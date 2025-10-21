@@ -1,0 +1,59 @@
+name: Changeset Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+jobs:
+  changeset-check:
+    name: Check for Changeset
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check changeset status
+        run: npm run changeset:status
+      
+      - name: Verify changeset presence
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Checking if PR has changeset..."
+            if ! npm run changeset:check; then
+              echo "❌ No changeset found for this PR"
+              echo "Please run 'npm run changeset:add' to create a changeset"
+              exit 1
+            else
+              echo "✅ Changeset found for this PR"
+            fi
+          fi
+      
+      - name: Validate changeset format
+        run: |
+          if [ -d ".changeset" ]; then
+            echo "Validating changeset files..."
+            for file in .changeset/*.md; do
+              if [ -f "$file" ] && [ "$(basename "$file")" != "README.md" ]; then
+                echo "Validating $file"
+                if ! grep -q "---" "$file" || ! grep -q "---" "$file" -A 1 | grep -q "---"; then
+                  echo "❌ Invalid changeset format in $file"
+                  exit 1
+                fi
+                echo "✅ $file is valid"
+              fi
+            done
+          fi

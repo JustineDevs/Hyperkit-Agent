@@ -1,0 +1,55 @@
+# HyperKit AI Agent - Requirements
+# Core dependencies for the HyperKit AI Agent system
+
+# AI and Generation
+openai>=1.0.0
+anthropic>=0.7.0
+google-generativeai>=0.3.0
+dashscope>=1.14.0
+
+# Web3 and Blockchain
+web3>=6.0.0
+eth-account>=0.8.0
+eth-utils>=2.0.0
+
+# HTTP and API
+httpx>=0.24.0
+requests>=2.31.0
+aiohttp>=3.8.0
+
+# Data Processing
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+
+# Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.21.0
+
+# Code Quality
+black>=23.0.0
+flake8>=6.0.0
+isort>=5.12.0
+mypy>=1.0.0
+
+# Security
+safety>=2.0.0
+bandit>=1.7.0
+
+# Documentation
+sphinx>=7.0.0
+sphinx-rtd-theme>=1.3.0
+
+# Development
+pre-commit>=3.0.0
+
+# RAG and Vector Store
+langchain>=0.1.0
+chromadb>=0.4.0
+sentence-transformers>=2.2.0
+
+# Additional dependencies for HyperKit Agent
+asyncio-mqtt>=0.13.0
+redis>=5.0.0
+celery>=5.3.0

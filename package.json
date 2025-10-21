@@ -1,0 +1,107 @@
+{
+  "name": "hyperkit",
+  "version": "1.0.0",
+  "description": "Web3 Development Platform with AI Generation and Cross-Chain DeFi Primitives",
+  "main": "hypeagent/__init__.py",
+  "scripts": {
+    "update": "node .github/workflows/scripts/update.js",
+    "update:changelog": "node .github/workflows/scripts/update.js --changelog-only",
+    "update:commit": "node .github/workflows/scripts/update.js --commit-only",
+    "update:push": "node .github/workflows/scripts/update.js --push-only",
+    "update:tag": "node .github/workflows/scripts/update.js --tag-only",
+    "changelog": "npm run update:changelog",
+    "commit": "npm run update:commit",
+    "push": "npm run update:push",
+    "changeset": "changeset",
+    "changeset:add": "changeset add",
+    "changeset:version": "changeset version",
+    "changeset:publish": "changeset publish",
+    "changeset:status": "changeset status",
+    "changeset:check": "changeset status --since HEAD~1",
+    "version": "changeset version",
+    "release": "changeset publish",
+    "test": "pytest tests/",
+    "test:coverage": "pytest --cov=hyperkit tests/",
+    "test:contracts": "pytest tests/contracts/",
+    "test:modules": "pytest tests/modules/",
+    "test:ai": "pytest tests/ai/",
+    "lint": "flake8 hyperkit/",
+    "format": "black hyperkit/",
+    "format:check": "black --check hyperkit/",
+    "type-check": "mypy hyperkit/",
+    "security": "bandit -r hyperkit/",
+    "security:contracts": "slither .",
+    "install:dev": "pip install -e .[dev]",
+    "install:prod": "pip install -e .",
+    "build": "python -m build",
+    "publish:test": "python -m twine upload --repository testpypi dist/*",
+    "publish:prod": "python -m twine upload dist/*",
+    "clean": "rm -rf dist/ build/ *.egg-info/",
+    "docs": "sphinx-build -b html docs/ docs/_build/html",
+    "docs:serve": "python -m http.server 8000 -d docs/_build/html",
+    "dev": "python -m hyperkit.cli.main",
+    "dashboard": "python -m hyperkit.dashboard.main",
+    "init": "python -m hyperkit.cli.init",
+    "generate": "python -m hyperkit.ai.generation",
+    "deploy": "python -m hyperkit.contracts.deploy"
+  },
+  "bin": {
+    "hyperkit": "./hypeagent/cli/main.py",
+    "hyperkit-update": "./.github/workflows/scripts/update.js"
+  },
+  "keywords": [
+    "web3",
+    "defi",
+    "smart-contracts",
+    "ai",
+    "hyperion",
+    "andromeda",
+    "blockchain",
+    "ethereum",
+    "cross-chain",
+    "dapp",
+    "sdk",
+    "cli",
+    "dashboard"
+  ],
+  "author": "HyperKit Team",
+  "author_email": "team@hyperionkit.xyz",
+  "license": "MIT",
+  "homepage": "https://hyperionkit.xyz",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hyperionkit/hyperkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hyperionkit/hyperkit/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "python": ">=3.9"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.0.0",
+    "inquirer": "^8.2.5",
+    "ora": "^5.4.1"
+  },
+  "files": [
+    "hypeagent/",
+    ".github/workflows/scripts/",
+    "docs/",
+    "tests/",
+    "*.md",
+    "*.txt",
+    "*.yml",
+    "*.yaml"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  }
+}

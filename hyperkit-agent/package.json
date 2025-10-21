@@ -1,0 +1,72 @@
+{
+  "name": "hyperkit-agent",
+  "version": "1.0.0",
+  "description": "HyperKit AI Agent - Smart Contract Generation, Auditing, and Deployment",
+  "main": "core/agent/main.py",
+  "scripts": {
+    "start": "python core/agent/main.py",
+    "test": "pytest tests/",
+    "test:coverage": "pytest --cov=core --cov=services tests/",
+    "lint": "flake8 core/ services/",
+    "format": "black core/ services/",
+    "format:check": "black --check core/ services/",
+    "type-check": "mypy core/ services/",
+    "security": "bandit -r core/ services/",
+    "install": "pip install -r requirements.txt",
+    "install:dev": "pip install -r requirements.txt -r requirements-dev.txt",
+    "setup": "python setup.py install",
+    "docs": "sphinx-build -b html docs/ docs/_build/html",
+    "docs:serve": "python -m http.server 8000 -d docs/_build/html",
+    "changeset": "changeset",
+    "changeset:add": "changeset add",
+    "changeset:version": "changeset version",
+    "changeset:publish": "changeset publish",
+    "changeset:status": "changeset status",
+    "changeset:check": "changeset status --since HEAD~1",
+    "version": "changeset version",
+    "release": "changeset publish",
+    "precommit": "changeset status --since HEAD~1 && npm run format:check && npm run lint && npm run type-check && npm run security"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "smart-contracts",
+    "solidity",
+    "web3",
+    "defi",
+    "auditing",
+    "deployment",
+    "hyperion",
+    "andromeda",
+    "blockchain"
+  ],
+  "author": "HyperKit Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hyperionkit/hyperkit-agent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hyperionkit/hyperkit-agent/issues"
+  },
+  "homepage": "https://hyperionkit.xyz",
+  "engines": {
+    "python": ">=3.9"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.7",
+    "@changesets/changelog-github": "^0.5.1",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  },
+  "files": [
+    "core/",
+    "services/",
+    "blockchain/",
+    "api/",
+    "docs/",
+    "*.md",
+    "*.txt",
+    "*.json"
+  ]
+}
