@@ -11,7 +11,7 @@
 
 ### 🤖 AI-Powered Contract Generation
 - **Natural Language to Solidity**: Generate smart contracts from plain English descriptions
-- **Multi-AI Provider Support**: Integration with Claude, GPT-4, Gemini, DeepSeek, and Qwen
+- **Google Gemini Integration**: Powered by Google Gemini 2.5 Pro with free $300 credits
 - **Template Library**: Pre-built templates for tokens, NFTs, DeFi vaults, and more
 - **Context-Aware Generation**: RAG-powered knowledge retrieval for better results
 
@@ -32,6 +32,34 @@
 - **Smart Contract Patterns**: Comprehensive knowledge base of best practices
 - **Context Retrieval**: Relevant knowledge injection for better generation
 - **Continuous Learning**: Expandable knowledge base with custom patterns
+
+## 🆓 Google Gemini Integration
+
+The HyperKit Agent is powered by **Google Gemini** for completely free smart contract generation:
+
+### Google Gemini Features
+- **Model**: Gemini-2.5-Pro (Latest and most powerful!)
+- **Free Credits**: $300 included with Google account
+- **High Quality**: Professional-grade Solidity contracts
+- **Fast Response**: Quick generation times
+- **Reliable**: Stable and consistent results
+
+### Obsidian Knowledge Base
+- **Markdown-based**: Store contract patterns, audit checklists, templates
+- **RAG Integration**: Automatic context retrieval for better generation
+- **Version Control**: Sync with Git for team collaboration
+
+### Setup Free Models
+```bash
+# Install Ollama and models
+python setup_free_models.py
+
+# Test free models
+python test_free_models.py
+
+# Generate with local models
+python cli.py generate "Create ERC20 token" --provider local --use-rag
+```
 
 ## 🚀 Quick Start
 
@@ -71,6 +99,30 @@
    ```bash
    python main.py
    ```
+
+## 🤖 AI Provider Support
+
+HyperKit AI Agent supports multiple AI providers with automatic fallback:
+
+### Supported Providers
+- **OpenAI** - GPT-4, GPT-3.5 (Recommended)
+- **DeepSeek** - Cost-effective alternative with high quality
+- **xAI** - Grok models for advanced reasoning
+- **GPT-OSS** - Open source GPT implementations
+- **Anthropic** - Claude models for safety and reliability
+- **Google** - Gemini models for multimodal capabilities
+- **Alibaba DashScope** - Qwen models for Chinese language support
+
+### Provider Selection
+The agent automatically selects the best available provider based on your configured API keys. You can also specify a provider manually:
+
+```bash
+# Auto-select best available provider
+python cli.py generate "Create a simple ERC20 token"
+
+# Use specific provider
+python cli.py generate "Create a DeFi vault" --provider deepseek
+```
 
 ## 🔧 Usage
 

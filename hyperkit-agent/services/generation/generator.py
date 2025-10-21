@@ -48,7 +48,25 @@ class ContractGenerator:
             elif self.provider == "google":
                 import google.generativeai as genai
                 genai.configure(api_key=self.api_key)
-                self.client = genai.GenerativeModel('gemini-pro')
+                self.client = genai.GenerativeModel('gemini-2.5-pro-preview-03-25')  # Use working model
+            elif self.provider == "deepseek":
+                import openai
+                self.client = openai.OpenAI(
+                    api_key=self.api_key,
+                    base_url="https://api.deepseek.com"
+                )
+            elif self.provider == "xai":
+                import openai
+                self.client = openai.OpenAI(
+                    api_key=self.api_key,
+                    base_url="https://api.x.ai/v1"
+                )
+            elif self.provider == "gpt-oss":
+                import openai
+                self.client = openai.OpenAI(
+                    api_key=self.api_key,
+                    base_url="https://api.openai.com/v1"
+                )
             else:
                 raise ValueError(f"Unsupported provider: {self.provider}")
         except ImportError as e:
@@ -169,7 +187,7 @@ contract {CONTRACT_NAME} is Ownable, ReentrancyGuard, Pausable {{
             system_prompt = self._create_system_prompt(contract_type, context)
             
             # Generate contract using AI
-            if self.provider == "openai":
+            if self.provider in ["openai", "deepseek", "xai", "gpt-oss"]:
                 contract_code = await self._generate_with_openai(system_prompt, prompt)
             elif self.provider == "anthropic":
                 contract_code = await self._generate_with_anthropic(system_prompt, prompt)
@@ -234,9 +252,18 @@ Generate only the Solidity contract code, no explanations or markdown formatting
         return base_prompt
     
     async def _generate_with_openai(self, system_prompt: str, user_prompt: str) -> str:
-        """Generate contract using OpenAI API."""
+        """Generate contract using OpenAI-compatible API."""
+        # Select model based on provider
+        model_map = {
+            "openai": "gpt-3.5-turbo",  # Changed from gpt-4 to gpt-3.5-turbo
+            "deepseek": "deepseek-chat",
+            "xai": "grok-beta",
+            "gpt-oss": "gpt-3.5-turbo"  # Changed from gpt-4 to gpt-3.5-turbo
+        }
+        model = model_map.get(self.provider, "gpt-4")
+        
         response = self.client.chat.completions.create(
-            model="gpt-4",
+            model=model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}

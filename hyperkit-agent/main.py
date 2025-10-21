@@ -94,19 +94,33 @@ def load_config():
     load_dotenv()
     
     config = {
-        'openai_api_key': os.getenv('OPENAI_API_KEY'),
-        'anthropic_api_key': os.getenv('ANTHROPIC_API_KEY'),
-        'google_api_key': os.getenv('GOOGLE_API_KEY'),
-        'dashscope_api_key': os.getenv('DASHSCOPE_API_KEY'),
-        'default_private_key': os.getenv('DEFAULT_PRIVATE_KEY'),
+        # AI Provider API Keys (Google Gemini Only)
+        'GOOGLE_API_KEY': os.getenv('GOOGLE_API_KEY'),
+        
+        # Obsidian Integration
+        'OBSIDIAN_VAULT_PATH': os.getenv('OBSIDIAN_VAULT_PATH', '~/hyperkit-kb'),
+        
+        # Blockchain Configuration
+        'DEFAULT_PRIVATE_KEY': os.getenv('DEFAULT_PRIVATE_KEY'),
+        'DEFAULT_NETWORK': os.getenv('DEFAULT_NETWORK', 'hyperion'),
         'networks': {
             'hyperion': os.getenv('HYPERION_RPC_URL', 'https://hyperion-testnet.metisdevops.link'),
             'polygon': os.getenv('POLYGON_RPC_URL', 'https://polygon-rpc.com'),
             'arbitrum': os.getenv('ARBITRUM_RPC_URL', 'https://arb1.arbitrum.io/rpc'),
             'ethereum': os.getenv('ETHEREUM_RPC_URL', 'https://mainnet.infura.io/v3/YOUR_PROJECT_ID')
         },
-        'vectorstore_path': os.getenv('VECTORSTORE_PATH', './data/vectordb'),
-        'log_level': os.getenv('LOG_LEVEL', 'INFO')
+        
+        # RAG Configuration
+        'VECTORSTORE_PATH': os.getenv('VECTORSTORE_PATH', './data/vectordb'),
+        'EMBEDDING_MODEL': os.getenv('EMBEDDING_MODEL', 'sentence-transformers/all-MiniLM-L6-v2'),
+        
+        # Security Tools
+        'SLITHER_ENABLED': os.getenv('SLITHER_ENABLED', 'true'),
+        'MYTHRIL_ENABLED': os.getenv('MYTHRIL_ENABLED', 'true'),
+        'EDB_ENABLED': os.getenv('EDB_ENABLED', 'true'),
+        
+        # Logging
+        'LOG_LEVEL': os.getenv('LOG_LEVEL', 'INFO')
     }
     
     return config

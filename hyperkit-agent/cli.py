@@ -24,23 +24,52 @@ def load_config():
     load_dotenv()
     
     return {
-        'openai_api_key': os.getenv('OPENAI_API_KEY'),
-        'anthropic_api_key': os.getenv('ANTHROPIC_API_KEY'),
-        'google_api_key': os.getenv('GOOGLE_API_KEY'),
-        'dashscope_api_key': os.getenv('DASHSCOPE_API_KEY'),
-        'default_private_key': os.getenv('DEFAULT_PRIVATE_KEY'),
+        # AI Provider API Keys (Google Gemini Only)
+        'GOOGLE_API_KEY': os.getenv('GOOGLE_API_KEY'),
+        
+        # Obsidian Integration
+        'OBSIDIAN_VAULT_PATH': os.getenv('OBSIDIAN_VAULT_PATH', '~/hyperkit-kb'),
+        
+        # Blockchain Configuration
+        'DEFAULT_PRIVATE_KEY': os.getenv('DEFAULT_PRIVATE_KEY'),
+        'DEFAULT_NETWORK': os.getenv('DEFAULT_NETWORK', 'hyperion'),
         'networks': {
             'hyperion': os.getenv('HYPERION_RPC_URL', 'https://hyperion-testnet.metisdevops.link'),
             'polygon': os.getenv('POLYGON_RPC_URL', 'https://polygon-rpc.com'),
             'arbitrum': os.getenv('ARBITRUM_RPC_URL', 'https://arb1.arbitrum.io/rpc'),
             'ethereum': os.getenv('ETHEREUM_RPC_URL', 'https://mainnet.infura.io/v3/YOUR_PROJECT_ID')
-        }
+        },
+        
+        # RAG Configuration
+        'VECTORSTORE_PATH': os.getenv('VECTORSTORE_PATH', './data/vectordb'),
+        'EMBEDDING_MODEL': os.getenv('EMBEDDING_MODEL', 'sentence-transformers/all-MiniLM-L6-v2'),
+        
+        # Security Tools
+        'SLITHER_ENABLED': os.getenv('SLITHER_ENABLED', 'true'),
+        'MYTHRIL_ENABLED': os.getenv('MYTHRIL_ENABLED', 'true'),
+        'EDB_ENABLED': os.getenv('EDB_ENABLED', 'true'),
+        
+        # Logging
+        'LOG_LEVEL': os.getenv('LOG_LEVEL', 'INFO')
     }
 
 
 async def generate_command(args):
     """Handle the generate command."""
     config = load_config()
+    
+    # Configure for free models if requested
+    if args.provider:
+        if args.provider == 'google':
+            print(f"Using Google Gemini")
+        else:
+            print(f"Only Google Gemini is supported. Using Google Gemini.")
+    
+    # Configure RAG
+    if args.use_rag:
+        config['OBSIDIAN_VAULT_PATH'] = os.path.expanduser('~/hyperkit-kb')
+        print("Using Obsidian RAG for context retrieval")
+    
     agent = HyperKitAgent(config)
     
     print(f"Generating contract: {args.prompt}")
@@ -52,6 +81,10 @@ async def generate_command(args):
         print("=" * 50)
         print(result['contract_code'])
         print("=" * 50)
+        print(f"Provider used: {result.get('provider_used', 'unknown')}")
+        
+        if args.use_rag and 'context_used' in result:
+            print(f"RAG context length: {len(result['context_used'])} chars")
         
         if args.save:
             from core.tools.utils import save_contract_to_file
@@ -222,6 +255,10 @@ Examples:
     gen_parser = subparsers.add_parser('generate', help='Generate a smart contract')
     gen_parser.add_argument('prompt', help='Natural language description of the contract')
     gen_parser.add_argument('--context', help='Additional context for generation')
+    gen_parser.add_argument('--provider', choices=['google'], 
+                           help='AI provider to use (only Google Gemini is supported)')
+    gen_parser.add_argument('--model', help='Specific model to use (e.g., llama3.1:8b, qwen2.5-coder:32b)')
+    gen_parser.add_argument('--use-rag', action='store_true', help='Use Obsidian RAG for context retrieval')
     gen_parser.add_argument('--save', help='Save contract to file')
     gen_parser.add_argument('--output-dir', default='./contracts', help='Output directory')
     

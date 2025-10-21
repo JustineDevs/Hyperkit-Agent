@@ -24,8 +24,19 @@ class HyperKitAgent:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize the HyperKit Agent with configuration."""
         self.config = config or {}
-        self.rag = None  # Will be initialized when RAG service is ready
-        self.alith = None  # Will be initialized when Alith SDK is ready
+        
+        # Initialize free LLM router
+        from core.llm.router import HybridLLMRouter
+        self.llm_router = HybridLLMRouter()
+        
+        # Initialize Obsidian RAG
+        from services.rag.obsidian_rag import ObsidianRAG
+        vault_path = self.config.get('OBSIDIAN_VAULT_PATH', '~/hyperkit-kb')
+        self.rag = ObsidianRAG(vault_path=vault_path)
+        
+        # Initialize mock Alith client
+        from core.tools.alith_mock import AlithClient
+        self.alith = AlithClient()
         
         # Register available tools
         self.tools = {
@@ -40,7 +51,7 @@ class HyperKitAgent:
     
     async def generate_contract(self, prompt: str, context: str = "") -> Dict[str, Any]:
         """
-        Generate a smart contract based on natural language prompt.
+        Generate a smart contract based on natural language prompt using free LLM models.
         
         Args:
             prompt: Natural language description of the contract
@@ -50,17 +61,29 @@ class HyperKitAgent:
             Dictionary containing generated contract code and metadata
         """
         try:
-            # Import generation service
-            from services.generation.generator import ContractGenerator
+            # Retrieve context from Obsidian vault
+            rag_context = ""
+            if self.rag:
+                rag_context = self.rag.retrieve(prompt)
             
-            generator = ContractGenerator(self.config.get('openai_api_key'))
-            contract_code = await generator.generate(prompt, context)
+            # Combine all context
+            full_context = f"{context}\n\n{rag_context}".strip()
+            
+            # Create enhanced prompt with context
+            enhanced_prompt = self._create_contract_generation_prompt(prompt, full_context)
+            
+            # Use free LLM router for code generation
+            contract_code = self.llm_router.route(enhanced_prompt, task_type='code', prefer_local=True)
+            
+            # Post-process the generated code
+            contract_code = self._post_process_contract(contract_code)
             
             return {
                 'status': 'success',
                 'contract_code': contract_code,
                 'prompt': prompt,
-                'context_used': context
+                'context_used': full_context,
+                'provider_used': 'free_llm_router'
             }
         except Exception as e:
             logger.error(f"Contract generation failed: {e}")
@@ -207,7 +230,7 @@ class HyperKitAgent:
             # Step 1: RAG-enhanced context retrieval
             context = ""
             if self.rag:
-                context = await self.rag.retrieve(user_prompt)
+                context = self.rag.retrieve(user_prompt)
             
             # Step 2: Generate contract
             generation_result = await self.generate_contract(user_prompt, context)
@@ -227,7 +250,7 @@ class HyperKitAgent:
                 
                 # Log audit results with deployment
                 if self.alith and deployment_result['status'] == 'success':
-                    await self.alith.log_audit(
+                    self.alith.log_audit(
                         deployment_result['deployment']['address'],
                         audit_result['results']
                     )
@@ -287,6 +310,72 @@ class HyperKitAgent:
             'has_modifiers': 'modifier ' in contract_code,
             'uses_openzeppelin': 'import "@openzeppelin' in contract_code
         }
+    
+    def _select_ai_provider(self) -> tuple[str, str]:
+        """
+        Select the best available AI provider based on configured API keys.
+        
+        Returns:
+            Tuple of (provider_name, api_key)
+        """
+        # Priority order for AI providers
+        providers = [
+            ('openai', 'OPENAI_API_KEY'),
+            ('deepseek', 'DEEPSEEK_API_KEY'),
+            ('xai', 'XAI_API_KEY'),
+            ('gpt-oss', 'GPT_OSS_API_KEY'),
+            ('anthropic', 'ANTHROPIC_API_KEY'),
+            ('google', 'GOOGLE_API_KEY'),
+            ('dashscope', 'DASHSCOPE_API_KEY')
+        ]
+        
+        for provider, key_name in providers:
+            api_key = self.config.get(key_name)
+            if api_key and api_key != f'your_{key_name.lower()}_here':
+                logger.info(f"Selected AI provider: {provider}")
+                return provider, api_key
+        
+        # Fallback to OpenAI with a placeholder
+        logger.warning("No valid API keys found, using OpenAI with placeholder")
+        return 'openai', 'placeholder-key'
+    
+    def _create_contract_generation_prompt(self, user_prompt: str, context: str = "") -> str:
+        """Create enhanced prompt for contract generation."""
+        base_prompt = f"""
+You are an expert Solidity smart contract developer. Generate a secure, production-ready smart contract based on the user's request.
+
+User Request: {user_prompt}
+
+Additional Context:
+{context}
+
+Requirements:
+1. Use Solidity ^0.8.0
+2. Follow security best practices
+3. Include proper access controls
+4. Add events for important actions
+5. Include NatSpec documentation
+6. Use OpenZeppelin contracts when appropriate
+7. Implement proper error handling
+8. Add reentrancy guards where needed
+
+Generate only the Solidity contract code, no explanations or markdown formatting.
+"""
+        return base_prompt.strip()
+    
+    def _post_process_contract(self, contract_code: str) -> str:
+        """Post-process generated contract code."""
+        # Remove markdown formatting if present
+        if contract_code.startswith('```solidity'):
+            contract_code = contract_code.replace('```solidity', '').replace('```', '')
+        
+        if contract_code.startswith('```'):
+            contract_code = contract_code.replace('```', '')
+        
+        # Clean up extra whitespace
+        contract_code = contract_code.strip()
+        
+        return contract_code
 
 
 # Example usage and testing

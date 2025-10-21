@@ -92,12 +92,12 @@ class TestHyperKitAgent:
     @pytest.mark.asyncio
     async def test_run_workflow_success(self, agent):
         """Test successful workflow execution."""
-        with patch.object(agent, 'generate_contract') as mock_gen, \
-             patch.object(agent, 'audit_contract') as mock_audit, \
-             patch.object(agent, 'deploy_contract') as mock_deploy:
+        with patch.object(agent, 'generate_contract', new_callable=AsyncMock) as mock_gen, \
+             patch.object(agent, 'audit_contract', new_callable=AsyncMock) as mock_audit, \
+             patch.object(agent, 'deploy_contract', new_callable=AsyncMock) as mock_deploy:
             
             mock_gen.return_value = {'status': 'success', 'contract_code': 'contract Test {}'}
-            mock_audit.return_value = {'status': 'success', 'severity': 'low'}
+            mock_audit.return_value = {'status': 'success', 'severity': 'low', 'results': {}}
             mock_deploy.return_value = {'status': 'success', 'deployment': {'address': '0x123'}}
             
             result = await agent.run_workflow("Create a simple contract")
@@ -108,11 +108,11 @@ class TestHyperKitAgent:
     @pytest.mark.asyncio
     async def test_run_workflow_audit_failed(self, agent):
         """Test workflow with failed audit."""
-        with patch.object(agent, 'generate_contract') as mock_gen, \
-             patch.object(agent, 'audit_contract') as mock_audit:
+        with patch.object(agent, 'generate_contract', new_callable=AsyncMock) as mock_gen, \
+             patch.object(agent, 'audit_contract', new_callable=AsyncMock) as mock_audit:
             
             mock_gen.return_value = {'status': 'success', 'contract_code': 'contract Test {}'}
-            mock_audit.return_value = {'status': 'success', 'severity': 'critical'}
+            mock_audit.return_value = {'status': 'success', 'severity': 'critical', 'results': {}}
             
             result = await agent.run_workflow("Create a simple contract")
             
@@ -177,14 +177,19 @@ class TestSmartContractAuditor:
             function withdraw() public {
                 msg.sender.call{value: amount}("");
             }
+            
+            function badRandom() public view returns (uint) {
+                return block.timestamp;
+            }
         }
         '''
-        
+
         result = await auditor._run_custom_patterns(contract_code)
-        
+
         assert result['status'] == 'success'
         assert 'findings' in result
-        assert len(result['findings']) > 0
+        # Should find at least the block.timestamp pattern
+        assert len(result['findings']) >= 1
     
     def test_calculate_severity(self, auditor):
         """Test severity calculation."""
