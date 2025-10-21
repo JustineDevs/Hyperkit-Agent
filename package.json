@@ -70,10 +70,10 @@
   "homepage": "https://hyperionkit.xyz",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hyperionkit/hyperkit.git"
+    "url": "https://github.com/JustineDevs/Hyperkit-Agent.git"
   },
   "bugs": {
-    "url": "https://github.com/hyperionkit/hyperkit/issues"
+    "url": "https://github.com/JustineDevs/Hyperkit-Agent/issues"
   },
   "engines": {
     "node": ">=16.0.0",

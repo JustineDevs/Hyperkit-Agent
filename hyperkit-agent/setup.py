@@ -18,7 +18,7 @@ setup(
     description="HyperKit AI Agent - Smart Contract Generation, Auditing, and Deployment",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/hyperionkit/hyperkit-agent",
+    url="https://github.com/JustineDevs/Hyperkit-Agent",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",

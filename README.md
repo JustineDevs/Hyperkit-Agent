@@ -47,7 +47,7 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/hyperionkit/hyperkit.git
+   git clone https://github.com/JustineDevs/Hyperkit-Agent.git
    cd hyperkit
    ```
 
@@ -202,7 +202,7 @@ We welcome contributions from the HyperKit community! Please see our [Contributi
 
 1. **Fork the repository**
    ```bash
-   git clone https://github.com/hyperionkit/hyperkit.git
+   git clone https://github.com/JustineDevs/Hyperkit-Agent.git
    cd hyperkit
    ```
 

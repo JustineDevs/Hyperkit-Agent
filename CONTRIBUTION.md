@@ -34,7 +34,7 @@ This project adheres to a code of conduct that we expect all contributors to fol
 
 1. **Fork the repository**
    ```bash
-   git clone https://github.com/hyperionkit/hyperkit.git
+   git clone https://github.com/JustineDevs/Hyperkit-Agent.git
    cd hyperkit
    ```
 

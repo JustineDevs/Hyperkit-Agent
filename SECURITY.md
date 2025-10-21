@@ -158,7 +158,7 @@ We follow responsible disclosure practices:
 
 - **Security Team**: [security@hyperionkit.xyz](mailto:security@hyperionkit.xyz)
 - **PGP Key**: [Download our PGP key](https://hyperionkit.xyz/security/pgp-key.asc)
-- **Security Advisory**: [GitHub Security Advisories](https://github.com/hyperionkit/hyperkit/security/advisories)
+- **Security Advisory**: [GitHub Security Advisories](https://github.com/JustineDevs/Hyperkit-Agent/security/advisories)
 
 ## Security Resources
 

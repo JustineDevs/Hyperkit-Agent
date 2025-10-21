@@ -188,6 +188,5 @@ If there are version conflicts:
 
 If you have questions about version management or the release process:
 
-- Check the [Issues](https://github.com/hyperionkit/hyperkit-agent/issues)
-- Join our [Discord](https://discord.gg/hyperionkit)
+- Check the [Issues](https://github.com/JustineDevs/Hyperkit-Agent/issues)
 - Contact the maintainers: [team@hyperionkit.xyz](mailto:team@hyperionkit.xyz)
