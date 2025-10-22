@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4] - 2025-10-22
+
+### 🚀 Automated Release
+- **Version**: 1.2.4
+- **Date**: 2025-10-22
+- **Type**: Automated version bump
+
+### 📋 Changes
+- Updated version numbers across all tracked files
+- Generated changeset entry
+- Updated changelog files
+- Created git commit and tag
+
+### 🔧 Technical Details
+- **Files Updated**: 4 version files
+- **Changelog Updated**: 2 changelog files
+- **Git Tag**: v1.2.4
+
+---
 ## [1.2.3] - 2025-10-22
 
 ### 🚀 Automated Release
