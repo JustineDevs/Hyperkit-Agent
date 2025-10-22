@@ -22,7 +22,7 @@
 - [x] **Security tools** (Slither enabled, Mythril disabled)
 
 ### ❌ **Not Recommended For**
-- [ ] **Production deployments** (testnet only)
+- [x] **Production deployments** (testnet only)
 - [ ] **Complex DeFi protocols** (limited templates)
 - [ ] **High-security applications** (basic auditing only)
 - [ ] **Enterprise use** (limited collaboration features)
