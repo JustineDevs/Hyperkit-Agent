@@ -23,7 +23,7 @@ ai_providers:
     model: "claude-3-sonnet"
     api_key_env: "ANTHROPIC_API_KEY"
 
-# Blockchain Network Configuration - HYPERION FOCUS ONLY
+# Blockchain Network Configuration - HYPERION/METIS/LAZAI FOCUS
 networks:
   hyperion:
     name: "Hyperion Testnet"
@@ -35,15 +35,14 @@ networks:
     enabled: true
     priority: 1
   
-  # Other networks temporarily unavailable - focusing on Hyperion testnet only
   metis:
-    name: "Metis Mainnet"
+    name: "Metis Andromeda"
     rpc_url: "https://andromeda.metis.io"
     chain_id: 1088
     explorer_url: "https://andromeda-explorer.metis.io"
     gas_price: "20000000000"  # 20 gwei
     gas_limit: 8000000
-    enabled: false  # Temporarily disabled
+    enabled: true
     priority: 2
   
   lazai:
@@ -53,38 +52,8 @@ networks:
     explorer_url: "https://testnet-explorer.lazai.network"
     gas_price: "1000000000"  # 1 gwei
     gas_limit: 8000000
-    enabled: false  # Temporarily disabled
+    enabled: true
     priority: 3
-  
-  polygon:
-    name: "Polygon Mainnet"
-    rpc_url: "https://polygon-rpc.com"
-    chain_id: 137
-    explorer_url: "https://polygonscan.com"
-    gas_price: "30000000000"  # 30 gwei
-    gas_limit: 8000000
-    enabled: false  # Temporarily disabled
-    priority: 4
-  
-  arbitrum:
-    name: "Arbitrum One"
-    rpc_url: "https://arb1.arbitrum.io/rpc"
-    chain_id: 42161
-    explorer_url: "https://arbiscan.io"
-    gas_price: "100000000"  # 0.1 gwei
-    gas_limit: 8000000
-    enabled: false  # Temporarily disabled
-    priority: 5
-  
-  ethereum:
-    name: "Ethereum Mainnet"
-    rpc_url: "https://mainnet.infura.io/v3/YOUR_PROJECT_ID"
-    chain_id: 1
-    explorer_url: "https://etherscan.io"
-    gas_price: "20000000000"  # 20 gwei
-    gas_limit: 8000000
-    enabled: false  # Temporarily disabled
-    priority: 6
 
 # Default Settings
 defaults:

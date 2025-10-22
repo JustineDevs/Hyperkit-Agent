@@ -18,9 +18,7 @@ class PublicContractAuditor:
         self.explorer_apis = {
             'hyperion': 'https://hyperion-testnet.metisdevops.link/api',
             'metis': 'https://andromeda.metaswap.org/api',
-            'ethereum': 'https://api.etherscan.io/api',
-            'polygon': 'https://api.polygonscan.com/api',
-            'arbitrum': 'https://api.arbiscan.io/api'
+            'lazai': 'https://testnet-explorer.lazai.network/api'
         }
     
     async def audit_by_address(self, address: str, network: str = 'hyperion') -> Dict[str, Any]:
@@ -197,12 +195,8 @@ class PublicContractAuditor:
                     network = 'hyperion'
                 elif 'andromeda' in url or 'metis' in url:
                     network = 'metis'
-                elif 'etherscan' in url:
-                    network = 'ethereum'
-                elif 'polygonscan' in url:
-                    network = 'polygon'
-                elif 'arbiscan' in url:
-                    network = 'arbitrum'
+                elif 'lazai' in url:
+                    network = 'lazai'
                 else:
                     network = 'unknown'
                 

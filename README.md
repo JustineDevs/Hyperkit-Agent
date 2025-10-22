@@ -147,10 +147,8 @@ HyperKit/
 | Network | Status | Features | Use Cases |
 |---------|--------|----------|-----------|
 | Hyperion | 🔄 Testnet | Native support, optimized | Primary development |
-| Andromeda | 🔄 Testnet | Cross-chain bridging | Asset migration |
-| Ethereum | 🔄 Testnet | Bridge integration | Cross-chain DeFi |
-| Polygon | 🔄 Testnet | Layer 2 scaling | High-throughput dApps |
-| Arbitrum | 🔄 Testnet | Optimistic rollups | Advanced DeFi protocols |
+| Metis | 🔄 Mainnet | Cross-chain bridging | Asset migration |
+| LazAI | 🔄 Testnet | AI-optimized blockchain | AI-powered dApps |
 
 ## 📚 Documentation
 

@@ -28,15 +28,20 @@ OPENAI_API_KEY=your_openai_api_key_here
 ### 3. Blockchain Network RPC URLs
 
 ```bash
-# Hyperion Testnet (Primary - Focus Network)
+# Hyperion Testnet (Primary)
 HYPERION_RPC_URL=https://hyperion-testnet.metisdevops.link
 HYPERION_CHAIN_ID=133717
 HYPERION_EXPLORER_URL=https://hyperion-testnet-explorer.metisdevops.link
 
-# Other Networks (Temporarily Disabled - Focus on Hyperion)
-# POLYGON_RPC_URL=https://polygon-rpc.com
-# ARBITRUM_RPC_URL=https://arb1.arbitrum.io/rpc
-# ETHEREUM_RPC_URL=https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
+# Metis Andromeda (Secondary)
+METIS_RPC_URL=https://andromeda.metis.io
+METIS_CHAIN_ID=1088
+METIS_EXPLORER_URL=https://andromeda-explorer.metis.io
+
+# LazAI Testnet (Tertiary)
+LAZAI_RPC_URL=https://rpc.lazai.network/testnet
+LAZAI_CHAIN_ID=9001
+LAZAI_EXPLORER_URL=https://testnet-explorer.lazai.network
 ```
 
 ### 4. RAG System Configuration (Simple MCP)
@@ -123,11 +128,19 @@ LANGSMITH_ENDPOINT=https://api.smith.langchain.com
 LANGSMITH_API_KEY=your_langsmith_api_key_here
 LANGSMITH_PROJECT=your_project_name
 
-# Blockchain Configuration (Hyperion Focus)
+# Blockchain Configuration (Hyperion/Metis/LazAI Focus)
 DEFAULT_NETWORK=hyperion
 HYPERION_RPC_URL=https://hyperion-testnet.metisdevops.link
 HYPERION_CHAIN_ID=133717
 HYPERION_EXPLORER_URL=https://hyperion-testnet-explorer.metisdevops.link
+
+METIS_RPC_URL=https://andromeda.metis.io
+METIS_CHAIN_ID=1088
+METIS_EXPLORER_URL=https://andromeda-explorer.metis.io
+
+LAZAI_RPC_URL=https://rpc.lazai.network/testnet
+LAZAI_CHAIN_ID=9001
+LAZAI_EXPLORER_URL=https://testnet-explorer.lazai.network
 
 # Wallet Configuration
 DEFAULT_PRIVATE_KEY=your_wallet_private_key_here
@@ -143,16 +156,23 @@ LOG_LEVEL=INFO
 
 ## Network RPC URLs
 
-### Hyperion Testnet (Primary Focus)
+### Hyperion Testnet (Primary)
 - **RPC URL**: `https://hyperion-testnet.metisdevops.link`
 - **Chain ID**: `133717`
 - **Explorer**: `https://hyperion-testnet-explorer.metisdevops.link`
 - **Status**: Free, no API key required
 
-### Other Networks (Temporarily Disabled)
-- **Polygon**: `https://polygon-rpc.com` (commented out)
-- **Arbitrum**: `https://arb1.arbitrum.io/rpc` (commented out)
-- **Ethereum**: Use Infura, Alchemy, or QuickNode (commented out)
+### Metis Andromeda (Secondary)
+- **RPC URL**: `https://andromeda.metis.io`
+- **Chain ID**: `1088`
+- **Explorer**: `https://andromeda-explorer.metis.io`
+- **Status**: Free, no API key required
+
+### LazAI Testnet (Tertiary)
+- **RPC URL**: `https://rpc.lazai.network/testnet`
+- **Chain ID**: `9001`
+- **Explorer**: `https://testnet-explorer.lazai.network`
+- **Status**: Free, no API key required
 
 ## Security Best Practices
 

@@ -1,11 +1,11 @@
 # HyperKit AI Agent - Requirements
 # Core dependencies for the HyperKit AI Agent system
 
-# AI and Generation (Google Gemini Only)
+# AI and Generation (Cloud-Based Providers)
 google-generativeai>=0.3.0
+openai>=1.0.0
 
-# Disabled Providers (Not Used)
-# openai>=1.0.0
+# Additional AI Providers (Optional)
 # anthropic>=0.7.0
 # dashscope>=1.14.0
 # deepseek-ai>=0.1.0
