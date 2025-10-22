@@ -265,7 +265,7 @@ def format_contract_code(code: str) -> str:
 
 
 def save_contract_to_file(
-    code: str, filename: str, directory: str = "./contracts"
+    code: str, filename: str, directory: str = "./contracts/agent_generate"
 ) -> str:
     """
     Save contract code to a file.
