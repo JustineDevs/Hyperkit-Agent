@@ -1,21 +1,23 @@
 """
-Error Handling and User Feedback Utilities
-Provides comprehensive error handling and user-friendly feedback
+Enhanced Error Handling System for HyperKit AI Agent
+
+This module provides comprehensive error handling, classification, and recovery
+mechanisms for the HyperKit AI Agent.
 """
 
 import logging
 import traceback
-from typing import Dict, Any, Optional, Union
+import json
+from typing import Dict, Any, Optional, List, Union, Callable
 from enum import Enum
-from dataclasses import dataclass
 from datetime import datetime
-
-logger = logging.getLogger(__name__)
+import functools
+import asyncio
+from pathlib import Path
 
 
 class ErrorSeverity(Enum):
-    """Error severity levels"""
-
+    """Error severity levels."""
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -23,494 +25,392 @@ class ErrorSeverity(Enum):
 
 
 class ErrorCategory(Enum):
-    """Error categories"""
-
-    VALIDATION = "validation"
+    """Error categories for classification."""
     NETWORK = "network"
-    AUTHENTICATION = "authentication"
-    AUTHORIZATION = "authorization"
-    RESOURCE = "resource"
-    CONFIGURATION = "configuration"
-    EXTERNAL_SERVICE = "external_service"
-    INTERNAL = "internal"
-    USER_INPUT = "user_input"
+    API = "api"
+    VALIDATION = "validation"
+    COMPILATION = "compilation"
     DEPLOYMENT = "deployment"
-    AUDIT = "audit"
-    GENERATION = "generation"
+    SECURITY = "security"
+    CONFIGURATION = "configuration"
+    FILE_SYSTEM = "file_system"
+    PERMISSION = "permission"
+    RESOURCE = "resource"
+    UNKNOWN = "unknown"
 
 
-@dataclass
-class ErrorInfo:
-    """Error information structure"""
+class ErrorContext:
+    """Context information for error handling."""
+    
+    def __init__(self, operation: str, component: str, user_id: Optional[str] = None):
+        self.operation = operation
+        self.component = component
+        self.user_id = user_id
+        self.timestamp = datetime.now()
+        self.metadata = {}
 
-    error_id: str
-    category: ErrorCategory
-    severity: ErrorSeverity
-    message: str
-    user_message: str
-    technical_details: str
-    suggestions: list
-    timestamp: datetime
-    context: Dict[str, Any]
+
+class HyperKitError(Exception):
+    """Base exception class for HyperKit AI Agent."""
+    
+    def __init__(
+        self,
+        message: str,
+        category: ErrorCategory = ErrorCategory.UNKNOWN,
+        severity: ErrorSeverity = ErrorSeverity.MEDIUM,
+        context: Optional[ErrorContext] = None,
+        original_error: Optional[Exception] = None,
+        recovery_suggestion: Optional[str] = None
+    ):
+        super().__init__(message)
+        self.message = message
+        self.category = category
+        self.severity = severity
+        self.context = context
+        self.original_error = original_error
+        self.recovery_suggestion = recovery_suggestion
+        self.timestamp = datetime.now()
+        self.error_id = self._generate_error_id()
+    
+    def _generate_error_id(self) -> str:
+        """Generate unique error ID."""
+        import uuid
+        return f"HK-{uuid.uuid4().hex[:8].upper()}"
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert error to dictionary for logging."""
+        return {
+            'error_id': self.error_id,
+            'message': self.message,
+            'category': self.category.value,
+            'severity': self.severity.value,
+            'timestamp': self.timestamp.isoformat(),
+            'context': {
+                'operation': self.context.operation if self.context else None,
+                'component': self.context.component if self.context else None,
+                'user_id': self.context.user_id if self.context else None,
+                'metadata': self.context.metadata if self.context else {}
+            } if self.context else None,
+            'original_error': str(self.original_error) if self.original_error else None,
+            'recovery_suggestion': self.recovery_suggestion,
+            'traceback': traceback.format_exc()
+        }
 
 
 class ErrorHandler:
-    """
-    Comprehensive error handling and user feedback system
-    """
-
-    def __init__(self):
-        self.error_patterns = self._initialize_error_patterns()
-        self.suggestion_templates = self._initialize_suggestion_templates()
-
-    def _initialize_error_patterns(self) -> Dict[str, Dict[str, Any]]:
-        """Initialize error pattern recognition"""
-        return {
-            "api_key_invalid": {
-                "patterns": [
-                    "invalid api key",
-                    "unauthorized",
-                    "401",
-                    "authentication failed",
-                ],
-                "category": ErrorCategory.AUTHENTICATION,
-                "severity": ErrorSeverity.HIGH,
-                "user_message": "API key is invalid or expired. Please check your API key configuration.",
-                "suggestions": [
-                    "Verify your API key is correct",
-                    "Check if the API key has expired",
-                    "Ensure the API key has the required permissions",
-                    "Try regenerating the API key",
-                ],
-            },
-            "network_error": {
-                "patterns": [
-                    "connection error",
-                    "timeout",
-                    "network unreachable",
-                    "dns resolution failed",
-                ],
-                "category": ErrorCategory.NETWORK,
-                "severity": ErrorSeverity.MEDIUM,
-                "user_message": "Network connection failed. Please check your internet connection.",
-                "suggestions": [
-                    "Check your internet connection",
-                    "Verify the RPC URL is correct",
-                    "Try using a different RPC endpoint",
-                    "Check if the service is temporarily unavailable",
-                ],
-            },
-            "insufficient_funds": {
-                "patterns": [
-                    "insufficient funds",
-                    "insufficient balance",
-                    "not enough gas",
-                ],
-                "category": ErrorCategory.RESOURCE,
-                "severity": ErrorSeverity.HIGH,
-                "user_message": "Insufficient funds for this operation.",
-                "suggestions": [
-                    "Add more funds to your wallet",
-                    "Check your account balance",
-                    "Reduce the transaction amount",
-                    "Increase gas price for faster confirmation",
-                ],
-            },
-            "gas_estimation_failed": {
-                "patterns": [
-                    "gas estimation failed",
-                    "out of gas",
-                    "gas limit exceeded",
-                ],
-                "category": ErrorCategory.DEPLOYMENT,
-                "severity": ErrorSeverity.MEDIUM,
-                "user_message": "Gas estimation failed. The transaction may be too complex.",
-                "suggestions": [
-                    "Simplify the contract code",
-                    "Increase gas limit",
-                    "Check for infinite loops",
-                    "Optimize contract functions",
-                ],
-            },
-            "compilation_error": {
-                "patterns": [
-                    "compilation failed",
-                    "syntax error",
-                    "type error",
-                    "pragma error",
-                ],
-                "category": ErrorCategory.VALIDATION,
-                "severity": ErrorSeverity.HIGH,
-                "user_message": "Contract compilation failed. Please check the Solidity code.",
-                "suggestions": [
-                    "Check for syntax errors",
-                    "Verify pragma version compatibility",
-                    "Check import statements",
-                    "Validate function signatures",
-                ],
-            },
-            "deployment_failed": {
-                "patterns": [
-                    "deployment failed",
-                    "transaction reverted",
-                    "contract creation failed",
-                ],
-                "category": ErrorCategory.DEPLOYMENT,
-                "severity": ErrorSeverity.HIGH,
-                "user_message": "Contract deployment failed.",
-                "suggestions": [
-                    "Check contract constructor parameters",
-                    "Verify sufficient gas for deployment",
-                    "Check network connectivity",
-                    "Review contract code for errors",
-                ],
-            },
-            "audit_failed": {
-                "patterns": [
-                    "audit failed",
-                    "security scan failed",
-                    "vulnerability detected",
-                ],
-                "category": ErrorCategory.AUDIT,
-                "severity": ErrorSeverity.MEDIUM,
-                "user_message": "Security audit failed. Please review the findings.",
-                "suggestions": [
-                    "Review security findings",
-                    "Fix identified vulnerabilities",
-                    "Run additional security checks",
-                    "Consider professional audit",
-                ],
-            },
-            "generation_failed": {
-                "patterns": ["generation failed", "ai service error", "model error"],
-                "category": ErrorCategory.GENERATION,
-                "severity": ErrorSeverity.MEDIUM,
-                "user_message": "Contract generation failed. Please try again.",
-                "suggestions": [
-                    "Check your prompt clarity",
-                    "Try a different approach",
-                    "Verify AI service status",
-                    "Contact support if issue persists",
-                ],
-            },
+    """Comprehensive error handling system."""
+    
+    def __init__(self, log_file: Optional[str] = None):
+        self.logger = logging.getLogger(__name__)
+        self.error_log = []
+        self.recovery_strategies = {}
+        self.circuit_breakers = {}
+        self.retry_configs = {}
+        
+        # Setup logging
+        if log_file:
+            self._setup_file_logging(log_file)
+        
+        # Initialize recovery strategies
+        self._setup_recovery_strategies()
+    
+    def _setup_file_logging(self, log_file: str):
+        """Setup file logging for errors."""
+        handler = logging.FileHandler(log_file)
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+    
+    def _setup_recovery_strategies(self):
+        """Setup automatic recovery strategies."""
+        self.recovery_strategies = {
+            ErrorCategory.NETWORK: self._recover_network_error,
+            ErrorCategory.API: self._recover_api_error,
+            ErrorCategory.CONFIGURATION: self._recover_configuration_error,
+            ErrorCategory.FILE_SYSTEM: self._recover_filesystem_error,
+            ErrorCategory.PERMISSION: self._recover_permission_error
         }
-
-    def _initialize_suggestion_templates(self) -> Dict[str, list]:
-        """Initialize suggestion templates for different error types"""
-        return {
-            "general": [
-                "Check your input parameters",
-                "Verify your configuration",
-                "Try again in a few moments",
-                "Contact support if the issue persists",
-            ],
-            "network": [
-                "Check your internet connection",
-                "Verify RPC endpoint URL",
-                "Try a different network",
-                "Check service status",
-            ],
-            "authentication": [
-                "Verify your credentials",
-                "Check API key permissions",
-                "Regenerate your API key",
-                "Contact service provider",
-            ],
-            "deployment": [
-                "Check contract code",
-                "Verify gas settings",
-                "Ensure sufficient balance",
-                "Try different network",
-            ],
-        }
-
+    
     def handle_error(
-        self, error: Exception, context: Optional[Dict[str, Any]] = None
-    ) -> ErrorInfo:
+        self,
+        error: Exception,
+        context: Optional[ErrorContext] = None,
+        auto_recover: bool = True
+    ) -> HyperKitError:
         """
-        Handle an error and return structured error information
-
+        Handle and classify an error.
+        
         Args:
-            error: Exception that occurred
-            context: Additional context information
-
+            error: The original exception
+            context: Error context information
+            auto_recover: Whether to attempt automatic recovery
+            
         Returns:
-            ErrorInfo object with structured error information
+            Classified HyperKitError
         """
-        error_str = str(error).lower()
-        error_traceback = traceback.format_exc()
-
-        # Find matching error pattern
-        matched_pattern = None
-        for pattern_name, pattern_info in self.error_patterns.items():
-            for pattern in pattern_info["patterns"]:
-                if pattern in error_str:
-                    matched_pattern = pattern_name
-                    break
-            if matched_pattern:
-                break
-
-        if matched_pattern:
-            pattern_info = self.error_patterns[matched_pattern]
-            category = pattern_info["category"]
-            severity = pattern_info["severity"]
-            user_message = pattern_info["user_message"]
-            suggestions = pattern_info["suggestions"]
-        else:
-            # Default error handling
-            category = ErrorCategory.INTERNAL
-            severity = ErrorSeverity.MEDIUM
-            user_message = "An unexpected error occurred. Please try again."
-            suggestions = self.suggestion_templates["general"]
-
-        # Generate error ID
-        error_id = self._generate_error_id(error, context)
-
-        # Create error info
-        error_info = ErrorInfo(
-            error_id=error_id,
+        # Classify the error
+        category = self._classify_error(error)
+        severity = self._determine_severity(error, category)
+        
+        # Create HyperKitError
+        hk_error = HyperKitError(
+            message=str(error),
             category=category,
             severity=severity,
-            message=str(error),
-            user_message=user_message,
-            technical_details=error_traceback,
-            suggestions=suggestions,
-            timestamp=datetime.now(),
-            context=context or {},
+            context=context,
+            original_error=error,
+            recovery_suggestion=self._get_recovery_suggestion(category, error)
         )
-
+        
         # Log the error
-        self._log_error(error_info)
-
-        return error_info
-
-    def _generate_error_id(
-        self, error: Exception, context: Optional[Dict[str, Any]]
-    ) -> str:
-        """Generate a unique error ID"""
-        import hashlib
-        import uuid
-
-        error_data = f"{type(error).__name__}:{str(error)}:{datetime.now().isoformat()}"
-        if context:
-            error_data += f":{str(context)}"
-
-        return hashlib.md5(error_data.encode()).hexdigest()[:8]
-
-    def _log_error(self, error_info: ErrorInfo):
-        """Log error information"""
-        log_message = f"Error {error_info.error_id}: {error_info.message}"
-
-        if error_info.severity == ErrorSeverity.CRITICAL:
-            logger.critical(log_message, extra={"error_info": error_info})
-        elif error_info.severity == ErrorSeverity.HIGH:
-            logger.error(log_message, extra={"error_info": error_info})
-        elif error_info.severity == ErrorSeverity.MEDIUM:
-            logger.warning(log_message, extra={"error_info": error_info})
+        self._log_error(hk_error)
+        
+        # Store in error log
+        self.error_log.append(hk_error)
+        
+        # Attempt recovery if enabled
+        if auto_recover and category in self.recovery_strategies:
+            try:
+                recovery_result = self.recovery_strategies[category](hk_error)
+                if recovery_result:
+                    self.logger.info(f"Error {hk_error.error_id} recovered successfully")
+            except Exception as recovery_error:
+                self.logger.error(f"Recovery failed for error {hk_error.error_id}: {recovery_error}")
+        
+        return hk_error
+    
+    def _classify_error(self, error: Exception) -> ErrorCategory:
+        """Classify error into categories."""
+        error_type = type(error).__name__
+        error_message = str(error).lower()
+        
+        # Network errors
+        if any(keyword in error_message for keyword in ['connection', 'timeout', 'network', 'unreachable']):
+            return ErrorCategory.NETWORK
+        
+        # API errors
+        if any(keyword in error_message for keyword in ['api', 'http', 'request', 'response', 'endpoint']):
+            return ErrorCategory.API
+        
+        # Validation errors
+        if any(keyword in error_message for keyword in ['validation', 'invalid', 'required', 'missing']):
+            return ErrorCategory.VALIDATION
+        
+        # Compilation errors
+        if any(keyword in error_message for keyword in ['compilation', 'syntax', 'solidity', 'compile']):
+            return ErrorCategory.COMPILATION
+        
+        # Deployment errors
+        if any(keyword in error_message for keyword in ['deploy', 'deployment', 'transaction', 'gas']):
+            return ErrorCategory.DEPLOYMENT
+        
+        # Security errors
+        if any(keyword in error_message for keyword in ['security', 'unauthorized', 'forbidden', 'access']):
+            return ErrorCategory.SECURITY
+        
+        # Configuration errors
+        if any(keyword in error_message for keyword in ['config', 'configuration', 'setting', 'environment']):
+            return ErrorCategory.CONFIGURATION
+        
+        # File system errors
+        if any(keyword in error_message for keyword in ['file', 'directory', 'path', 'permission']):
+            return ErrorCategory.FILE_SYSTEM
+        
+        return ErrorCategory.UNKNOWN
+    
+    def _determine_severity(self, error: Exception, category: ErrorCategory) -> ErrorSeverity:
+        """Determine error severity level."""
+        error_message = str(error).lower()
+        
+        # Critical errors
+        if any(keyword in error_message for keyword in ['critical', 'fatal', 'crash', 'abort']):
+            return ErrorSeverity.CRITICAL
+        
+        # High severity
+        if category in [ErrorCategory.SECURITY, ErrorCategory.DEPLOYMENT]:
+            return ErrorSeverity.HIGH
+        
+        if any(keyword in error_message for keyword in ['error', 'failed', 'exception']):
+            return ErrorSeverity.HIGH
+        
+        # Medium severity
+        if category in [ErrorCategory.NETWORK, ErrorCategory.API, ErrorCategory.COMPILATION]:
+            return ErrorSeverity.MEDIUM
+        
+        # Low severity
+        if category in [ErrorCategory.VALIDATION, ErrorCategory.CONFIGURATION]:
+            return ErrorSeverity.LOW
+        
+        return ErrorSeverity.MEDIUM
+    
+    def _get_recovery_suggestion(self, category: ErrorCategory, error: Exception) -> str:
+        """Get recovery suggestion based on error category."""
+        suggestions = {
+            ErrorCategory.NETWORK: "Check network connection and retry. Consider using a different RPC endpoint.",
+            ErrorCategory.API: "Verify API keys and endpoints. Check rate limits and quotas.",
+            ErrorCategory.VALIDATION: "Review input parameters and ensure they meet requirements.",
+            ErrorCategory.COMPILATION: "Check Solidity syntax and dependencies. Ensure compiler version compatibility.",
+            ErrorCategory.DEPLOYMENT: "Verify gas settings and account balance. Check contract constructor parameters.",
+            ErrorCategory.SECURITY: "Review access controls and permissions. Check for security vulnerabilities.",
+            ErrorCategory.CONFIGURATION: "Verify configuration files and environment variables.",
+            ErrorCategory.FILE_SYSTEM: "Check file permissions and disk space. Ensure paths exist.",
+            ErrorCategory.PERMISSION: "Verify user permissions and access rights.",
+            ErrorCategory.RESOURCE: "Check system resources (memory, CPU, disk space).",
+            ErrorCategory.UNKNOWN: "Review error logs and contact support if issue persists."
+        }
+        
+        return suggestions.get(category, "Review error details and try again.")
+    
+    def _log_error(self, error: HyperKitError):
+        """Log error with appropriate level."""
+        error_data = error.to_dict()
+        
+        if error.severity == ErrorSeverity.CRITICAL:
+            self.logger.critical(f"CRITICAL ERROR {error.error_id}: {error.message}", extra=error_data)
+        elif error.severity == ErrorSeverity.HIGH:
+            self.logger.error(f"HIGH ERROR {error.error_id}: {error.message}", extra=error_data)
+        elif error.severity == ErrorSeverity.MEDIUM:
+            self.logger.warning(f"MEDIUM ERROR {error.error_id}: {error.message}", extra=error_data)
         else:
-            logger.info(log_message, extra={"error_info": error_info})
-
-    def format_error_response(
-        self, error_info: ErrorInfo, include_technical: bool = False
-    ) -> Dict[str, Any]:
-        """
-        Format error information for user response
-
-        Args:
-            error_info: Error information
-            include_technical: Whether to include technical details
-
-        Returns:
-            Formatted error response
-        """
-        response = {
-            "status": "error",
-            "error_id": error_info.error_id,
-            "category": error_info.category.value,
-            "severity": error_info.severity.value,
-            "message": error_info.user_message,
-            "suggestions": error_info.suggestions,
-            "timestamp": error_info.timestamp.isoformat(),
-        }
-
-        if include_technical:
-            response["technical_details"] = {
-                "error_type": type(error_info).__name__,
-                "original_message": error_info.message,
-                "traceback": error_info.technical_details,
-                "context": error_info.context,
-            }
-
-        return response
-
-    def create_success_response(
-        self, data: Any, message: str = "Operation completed successfully"
-    ) -> Dict[str, Any]:
-        """
-        Create a standardized success response
-
-        Args:
-            data: Response data
-            message: Success message
-
-        Returns:
-            Formatted success response
-        """
-        return {
-            "status": "success",
-            "message": message,
-            "data": data,
-            "timestamp": datetime.now().isoformat(),
-        }
-
-    def create_validation_error(self, field: str, value: Any, reason: str) -> ErrorInfo:
-        """
-        Create a validation error
-
-        Args:
-            field: Field that failed validation
-            value: Invalid value
-            reason: Reason for validation failure
-
-        Returns:
-            ErrorInfo object
-        """
-        return ErrorInfo(
-            error_id=self._generate_error_id(
-                Exception(reason), {"field": field, "value": value}
-            ),
-            category=ErrorCategory.VALIDATION,
-            severity=ErrorSeverity.MEDIUM,
-            message=f"Validation failed for field '{field}': {reason}",
-            user_message=f"Invalid value for {field}. {reason}",
-            technical_details=f"Field: {field}, Value: {value}, Reason: {reason}",
-            suggestions=[
-                f"Check the {field} field",
-                "Verify the input format",
-                "Ensure the value meets requirements",
-            ],
-            timestamp=datetime.now(),
-            context={"field": field, "value": value, "reason": reason},
-        )
-
-    def create_network_error(
-        self, operation: str, endpoint: str, error: Exception
-    ) -> ErrorInfo:
-        """
-        Create a network error
-
-        Args:
-            operation: Operation that failed
-            endpoint: Network endpoint
-            error: Original error
-
-        Returns:
-            ErrorInfo object
-        """
-        return ErrorInfo(
-            error_id=self._generate_error_id(
-                error, {"operation": operation, "endpoint": endpoint}
-            ),
-            category=ErrorCategory.NETWORK,
-            severity=ErrorSeverity.MEDIUM,
-            message=f"Network error during {operation}: {str(error)}",
-            user_message=f"Failed to connect to {endpoint}. Please check your network connection.",
-            technical_details=str(error),
-            suggestions=[
-                "Check your internet connection",
-                "Verify the endpoint URL",
-                "Try again in a few moments",
-                "Contact support if the issue persists",
-            ],
-            timestamp=datetime.now(),
-            context={"operation": operation, "endpoint": endpoint},
-        )
-
-    def create_deployment_error(
-        self, contract_name: str, network: str, error: Exception
-    ) -> ErrorInfo:
-        """
-        Create a deployment error
-
-        Args:
-            contract_name: Name of the contract
-            network: Target network
-            error: Original error
-
-        Returns:
-            ErrorInfo object
-        """
-        return ErrorInfo(
-            error_id=self._generate_error_id(
-                error, {"contract": contract_name, "network": network}
-            ),
-            category=ErrorCategory.DEPLOYMENT,
-            severity=ErrorSeverity.HIGH,
-            message=f"Failed to deploy {contract_name} to {network}: {str(error)}",
-            user_message=f"Contract deployment failed. Please check your contract code and network settings.",
-            technical_details=str(error),
-            suggestions=[
-                "Check your contract code for errors",
-                "Verify sufficient gas for deployment",
-                "Ensure your wallet has enough balance",
-                "Try deploying to a different network",
-            ],
-            timestamp=datetime.now(),
-            context={"contract": contract_name, "network": network},
-        )
-
+            self.logger.info(f"LOW ERROR {error.error_id}: {error.message}", extra=error_data)
+    
+    def _recover_network_error(self, error: HyperKitError) -> bool:
+        """Attempt to recover from network errors."""
+        # Implement network recovery logic
+        self.logger.info(f"Attempting network recovery for error {error.error_id}")
+        return False  # Placeholder
+    
+    def _recover_api_error(self, error: HyperKitError) -> bool:
+        """Attempt to recover from API errors."""
+        # Implement API recovery logic
+        self.logger.info(f"Attempting API recovery for error {error.error_id}")
+        return False  # Placeholder
+    
+    def _recover_configuration_error(self, error: HyperKitError) -> bool:
+        """Attempt to recover from configuration errors."""
+        # Implement configuration recovery logic
+        self.logger.info(f"Attempting configuration recovery for error {error.error_id}")
+        return False  # Placeholder
+    
+    def _recover_filesystem_error(self, error: HyperKitError) -> bool:
+        """Attempt to recover from filesystem errors."""
+        # Implement filesystem recovery logic
+        self.logger.info(f"Attempting filesystem recovery for error {error.error_id}")
+        return False  # Placeholder
+    
+    def _recover_permission_error(self, error: HyperKitError) -> bool:
+        """Attempt to recover from permission errors."""
+        # Implement permission recovery logic
+        self.logger.info(f"Attempting permission recovery for error {error.error_id}")
+        return False  # Placeholder
+    
     def get_error_statistics(self) -> Dict[str, Any]:
-        """
-        Get error statistics for monitoring
-
-        Returns:
-            Error statistics
-        """
-        # This would typically come from a logging system or database
+        """Get error statistics and analytics."""
+        if not self.error_log:
+            return {'total_errors': 0}
+        
+        total_errors = len(self.error_log)
+        severity_counts = {}
+        category_counts = {}
+        
+        for error in self.error_log:
+            severity = error.severity.value
+            category = error.category.value
+            
+            severity_counts[severity] = severity_counts.get(severity, 0) + 1
+            category_counts[category] = category_counts.get(category, 0) + 1
+        
         return {
-            "total_errors": 0,
-            "errors_by_category": {},
-            "errors_by_severity": {},
-            "recent_errors": [],
+            'total_errors': total_errors,
+            'severity_distribution': severity_counts,
+            'category_distribution': category_counts,
+            'recent_errors': [error.to_dict() for error in self.error_log[-10:]]
         }
+    
+    def export_error_log(self, output_path: str) -> bool:
+        """Export error log to JSON file."""
+        try:
+            error_data = [error.to_dict() for error in self.error_log]
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(error_data, f, indent=2, ensure_ascii=False)
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to export error log: {e}")
+            return False
 
-    def should_retry(self, error_info: ErrorInfo, retry_count: int = 0) -> bool:
-        """
-        Determine if an operation should be retried
 
-        Args:
-            error_info: Error information
-            retry_count: Number of retries already attempted
+def error_handler(
+    context: Optional[ErrorContext] = None,
+    auto_recover: bool = True,
+    reraise: bool = False
+):
+    """Decorator for automatic error handling."""
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                handler = ErrorHandler()
+                hk_error = handler.handle_error(e, context, auto_recover)
+                
+                if reraise:
+                    raise hk_error
+                else:
+                    return None
+        
+        @functools.wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            try:
+                return await func(*args, **kwargs)
+            except Exception as e:
+                handler = ErrorHandler()
+                hk_error = handler.handle_error(e, context, auto_recover)
+                
+                if reraise:
+                    raise hk_error
+                else:
+                    return None
+        
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return wrapper
+    
+    return decorator
 
-        Returns:
-            True if should retry, False otherwise
-        """
-        max_retries = {
-            ErrorSeverity.LOW: 3,
-            ErrorSeverity.MEDIUM: 2,
-            ErrorSeverity.HIGH: 1,
-            ErrorSeverity.CRITICAL: 0,
-        }
 
-        return retry_count < max_retries.get(error_info.severity, 0)
+def create_error_context(operation: str, component: str, **metadata) -> ErrorContext:
+    """Create error context with metadata."""
+    context = ErrorContext(operation, component)
+    context.metadata.update(metadata)
+    return context
 
-    def get_retry_delay(self, error_info: ErrorInfo, retry_count: int) -> int:
-        """
-        Get delay before retry
 
-        Args:
-            error_info: Error information
-            retry_count: Number of retries already attempted
+def main():
+    """Test the error handling system."""
+    handler = ErrorHandler()
+    
+    # Test different error types
+    test_errors = [
+        ConnectionError("Network connection failed"),
+        ValueError("Invalid input parameter"),
+        FileNotFoundError("Configuration file not found"),
+        PermissionError("Access denied"),
+        RuntimeError("Unknown runtime error")
+    ]
+    
+    for error in test_errors:
+        context = create_error_context("test_operation", "test_component")
+        hk_error = handler.handle_error(error, context)
+        print(f"Handled error: {hk_error.error_id} - {hk_error.message}")
+    
+    # Print statistics
+    stats = handler.get_error_statistics()
+    print(f"\nError Statistics: {json.dumps(stats, indent=2)}")
 
-        Returns:
-            Delay in seconds
-        """
-        base_delays = {
-            ErrorSeverity.LOW: 1,
-            ErrorSeverity.MEDIUM: 2,
-            ErrorSeverity.HIGH: 5,
-            ErrorSeverity.CRITICAL: 10,
-        }
 
-        base_delay = base_delays.get(error_info.severity, 2)
-        return base_delay * (2**retry_count)  # Exponential backoff
+if __name__ == "__main__":
+    main()

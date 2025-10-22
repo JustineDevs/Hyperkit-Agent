@@ -8,6 +8,7 @@ import asyncio
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 # Add the project root to Python path
@@ -15,6 +16,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from core.agent.main import HyperKitAgent
 from core.tools.utils import validate_solidity_code, extract_contract_info
+from services.gas import GasEstimator, GasOptimizer
+from services.monitoring import TransactionMonitor
 
 
 def load_config():
@@ -345,6 +348,673 @@ async def test_apis_command(args):
         print("Errors:", result.stderr)
 
 
+async def gas_estimate_command(args):
+    """Handle the gas-estimate command."""
+    config = load_config()
+    estimator = GasEstimator(config)
+    
+    if args.action == 'deployment':
+        # Estimate gas for contract deployment
+        if not args.bytecode:
+            print("Error: --bytecode is required for deployment estimation")
+            return
+        
+        constructor_args = None
+        if args.constructor_args:
+            try:
+                constructor_args = json.loads(args.constructor_args)
+            except json.JSONDecodeError:
+                print("Error: Invalid JSON in constructor arguments")
+                return
+        
+        estimate = await estimator.estimate_deployment_gas(
+            contract_bytecode=args.bytecode,
+            constructor_args=constructor_args,
+            network=args.network
+        )
+        
+        print(estimator.format_gas_estimate(estimate))
+        
+    elif args.action == 'function':
+        # Estimate gas for function call
+        if not all([args.contract_address, args.function_abi, args.function_name]):
+            print("Error: --contract-address, --function-abi, and --function-name are required for function estimation")
+            return
+        
+        try:
+            function_abi = json.loads(args.function_abi)
+        except json.JSONDecodeError:
+            print("Error: Invalid JSON in function ABI")
+            return
+        
+        function_args = None
+        if args.function_args:
+            try:
+                function_args = json.loads(args.function_args)
+            except json.JSONDecodeError:
+                print("Error: Invalid JSON in function arguments")
+                return
+        
+        estimate = await estimator.estimate_function_call_gas(
+            contract_address=args.contract_address,
+            function_abi=function_abi,
+            function_name=args.function_name,
+            function_args=function_args,
+            network=args.network
+        )
+        
+        print(estimator.format_gas_estimate(estimate))
+        
+    elif args.action == 'info':
+        # Get network gas information
+        gas_info = await estimator.get_network_gas_info(args.network)
+        print(json.dumps(gas_info, indent=2))
+
+
+async def gas_optimize_command(args):
+    """Handle the gas-optimize command."""
+    optimizer = GasOptimizer()
+    
+    # Analyze contract file
+    try:
+        if not os.path.exists(args.file):
+            print(f"Error: File {args.file} not found")
+            return
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return
+    
+    # Analyze contract
+    report = optimizer.analyze_contract(args.file)
+    
+    # Generate and display report
+    print(optimizer.generate_optimization_report(report))
+    
+    # Export JSON if requested
+    if args.export:
+        json_report = optimizer.export_report_json(report)
+        with open(args.export, 'w', encoding='utf-8') as f:
+            f.write(json_report)
+        print(f"\nReport exported to {args.export}")
+
+
+async def monitor_transaction_command(args):
+    """Handle the monitor-transaction command."""
+    config = load_config()
+    monitor = TransactionMonitor(config)
+    
+    if args.action == 'add':
+        # Add transaction to monitoring
+        success = await monitor.add_transaction(
+            tx_hash=args.tx_hash,
+            network=args.network
+        )
+        
+        if success:
+            print(f"✅ Added transaction {args.tx_hash} to monitoring on {args.network}")
+        else:
+            print(f"❌ Failed to add transaction {args.tx_hash} to monitoring")
+    
+    elif args.action == 'status':
+        # Get transaction status
+        tx_status = await monitor.get_transaction_status(args.tx_hash)
+        
+        if tx_status:
+            print(f"Transaction Status for {args.tx_hash}:")
+            print(f"├── Status: {tx_status.status}")
+            print(f"├── Network: {tx_status.network}")
+            print(f"├── Block Number: {tx_status.block_number or 'N/A'}")
+            print(f"├── Gas Used: {tx_status.gas_used or 'N/A'}")
+            print(f"├── Gas Price: {tx_status.gas_price or 'N/A'}")
+            print(f"├── Confirmations: {tx_status.confirmation_count}")
+            print(f"└── Timestamp: {tx_status.timestamp}")
+        else:
+            print(f"❌ Transaction {args.tx_hash} not found in monitoring")
+    
+    elif args.action == 'list':
+        # List all monitored transactions
+        transactions = await monitor.get_all_transactions()
+        
+        if transactions:
+            print(f"Monitored Transactions ({len(transactions)}):")
+            print("-" * 50)
+            for tx in transactions:
+                print(f"📄 {tx.tx_hash[:10]}... | {tx.status} | {tx.network}")
+        else:
+            print("No transactions being monitored")
+    
+    elif args.action == 'metrics':
+        # Get monitoring metrics
+        metrics = await monitor.get_metrics()
+        
+        print("Monitoring Metrics:")
+        print("=" * 30)
+        print(f"Total Transactions: {metrics.total_transactions}")
+        print(f"Confirmed: {metrics.confirmed_transactions}")
+        print(f"Failed: {metrics.failed_transactions}")
+        print(f"Pending: {metrics.pending_transactions}")
+        print(f"Success Rate: {metrics.success_rate:.1f}%")
+        print(f"Avg Gas Used: {metrics.average_gas_used:.0f}")
+        print(f"Avg Gas Price: {metrics.average_gas_price / 1e9:.2f} Gwei")
+    
+    elif args.action == 'remove':
+        # Remove transaction from monitoring
+        success = await monitor.remove_transaction(args.tx_hash)
+        
+        if success:
+            print(f"✅ Removed transaction {args.tx_hash} from monitoring")
+        else:
+            print(f"❌ Transaction {args.tx_hash} not found in monitoring")
+    
+    elif args.action == 'export':
+        # Export metrics to file
+        file_path = args.output or f"monitoring_metrics_{int(time.time())}.json"
+        success = await monitor.export_metrics(file_path)
+        
+        if success:
+            print(f"✅ Metrics exported to {file_path}")
+        else:
+            print(f"❌ Failed to export metrics to {file_path}")
+    
+    elif args.action == 'network':
+        # Get network status
+        network_status = await monitor.get_network_status(args.network)
+        
+        if "error" in network_status:
+            print(f"❌ Error: {network_status['error']}")
+        else:
+            print(f"Network Status for {args.network}:")
+            print(f"├── Block Number: {network_status['block_number']}")
+            print(f"├── Gas Price: {network_status['gas_price_gwei']:.2f} Gwei")
+            print(f"├── Pending Transactions: {network_status['pending_transactions']}")
+            print(f"└── Synced: {network_status['is_synced']}")
+
+
+async def create_uniswap_v2_router_command(args):
+    """Handle the create-uniswap-v2-router command."""
+    print("🚀 Creating Uniswap V2 Router contract template...")
+    
+    # This would generate the Uniswap V2 Router contract
+    # For now, we'll create a placeholder
+    router_content = """// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./interfaces/IUniswapV2Router.sol";
+import "./interfaces/IUniswapV2Factory.sol";
+import "./interfaces/IERC20.sol";
+import "./libraries/UniswapV2Library.sol";
+
+/**
+ * @title UniswapV2Router02
+ * @dev Uniswap V2 Router for token swaps
+ * @notice This contract handles token swaps and liquidity operations
+ * @author HyperKit Agent
+ */
+contract UniswapV2Router02 is IUniswapV2Router02, Ownable, ReentrancyGuard {
+    using SafeMath for uint256;
+    
+    address public immutable override factory;
+    address public immutable override WETH;
+    
+    modifier ensure(uint deadline) {
+        require(deadline >= block.timestamp, 'UniswapV2Router: EXPIRED');
+        _;
+    }
+    
+    constructor(address _factory, address _WETH) {
+        factory = _factory;
+        WETH = _WETH;
+    }
+    
+    receive() external payable {
+        assert(msg.sender == WETH); // only accept ETH via fallback from the WETH contract
+    }
+    
+    // Add liquidity functions
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint amountADesired,
+        uint amountBDesired,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external virtual override ensure(deadline) returns (uint amountA, uint amountB, uint liquidity) {
+        // Implementation here
+    }
+    
+    // Remove liquidity functions
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) public virtual override ensure(deadline) returns (uint amountA, uint amountB) {
+        // Implementation here
+    }
+    
+    // Swap functions
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
+        // Implementation here
+    }
+    
+    // Additional swap and liquidity functions would be implemented here
+}"""
+    
+    # Save to contracts/templates
+    output_path = Path("contracts/templates/UniswapV2Router02.sol")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(router_content, encoding='utf-8')
+    
+    print(f"✅ Uniswap V2 Router template created at {output_path}")
+
+
+async def create_vesting_contract_command(args):
+    """Handle the create-vesting-contract command."""
+    print(f"🚀 Creating {args.type} vesting contract template...")
+    
+    if args.type == 'linear':
+        contract_name = "LinearVesting"
+        description = "Linear token vesting contract"
+    elif args.type == 'cliff':
+        contract_name = "CliffVesting"
+        description = "Cliff token vesting contract"
+    elif args.type == 'multi-beneficiary':
+        contract_name = "MultiBeneficiaryVesting"
+        description = "Multi-beneficiary token vesting contract"
+    else:
+        print(f"❌ Unknown vesting type: {args.type}")
+        return
+    
+    vesting_content = f"""// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+
+/**
+ * @title {contract_name}
+ * @dev {description}
+ * @notice This contract handles token vesting with {args.type} distribution
+ * @author HyperKit Agent
+ */
+contract {contract_name} is Ownable, ReentrancyGuard, Pausable {{
+    IERC20 public immutable token;
+    
+    struct VestingSchedule {{
+        uint256 totalAmount;
+        uint256 startTime;
+        uint256 duration;
+        uint256 cliff;
+        uint256 released;
+        bool revocable;
+        bool revoked;
+    }}
+    
+    mapping(address => VestingSchedule) public vestingSchedules;
+    mapping(address => bool) public hasVestingSchedule;
+    
+    uint256 public totalVested;
+    uint256 public totalReleased;
+    
+    event VestingScheduleCreated(address indexed beneficiary, uint256 totalAmount, uint256 startTime, uint256 duration);
+    event TokensReleased(address indexed beneficiary, uint256 amount);
+    event VestingRevoked(address indexed beneficiary);
+    
+    constructor(address _token) {{
+        require(_token != address(0), "Invalid token address");
+        token = IERC20(_token);
+    }}
+    
+    function createVestingSchedule(
+        address beneficiary,
+        uint256 totalAmount,
+        uint256 startTime,
+        uint256 duration,
+        uint256 cliff,
+        bool revocable
+    ) external onlyOwner {{
+        require(beneficiary != address(0), "Invalid beneficiary");
+        require(totalAmount > 0, "Invalid amount");
+        require(!hasVestingSchedule[beneficiary], "Vesting already exists");
+        require(startTime >= block.timestamp, "Invalid start time");
+        require(duration > 0, "Invalid duration");
+        require(cliff <= duration, "Cliff exceeds duration");
+        
+        vestingSchedules[beneficiary] = VestingSchedule(
+            totalAmount,
+            startTime,
+            duration,
+            cliff,
+            0,
+            revocable,
+            false
+        );
+        
+        hasVestingSchedule[beneficiary] = true;
+        totalVested += totalAmount;
+        
+        emit VestingScheduleCreated(beneficiary, totalAmount, startTime, duration);
+    }}
+    
+    function release() external nonReentrant whenNotPaused {{
+        require(hasVestingSchedule[msg.sender], "No vesting schedule");
+        require(!vestingSchedules[msg.sender].revoked, "Vesting revoked");
+        
+        uint256 releasableAmount = getReleasableAmount(msg.sender);
+        require(releasableAmount > 0, "No tokens to release");
+        
+        vestingSchedules[msg.sender].released += releasableAmount;
+        totalReleased += releasableAmount;
+        
+        require(token.transfer(msg.sender, releasableAmount), "Transfer failed");
+        
+        emit TokensReleased(msg.sender, releasableAmount);
+    }}
+    
+    function getReleasableAmount(address beneficiary) public view returns (uint256) {{
+        if (!hasVestingSchedule[beneficiary] || vestingSchedules[beneficiary].revoked) {{
+            return 0;
+        }}
+        
+        VestingSchedule memory schedule = vestingSchedules[beneficiary];
+        uint256 currentTime = block.timestamp;
+        
+        if (currentTime < schedule.startTime + schedule.cliff) {{
+            return 0;
+        }}
+        
+        uint256 vestedAmount = getVestedAmount(beneficiary);
+        return vestedAmount - schedule.released;
+    }}
+    
+    function getVestedAmount(address beneficiary) public view returns (uint256) {{
+        if (!hasVestingSchedule[beneficiary] || vestingSchedules[beneficiary].revoked) {{
+            return 0;
+        }}
+        
+        VestingSchedule memory schedule = vestingSchedules[beneficiary];
+        uint256 currentTime = block.timestamp;
+        
+        if (currentTime < schedule.startTime) {{
+            return 0;
+        }}
+        
+        if (currentTime >= schedule.startTime + schedule.duration) {{
+            return schedule.totalAmount;
+        }}
+        
+        return (schedule.totalAmount * (currentTime - schedule.startTime)) / schedule.duration;
+    }}
+    
+    function revokeVesting(address beneficiary) external onlyOwner {{
+        require(hasVestingSchedule[beneficiary], "No vesting schedule");
+        require(vestingSchedules[beneficiary].revocable, "Not revocable");
+        require(!vestingSchedules[beneficiary].revoked, "Already revoked");
+        
+        vestingSchedules[beneficiary].revoked = true;
+        
+        emit VestingRevoked(beneficiary);
+    }}
+    
+    function emergencyWithdraw() external onlyOwner {{
+        uint256 balance = token.balanceOf(address(this));
+        require(balance > 0, "No tokens to withdraw");
+        require(token.transfer(owner(), balance), "Transfer failed");
+    }}
+}}"""
+    
+    # Save to contracts/templates
+    output_path = Path(f"contracts/templates/{contract_name}.sol")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(vesting_content, encoding='utf-8')
+    
+    print(f"✅ {contract_name} template created at {output_path}")
+
+
+async def create_auction_contract_command(args):
+    """Handle the create-auction-contract command."""
+    print(f"🚀 Creating {args.type} auction contract template...")
+    
+    if args.type == 'english':
+        contract_name = "EnglishAuction"
+        description = "English auction contract"
+    elif args.type == 'dutch':
+        contract_name = "DutchAuction"
+        description = "Dutch auction contract"
+    elif args.type == 'sealed-bid':
+        contract_name = "SealedBidAuction"
+        description = "Sealed bid auction contract"
+    else:
+        print(f"❌ Unknown auction type: {args.type}")
+        return
+    
+    auction_content = f"""// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+
+/**
+ * @title {contract_name}
+ * @dev {description}
+ * @notice This contract handles {args.type} auction functionality
+ * @author HyperKit Agent
+ */
+contract {contract_name} is Ownable, ReentrancyGuard, Pausable {{
+    IERC721 public immutable nft;
+    IERC20 public immutable paymentToken;
+    
+    struct Auction {{
+        uint256 tokenId;
+        address seller;
+        uint256 startingPrice;
+        uint256 currentPrice;
+        uint256 endTime;
+        address highestBidder;
+        bool ended;
+        bool cancelled;
+    }}
+    
+    mapping(uint256 => Auction) public auctions;
+    mapping(uint256 => mapping(address => uint256)) public bids;
+    
+    uint256 public auctionCount;
+    uint256 public platformFee;
+    address public feeRecipient;
+    
+    event AuctionCreated(uint256 indexed auctionId, uint256 indexed tokenId, address indexed seller, uint256 startingPrice, uint256 endTime);
+    event BidPlaced(uint256 indexed auctionId, address indexed bidder, uint256 amount);
+    event AuctionEnded(uint256 indexed auctionId, address indexed winner, uint256 finalPrice);
+    event AuctionCancelled(uint256 indexed auctionId);
+    
+    constructor(address _nft, address _paymentToken, address _feeRecipient) {{
+        require(_nft != address(0), "Invalid NFT address");
+        require(_paymentToken != address(0), "Invalid payment token address");
+        require(_feeRecipient != address(0), "Invalid fee recipient");
+        
+        nft = IERC721(_nft);
+        paymentToken = IERC20(_paymentToken);
+        feeRecipient = _feeRecipient;
+        platformFee = 250; // 2.5%
+    }}
+    
+    function createAuction(
+        uint256 tokenId,
+        uint256 startingPrice,
+        uint256 duration
+    ) external whenNotPaused {{
+        require(nft.ownerOf(tokenId) == msg.sender, "Not token owner");
+        require(startingPrice > 0, "Invalid starting price");
+        require(duration > 0, "Invalid duration");
+        
+        nft.transferFrom(msg.sender, address(this), tokenId);
+        
+        uint256 auctionId = auctionCount++;
+        auctions[auctionId] = Auction(
+            tokenId,
+            msg.sender,
+            startingPrice,
+            startingPrice,
+            block.timestamp + duration,
+            address(0),
+            false,
+            false
+        );
+        
+        emit AuctionCreated(auctionId, tokenId, msg.sender, startingPrice, block.timestamp + duration);
+    }}
+    
+    function placeBid(uint256 auctionId, uint256 amount) external nonReentrant whenNotPaused {{
+        Auction storage auction = auctions[auctionId];
+        require(!auction.ended, "Auction ended");
+        require(!auction.cancelled, "Auction cancelled");
+        require(block.timestamp < auction.endTime, "Auction expired");
+        require(amount > auction.currentPrice, "Bid too low");
+        
+        // Refund previous highest bidder
+        if (auction.highestBidder != address(0)) {{
+            require(paymentToken.transfer(auction.highestBidder, bids[auctionId][auction.highestBidder]), "Refund failed");
+        }}
+        
+        // Transfer new bid
+        require(paymentToken.transferFrom(msg.sender, address(this), amount), "Transfer failed");
+        
+        auction.currentPrice = amount;
+        auction.highestBidder = msg.sender;
+        bids[auctionId][msg.sender] = amount;
+        
+        emit BidPlaced(auctionId, msg.sender, amount);
+    }}
+    
+    function endAuction(uint256 auctionId) external nonReentrant {{
+        Auction storage auction = auctions[auctionId];
+        require(!auction.ended, "Auction already ended");
+        require(auction.seller == msg.sender || block.timestamp >= auction.endTime, "Not authorized");
+        
+        auction.ended = true;
+        
+        if (auction.highestBidder != address(0)) {{
+            // Transfer NFT to winner
+            nft.transferFrom(address(this), auction.highestBidder, auction.tokenId);
+            
+            // Calculate fees
+            uint256 fee = (auction.currentPrice * platformFee) / 10000;
+            uint256 sellerAmount = auction.currentPrice - fee;
+            
+            // Transfer payment to seller
+            require(paymentToken.transfer(auction.seller, sellerAmount), "Transfer to seller failed");
+            
+            // Transfer fee to platform
+            require(paymentToken.transfer(feeRecipient, fee), "Transfer fee failed");
+            
+            emit AuctionEnded(auctionId, auction.highestBidder, auction.currentPrice);
+        }} else {{
+            // No bids, return NFT to seller
+            nft.transferFrom(address(this), auction.seller, auction.tokenId);
+            emit AuctionEnded(auctionId, address(0), 0);
+        }}
+    }}
+    
+    function cancelAuction(uint256 auctionId) external {{
+        Auction storage auction = auctions[auctionId];
+        require(auction.seller == msg.sender, "Not seller");
+        require(!auction.ended, "Auction ended");
+        require(!auction.cancelled, "Already cancelled");
+        
+        auction.cancelled = true;
+        
+        // Refund highest bidder if any
+        if (auction.highestBidder != address(0)) {{
+            require(paymentToken.transfer(auction.highestBidder, bids[auctionId][auction.highestBidder]), "Refund failed");
+        }}
+        
+        // Return NFT to seller
+        nft.transferFrom(address(this), auction.seller, auction.tokenId);
+        
+        emit AuctionCancelled(auctionId);
+    }}
+    
+    function setPlatformFee(uint256 _fee) external onlyOwner {{
+        require(_fee <= 1000, "Fee too high"); // Max 10%
+        platformFee = _fee;
+    }}
+    
+    function setFeeRecipient(address _feeRecipient) external onlyOwner {{
+        require(_feeRecipient != address(0), "Invalid address");
+        feeRecipient = _feeRecipient;
+    }}
+}}"""
+    
+    # Save to contracts/templates
+    output_path = Path(f"contracts/templates/{contract_name}.sol")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(auction_content, encoding='utf-8')
+    
+    print(f"✅ {contract_name} template created at {output_path}")
+
+
+async def create_uniswap_v3_command(args):
+    """Create Uniswap V3 contract template."""
+    try:
+        print(f"🚀 Creating Uniswap V3 {args.type} contract template...")
+        
+        # Map type to template file
+        type_mapping = {
+            'factory': 'UniswapV3Factory.sol',
+            'pool': 'UniswapV3Pool.sol',
+            'router': 'UniswapV3Router.sol',
+            'nft-manager': 'UniswapV3NonfungiblePositionManager.sol'
+        }
+        
+        template_file = type_mapping.get(args.type)
+        if not template_file:
+            print(f"❌ Unknown V3 contract type: {args.type}")
+            return
+        
+        template_path = f"contracts/templates/{template_file}"
+        
+        if not os.path.exists(template_path):
+            print(f"❌ Template not found: {template_path}")
+            return
+        
+        # Read template
+        with open(template_path, 'r') as f:
+            contract_code = f.read()
+        
+        # Save to output directory
+        output_dir = Path(args.output_dir or './contracts/agent_generate')
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        filename = template_file
+        output_path = output_dir / filename
+        
+        with open(output_path, 'w') as f:
+            f.write(contract_code)
+        
+        print(f"✅ Created Uniswap V3 {args.type} contract: {output_path}")
+        
+    except Exception as e:
+        print(f"❌ Error creating Uniswap V3 contract: {e}")
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -431,6 +1101,53 @@ Examples:
     # Test APIs command
     test_parser = subparsers.add_parser('test-apis', help='Test API connectivity')
     
+    # Gas estimate command
+    gas_estimate_parser = subparsers.add_parser('gas-estimate', help='Estimate gas costs')
+    gas_estimate_parser.add_argument('action', choices=['deployment', 'function', 'info'], 
+                                   help='Type of gas estimation')
+    gas_estimate_parser.add_argument('--network', default='hyperion', 
+                                   choices=['hyperion', 'metis', 'lazai'], help='Target network')
+    gas_estimate_parser.add_argument('--bytecode', help='Contract bytecode for deployment estimation')
+    gas_estimate_parser.add_argument('--constructor-args', help='Constructor arguments (JSON)')
+    gas_estimate_parser.add_argument('--contract-address', help='Contract address for function estimation')
+    gas_estimate_parser.add_argument('--function-abi', help='Function ABI (JSON)')
+    gas_estimate_parser.add_argument('--function-name', help='Function name')
+    gas_estimate_parser.add_argument('--function-args', help='Function arguments (JSON)')
+    
+    # Gas optimize command
+    gas_optimize_parser = subparsers.add_parser('gas-optimize', help='Optimize contract gas usage')
+    gas_optimize_parser.add_argument('file', help='Contract file to optimize')
+    gas_optimize_parser.add_argument('--export', help='Export optimization report to JSON file')
+    
+    # Monitor transaction command
+    monitor_tx_parser = subparsers.add_parser('monitor-tx', help='Monitor transaction status')
+    monitor_tx_parser.add_argument('action', choices=['add', 'status', 'list', 'metrics', 'remove', 'export', 'network'], 
+                                 help='Monitor action')
+    monitor_tx_parser.add_argument('--tx-hash', help='Transaction hash')
+    monitor_tx_parser.add_argument('--network', default='hyperion', 
+                                 choices=['hyperion', 'metis', 'lazai'], help='Target network')
+    monitor_tx_parser.add_argument('--output', help='Output file for export')
+    
+    # Create Uniswap V2 Router command
+    create_router_parser = subparsers.add_parser('create-uniswap-v2-router', help='Create Uniswap V2 Router template')
+    
+    # Create vesting contract command
+    create_vesting_parser = subparsers.add_parser('create-vesting', help='Create vesting contract template')
+    create_vesting_parser.add_argument('type', choices=['linear', 'cliff', 'multi-beneficiary'], 
+                                     help='Type of vesting contract')
+    
+    # Create auction contract command
+    create_auction_parser = subparsers.add_parser('create-auction', help='Create auction contract template')
+    create_auction_parser.add_argument('type', choices=['english', 'dutch', 'sealed-bid'], 
+                                     help='Type of auction contract')
+    
+    # Create Uniswap V3 command
+    create_uniswap_v3_parser = subparsers.add_parser('create-uniswap-v3', help='Create Uniswap V3 contract template')
+    create_uniswap_v3_parser.add_argument('type', choices=['factory', 'pool', 'router', 'nft-manager'], 
+                                        help='Type of V3 contract')
+    create_uniswap_v3_parser.add_argument('--output-dir', default='./contracts/agent_generate', help='Output directory')
+    create_uniswap_v3_parser.add_argument('--save', help='Save contract with specific name')
+    
     args = parser.parse_args()
     
     if not args.command:
@@ -456,6 +1173,20 @@ Examples:
         asyncio.run(monitor_command(args))
     elif args.command == 'test-apis':
         asyncio.run(test_apis_command(args))
+    elif args.command == 'gas-estimate':
+        asyncio.run(gas_estimate_command(args))
+    elif args.command == 'gas-optimize':
+        asyncio.run(gas_optimize_command(args))
+    elif args.command == 'monitor-tx':
+        asyncio.run(monitor_transaction_command(args))
+    elif args.command == 'create-uniswap-v2-router':
+        asyncio.run(create_uniswap_v2_router_command(args))
+    elif args.command == 'create-vesting':
+        asyncio.run(create_vesting_contract_command(args))
+    elif args.command == 'create-auction':
+        asyncio.run(create_auction_contract_command(args))
+    elif args.command == 'create-uniswap-v3':
+        asyncio.run(create_uniswap_v3_command(args))
 
 
 if __name__ == "__main__":
