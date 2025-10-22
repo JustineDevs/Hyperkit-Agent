@@ -396,9 +396,8 @@ class Validator:
         # Validate network URLs
         network_keys = [
             "HYPERION_RPC_URL",
-            "POLYGON_RPC_URL",
-            "ARBITRUM_RPC_URL",
-            "ETHEREUM_RPC_URL",
+            "METIS_RPC_URL",
+            "LAZAI_RPC_URL",
         ]
         for key in network_keys:
             if config.get(key):

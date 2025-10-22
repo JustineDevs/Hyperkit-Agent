@@ -34,6 +34,13 @@ jobs:
         run: |
           cd hyperkit-agent
           pytest tests/ --cov=core --cov=services --cov-report=xml
+        env:
+          # AI Provider API Keys for testing
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          # Test environment variables
+          TEST_MODE: true
+          HYPERION_RPC_URL: https://hyperion-testnet.metisdevops.link
       
       - name: Run linting
         run: |

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class MultiChainDeployer:
     """
-    Multi-chain smart contract deployer supporting Hyperion, Polygon, Arbitrum, and Ethereum.
+    Multi-chain smart contract deployer supporting Hyperion, Metis, and LazAI networks.
     Handles compilation, deployment, and verification across networks.
     """
 
@@ -33,11 +33,10 @@ class MultiChainDeployer:
         logger.info("MultiChainDeployer initialized")
 
     def _initialize_networks(self) -> Dict[str, Dict[str, Any]]:
-        """Initialize network configurations - HYPERION FOCUS ONLY."""
+        """Initialize network configurations - HYPERION/METIS/LAZAI FOCUS."""
         # Get network config from main config if available
         networks_config = self.config.get("networks", {})
         
-        # Focus on Hyperion testnet only - other networks temporarily unavailable
         return {
             "hyperion": {
                 "rpc_url": networks_config.get("hyperion", {}).get(
@@ -51,12 +50,30 @@ class MultiChainDeployer:
                 "gas_limit": 8000000,
                 "enabled": True,
             },
-            # Other networks temporarily unavailable - focusing on Hyperion testnet only
-            # "metis": {...},
-            # "lazai": {...},
-            # "polygon": {...},
-            # "arbitrum": {...},
-            # "ethereum": {...},
+            "metis": {
+                "rpc_url": networks_config.get("metis", {}).get(
+                    "rpc_url", "https://andromeda.metis.io"
+                ),
+                "chain_id": networks_config.get("metis", {}).get("chain_id", 1088),
+                "explorer": networks_config.get("metis", {}).get(
+                    "explorer_url", "https://andromeda-explorer.metis.io"
+                ),
+                "gas_price": "20000000000",  # 20 gwei
+                "gas_limit": 8000000,
+                "enabled": True,
+            },
+            "lazai": {
+                "rpc_url": networks_config.get("lazai", {}).get(
+                    "rpc_url", "https://rpc.lazai.network/testnet"
+                ),
+                "chain_id": networks_config.get("lazai", {}).get("chain_id", 9001),
+                "explorer": networks_config.get("lazai", {}).get(
+                    "explorer_url", "https://testnet-explorer.lazai.network"
+                ),
+                "gas_price": "1000000000",  # 1 gwei
+                "gas_limit": 8000000,
+                "enabled": True,
+            },
         }
 
     def _get_compiler_settings(self) -> Dict[str, Any]:

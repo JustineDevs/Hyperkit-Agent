@@ -1051,7 +1051,8 @@ async def main():
         "openai_api_key": "your-api-key-here",
         "networks": {
             "hyperion": "https://hyperion-testnet.metisdevops.link",
-            "polygon": "https://polygon-rpc.com",
+            "metis": "https://andromeda.metis.io",
+            "lazai": "https://rpc.lazai.network/testnet",
         },
     }
 
