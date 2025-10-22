@@ -4,7 +4,6 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
-[![Tests](https://github.com/hyperionkit/hyperkit/workflows/Integration%20Tests/badge.svg)](https://github.com/hyperionkit/hyperkit/actions)
 
 **HyperKit** is a comprehensive Web3 development platform that combines AI-powered project generation, modular UI components, and cross-chain DeFi primitives. Built for the Hyperion and Andromeda ecosystems, HyperKit enables developers to rapidly prototype, deploy, and manage smart contracts, dApps, and DeFi protocols with an intuitive visual interface and powerful CLI tools.
 

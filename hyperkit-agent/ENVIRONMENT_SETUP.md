@@ -4,51 +4,60 @@
 
 To use the HyperKit AI Agent, you'll need to configure the following API keys in your `.env` file:
 
-### 1. AI Provider API Keys (Google Gemini Only)
+### 1. AI Provider API Keys (Cloud-Based Only)
 
 ```bash
-# Google Gemini (Only Provider - Free $300 credits)
+# Google Gemini (Primary Provider - Free $300 credits)
 GOOGLE_API_KEY=your_google_api_key_here
+
+# OpenAI (Secondary Provider - Optional)
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
 ### 2. Disabled Providers (Not Used)
 
 ```bash
 # These providers are not used in this version
-# OPENAI_API_KEY=your_openai_api_key_here
 # ANTHROPIC_API_KEY=your_anthropic_api_key_here
 # DASHSCOPE_API_KEY=your_dashscope_api_key_here
 # DEEPSEEK_API_KEY=your_deepseek_api_key_here
 # XAI_API_KEY=your_xai_api_key_here
-# GPT_OSS_API_KEY=your_gpt_oss_api_key_here
+# Local models (GPT-OSS, LM Studio) - Removed for cloud-based architecture
 ```
 
-### 2. Blockchain Network RPC URLs
+### 3. Blockchain Network RPC URLs
 
 ```bash
-# Hyperion Testnet (Primary)
+# Hyperion Testnet (Primary - Focus Network)
 HYPERION_RPC_URL=https://hyperion-testnet.metisdevops.link
+HYPERION_CHAIN_ID=133717
+HYPERION_EXPLORER_URL=https://hyperion-testnet-explorer.metisdevops.link
 
-# Polygon Mainnet
-POLYGON_RPC_URL=https://polygon-rpc.com
-
-# Arbitrum One
-ARBITRUM_RPC_URL=https://arb1.arbitrum.io/rpc
-
-# Ethereum Mainnet (requires Infura/Alchemy)
-ETHEREUM_RPC_URL=https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
+# Other Networks (Temporarily Disabled - Focus on Hyperion)
+# POLYGON_RPC_URL=https://polygon-rpc.com
+# ARBITRUM_RPC_URL=https://arb1.arbitrum.io/rpc
+# ETHEREUM_RPC_URL=https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID
 ```
 
-### 3. Wallet Configuration
+### 4. RAG System Configuration (Simple MCP)
+
+```bash
+# Simple MCP Integration (Direct Obsidian API)
+MCP_ENABLED=true
+OBSIDIAN_API_KEY=your_obsidian_api_key_here
+OBSIDIAN_API_URL=http://localhost:27124
+```
+
+### 5. Wallet Configuration
 
 ```bash
 # Your wallet private key (for deployment)
-WALLET_PRIVATE_KEY=your_wallet_private_key_here
+DEFAULT_PRIVATE_KEY=your_wallet_private_key_here
 ```
 
 ## Getting API Keys
 
-### Google Gemini API Key (Required)
+### Google Gemini API Key (Primary - Required)
 1. Visit [Google AI Studio](https://aistudio.google.com/)
 2. Sign up or log in with your Google account
 3. Click "Get API Key" in the left sidebar
@@ -56,38 +65,72 @@ WALLET_PRIVATE_KEY=your_wallet_private_key_here
 5. Copy and paste into `.env` file
 6. **Free $300 credits included!**
 
-### No Other Providers Needed
-The HyperKit Agent uses **only Google Gemini** for all AI-powered contract generation. No other API keys or local setups are required.
+### OpenAI API Key (Secondary - Optional)
+1. Visit [OpenAI Platform](https://platform.openai.com/)
+2. Sign up or log in with your account
+3. Go to API Keys section
+4. Create a new API key
+5. Copy and paste into `.env` file
+6. **Pay-per-use pricing**
 
-## Obsidian Integration Setup
+### Cloud-Based Architecture
+The HyperKit Agent uses **cloud-based AI providers only** (Google Gemini + OpenAI) for all AI-powered contract generation. No local models or GPT-OSS setup required.
+
+## Obsidian Integration Setup (MCP Docker Only)
 
 ### 1. Install Obsidian
 1. Download [Obsidian](https://obsidian.md/) for your platform
 2. Install and create a new vault
-3. Set the vault path in your `.env` file: `OBSIDIAN_VAULT_PATH=/path/to/your/vault`
+3. No vault path configuration needed - MCP Docker handles this automatically
 
 ### 2. Create Knowledge Base
-1. Create markdown files with smart contract patterns
-2. Add security best practices documentation
-3. Include common contract templates
-4. The RAG system will automatically index these files
+1. Create markdown files with smart contract patterns in:
+   - `Contracts/` - Smart contract templates
+   - `Audits/` - Security checklists and patterns
+   - `Templates/` - Deployment templates
+   - `Prompts/` - Generation prompts
+2. The MCP Docker system will automatically index these files
+
+### 3. MCP Docker Configuration
+The system uses Docker-based MCP (Model Context Protocol) for advanced Obsidian integration:
+- **MCP_ENABLED=true** - Enables Docker-based Obsidian access
+- **DOCKER_ENABLED=true** - Enables Docker containerization
+- **OBSIDIAN_MCP_API_KEY** - Your Obsidian API key (for MCP Docker)
+- **OBSIDIAN_HOST=host.docker.internal** - Docker host configuration
+
+**Note**: No Local REST API plugin needed - MCP Docker handles all Obsidian access.
 
 ## Configuration Examples
 
 ### Complete .env File Example
 ```bash
-# AI Provider API Keys (Google Gemini Only)
+# AI Provider API Keys (Cloud-Based)
 GOOGLE_API_KEY=your_google_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
 
-# Obsidian Integration
-OBSIDIAN_VAULT_PATH=~/hyperkit-kb
+# MCP Configuration
+MCP_ENABLED=true
+MCP_CONFIG_PATH=mcp_config.json
+OBSIDIAN_MCP_API_KEY=your_obsidian_api_key_here
 
-# Blockchain Configuration
+# Docker Configuration
+DOCKER_ENABLED=true
+OBSIDIAN_HOST=host.docker.internal
+
+# LangChain Configuration
+LANGSMITH_TRACING=true
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+LANGSMITH_API_KEY=your_langsmith_api_key_here
+LANGSMITH_PROJECT=your_project_name
+
+# Blockchain Configuration (Hyperion Focus)
 DEFAULT_NETWORK=hyperion
 HYPERION_RPC_URL=https://hyperion-testnet.metisdevops.link
-POLYGON_RPC_URL=https://polygon-rpc.com
-ARBITRUM_RPC_URL=https://arb1.arbitrum.io/rpc
-ETHEREUM_RPC_URL=https://mainnet.infura.io/v3/YOUR_PROJECT_ID
+HYPERION_CHAIN_ID=133717
+HYPERION_EXPLORER_URL=https://hyperion-testnet-explorer.metisdevops.link
+
+# Wallet Configuration
+DEFAULT_PRIVATE_KEY=your_wallet_private_key_here
 
 # Security Tools
 SLITHER_ENABLED=true
@@ -100,15 +143,16 @@ LOG_LEVEL=INFO
 
 ## Network RPC URLs
 
-### Free RPC Providers
-- **Polygon**: `https://polygon-rpc.com`
-- **Arbitrum**: `https://arb1.arbitrum.io/rpc`
-- **Ethereum**: Use Infura, Alchemy, or QuickNode
+### Hyperion Testnet (Primary Focus)
+- **RPC URL**: `https://hyperion-testnet.metisdevops.link`
+- **Chain ID**: `133717`
+- **Explorer**: `https://hyperion-testnet-explorer.metisdevops.link`
+- **Status**: Free, no API key required
 
-### Paid RPC Providers (Recommended for production)
-- **Infura**: `https://mainnet.infura.io/v3/YOUR_PROJECT_ID`
-- **Alchemy**: `https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY`
-- **QuickNode**: `https://your-endpoint.quiknode.pro/YOUR_API_KEY/`
+### Other Networks (Temporarily Disabled)
+- **Polygon**: `https://polygon-rpc.com` (commented out)
+- **Arbitrum**: `https://arb1.arbitrum.io/rpc` (commented out)
+- **Ethereum**: Use Infura, Alchemy, or QuickNode (commented out)
 
 ## Security Best Practices
 
