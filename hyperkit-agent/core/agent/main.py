@@ -7,8 +7,15 @@ import asyncio
 import json
 import logging
 import subprocess
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from pathlib import Path
+from core.config.loader import get_config
+from core.intent_router import IntentRouter, IntentType
+from services.debug.edb_integration import EDBIntegration
+from services.onchain.alith_integration import AlithIntegration
+from services.audit.public_contract_auditor import public_contract_auditor
+from services.monitoring.enhanced_monitor import enhanced_monitor, MonitorConfig, MonitorType
+from services.defi.primitives_generator import defi_primitives_generator, DeFiPrimitive
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,148 +27,303 @@ class HyperKitAgent:
     Main HyperKit AI Agent that orchestrates smart contract generation,
     auditing, debugging, and deployment workflows.
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize the HyperKit Agent with configuration."""
-        self.config = config or {}
-        
+        # Use provided config or load from configuration system
+        if config:
+            self.config = config
+        else:
+            config_loader = get_config()
+            self.config = config_loader.to_dict()
+
         # Initialize free LLM router
         from core.llm.router import HybridLLMRouter
+
         self.llm_router = HybridLLMRouter()
+
+        # Initialize Intent Router
+        self.intent_router = IntentRouter()
         
         # Initialize Obsidian RAG
-        from services.rag.obsidian_rag import ObsidianRAG
-        vault_path = self.config.get('OBSIDIAN_VAULT_PATH', '~/hyperkit-kb')
-        self.rag = ObsidianRAG(vault_path=vault_path)
+        from services.rag.obsidian_rag_enhanced import ObsidianRAGEnhanced
+
+        # Get RAG config from the config system
+        rag_config = self.config.get("rag_system", {})
+        mcp_enabled = rag_config.get("mcp_enabled", False)
         
-        # Initialize mock Alith client
-        from core.tools.alith_mock import AlithClient
-        self.alith = AlithClient()
-        
-        # Register available tools
-        self.tools = {
-            'generate': self.generate_contract,
-            'audit': self.audit_contract,
-            'deploy': self.deploy_contract,
-            'debug': self.debug_contract,
-            'analyze': self.analyze_contract
+        # Prepare MCP config
+        mcp_config = {
+            "obsidian_host": "host.docker.internal",
+            "obsidian_api_key": self.config.get("OBSIDIAN_MCP_API_KEY")
         }
         
+        self.rag = ObsidianRAGEnhanced(
+            vault_path="",  # MCP Docker handles vault access
+            use_api=False,  # No local API - MCP Docker only
+            api_key=None,
+            api_url=None,
+            use_mcp=mcp_enabled,
+            mcp_config=mcp_config,
+        )
+        
+        # Scaffolder removed - focusing on smart contracts only
+        
+        # Initialize EDB Integration
+        self.edb = EDBIntegration()
+        
+        # Initialize Alith Integration
+        self.alith = AlithIntegration()
+
+        # Initialize mock Alith client
+        from core.tools.alith_mock import AlithClient
+
+        self.alith = AlithClient()
+        
+        # Initialize LangChain agent if available
+        self.langchain_agent = None
+        if hasattr(self.rag, 'create_langchain_agent'):
+            self.langchain_agent = self.rag.create_langchain_agent()
+
+        # Initialize transaction monitor
+        from services.monitoring.transaction_monitor import (
+            TransactionMonitor,
+            MonitoringConfig,
+        )
+
+        monitor_config = MonitoringConfig(
+            rpc_url=self.config.get("networks", {}).get(
+                "hyperion", "https://hyperion-testnet.metisdevops.link"
+            ),
+            confirmation_blocks=12,
+            check_interval=5,
+        )
+        self.transaction_monitor = TransactionMonitor(monitor_config)
+
+        # Register available tools
+        self.tools = {
+            "generate": self.generate_contract,
+            "audit": self.audit_contract,
+            "deploy": self.deploy_contract,
+            "debug": self.debug_contract,
+            "analyze": self.analyze_contract,
+            "optimize": self.optimize_contract,
+            "monitor": self.monitor_transaction,
+        }
+
         logger.info("HyperKit Agent initialized successfully")
-    
+
     async def generate_contract(self, prompt: str, context: str = "") -> Dict[str, Any]:
         """
         Generate a smart contract based on natural language prompt using free LLM models.
-        
+
         Args:
             prompt: Natural language description of the contract
             context: Additional context from RAG system
-            
+
         Returns:
             Dictionary containing generated contract code and metadata
         """
         try:
+            from core.utils.validation import Validator
+            from core.utils.error_handler import ErrorHandler
+
+            validator = Validator()
+            error_handler = ErrorHandler()
+
+            # Validate input
+            prompt_result = validator.validate_prompt(prompt)
+            if not prompt_result.is_valid:
+                error_info = error_handler.create_validation_error(
+                    "prompt", prompt, "; ".join(prompt_result.errors)
+                )
+                return error_handler.format_error_response(error_info)
+
+            # Sanitize input
+            prompt = validator.sanitize_input(prompt)
+            context = validator.sanitize_input(context)
+
             # Retrieve context from Obsidian vault
             rag_context = ""
             if self.rag:
                 rag_context = self.rag.retrieve(prompt)
-            
+
             # Combine all context
             full_context = f"{context}\n\n{rag_context}".strip()
-            
+
             # Create enhanced prompt with context
-            enhanced_prompt = self._create_contract_generation_prompt(prompt, full_context)
-            
+            enhanced_prompt = self._create_contract_generation_prompt(
+                prompt, full_context
+            )
+
             # Use free LLM router for code generation
-            contract_code = self.llm_router.route(enhanced_prompt, task_type='code', prefer_local=True)
-            
+            contract_code = self.llm_router.route(
+                enhanced_prompt, task_type="code", prefer_local=True
+            )
+
             # Post-process the generated code
             contract_code = self._post_process_contract(contract_code)
-            
+
+            # Validate generated contract
+            contract_result = validator.validate_contract_code(contract_code)
+            if not contract_result.is_valid:
+                error_info = error_handler.create_validation_error(
+                    "contract_code", contract_code, "; ".join(contract_result.errors)
+                )
+                return error_handler.format_error_response(error_info)
+
             return {
-                'status': 'success',
-                'contract_code': contract_code,
-                'prompt': prompt,
-                'context_used': full_context,
-                'provider_used': 'free_llm_router'
+                "status": "success",
+                "contract_code": contract_code,
+                "prompt": prompt,
+                "context_used": full_context,
+                "provider_used": "free_llm_router",
+                "warnings": prompt_result.warnings + contract_result.warnings,
             }
         except Exception as e:
             logger.error(f"Contract generation failed: {e}")
-            return {
-                'status': 'error',
-                'error': str(e),
-                'prompt': prompt
-            }
-    
+            error_info = error_handler.handle_error(
+                e, {"prompt": prompt, "context": context}
+            )
+            return error_handler.format_error_response(error_info)
+
     async def audit_contract(self, contract_code: str) -> Dict[str, Any]:
         """
         Audit a smart contract using multiple security tools.
-        
+
         Args:
             contract_code: Solidity contract code to audit
-            
+
         Returns:
             Dictionary containing audit results and severity level
         """
         try:
             # Import audit service
             from services.audit.auditor import SmartContractAuditor
-            
+
             auditor = SmartContractAuditor()
             audit_results = await auditor.audit(contract_code)
-            
+
             return {
-                'status': 'success',
-                'results': audit_results,
-                'severity': audit_results.get('severity', 'unknown')
+                "status": "success",
+                "results": audit_results,
+                "severity": audit_results.get("severity", "unknown"),
             }
         except Exception as e:
             logger.error(f"Contract audit failed: {e}")
-            return {
-                'status': 'error',
-                'error': str(e),
-                'severity': 'critical'
-            }
-    
-    async def deploy_contract(self, contract_code: str, network: str = 'hyperion') -> Dict[str, Any]:
+            return {"status": "error", "error": str(e), "severity": "critical"}
+
+    async def deploy_contract(
+        self, contract_code: str, network: str = "hyperion"
+    ) -> Dict[str, Any]:
         """
         Deploy a smart contract to the specified network.
-        
+
         Args:
             contract_code: Solidity contract code to deploy
             network: Target network for deployment
-            
+
         Returns:
             Dictionary containing deployment details
         """
         try:
-            # Import deployment service
             from services.deployment.deployer import MultiChainDeployer
+            from core.utils.validation import Validator
+            from core.utils.error_handler import ErrorHandler
+
+            validator = Validator()
+            error_handler = ErrorHandler()
+
+            # Validate inputs
+            contract_result = validator.validate_contract_code(contract_code)
+            if not contract_result.is_valid:
+                error_info = error_handler.create_validation_error(
+                    "contract_code", contract_code, "; ".join(contract_result.errors)
+                )
+                return error_handler.format_error_response(error_info)
+
+            network_result = validator.validate_network_config(
+                network, self.config.get("networks", {}).get(network, "")
+            )
+            if not network_result.is_valid:
+                error_info = error_handler.create_validation_error(
+                    "network", network, "; ".join(network_result.errors)
+                )
+                return error_handler.format_error_response(error_info)
+
+            # Check if private key is available
+            if not self.config.get("DEFAULT_PRIVATE_KEY"):
+                error_info = error_handler.create_validation_error(
+                    "private_key", "", "Private key required for deployment"
+                )
+                return error_handler.format_error_response(error_info)
+
+            # Get network configuration from the new config system
+            config_loader = get_config()
+            network_config = config_loader.get_network_config(network)
             
-            deployer = MultiChainDeployer()
-            deployment_result = await deployer.deploy(contract_code, network)
+            # Create deployer with proper configuration
+            deployer = MultiChainDeployer({
+                'networks': {network: network_config},
+                'default_private_key': self.config.get('DEFAULT_PRIVATE_KEY')
+            })
+            # Check if contract has constructor arguments and provide them
+            constructor_args = None
+            if "constructor(" in contract_code:
+                from eth_account import Account
+                if self.config.get('DEFAULT_PRIVATE_KEY'):
+                    account = Account.from_key(self.config['DEFAULT_PRIVATE_KEY'])
+                    
+                    # Enhanced constructor parameter detection
+                    if "name" in contract_code and "symbol" in contract_code and "initialSupply" in contract_code:
+                        # Contract has name, symbol, and initialSupply (most common pattern)
+                        constructor_args = ["Test Token", "TEST", 1000000]  # 1M tokens (will be multiplied by decimals)
+                    elif "initialOwner" in contract_code and "initialSupply" in contract_code:
+                        # Contract has both initialOwner and initialSupply
+                        constructor_args = [account.address, 1000000 * 10**18]  # 1M tokens with 18 decimals
+                    elif "initialOwner" in contract_code:
+                        # Contract only has initialOwner
+                        constructor_args = [account.address]
+                    elif "name" in contract_code and "symbol" in contract_code:
+                        # Contract has name and symbol only
+                        constructor_args = ["Test Token", "TEST"]
+                    elif "owner" in contract_code:
+                        # Generic owner parameter
+                        constructor_args = [account.address]
             
-            return {
-                'status': 'success',
-                'deployment': deployment_result,
-                'network': network
-            }
+            deployment_result = await deployer.deploy(contract_code, network, constructor_args)
+
+            # Handle deployment result structure
+            if deployment_result.get("success"):
+                return {
+                    "status": "success",
+                    "deployment": deployment_result,
+                    "network": network,
+                    "address": deployment_result.get("address"),
+                    "tx_hash": deployment_result.get("tx_hash"),
+                    "gas_used": deployment_result.get("gas_used"),
+                    "warnings": contract_result.warnings + network_result.warnings,
+                }
+            else:
+                error_info = error_handler.create_deployment_error(
+                    "Contract",
+                    network,
+                    Exception(deployment_result.get("error", "Deployment failed")),
+                )
+                return error_handler.format_error_response(error_info)
         except Exception as e:
             logger.error(f"Contract deployment failed: {e}")
-            return {
-                'status': 'error',
-                'error': str(e),
-                'network': network
-            }
-    
+            error_info = error_handler.create_deployment_error("Contract", network, e)
+            return error_handler.format_error_response(error_info)
+
     async def debug_contract(self, tx_hash: str, rpc_url: str) -> Dict[str, Any]:
         """
         Debug a transaction using EDB debugger.
-        
+
         Args:
             tx_hash: Transaction hash to debug
             rpc_url: RPC URL for the network
-            
+
         Returns:
             Dictionary containing debug results
         """
@@ -169,177 +331,340 @@ class HyperKitAgent:
             # Integration with EDB debugger
             cmd = f"edb --rpc-urls {rpc_url} replay {tx_hash}"
             result = subprocess.run(cmd.split(), capture_output=True, text=True)
-            
+
             return {
-                'status': 'success',
-                'debug_output': result.stdout,
-                'tx_hash': tx_hash,
-                'rpc_url': rpc_url
+                "status": "success",
+                "debug_output": result.stdout,
+                "tx_hash": tx_hash,
+                "rpc_url": rpc_url,
             }
         except Exception as e:
             logger.error(f"Contract debugging failed: {e}")
-            return {
-                'status': 'error',
-                'error': str(e),
-                'tx_hash': tx_hash
-            }
-    
+            return {"status": "error", "error": str(e), "tx_hash": tx_hash}
+
     async def analyze_contract(self, contract_code: str) -> Dict[str, Any]:
         """
         Perform comprehensive analysis of a smart contract.
-        
+
         Args:
             contract_code: Solidity contract code to analyze
-            
+
         Returns:
             Dictionary containing analysis results
         """
         try:
             # Perform static analysis
             analysis_results = {
-                'gas_estimation': self._estimate_gas(contract_code),
-                'complexity_score': self._calculate_complexity(contract_code),
-                'security_patterns': self._check_security_patterns(contract_code),
-                'best_practices': self._check_best_practices(contract_code)
+                "gas_estimation": self._estimate_gas(contract_code),
+                "complexity_score": self._calculate_complexity(contract_code),
+                "security_patterns": self._check_security_patterns(contract_code),
+                "best_practices": self._check_best_practices(contract_code),
             }
-            
-            return {
-                'status': 'success',
-                'analysis': analysis_results
-            }
+
+            return {"status": "success", "analysis": analysis_results}
         except Exception as e:
             logger.error(f"Contract analysis failed: {e}")
-            return {
-                'status': 'error',
-                'error': str(e)
-            }
-    
+            return {"status": "error", "error": str(e)}
+
     async def run_workflow(self, user_prompt: str) -> Dict[str, Any]:
         """
         Execute the complete workflow: generate -> audit -> deploy.
-        
+
         Args:
             user_prompt: User's natural language request
-            
+
         Returns:
             Dictionary containing workflow results
         """
         try:
             logger.info(f"Starting workflow for prompt: {user_prompt}")
-            
+
             # Step 1: RAG-enhanced context retrieval
             context = ""
             if self.rag:
                 context = self.rag.retrieve(user_prompt)
-            
+
             # Step 2: Generate contract
             generation_result = await self.generate_contract(user_prompt, context)
-            if generation_result['status'] != 'success':
+            if generation_result["status"] != "success":
                 return generation_result
-            
-            contract_code = generation_result['contract_code']
-            
+
+            contract_code = generation_result["contract_code"]
+
             # Step 3: Audit contract
             audit_result = await self.audit_contract(contract_code)
-            if audit_result['status'] != 'success':
+            if audit_result["status"] != "success":
                 return audit_result
-            
+
             # Step 4: Deploy if audit passes
-            if audit_result['severity'] in ['low', 'medium']:
+            if audit_result["severity"] in ["low", "medium"]:
                 deployment_result = await self.deploy_contract(contract_code)
-                
+
                 # Log audit results with deployment
-                if self.alith and deployment_result['status'] == 'success':
-                    self.alith.log_audit(
-                        deployment_result['deployment']['address'],
-                        audit_result['results']
-                    )
-                
+                if self.alith and deployment_result["status"] == "success":
+                    # Get address from deployment result
+                    deployment_address = deployment_result.get("address")
+
+                    if deployment_address:
+                        self.alith.log_audit(
+                            deployment_address, audit_result["results"]
+                        )
+
                 return {
-                    'status': 'success',
-                    'workflow': 'complete',
-                    'generation': generation_result,
-                    'audit': audit_result,
-                    'deployment': deployment_result
+                    "status": "success",
+                    "workflow": "complete",
+                    "generation": generation_result,
+                    "audit": audit_result,
+                    "deployment": deployment_result,
                 }
             else:
                 return {
-                    'status': 'audit_failed',
-                    'workflow': 'stopped_at_audit',
-                    'generation': generation_result,
-                    'audit': audit_result,
-                    'reason': f"Audit severity too high: {audit_result['severity']}"
+                    "status": "audit_failed",
+                    "workflow": "stopped_at_audit",
+                    "generation": generation_result,
+                    "audit": audit_result,
+                    "reason": f"Audit severity too high: {audit_result['severity']}",
                 }
-                
+
         except Exception as e:
             logger.error(f"Workflow execution failed: {e}")
-            return {
-                'status': 'error',
-                'error': str(e),
-                'workflow': 'failed'
-            }
-    
-    def _estimate_gas(self, contract_code: str) -> Dict[str, int]:
+            return {"status": "error", "error": str(e), "workflow": "failed"}
+
+    def _estimate_gas(self, contract_code: str) -> Dict[str, Any]:
         """Estimate gas usage for contract functions."""
-        # Placeholder for gas estimation logic
-        return {
-            'deployment': 1000000,
-            'average_function': 50000,
-            'complex_function': 200000
-        }
-    
+        try:
+            from core.optimization.gas_optimizer import GasOptimizer
+
+            optimizer = GasOptimizer()
+            optimizations = optimizer.analyze_contract(contract_code)
+            savings_estimate = optimizer.estimate_gas_savings(optimizations)
+
+            # Basic gas estimation (simplified)
+            base_deployment = 1000000
+            base_function = 50000
+
+            # Apply optimization savings
+            optimized_deployment = max(
+                base_deployment - savings_estimate["total_savings"], 500000
+            )
+            optimized_function = max(
+                base_function - (savings_estimate["total_savings"] // 10), 20000
+            )
+
+            return {
+                "deployment": {
+                    "original": base_deployment,
+                    "optimized": optimized_deployment,
+                    "savings": base_deployment - optimized_deployment,
+                },
+                "average_function": {
+                    "original": base_function,
+                    "optimized": optimized_function,
+                    "savings": base_function - optimized_function,
+                },
+                "complex_function": {
+                    "original": base_function * 4,
+                    "optimized": optimized_function * 4,
+                    "savings": (base_function - optimized_function) * 4,
+                },
+                "optimizations": {
+                    "count": savings_estimate["optimization_count"],
+                    "high_impact": savings_estimate["high_impact_count"],
+                    "medium_impact": savings_estimate["medium_impact_count"],
+                    "low_impact": savings_estimate["low_impact_count"],
+                },
+            }
+        except Exception as e:
+            logger.error(f"Gas estimation failed: {e}")
+            return {
+                "deployment": 1000000,
+                "average_function": 50000,
+                "complex_function": 200000,
+                "error": str(e),
+            }
+
+    async def optimize_contract(self, contract_code: str) -> Dict[str, Any]:
+        """
+        Optimize contract for gas efficiency.
+
+        Args:
+            contract_code: Solidity contract code to optimize
+
+        Returns:
+            Dictionary containing optimization results
+        """
+        try:
+            from core.optimization.gas_optimizer import GasOptimizer
+
+            optimizer = GasOptimizer()
+            optimizations = optimizer.analyze_contract(contract_code)
+            savings_estimate = optimizer.estimate_gas_savings(optimizations)
+
+            # Generate optimized code
+            optimized_code = optimizer.generate_optimized_code(
+                contract_code, optimizations
+            )
+
+            # Generate report
+            report = optimizer.generate_report(optimizations)
+
+            return {
+                "status": "success",
+                "original_code": contract_code,
+                "optimized_code": optimized_code,
+                "optimizations": optimizations,
+                "savings_estimate": savings_estimate,
+                "report": report,
+                "optimization_count": len(optimizations),
+            }
+        except Exception as e:
+            logger.error(f"Contract optimization failed: {e}")
+            return {"status": "error", "error": str(e), "original_code": contract_code}
+
+    async def monitor_transaction(self, tx_hash: str) -> Dict[str, Any]:
+        """
+        Monitor a blockchain transaction.
+
+        Args:
+            tx_hash: Transaction hash to monitor
+
+        Returns:
+            Dictionary containing monitoring results
+        """
+        try:
+            # Start monitoring the transaction
+            tx_status = await self.transaction_monitor.monitor_transaction(tx_hash)
+
+            # Start monitoring if not already started
+            if not self.transaction_monitor.is_monitoring:
+                await self.transaction_monitor.start_monitoring()
+
+            return {
+                "status": "success",
+                "tx_hash": tx_hash,
+                "monitoring_started": True,
+                "initial_status": {
+                    "status": tx_status.status,
+                    "block_number": tx_status.block_number,
+                    "gas_used": tx_status.gas_used,
+                    "confirmations": tx_status.confirmations,
+                    "timestamp": tx_status.timestamp.isoformat(),
+                },
+            }
+        except Exception as e:
+            logger.error(f"Transaction monitoring failed: {e}")
+            return {"status": "error", "error": str(e), "tx_hash": tx_hash}
+
+    async def get_transaction_status(self, tx_hash: str) -> Dict[str, Any]:
+        """
+        Get current status of a monitored transaction.
+
+        Args:
+            tx_hash: Transaction hash
+
+        Returns:
+            Dictionary containing transaction status
+        """
+        try:
+            tx_status = await self.transaction_monitor.get_transaction_status(tx_hash)
+
+            if not tx_status:
+                return {
+                    "status": "error",
+                    "error": "Transaction not found or not being monitored",
+                    "tx_hash": tx_hash,
+                }
+
+            return {
+                "status": "success",
+                "tx_hash": tx_hash,
+                "transaction_status": {
+                    "status": tx_status.status,
+                    "block_number": tx_status.block_number,
+                    "gas_used": tx_status.gas_used,
+                    "gas_price": tx_status.gas_price,
+                    "from_address": tx_status.from_address,
+                    "to_address": tx_status.to_address,
+                    "value": tx_status.value,
+                    "confirmations": tx_status.confirmations,
+                    "timestamp": tx_status.timestamp.isoformat(),
+                    "error_message": tx_status.error_message,
+                },
+            }
+        except Exception as e:
+            logger.error(f"Failed to get transaction status: {e}")
+            return {"status": "error", "error": str(e), "tx_hash": tx_hash}
+
+    async def get_monitoring_summary(self) -> Dict[str, Any]:
+        """
+        Get summary of all monitored transactions.
+
+        Returns:
+            Dictionary containing monitoring summary
+        """
+        try:
+            summary = await self.transaction_monitor.get_monitoring_summary()
+            return {"status": "success", "monitoring_summary": summary}
+        except Exception as e:
+            logger.error(f"Failed to get monitoring summary: {e}")
+            return {"status": "error", "error": str(e)}
+
     def _calculate_complexity(self, contract_code: str) -> int:
         """Calculate cyclomatic complexity of the contract."""
         # Placeholder for complexity calculation
-        return len(contract_code.split('\n')) // 10
-    
+        return len(contract_code.split("\n")) // 10
+
     def _check_security_patterns(self, contract_code: str) -> Dict[str, bool]:
         """Check for common security patterns."""
         return {
-            'has_reentrancy_guard': 'ReentrancyGuard' in contract_code,
-            'has_access_control': 'onlyOwner' in contract_code or 'onlyRole' in contract_code,
-            'has_pausable': 'Pausable' in contract_code,
-            'uses_safe_math': 'SafeMath' in contract_code or 'unchecked' not in contract_code
+            "has_reentrancy_guard": "ReentrancyGuard" in contract_code,
+            "has_access_control": "onlyOwner" in contract_code
+            or "onlyRole" in contract_code,
+            "has_pausable": "Pausable" in contract_code,
+            "uses_safe_math": "SafeMath" in contract_code
+            or "unchecked" not in contract_code,
         }
-    
+
     def _check_best_practices(self, contract_code: str) -> Dict[str, bool]:
         """Check for Solidity best practices."""
         return {
-            'has_nat_spec': '/**' in contract_code and '*/' in contract_code,
-            'has_events': 'event ' in contract_code,
-            'has_modifiers': 'modifier ' in contract_code,
-            'uses_openzeppelin': 'import "@openzeppelin' in contract_code
+            "has_nat_spec": "/**" in contract_code and "*/" in contract_code,
+            "has_events": "event " in contract_code,
+            "has_modifiers": "modifier " in contract_code,
+            "uses_openzeppelin": 'import "@openzeppelin' in contract_code,
         }
-    
+
     def _select_ai_provider(self) -> tuple[str, str]:
         """
         Select the best available AI provider based on configured API keys.
-        
+
         Returns:
             Tuple of (provider_name, api_key)
         """
         # Priority order for AI providers
         providers = [
-            ('openai', 'OPENAI_API_KEY'),
-            ('deepseek', 'DEEPSEEK_API_KEY'),
-            ('xai', 'XAI_API_KEY'),
-            ('gpt-oss', 'GPT_OSS_API_KEY'),
-            ('anthropic', 'ANTHROPIC_API_KEY'),
-            ('google', 'GOOGLE_API_KEY'),
-            ('dashscope', 'DASHSCOPE_API_KEY')
+            ("openai", "OPENAI_API_KEY"),
+            ("deepseek", "DEEPSEEK_API_KEY"),
+            ("xai", "XAI_API_KEY"),
+            ("gpt-oss", "GPT_OSS_API_KEY"),
+            ("anthropic", "ANTHROPIC_API_KEY"),
+            ("google", "GOOGLE_API_KEY"),
+            ("dashscope", "DASHSCOPE_API_KEY"),
         ]
-        
+
         for provider, key_name in providers:
             api_key = self.config.get(key_name)
-            if api_key and api_key != f'your_{key_name.lower()}_here':
+            if api_key and api_key != f"your_{key_name.lower()}_here":
                 logger.info(f"Selected AI provider: {provider}")
                 return provider, api_key
-        
+
         # Fallback to OpenAI with a placeholder
         logger.warning("No valid API keys found, using OpenAI with placeholder")
-        return 'openai', 'placeholder-key'
-    
-    def _create_contract_generation_prompt(self, user_prompt: str, context: str = "") -> str:
+        return "openai", "placeholder-key"
+
+    def _create_contract_generation_prompt(
+        self, user_prompt: str, context: str = ""
+    ) -> str:
         """Create enhanced prompt for contract generation."""
         base_prompt = f"""
 You are an expert Solidity smart contract developer. Generate a secure, production-ready smart contract based on the user's request.
@@ -362,39 +687,380 @@ Requirements:
 Generate only the Solidity contract code, no explanations or markdown formatting.
 """
         return base_prompt.strip()
-    
+
     def _post_process_contract(self, contract_code: str) -> str:
         """Post-process generated contract code."""
         # Remove markdown formatting if present
-        if contract_code.startswith('```solidity'):
-            contract_code = contract_code.replace('```solidity', '').replace('```', '')
-        
-        if contract_code.startswith('```'):
-            contract_code = contract_code.replace('```', '')
-        
+        if contract_code.startswith("```solidity"):
+            contract_code = contract_code.replace("```solidity", "").replace("```", "")
+
+        if contract_code.startswith("```"):
+            contract_code = contract_code.replace("```", "")
+
         # Clean up extra whitespace
         contract_code = contract_code.strip()
-        
+
         return contract_code
+
+    async def run_comprehensive_workflow(self, user_prompt: str) -> Dict[str, Any]:
+        """
+        Run comprehensive end-to-end workflow based on user intent
+        
+        Args:
+            user_prompt: User's natural language request
+            
+        Returns:
+            Complete workflow results
+        """
+        try:
+            # 1. Classify user intent
+            intent_type, parameters = self.intent_router.classify_intent(user_prompt)
+            logger.info(f"Intent classified as: {intent_type.value}")
+            
+            # 2. Get RAG context
+            context = self.rag.retrieve(user_prompt)
+            logger.info(f"RAG context retrieved: {len(context)} characters")
+            
+            # 3. Generate smart contracts
+            contract_result = await self.generate_contract(user_prompt, context)
+            if not contract_result.get("success"):
+                return contract_result
+            
+            contract_code = contract_result.get("contract_code", "")
+            
+            # 4. Run security audit
+            audit_result = await self.audit_contract(contract_code)
+            if not audit_result.get("success"):
+                return audit_result
+            
+            # 5. Deploy contracts
+            deployment_result = await self.deploy_contract(contract_code, "hyperion")
+            if not deployment_result.get("success"):
+                return deployment_result
+            
+            # 6. Handle different intent types
+            if intent_type == IntentType.DEBUG_TRANSACTION:
+                return await self._handle_debug_workflow(parameters, deployment_result)
+            else:
+                # Simple contract workflow
+                return await self._handle_simple_contract_workflow(
+                    contract_code, audit_result, deployment_result
+                )
+                
+        except Exception as e:
+            logger.error(f"Comprehensive workflow failed: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "workflow": "failed"
+            }
+
+    # dApp scaffolding removed - focusing on smart contracts only
+
+    async def _handle_debug_workflow(
+        self, 
+        parameters: Dict[str, Any], 
+        deployment_result: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Handle debugging workflow"""
+        try:
+            tx_hash = parameters.get("tx_hash", deployment_result.get("tx_hash", ""))
+            rpc_url = "https://hyperion-testnet.metisdevops.link"
+            
+            if not tx_hash:
+                return {
+                    "status": "error",
+                    "workflow": "debug",
+                    "error": "No transaction hash provided for debugging"
+                }
+            
+            # Start debug session
+            debug_session = await self.edb.start_debug_session(tx_hash, rpc_url)
+            
+            return {
+                "status": "success",
+                "workflow": "debug",
+                "debug_session": {
+                    "session_id": debug_session.session_id,
+                    "tx_hash": tx_hash,
+                    "status": debug_session.status
+                },
+                "instructions": [
+                    "Use step_through_transaction() to step through execution",
+                    "Use inspect_variable() to inspect variable values",
+                    "Use get_call_stack() to view call stack"
+                ]
+            }
+            
+        except Exception as e:
+            logger.error(f"Debug workflow failed: {e}")
+            return {
+                "status": "error",
+                "workflow": "debug",
+                "error": str(e)
+            }
+
+    async def _handle_simple_contract_workflow(
+        self, 
+        contract_code: str, 
+        audit_result: Dict[str, Any], 
+        deployment_result: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Handle simple contract workflow"""
+        # Log audit onchain
+        audit_log_result = await self.alith.log_audit(
+            deployment_result.get("address", ""),
+            audit_result
+        )
+        
+        result = {
+            "status": "success",
+            "workflow": "simple_contract",
+            "contract_code": contract_code,
+            "audit_result": audit_result,
+            "deployment_result": deployment_result,
+            "audit_logged": audit_log_result
+        }
+        return result
+
+    async def debug_transaction(self, tx_hash: str, steps: int = 1) -> Dict[str, Any]:
+        """
+        Debug a transaction using EDB
+        
+        Args:
+            tx_hash: Transaction hash to debug
+            steps: Number of steps to execute
+            
+        Returns:
+            Debug results
+        """
+        try:
+            rpc_url = "https://hyperion-testnet.metisdevops.link"
+            
+            # Start debug session
+            session = await self.edb.start_debug_session(tx_hash, rpc_url)
+            
+            if session.status != "active":
+                return {
+                    "status": "error",
+                    "error": f"Failed to start debug session: {session.variables.get('error', 'Unknown error')}"
+                }
+            
+            # Step through transaction
+            step_result = await self.edb.step_through_transaction(session.session_id, steps)
+            
+            return {
+                "status": "success",
+                "debug_session": {
+                    "session_id": session.session_id,
+                    "tx_hash": tx_hash
+                },
+                "step_result": step_result
+            }
+            
+        except Exception as e:
+            logger.error(f"Transaction debugging failed: {e}")
+            return {
+                "status": "error",
+                "error": str(e)
+            }
+
+    async def scaffold_dapp(self, requirements: str, contract_code: str) -> Dict[str, Any]:
+        """
+        Scaffold a complete dApp
+        
+        Args:
+            requirements: User requirements for the dApp
+            contract_code: Generated smart contract code
+            
+        Returns:
+            Scaffold results
+        """
+        try:
+            # Classify requirements
+            intent_type, parameters = self.intent_router.classify_intent(requirements)
+            
+            # Create scaffold configuration
+            scaffold_config = ScaffoldConfig(
+                project_name=parameters.get("project_name", "hyperkit_dapp"),
+                frontend_framework=parameters.get("frontend_framework", "nextjs"),
+                backend_framework=parameters.get("backend_framework", "express"),
+                blockchain=parameters.get("blockchain", "hyperion"),
+                features=parameters.get("features", [])
+            )
+            
+            # Scaffold the dApp
+            result = await self.scaffolder.scaffold_dapp(scaffold_config, contract_code)
+            
+            return {
+                "status": "success",
+                "scaffold_result": result
+            }
+            
+        except Exception as e:
+            logger.error(f"dApp scaffolding failed: {e}")
+            return {
+                "status": "error",
+                "error": str(e)
+            }
+    
+    def get_langchain_agent(self):
+        """Get the LangChain agent for advanced RAG operations"""
+        return self.langchain_agent
+    
+    def create_custom_langchain_agent(self, tools=None, system_prompt=None):
+        """Create a custom LangChain agent with specific tools and prompt"""
+        if hasattr(self.rag, 'create_langchain_agent'):
+            return self.rag.create_langchain_agent(tools, system_prompt)
+        return None
+
+    async def audit_public_contract(self, address: str, network: str = "hyperion") -> Dict[str, Any]:
+        """
+        Audit a public contract by address
+        
+        Args:
+            address: Contract address
+            network: Network to query
+            
+        Returns:
+            Audit results
+        """
+        try:
+            logger.info(f"Auditing public contract: {address} on {network}")
+            
+            result = await public_contract_auditor.audit_by_address(address, network)
+            
+            if result.get("status") == "success":
+                # Log audit onchain using Alith
+                audit_log_result = await self.alith.log_audit(
+                    address,
+                    result.get("analysis", {})
+                )
+                result["audit_logged"] = audit_log_result
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Public contract audit failed: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "address": address,
+                "network": network
+            }
+
+    async def start_monitoring(self, target: str, monitor_type: str, network: str = "hyperion", 
+                             interval: int = 30, duration: Optional[int] = None) -> str:
+        """
+        Start monitoring a target
+        
+        Args:
+            target: Contract address or transaction hash
+            monitor_type: Type of monitoring (transaction, contract, gas, events)
+            network: Network to monitor
+            interval: Monitoring interval in seconds
+            duration: Monitoring duration in seconds (None for indefinite)
+            
+        Returns:
+            Monitor ID
+        """
+        try:
+            monitor_type_enum = MonitorType(monitor_type)
+            config = MonitorConfig(
+                target=target,
+                monitor_type=monitor_type_enum,
+                network=network,
+                interval=interval,
+                duration=duration
+            )
+            
+            monitor_id = await enhanced_monitor.start_monitoring(config)
+            logger.info(f"Started monitoring {target} ({monitor_type})")
+            
+            return monitor_id
+            
+        except Exception as e:
+            logger.error(f"Failed to start monitoring: {e}")
+            raise
+
+    async def stop_monitoring(self, monitor_id: str) -> bool:
+        """
+        Stop monitoring a target
+        
+        Args:
+            monitor_id: Monitor ID to stop
+            
+        Returns:
+            True if stopped successfully
+        """
+        try:
+            return await enhanced_monitor.stop_monitoring(monitor_id)
+        except Exception as e:
+            logger.error(f"Failed to stop monitoring: {e}")
+            return False
+
+    async def get_monitoring_metrics(self) -> Dict[str, Any]:
+        """Get monitoring metrics"""
+        try:
+            return enhanced_monitor.get_metrics()
+        except Exception as e:
+            logger.error(f"Failed to get monitoring metrics: {e}")
+            return {"error": str(e)}
+
+    async def generate_defi_primitive(self, primitive_type: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate a DeFi primitive contract
+        
+        Args:
+            primitive_type: Type of DeFi primitive (staking, swap, vault, lending, governance)
+            config: Configuration for the primitive
+            
+        Returns:
+            Generated contract code and metadata
+        """
+        try:
+            primitive_enum = DeFiPrimitive(primitive_type)
+            result = await defi_primitives_generator.generate_primitive(primitive_enum, config)
+            
+            if result.get("status") == "success":
+                logger.info(f"Generated {primitive_type} primitive successfully")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"DeFi primitive generation failed: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "primitive_type": primitive_type
+            }
+
+    async def get_supported_defi_primitives(self) -> List[str]:
+        """Get list of supported DeFi primitives"""
+        return [primitive.value for primitive in DeFiPrimitive]
+
+    async def get_supported_networks(self) -> List[str]:
+        """Get list of supported networks for public contract auditing"""
+        return public_contract_auditor.get_supported_networks()
 
 
 # Example usage and testing
 async def main():
     """Example usage of the HyperKit Agent."""
     config = {
-        'openai_api_key': 'your-api-key-here',
-        'networks': {
-            'hyperion': 'https://hyperion-testnet.metisdevops.link',
-            'polygon': 'https://polygon-rpc.com'
-        }
+        "openai_api_key": "your-api-key-here",
+        "networks": {
+            "hyperion": "https://hyperion-testnet.metisdevops.link",
+            "polygon": "https://polygon-rpc.com",
+        },
     }
-    
+
     agent = HyperKitAgent(config)
-    
+
     # Test workflow
     prompt = "Create a simple ERC20 token contract with minting functionality"
     result = await agent.run_workflow(prompt)
-    
+
     print(json.dumps(result, indent=2))
 
 
