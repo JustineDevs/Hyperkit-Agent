@@ -1,5 +1,22 @@
 # hyperkit-agent
 
+## 1.2.0
+
+### Minor Changes
+
+- f5eb3e8: Fix CI/CD pipeline failures by removing Node.js dependencies
+  - Remove all Node.js dependencies from CI/CD workflows
+  - Update paths to point to hyperkit-agent/ directory
+  - Simplify changeset validation (no npm required)
+  - Add basic Python tests for CI/CD validation
+  - Focus pipeline on Python-only smart contract development
+
+- 716fe2f: Add comprehensive changeset for file organization improvements
+  - Fixed file organization to save all generated contracts to contracts/agent_generate/
+  - Updated CLI defaults and documentation
+  - Generated 5 production-ready smart contracts
+  - Improved developer experience with better file management
+
 ## 1.1.0
 
 ### Minor Changes

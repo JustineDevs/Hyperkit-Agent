@@ -8,12 +8,12 @@ The HyperKit AI Agent generates various files during its operation. This documen
 
 ### 1. Smart Contracts
 
-**Default Location**: `./contracts/`
+**Default Location**: `./contracts/agent_generate/`
 **CLI Option**: `--output-dir` parameter
 
 ```bash
 # Default location
-./contracts/
+./contracts/agent_generate/
 ├── ERC20Token.sol
 ├── StakingContract.sol
 ├── VaultContract.sol

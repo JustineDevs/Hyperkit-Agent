@@ -67,7 +67,7 @@ async def generate_command(args):
             file_path = save_contract_to_file(
                 result['contract_code'],
                 args.save,
-                args.output_dir or './contracts'
+                args.output_dir
             )
             print(f"\nContract saved to: {file_path}")
     else:
@@ -382,7 +382,7 @@ Examples:
     gen_parser.add_argument('--model', help='Specific model to use (e.g., gemini-1.5-flash, gpt-4o-mini)')
     gen_parser.add_argument('--use-rag', action='store_true', help='Use Obsidian MCP Docker for context retrieval')
     gen_parser.add_argument('--save', help='Save contract to file')
-    gen_parser.add_argument('--output-dir', default='./contracts', help='Output directory')
+    gen_parser.add_argument('--output-dir', default='./contracts/agent_generate', help='Output directory')
     
     # Audit command
     audit_parser = subparsers.add_parser('audit', help='Audit a smart contract')
