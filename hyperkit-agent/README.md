@@ -21,17 +21,17 @@
 - **Real-time Debugging**: EDB integration for transaction replay and debugging
 - **Security Best Practices**: Built-in checks for common vulnerabilities
 
-### 🌐 Multi-Chain Deployment
-- **Cross-Chain Support**: Deploy to Hyperion, Polygon, Arbitrum, and Ethereum
+### 🌐 Hyperion Testnet Deployment
+- **Hyperion Focus**: Primary support for Hyperion testnet deployment
 - **Gas Optimization**: Automatic gas estimation and optimization
-- **Contract Verification**: Automated verification on blockchain explorers
+- **Contract Verification**: Automated verification on Hyperion explorer
 - **EIP-712 Signing**: Secure structured data signing capabilities
 
 ### 🧠 RAG Knowledge System
-- **Vector Database**: ChromaDB integration for semantic search
-- **Smart Contract Patterns**: Comprehensive knowledge base of best practices
+- **Simple MCP Integration**: Direct Obsidian API integration for knowledge retrieval
+- **Smart Contract Patterns**: Comprehensive DeFi patterns knowledge base (3,018 chunks)
 - **Context Retrieval**: Relevant knowledge injection for better generation
-- **Continuous Learning**: Expandable knowledge base with custom patterns
+- **Graceful Fallback**: DeFi patterns only when external systems unavailable
 
 ## 🆓 Google Gemini Integration
 
@@ -45,9 +45,9 @@ The HyperKit Agent is powered by **Google Gemini** for completely free smart con
 - **Reliable**: Stable and consistent results
 
 ### Obsidian Knowledge Base
-- **Markdown-based**: Store contract patterns, audit checklists, templates
+- **Simple MCP**: Direct API integration without Docker complexity
 - **RAG Integration**: Automatic context retrieval for better generation
-- **Version Control**: Sync with Git for team collaboration
+- **DeFi Patterns**: Built-in knowledge base with 3,018 security patterns
 
 ### Setup Free Models
 ```bash
@@ -95,7 +95,14 @@ python cli.py generate "Create ERC20 token" --provider local --use-rag
    # Edit .env with your API keys and configuration
    ```
 
-5. **Run the agent**
+5. **Test API keys**
+   ```bash
+   python test_api_keys.py
+   # Or use the setup command
+   python setup.py test-apis
+   ```
+
+6. **Run the agent**
    ```bash
    python main.py
    ```
