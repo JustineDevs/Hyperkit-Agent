@@ -24,33 +24,27 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r hyperkit-agent/requirements.txt
           pip install pytest pytest-cov
-      
-      - name: Install Node.js dependencies
-        run: npm ci
       
       - name: Run Python tests
         run: |
+          cd hyperkit-agent
           pytest tests/ --cov=core --cov=services --cov-report=xml
       
       - name: Run linting
         run: |
+          cd hyperkit-agent
           flake8 core/ services/ --count --select=E9,F63,F7,F82 --show-source --statistics
           black --check core/ services/
           mypy core/ services/ --ignore-missing-imports
       
       - name: Run security checks
         run: |
+          cd hyperkit-agent
           bandit -r core/ services/ -f json -o bandit-report.json || true
           safety check --json --output safety-report.json || true
       
@@ -72,27 +66,27 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
       - name: Check changeset status
-        run: npm run changeset:status
+        run: |
+          echo "Checking changeset status..."
+          if [ -d ".changeset" ]; then
+            echo "✅ Changeset directory found"
+            ls -la .changeset/
+          else
+            echo "❌ No changeset directory found"
+            exit 1
+          fi
       
       - name: Verify changeset presence
         run: |
           echo "Checking if PR has changeset..."
-          if ! npm run changeset:check; then
-            echo "❌ No changeset found for this PR"
-            echo "Please run 'npm run changeset:add' to create a changeset"
-            exit 1
-          else
+          if [ -d ".changeset" ] && [ "$(find .changeset -name "*.md" -not -name "README.md" | wc -l)" -gt 0 ]; then
             echo "✅ Changeset found for this PR"
+            find .changeset -name "*.md" -not -name "README.md"
+          else
+            echo "❌ No changeset found for this PR"
+            echo "Please run 'npx changeset' to create a changeset"
+            exit 1
           fi
 
   build:
@@ -105,17 +99,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
       - name: Build Python package
         run: |
+          cd hyperkit-agent
           python -m pip install --upgrade pip
           pip install build twine
           python -m build
@@ -124,7 +110,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: dist
-          path: dist/
+          path: hyperkit-agent/dist/
 
   release:
     name: Release
@@ -138,27 +124,19 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
           name: dist
-          path: dist/
+          path: hyperkit-agent/dist/
       
-      - name: Create Release Pull Request
-        uses: changesets/action@v1
-        with:
-          publish: npm run changeset:publish
-          title: "Release: Version Packages"
-          commit: "chore: release packages"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Create Release
+        run: |
+          echo "Creating release from changeset..."
+          if [ -d ".changeset" ]; then
+            echo "Changeset directory found, creating release"
+            # For now, just echo the changeset files
+            find .changeset -name "*.md" -not -name "README.md"
+          else
+            echo "No changeset directory found"
+          fi
