@@ -1,422 +1,358 @@
+#!/usr/bin/env python3
 """
 Transaction Monitoring Service
-Monitors blockchain transactions and provides real-time status updates
+Provides comprehensive transaction monitoring and status tracking.
+Follows .cursor/rules for production-ready implementation.
 """
 
 import asyncio
-import logging
-from typing import Dict, List, Any, Optional, Callable
-from dataclasses import dataclass
-from datetime import datetime, timedelta
 import json
+import logging
+import time
+from typing import Dict, Any, List, Optional, Callable
+from dataclasses import dataclass, asdict
+from datetime import datetime, timedelta
+from pathlib import Path
+import aiohttp
+from web3 import Web3
+from web3.exceptions import TransactionNotFound, BlockNotFound
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class TransactionStatus:
-    """Transaction status information"""
-
+    """Represents transaction status information."""
     tx_hash: str
-    status: str  # 'pending', 'confirmed', 'failed', 'dropped'
-    block_number: Optional[int]
-    gas_used: Optional[int]
-    gas_price: Optional[int]
-    from_address: str
-    to_address: Optional[str]
-    value: int
-    timestamp: datetime
-    confirmations: int
+    status: str  # pending, confirmed, failed, dropped
+    block_number: Optional[int] = None
+    gas_used: Optional[int] = None
+    gas_price: Optional[int] = None
+    effective_gas_price: Optional[int] = None
+    confirmation_count: int = 0
+    timestamp: int = 0
+    network: str = "unknown"
     error_message: Optional[str] = None
-
+    receipt: Optional[Dict[str, Any]] = None
 
 @dataclass
-class MonitoringConfig:
-    """Configuration for transaction monitoring"""
-
-    rpc_url: str
-    confirmation_blocks: int = 12
-    check_interval: int = 5  # seconds
-    max_retries: int = 100
-    timeout: int = 300  # seconds
-
+class MonitoringMetrics:
+    """Represents monitoring metrics."""
+    total_transactions: int = 0
+    confirmed_transactions: int = 0
+    failed_transactions: int = 0
+    pending_transactions: int = 0
+    average_gas_used: float = 0.0
+    average_gas_price: float = 0.0
+    success_rate: float = 0.0
+    average_confirmation_time: float = 0.0
 
 class TransactionMonitor:
-    """
-    Monitors blockchain transactions and provides real-time updates
-    """
-
-    def __init__(self, config: MonitoringConfig):
+    """Transaction monitoring service for smart contracts."""
+    
+    def __init__(self, config: Dict[str, Any]):
+        """Initialize transaction monitor with configuration."""
         self.config = config
-        self.monitored_transactions: Dict[str, TransactionStatus] = {}
-        self.callbacks: Dict[str, List[Callable]] = {}
-        self.is_monitoring = False
-        self.monitor_task: Optional[asyncio.Task] = None
-
-        logger.info("TransactionMonitor initialized")
-
+        self.networks = config.get("networks", {})
+        self.web3_instances = {}
+        self.monitored_transactions = {}
+        self.metrics = MonitoringMetrics()
+        self.callbacks = []
+        self.running = False
+        
+        # Initialize Web3 instances
+        self._initialize_web3_instances()
+        
+        # Monitoring configuration
+        self.check_interval = 5  # seconds
+        self.max_confirmations = 12
+        self.timeout_duration = 300  # 5 minutes
+        
+    def _initialize_web3_instances(self):
+        """Initialize Web3 instances for each supported network."""
+        for network, network_config in self.networks.items():
+            if network_config.get("enabled", False):
+                rpc_url = f"{network.upper()}_RPC_URL"
+                import os
+                rpc_url = os.getenv(rpc_url)
+                if rpc_url:
+                    try:
+                        self.web3_instances[network] = Web3(Web3.HTTPProvider(rpc_url))
+                        logger.info(f"Initialized Web3 instance for {network}")
+                    except Exception as e:
+                        logger.error(f"Failed to initialize Web3 for {network}: {e}")
+    
     async def start_monitoring(self):
-        """Start the monitoring loop"""
-        if self.is_monitoring:
-            logger.warning("Monitoring already started")
+        """Start the transaction monitoring service."""
+        if self.running:
+            logger.warning("Transaction monitoring is already running")
             return
-
-        self.is_monitoring = True
-        self.monitor_task = asyncio.create_task(self._monitoring_loop())
-        logger.info("Transaction monitoring started")
-
+        
+        self.running = True
+        logger.info("Starting transaction monitoring service")
+        
+        # Start monitoring loop
+        asyncio.create_task(self._monitoring_loop())
+    
     async def stop_monitoring(self):
-        """Stop the monitoring loop"""
-        self.is_monitoring = False
-        if self.monitor_task:
-            self.monitor_task.cancel()
-            try:
-                await self.monitor_task
-            except asyncio.CancelledError:
-                pass
-        logger.info("Transaction monitoring stopped")
-
-    async def monitor_transaction(
-        self, tx_hash: str, callbacks: Optional[List[Callable]] = None
-    ) -> TransactionStatus:
+        """Stop the transaction monitoring service."""
+        self.running = False
+        logger.info("Transaction monitoring service stopped")
+    
+    async def add_transaction(
+        self, 
+        tx_hash: str, 
+        network: str = "hyperion",
+        callback: Optional[Callable] = None
+    ) -> bool:
         """
-        Start monitoring a transaction
-
+        Add a transaction to monitoring.
+        
         Args:
             tx_hash: Transaction hash to monitor
-            callbacks: List of callback functions to call on status updates
-
+            network: Network to monitor on
+            callback: Optional callback function for status updates
+            
         Returns:
-            Initial transaction status
+            True if successfully added, False otherwise
         """
-        try:
-            from web3 import Web3
-
-            w3 = Web3(Web3.HTTPProvider(self.config.rpc_url))
-
-            # Get initial transaction data
-            tx_data = w3.eth.get_transaction(tx_hash)
-            receipt = w3.eth.get_transaction_receipt(tx_hash)
-
-            # Determine initial status
-            if receipt.status == 1:
-                status = "confirmed"
-                block_number = receipt.blockNumber
-                gas_used = receipt.gasUsed
-            else:
-                status = "failed"
-                block_number = receipt.blockNumber
-                gas_used = receipt.gasUsed
-
-            # Create transaction status
-            tx_status = TransactionStatus(
-                tx_hash=tx_hash,
-                status=status,
-                block_number=block_number,
-                gas_used=gas_used,
-                gas_price=tx_data.gasPrice,
-                from_address=tx_data["from"],
-                to_address=tx_data.to,
-                value=tx_data.value,
-                timestamp=datetime.now(),
-                confirmations=0,
-            )
-
-            # Store transaction status
-            self.monitored_transactions[tx_hash] = tx_status
-
-            # Register callbacks
-            if callbacks:
-                self.callbacks[tx_hash] = callbacks
-
-            logger.info(f"Started monitoring transaction: {tx_hash}")
-            return tx_status
-
-        except Exception as e:
-            logger.error(f"Failed to start monitoring transaction {tx_hash}: {e}")
-            raise
-
-    async def get_transaction_status(self, tx_hash: str) -> Optional[TransactionStatus]:
-        """
-        Get current status of a monitored transaction
-
-        Args:
-            tx_hash: Transaction hash
-
-        Returns:
-            Transaction status or None if not found
-        """
-        return self.monitored_transactions.get(tx_hash)
-
-    async def stop_monitoring_transaction(self, tx_hash: str):
-        """
-        Stop monitoring a specific transaction
-
-        Args:
-            tx_hash: Transaction hash to stop monitoring
-        """
+        if network not in self.web3_instances:
+            logger.error(f"Network {network} not supported")
+            return False
+        
+        if tx_hash in self.monitored_transactions:
+            logger.warning(f"Transaction {tx_hash} is already being monitored")
+            return True
+        
+        # Initialize transaction status
+        tx_status = TransactionStatus(
+            tx_hash=tx_hash,
+            status="pending",
+            network=network,
+            timestamp=int(time.time())
+        )
+        
+        self.monitored_transactions[tx_hash] = tx_status
+        self.metrics.total_transactions += 1
+        self.metrics.pending_transactions += 1
+        
+        if callback:
+            self.callbacks.append(callback)
+        
+        logger.info(f"Added transaction {tx_hash} to monitoring on {network}")
+        return True
+    
+    async def remove_transaction(self, tx_hash: str) -> bool:
+        """Remove a transaction from monitoring."""
         if tx_hash in self.monitored_transactions:
             del self.monitored_transactions[tx_hash]
-            if tx_hash in self.callbacks:
-                del self.callbacks[tx_hash]
-            logger.info(f"Stopped monitoring transaction: {tx_hash}")
-
+            logger.info(f"Removed transaction {tx_hash} from monitoring")
+            return True
+        return False
+    
+    async def get_transaction_status(self, tx_hash: str) -> Optional[TransactionStatus]:
+        """Get current status of a monitored transaction."""
+        return self.monitored_transactions.get(tx_hash)
+    
+    async def get_all_transactions(self) -> List[TransactionStatus]:
+        """Get all monitored transactions."""
+        return list(self.monitored_transactions.values())
+    
+    async def get_metrics(self) -> MonitoringMetrics:
+        """Get current monitoring metrics."""
+        return self.metrics
+    
     async def _monitoring_loop(self):
-        """Main monitoring loop"""
-        while self.is_monitoring:
+        """Main monitoring loop."""
+        while self.running:
             try:
                 await self._check_all_transactions()
-                await asyncio.sleep(self.config.check_interval)
+                await asyncio.sleep(self.check_interval)
             except Exception as e:
                 logger.error(f"Error in monitoring loop: {e}")
-                await asyncio.sleep(self.config.check_interval)
-
+                await asyncio.sleep(self.check_interval)
+    
     async def _check_all_transactions(self):
-        """Check status of all monitored transactions"""
-        if not self.monitored_transactions:
-            return
-
-        try:
-            from web3 import Web3
-
-            w3 = Web3(Web3.HTTPProvider(self.config.rpc_url))
-            current_block = w3.eth.block_number
-
-            for tx_hash, tx_status in list(self.monitored_transactions.items()):
-                try:
-                    await self._check_transaction_status(
-                        tx_hash, tx_status, w3, current_block
-                    )
-                except Exception as e:
-                    logger.error(f"Error checking transaction {tx_hash}: {e}")
-
-        except Exception as e:
-            logger.error(f"Error in _check_all_transactions: {e}")
-
-    async def _check_transaction_status(
-        self, tx_hash: str, tx_status: TransactionStatus, w3, current_block: int
-    ):
-        """Check status of a specific transaction"""
+        """Check status of all monitored transactions."""
+        for tx_hash, tx_status in list(self.monitored_transactions.items()):
+            try:
+                await self._check_transaction_status(tx_hash, tx_status)
+            except Exception as e:
+                logger.error(f"Error checking transaction {tx_hash}: {e}")
+    
+    async def _check_transaction_status(self, tx_hash: str, tx_status: TransactionStatus):
+        """Check status of a specific transaction."""
+        web3 = self.web3_instances[tx_status.network]
+        
         try:
             # Get transaction receipt
-            receipt = w3.eth.get_transaction_receipt(tx_hash)
-
-            # Update confirmations
-            if tx_status.block_number:
-                confirmations = current_block - tx_status.block_number + 1
-                tx_status.confirmations = confirmations
-
-                # Check if transaction is confirmed
-                if confirmations >= self.config.confirmation_blocks:
-                    if tx_status.status != "confirmed":
-                        tx_status.status = "confirmed"
-                        await self._notify_callbacks(tx_hash, tx_status)
-                        logger.info(
-                            f"Transaction {tx_hash} confirmed with {confirmations} confirmations"
-                        )
-
-                # Check if transaction failed
-                if receipt.status == 0:
-                    if tx_status.status != "failed":
-                        tx_status.status = "failed"
-                        tx_status.error_message = "Transaction failed"
-                        await self._notify_callbacks(tx_hash, tx_status)
-                        logger.warning(f"Transaction {tx_hash} failed")
-
-        except Exception as e:
-            # Transaction might not be mined yet
-            if "not found" in str(e).lower():
-                # Check if transaction has been pending too long
-                if (datetime.now() - tx_status.timestamp).seconds > self.config.timeout:
-                    tx_status.status = "dropped"
-                    tx_status.error_message = "Transaction dropped (timeout)"
-                    await self._notify_callbacks(tx_hash, tx_status)
-                    logger.warning(f"Transaction {tx_hash} dropped due to timeout")
+            receipt = web3.eth.get_transaction_receipt(tx_hash)
+            
+            if receipt:
+                # Transaction is confirmed
+                tx_status.status = "confirmed"
+                tx_status.block_number = receipt.blockNumber
+                tx_status.gas_used = receipt.gasUsed
+                tx_status.receipt = dict(receipt)
+                
+                # Calculate confirmations
+                current_block = web3.eth.block_number
+                tx_status.confirmation_count = current_block - receipt.blockNumber + 1
+                
+                # Update metrics
+                self._update_metrics(tx_status)
+                
+                # Remove from monitoring if enough confirmations
+                if tx_status.confirmation_count >= self.max_confirmations:
+                    await self.remove_transaction(tx_hash)
+                
+                logger.info(f"Transaction {tx_hash} confirmed in block {receipt.blockNumber}")
+                
             else:
-                logger.error(f"Error checking transaction {tx_hash}: {e}")
-
-    async def _notify_callbacks(self, tx_hash: str, tx_status: TransactionStatus):
-        """Notify registered callbacks of status update"""
-        if tx_hash in self.callbacks:
-            for callback in self.callbacks[tx_hash]:
+                # Check if transaction exists in mempool
                 try:
-                    if asyncio.iscoroutinefunction(callback):
-                        await callback(tx_hash, tx_status)
-                    else:
-                        callback(tx_hash, tx_status)
-                except Exception as e:
-                    logger.error(f"Error in callback for transaction {tx_hash}: {e}")
-
-    def register_callback(self, tx_hash: str, callback: Callable):
-        """
-        Register a callback for a specific transaction
-
-        Args:
-            tx_hash: Transaction hash
-            callback: Callback function
-        """
-        if tx_hash not in self.callbacks:
-            self.callbacks[tx_hash] = []
-        self.callbacks[tx_hash].append(callback)
-
-    async def get_monitoring_summary(self) -> Dict[str, Any]:
-        """
-        Get summary of all monitored transactions
-
-        Returns:
-            Summary dictionary
-        """
-        total_transactions = len(self.monitored_transactions)
-        confirmed = len(
-            [
-                tx
-                for tx in self.monitored_transactions.values()
-                if tx.status == "confirmed"
-            ]
-        )
-        pending = len(
-            [
-                tx
-                for tx in self.monitored_transactions.values()
-                if tx.status == "pending"
-            ]
-        )
-        failed = len(
-            [tx for tx in self.monitored_transactions.values() if tx.status == "failed"]
-        )
-        dropped = len(
-            [
-                tx
-                for tx in self.monitored_transactions.values()
-                if tx.status == "dropped"
-            ]
-        )
-
-        return {
-            "total_transactions": total_transactions,
-            "confirmed": confirmed,
-            "pending": pending,
-            "failed": failed,
-            "dropped": dropped,
-            "is_monitoring": self.is_monitoring,
-            "monitored_hashes": list(self.monitored_transactions.keys()),
-        }
-
-    async def wait_for_confirmation(
-        self, tx_hash: str, timeout: Optional[int] = None
-    ) -> TransactionStatus:
-        """
-        Wait for a transaction to be confirmed
-
-        Args:
-            tx_hash: Transaction hash
-            timeout: Timeout in seconds (None for no timeout)
-
-        Returns:
-            Final transaction status
-        """
-        if tx_hash not in self.monitored_transactions:
-            await self.monitor_transaction(tx_hash)
-
-        start_time = datetime.now()
-        timeout_seconds = timeout or self.config.timeout
-
-        while True:
-            tx_status = self.monitored_transactions.get(tx_hash)
-            if not tx_status:
-                raise ValueError(f"Transaction {tx_hash} not found")
-
-            if tx_status.status in ["confirmed", "failed", "dropped"]:
-                return tx_status
-
-            if (datetime.now() - start_time).seconds > timeout_seconds:
-                tx_status.status = "dropped"
-                tx_status.error_message = "Timeout waiting for confirmation"
-                return tx_status
-
-            await asyncio.sleep(self.config.check_interval)
-
-    async def get_transaction_history(
-        self, address: str, from_block: int = 0, to_block: str = "latest"
-    ) -> List[Dict[str, Any]]:
-        """
-        Get transaction history for an address
-
-        Args:
-            address: Address to get history for
-            from_block: Starting block number
-            to_block: Ending block number or 'latest'
-
-        Returns:
-            List of transaction data
-        """
-        try:
-            from web3 import Web3
-
-            w3 = Web3(Web3.HTTPProvider(self.config.rpc_url))
-
-            # Get transaction count
-            tx_count = w3.eth.get_transaction_count(address)
-
-            transactions = []
-
-            # Get recent transactions (simplified approach)
-            for i in range(max(0, tx_count - 10), tx_count):
-                try:
-                    tx = w3.eth.get_transaction_by_index(address, i)
+                    tx = web3.eth.get_transaction(tx_hash)
                     if tx:
-                        transactions.append(
-                            {
-                                "hash": tx.hash.hex(),
-                                "from": tx["from"],
-                                "to": tx.to,
-                                "value": tx.value,
-                                "gas": tx.gas,
-                                "gas_price": tx.gasPrice,
-                                "block_number": tx.blockNumber,
-                                "transaction_index": tx.transactionIndex,
-                            }
-                        )
-                except Exception as e:
-                    logger.debug(
-                        f"Error getting transaction {i} for address {address}: {e}"
-                    )
-                    continue
-
-            return transactions
-
+                        tx_status.gas_price = tx.gasPrice
+                        tx_status.status = "pending"
+                    else:
+                        tx_status.status = "dropped"
+                        await self.remove_transaction(tx_hash)
+                except TransactionNotFound:
+                    tx_status.status = "dropped"
+                    await self.remove_transaction(tx_hash)
+        
         except Exception as e:
-            logger.error(f"Error getting transaction history for {address}: {e}")
-            return []
-
-    async def estimate_gas_price(self) -> Dict[str, int]:
-        """
-        Estimate current gas price
-
-        Returns:
-            Dictionary with gas price estimates
-        """
+            logger.error(f"Error checking transaction {tx_hash}: {e}")
+            tx_status.error_message = str(e)
+    
+    def _update_metrics(self, tx_status: TransactionStatus):
+        """Update monitoring metrics based on transaction status."""
+        if tx_status.status == "confirmed":
+            self.metrics.confirmed_transactions += 1
+            self.metrics.pending_transactions = max(0, self.metrics.pending_transactions - 1)
+            
+            if tx_status.gas_used:
+                # Update average gas used
+                total_gas = self.metrics.average_gas_used * (self.metrics.confirmed_transactions - 1)
+                self.metrics.average_gas_used = (total_gas + tx_status.gas_used) / self.metrics.confirmed_transactions
+            
+            if tx_status.gas_price:
+                # Update average gas price
+                total_price = self.metrics.average_gas_price * (self.metrics.confirmed_transactions - 1)
+                self.metrics.average_gas_price = (total_price + tx_status.gas_price) / self.metrics.confirmed_transactions
+        
+        elif tx_status.status == "failed":
+            self.metrics.failed_transactions += 1
+            self.metrics.pending_transactions = max(0, self.metrics.pending_transactions - 1)
+        
+        # Calculate success rate
+        total_processed = self.metrics.confirmed_transactions + self.metrics.failed_transactions
+        if total_processed > 0:
+            self.metrics.success_rate = (self.metrics.confirmed_transactions / total_processed) * 100
+    
+    async def get_transaction_history(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Get transaction history with optional limit."""
+        transactions = []
+        for tx_status in self.monitored_transactions.values():
+            transactions.append(asdict(tx_status))
+        
+        # Sort by timestamp (newest first)
+        transactions.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return transactions[:limit]
+    
+    async def export_metrics(self, file_path: str) -> bool:
+        """Export metrics to JSON file."""
         try:
-            from web3 import Web3
-
-            w3 = Web3(Web3.HTTPProvider(self.config.rpc_url))
-
-            # Get current gas price
-            current_gas_price = w3.eth.gas_price
-
-            # Estimate gas price for different priority levels
-            return {
-                "slow": int(current_gas_price * 0.8),
-                "standard": current_gas_price,
-                "fast": int(current_gas_price * 1.2),
-                "instant": int(current_gas_price * 1.5),
+            metrics_data = {
+                "timestamp": int(time.time()),
+                "metrics": asdict(self.metrics),
+                "transactions": await self.get_transaction_history()
             }
-
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(metrics_data, f, indent=2)
+            
+            logger.info(f"Metrics exported to {file_path}")
+            return True
+            
         except Exception as e:
-            logger.error(f"Error estimating gas price: {e}")
+            logger.error(f"Failed to export metrics: {e}")
+            return False
+    
+    async def get_network_status(self, network: str) -> Dict[str, Any]:
+        """Get network status information."""
+        if network not in self.web3_instances:
+            return {"error": f"Network {network} not supported"}
+        
+        try:
+            web3 = self.web3_instances[network]
+            
+            # Get latest block
+            latest_block = web3.eth.get_block('latest')
+            
+            # Get gas price
+            gas_price = web3.eth.gas_price
+            
+            # Get pending transactions count
+            pending_txs = len(self.monitored_transactions)
+            
             return {
-                "slow": 20000000000,  # 20 gwei
-                "standard": 25000000000,  # 25 gwei
-                "fast": 30000000000,  # 30 gwei
-                "instant": 40000000000,  # 40 gwei
+                "network": network,
+                "block_number": latest_block.number,
+                "gas_price_wei": gas_price,
+                "gas_price_gwei": gas_price / 1e9,
+                "pending_transactions": pending_txs,
+                "is_synced": True,  # Assume synced for now
+                "timestamp": int(time.time())
             }
+            
+        except Exception as e:
+            logger.error(f"Failed to get network status for {network}: {e}")
+            return {"error": str(e)}
+    
+    async def cleanup_old_transactions(self, max_age_hours: int = 24):
+        """Clean up old completed transactions."""
+        current_time = time.time()
+        max_age_seconds = max_age_hours * 3600
+        
+        to_remove = []
+        for tx_hash, tx_status in self.monitored_transactions.items():
+            if (tx_status.status in ["confirmed", "failed", "dropped"] and 
+                current_time - tx_status.timestamp > max_age_seconds):
+                to_remove.append(tx_hash)
+        
+        for tx_hash in to_remove:
+            await self.remove_transaction(tx_hash)
+        
+        if to_remove:
+            logger.info(f"Cleaned up {len(to_remove)} old transactions")
+
+# Example usage and testing
+async def main():
+    """Example usage of TransactionMonitor."""
+    config = {
+        "networks": {
+            "hyperion": {"enabled": True},
+            "metis": {"enabled": True},
+            "lazai": {"enabled": True}
+        }
+    }
+    
+    monitor = TransactionMonitor(config)
+    
+    # Start monitoring
+    await monitor.start_monitoring()
+    
+    # Add some example transactions (these would be real transaction hashes)
+    # await monitor.add_transaction("0x123...", "hyperion")
+    
+    # Get metrics
+    metrics = await monitor.get_metrics()
+    print(f"Monitoring metrics: {asdict(metrics)}")
+    
+    # Stop monitoring
+    await monitor.stop_monitoring()
+
+if __name__ == "__main__":
+    asyncio.run(main())

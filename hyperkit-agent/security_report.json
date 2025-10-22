@@ -1,0 +1,128 @@
+{
+  "scan_date": "2025-10-22T16:06:52.052708",
+  "total_issues": 13,
+  "issues_by_severity": {
+    "CRITICAL": 1,
+    "HIGH": 0,
+    "MEDIUM": 12
+  },
+  "issues": [
+    {
+      "file_path": "ENVIRONMENT_SETUP.md",
+      "line_number": 11,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your_google_api_key_here",
+      "suggested_fix": "Use environment variable"
+    },
+    {
+      "file_path": "ENVIRONMENT_SETUP.md",
+      "line_number": 14,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your_openai_api_key_here",
+      "suggested_fix": "Use environment variable"
+    },
+    {
+      "file_path": "ENVIRONMENT_SETUP.md",
+      "line_number": 52,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your_obsidian_api_key_here",
+      "suggested_fix": "Use environment variable"
+    },
+    {
+      "file_path": "ENVIRONMENT_SETUP.md",
+      "line_number": 113,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your_google_api_key_here",
+      "suggested_fix": "Use environment variable"
+    },
+    {
+      "file_path": "ENVIRONMENT_SETUP.md",
+      "line_number": 114,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your_openai_api_key_here",
+      "suggested_fix": "Use environment variable"
+    },
+    {
+      "file_path": "ENVIRONMENT_SETUP.md",
+      "line_number": 119,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your_obsidian_api_key_here",
+      "suggested_fix": "Use environment variable"
+    },
+    {
+      "file_path": "ENVIRONMENT_SETUP.md",
+      "line_number": 128,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your_langsmith_api_key_here",
+      "suggested_fix": "Use environment variable"
+    },
+    {
+      "file_path": "setup.py",
+      "line_number": 147,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your_obsidian_api_key_here",
+      "suggested_fix": "Use environment variable"
+    },
+    {
+      "file_path": "setup.py",
+      "line_number": 378,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your_google_api_key_here",
+      "suggested_fix": "Use environment variable"
+    },
+    {
+      "file_path": "setup.py",
+      "line_number": 379,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your_openai_api_key_here",
+      "suggested_fix": "Use environment variable"
+    },
+    {
+      "file_path": "setup.py",
+      "line_number": 384,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your_obsidian_api_key_here",
+      "suggested_fix": "Use environment variable"
+    },
+    {
+      "file_path": "tests\\conftest.py",
+      "line_number": 100,
+      "issue_type": "private_key",
+      "severity": "CRITICAL",
+      "description": "Private key detected",
+      "pattern_matched": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "suggested_fix": "Use environment variable: PRIVATE_KEY"
+    },
+    {
+      "file_path": "REPORTS\\model-tests\\google_gemini_report.md",
+      "line_number": 42,
+      "issue_type": "api_key_generic",
+      "severity": "MEDIUM",
+      "description": "Generic API key detected",
+      "pattern_matched": "API_KEY=your-google-api-key-here",
+      "suggested_fix": "Use environment variable"
+    }
+  ]
+}

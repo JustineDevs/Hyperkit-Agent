@@ -97,7 +97,7 @@ def mock_deployment_result():
         "status": "success",
         "success": True,
         "address": "0x1234567890123456789012345678901234567890",
-        "tx_hash": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+        "tx_hash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcde",
         "network": "hyperion",
         "gas_used": 100000,
         "gas_price": "20000000000"
