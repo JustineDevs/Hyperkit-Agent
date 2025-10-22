@@ -39,7 +39,7 @@ We will use industry-standard libraries from [OpenZeppelin](https://openzeppelin
 
 ### Environment Variable
 ```bash
-GOOGLE_API_KEY=AIzaSyD5GWKBS-54yhB2K6Bbqt4AQsNnuqrCWzA
+GOOGLE_API_KEY=your-google-api-key-here
 ```
 
 ### Test Command
