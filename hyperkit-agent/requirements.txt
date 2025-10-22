@@ -1,15 +1,12 @@
-# HyperKit AI Agent - Requirements
+# HyperKit AI Agent - Production Requirements
 # Core dependencies for the HyperKit AI Agent system
+
+# Python Version
+# Requires Python 3.8+
 
 # AI and Generation (Cloud-Based Providers)
 google-generativeai>=0.3.0
 openai>=1.0.0
-
-# Additional AI Providers (Optional)
-# anthropic>=0.7.0
-# dashscope>=1.14.0
-# deepseek-ai>=0.1.0
-# xai>=0.1.0
 
 # Web3 and Blockchain
 web3>=6.0.0
@@ -17,14 +14,14 @@ eth-account>=0.8.0
 eth-utils>=2.0.0
 
 # HTTP and API
-httpx>=0.24.0
 requests>=2.31.0
 aiohttp>=3.8.0
 
-# Data Processing
-pydantic>=2.0.0
+# Data Processing and Configuration
+pydantic>=2.6.0,<2.10.0
 pydantic-settings>=2.0.0
 python-dotenv>=1.0.0
+PyYAML>=6.0.0
 
 # Testing
 pytest>=7.0.0
@@ -38,10 +35,9 @@ isort>=5.12.0
 mypy>=1.0.0
 
 # Security
-safety>=2.0.0
+safety>=2.0.0,<3.6.0
 bandit>=1.7.0
 slither-analyzer>=0.11.0
-# mythril>=0.24.0  # Not available on Windows due to compilation issues
 
 # Documentation
 sphinx>=7.0.0
@@ -50,32 +46,22 @@ sphinx-rtd-theme>=1.3.0
 # Development
 pre-commit>=3.0.0
 
-# RAG and Vector Store (completely removed - using simple MCP instead)
-# LangChain dependencies removed for simplicity and reliability
-
-# MCP Docker Integration
+# MCP Docker Integration (Optional)
 docker>=6.0.0
 flask>=2.0.0
 flask-cors>=4.0.0
+
+# Logging
 loguru>=0.7.0
 
-# LangChain Configuration
+# LangChain (Optional - for advanced RAG)
 langsmith>=0.1.0
 
-# TensorFlow Compatibility
-tf-keras>=2.15.0
+# Platform and typing compatibility
+platformdirs>=4.2.0
+typing-extensions>=4.12.0,<4.15.0
 
-# HTTP and API
-requests>=2.31.0
-
-# Additional dependencies for HyperKit Agent
-asyncio-mqtt>=0.13.0
-redis>=5.0.0
-celery>=5.3.0
-
-# Configuration
-PyYAML>=6.0.0
-
-# API Testing and Validation
-python-dotenv>=1.0.0
-requests>=2.31.0
+# Additional utilities
+click>=8.2.0,!=8.2.2
+rich>=13.0.0
+urllib3>=2.5.0,<3.0

@@ -64,7 +64,9 @@ def test_agent_initialization():
             config = get_config()
             agent = HyperKitAgent(config.to_dict())
             assert agent is not None
-            assert hasattr(agent, 'process_request')
+            assert hasattr(agent, 'generate_contract')
+            assert hasattr(agent, 'audit_contract')
+            assert hasattr(agent, 'deploy_contract')
     except Exception as e:
         pytest.fail(f"Failed to initialize HyperKitAgent: {e}")
 
