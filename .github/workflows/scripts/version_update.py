@@ -291,9 +291,10 @@ def main():
         sys.exit(1)
     
     # Get bump type from environment or default to patch
-    bump_type = os.environ.get("BUMP_TYPE", "patch").lower()
+    bump_type = os.environ.get("BUMP_TYPE", "patch").lower().strip()
     if bump_type not in ["patch", "minor", "major"]:
-        print(f"❌ Invalid bump type: {bump_type}. Use 'patch', 'minor', or 'major'")
+        print(f"❌ Invalid bump type: '{bump_type}'. Use 'patch', 'minor', or 'major'")
+        print(f"   Environment variable BUMP_TYPE: '{os.environ.get('BUMP_TYPE', 'not set')}'")
         sys.exit(1)
     
     try:

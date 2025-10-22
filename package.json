@@ -1,13 +1,13 @@
 {
   "name": "hyperkit",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Web3 Development Platform with AI Generation and Cross-Chain DeFi Primitives",
   "main": "hypeagent/__init__.py",
   "scripts": {
     "version:update": "python .github/workflows/scripts/version_update.py",
-    "version:patch": "BUMP_TYPE=patch python .github/workflows/scripts/version_update.py",
-    "version:minor": "BUMP_TYPE=minor python .github/workflows/scripts/version_update.py",
-    "version:major": "BUMP_TYPE=major python .github/workflows/scripts/version_update.py",
+    "version:patch": "set BUMP_TYPE=patch && python .github/workflows/scripts/version_update.py",
+    "version:minor": "set BUMP_TYPE=minor && python .github/workflows/scripts/version_update.py",
+    "version:major": "set BUMP_TYPE=major && python .github/workflows/scripts/version_update.py",
     "changeset": "changeset",
     "changeset:add": "changeset add",
     "changeset:version": "changeset version",
