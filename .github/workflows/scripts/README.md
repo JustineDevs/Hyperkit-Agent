@@ -4,14 +4,17 @@
 
 ### **Update Version (All-in-One)**
 ```bash
+# Default patch
+npm run version:update
+
 # Patch version (1.2.0 → 1.2.1)
-python .github/workflows/scripts/version_update.py
+npm run version:patch 
 
 # Minor version (1.2.0 → 1.3.0)
-BUMP_TYPE=minor python .github/workflows/scripts/version_update.py
+npm run version:minor
 
 # Major version (1.2.0 → 2.0.0)
-BUMP_TYPE=major python .github/workflows/scripts/version_update.py
+npm run version:major 
 ```
 
 ### **What It Does**
