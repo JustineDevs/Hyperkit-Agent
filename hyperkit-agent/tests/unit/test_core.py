@@ -258,14 +258,16 @@ class TestMultiChainDeployer:
         assert deployer is not None
         assert deployer.networks is not None
         assert "hyperion" in deployer.networks
-        assert "polygon" in deployer.networks
+        assert "metis" in deployer.networks
+        assert "lazai" in deployer.networks
 
     def test_get_supported_networks(self, deployer):
         """Test getting supported networks."""
         networks = deployer.get_supported_networks()
         assert "hyperion" in networks
-        assert "polygon" in networks
-        assert "arbitrum" in networks
+        assert "metis" in networks
+        assert "lazai" in networks
+        assert len(networks) == 3  # Exactly 3 networks supported
 
     def test_get_network_info(self, deployer):
         """Test getting network information."""
