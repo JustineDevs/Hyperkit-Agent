@@ -20,6 +20,21 @@ from web3.exceptions import TransactionNotFound, BlockNotFound
 logger = logging.getLogger(__name__)
 
 @dataclass
+class MonitoringConfig:
+    """Configuration for transaction monitoring."""
+    rpc_url: str = "https://hyperion-testnet.metisdevops.link"
+    confirmation_blocks: int = 12
+    check_interval: int = 5  # seconds
+    enabled: bool = True
+    max_retries: int = 3
+    timeout: int = 10  # seconds
+    networks: List[str] = None
+    
+    def __post_init__(self):
+        if self.networks is None:
+            self.networks = ["hyperion", "metis", "lazai"]
+
+@dataclass
 class TransactionStatus:
     """Represents transaction status information."""
     tx_hash: str
@@ -49,10 +64,22 @@ class MonitoringMetrics:
 class TransactionMonitor:
     """Transaction monitoring service for smart contracts."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config):
         """Initialize transaction monitor with configuration."""
         self.config = config
-        self.networks = config.get("networks", {})
+        
+        # Handle both dict and MonitoringConfig objects
+        if hasattr(config, 'networks'):
+            self.networks = config.networks
+            self.rpc_url = config.rpc_url
+            self.confirmation_blocks = config.confirmation_blocks
+            self.check_interval = config.check_interval
+        else:
+            self.networks = config.get("networks", {})
+            self.rpc_url = config.get("rpc_url", "https://hyperion-testnet.metisdevops.link")
+            self.confirmation_blocks = config.get("confirmation_blocks", 12)
+            self.check_interval = config.get("check_interval", 5)
+        
         self.web3_instances = {}
         self.monitored_transactions = {}
         self.metrics = MonitoringMetrics()
@@ -62,24 +89,34 @@ class TransactionMonitor:
         # Initialize Web3 instances
         self._initialize_web3_instances()
         
-        # Monitoring configuration
-        self.check_interval = 5  # seconds
-        self.max_confirmations = 12
+        # Additional monitoring configuration
+        self.max_confirmations = self.confirmation_blocks
         self.timeout_duration = 300  # 5 minutes
         
     def _initialize_web3_instances(self):
         """Initialize Web3 instances for each supported network."""
-        for network, network_config in self.networks.items():
-            if network_config.get("enabled", False):
-                rpc_url = f"{network.upper()}_RPC_URL"
-                import os
-                rpc_url = os.getenv(rpc_url)
-                if rpc_url:
-                    try:
-                        self.web3_instances[network] = Web3(Web3.HTTPProvider(rpc_url))
-                        logger.info(f"Initialized Web3 instance for {network}")
-                    except Exception as e:
-                        logger.error(f"Failed to initialize Web3 for {network}: {e}")
+        # Handle both list and dict formats
+        if isinstance(self.networks, list):
+            # If networks is a list, use the rpc_url from config
+            if self.rpc_url:
+                try:
+                    self.web3_instances["hyperion"] = Web3(Web3.HTTPProvider(self.rpc_url))
+                    logger.info(f"Initialized Web3 instance for hyperion")
+                except Exception as e:
+                    logger.error(f"Failed to initialize Web3 for hyperion: {e}")
+        else:
+            # If networks is a dict, iterate through it
+            for network, network_config in self.networks.items():
+                if network_config.get("enabled", False):
+                    rpc_url = f"{network.upper()}_RPC_URL"
+                    import os
+                    rpc_url = os.getenv(rpc_url)
+                    if rpc_url:
+                        try:
+                            self.web3_instances[network] = Web3(Web3.HTTPProvider(rpc_url))
+                            logger.info(f"Initialized Web3 instance for {network}")
+                        except Exception as e:
+                            logger.error(f"Failed to initialize Web3 for {network}: {e}")
     
     async def start_monitoring(self):
         """Start the transaction monitoring service."""
