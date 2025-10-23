@@ -51,15 +51,15 @@ class TestHyperKitAgent:
     async def test_generate_contract(self, agent):
         """Test contract generation."""
         with patch(
-            "services.generation.generator.ContractGenerator.generate"
-        ) as mock_generate:
-            mock_generate.return_value = "contract Test {}"
+            "core.llm.router.HybridLLMRouter.route"
+        ) as mock_route:
+            mock_route.return_value = "pragma solidity ^0.8.0;\n\ncontract Test {\n    string public name = \"Test Contract\";\n}"
 
             result = await agent.generate_contract("Create a simple contract")
 
             assert result["status"] == "success"
             assert "contract_code" in result
-            assert result["contract_code"] == "contract Test {}"
+            assert "pragma solidity" in result["contract_code"]
 
     @pytest.mark.asyncio
     async def test_audit_contract(self, agent):
@@ -75,6 +75,9 @@ class TestHyperKitAgent:
     @pytest.mark.asyncio
     async def test_deploy_contract(self, agent):
         """Test contract deployment."""
+        # Set a test private key
+        agent.config["DEFAULT_PRIVATE_KEY"] = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        
         with patch(
             "services.deployment.deployer.MultiChainDeployer.deploy"
         ) as mock_deploy:
@@ -84,7 +87,7 @@ class TestHyperKitAgent:
                 "tx_hash": "0xabc",
             }
 
-            result = await agent.deploy_contract("contract Test {}", "hyperion")
+            result = await agent.deploy_contract("pragma solidity ^0.8.0;\n\ncontract Test {\n    string public name = \"Test Contract\";\n}", "hyperion")
 
             assert result["status"] == "success"
             assert result["network"] == "hyperion"

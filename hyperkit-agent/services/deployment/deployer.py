@@ -315,7 +315,7 @@ class MultiChainDeployer:
             # This is a simplified verification process
             # In practice, you'd use the specific explorer's API
 
-            explorer_url = network_config.get("explorer", "")
+            explorer_url = network_config.get("explorer_url", "")
 
             return {
                 "status": "pending",

@@ -340,6 +340,44 @@ class ErrorHandler:
             self.logger.error(f"Failed to export error log: {e}")
             return False
 
+    def create_validation_error(self, field: str, value: str, errors: str) -> HyperKitError:
+        """Create a validation error."""
+        context = ErrorContext("validation", "validator")
+        context.metadata = {"field": field, "value": value}
+        return HyperKitError(
+            message=f"Validation failed for {field}: {errors}",
+            category=ErrorCategory.VALIDATION,
+            severity=ErrorSeverity.MEDIUM,
+            context=context,
+            recovery_suggestion=f"Please provide a valid {field}"
+        )
+
+    def create_deployment_error(self, contract_type: str, network: str, error: Exception) -> HyperKitError:
+        """Create a deployment error."""
+        context = ErrorContext("deployment", "deployer")
+        context.metadata = {"contract_type": contract_type, "network": network}
+        return HyperKitError(
+            message=f"Failed to deploy {contract_type} to {network}: {str(error)}",
+            category=ErrorCategory.DEPLOYMENT,
+            severity=ErrorSeverity.HIGH,
+            context=context,
+            original_error=error,
+            recovery_suggestion="Check network configuration and contract code"
+        )
+
+    def format_error_response(self, error: HyperKitError) -> Dict[str, Any]:
+        """Format error response for API."""
+        return {
+            "success": False,
+            "error": {
+                "id": error.error_id,
+                "message": error.message,
+                "category": error.category.value,
+                "severity": error.severity.value,
+                "recovery_suggestion": error.recovery_suggestion
+            }
+        }
+
 
 def error_handler(
     context: Optional[ErrorContext] = None,

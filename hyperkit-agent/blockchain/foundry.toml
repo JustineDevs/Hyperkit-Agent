@@ -1,0 +1,31 @@
+[profile.default]
+src = "contracts"
+out = "out"
+libs = ["lib"]
+solc = "0.8.20"
+optimizer = true
+optimizer_runs = 200
+via_ir = false
+verbosity = 2
+fuzz = { runs = 1000 }
+invariant = { runs = 256, depth = 15, fail_on_revert = false, call_override = false }
+gas_reports = ["*"]
+gas_reports_ignore = ["MockERC20", "MockERC721", "MockERC1155"]
+
+[profile.ci]
+fuzz = { runs = 10000 }
+invariant = { runs = 1000, depth = 20 }
+
+[profile.lite]
+fuzz = { runs = 100 }
+invariant = { runs = 10, depth = 5 }
+
+[rpc_endpoints]
+hyperion = "https://hyperion-testnet.metisdevops.link"
+metis = "https://andromeda.metis.io"
+lazai = "https://rpc.lazai.network/testnet"
+
+[etherscan]
+hyperion = { key = "${HYPERION_ETHERSCAN_API_KEY}", url = "https://hyperion-testnet-explorer.metisdevops.link/api" }
+metis = { key = "${METIS_ETHERSCAN_API_KEY}", url = "https://andromeda-explorer.metis.io/api" }
+lazai = { key = "${LAZAI_ETHERSCAN_API_KEY}", url = "https://testnet-explorer.lazai.network/api" }
