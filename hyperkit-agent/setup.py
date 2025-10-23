@@ -466,7 +466,7 @@ Thumbs.db
 
 setup(
     name="hyperkit-agent",
-    version="1.3.5",
+    version="1.3.6",
     author="HyperKit Team",
     author_email="team@hyperionkit.xyz",
     description="HyperKit AI Agent - Smart Contract Generation, Auditing, and Deployment",
