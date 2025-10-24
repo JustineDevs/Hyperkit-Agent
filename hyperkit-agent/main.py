@@ -404,7 +404,91 @@ def deploy(contract_path, network, constructor_args, gas_price, verify, wait):
         sys.exit(1)
 
 # ============================================================================
-# 5. INTERACTIVE COMMAND - Development Mode
+# 5. DEFI PROTOCOL COMMAND - Advanced DeFi Generation
+# ============================================================================
+
+@cli.command()
+@click.option("--protocol", "-p", type=click.Choice(["uniswap_v2", "uniswap_v3", "compound", "aave", "curve", "balancer", "custom"]), 
+              default="uniswap_v2", help="DeFi protocol type")
+@click.option("--network", "-n", default="ethereum",
+              type=click.Choice(["ethereum", "polygon", "arbitrum", "hyperion", "metis"]))
+@click.option("--features", "-f", multiple=True, help="DeFi features to include")
+@click.option("--output", "-o", type=click.Path(), help="Save protocol to file")
+@click.option("--verbose", "-v", is_flag=True, help="Show detailed output")
+def defi_protocol(protocol, network, features, output, verbose):
+    """🚀 Generate DeFi protocol contracts (Uniswap, Compound, Aave, etc.)"""
+    try:
+        config = ConfigLoader.load()
+        agent = HyperKitAgent(config)
+        
+        protocol_spec = {
+            "protocol_type": protocol,
+            "network": network,
+            "features": list(features) if features else [],
+            "name": f"{protocol.title()}Protocol",
+            "description": f"Advanced {protocol} DeFi protocol"
+        }
+        
+        console.print(Panel(
+            f"[cyan]Protocol:[/cyan] {protocol.upper()}\n"
+            f"[cyan]Network:[/cyan] {network.upper()}\n"
+            f"[cyan]Features:[/cyan] {', '.join(features) if features else 'Default'}",
+            title="🔧 DeFi Protocol Configuration",
+            expand=False
+        ))
+        
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            progress.add_task("🚀 Generating DeFi protocol...", total=None)
+            result = asyncio.run(agent.generate_defi_protocol(protocol_spec))
+        
+        if result.get("status") == "success":
+            protocol_code = result.get("protocol_code", "")
+            protocol_type = result.get("protocol_type", "")
+            security_level = result.get("security_level", "UNKNOWN")
+            defi_complexity = result.get("defi_complexity", "UNKNOWN")
+            
+            console.print(Panel(
+                f"[green]✅ DeFi Protocol Generated![/green]\n"
+                f"[cyan]Type:[/cyan] {protocol_type}\n"
+                f"[cyan]Security Level:[/cyan] {security_level}\n"
+                f"[cyan]Complexity:[/cyan] {defi_complexity}\n"
+                f"[cyan]Lines of code:[/cyan] {len(protocol_code.splitlines())}",
+                title="🎉 Protocol Generation Summary",
+                expand=False
+            ))
+            
+            # Save protocol
+            if output:
+                protocol_path = Path(output)
+                protocol_path.parent.mkdir(parents=True, exist_ok=True)
+                protocol_path.write_text(protocol_code)
+                console.print(f"[green]Saved to: {protocol_path}[/green]")
+            else:
+                # Auto-save to generated protocols directory
+                output_dir = Path("contracts/generated/protocols")
+                output_dir.mkdir(parents=True, exist_ok=True)
+                protocol_path = output_dir / f"{protocol_type}_Protocol.sol"
+                protocol_path.write_text(protocol_code)
+                console.print(f"[green]Auto-saved to: {protocol_path}[/green]")
+            
+            if verbose:
+                console.print("[cyan]Generated protocol code:[/cyan]")
+                console.print(Panel(protocol_code, title="Protocol Code", expand=False))
+            
+        else:
+            console.print(f"[red]❌ Protocol generation failed: {result.get('error')}[/red]")
+            sys.exit(1)
+    
+    except Exception as e:
+        console.print(f"[red]❌ Error generating protocol: {e}[/red]")
+        sys.exit(1)
+
+# ============================================================================
+# 6. INTERACTIVE COMMAND - Development Mode
 # ============================================================================
 
 @cli.command()

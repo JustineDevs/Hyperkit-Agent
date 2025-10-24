@@ -150,10 +150,10 @@ database:
 # Logging Configuration
 logging:
   level: "INFO"
-  file: "./logs/hyperkit-agent.log"
-  max_size: "10MB"
+  file_path: "./logs/hyperkit-agent.log"
+  max_size: 10
   backup_count: 5
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  format: "text"
 
 # Development Configuration
 development:

@@ -1,6 +1,6 @@
 {
-  "timestamp": 198267.765,
-  "contract_length": 3267,
+  "timestamp": 218980.093,
+  "contract_length": 2474,
   "tools_used": [
     "slither",
     "custom"
@@ -11,13 +11,20 @@
       "severity": "medium",
       "description": "Potential integer overflow/underflow",
       "pattern": "integer_overflow",
-      "matches": 40
+      "matches": 35
     },
     {
       "tool": "custom",
       "severity": "info",
       "description": "Events defined for logging",
       "pattern": "has_events",
+      "matches": 1
+    },
+    {
+      "tool": "custom",
+      "severity": "info",
+      "description": "Custom modifiers defined",
+      "pattern": "has_modifiers",
       "matches": 1
     },
     {
@@ -42,13 +49,20 @@
         "severity": "medium",
         "description": "Potential integer overflow/underflow",
         "pattern": "integer_overflow",
-        "matches": 40
+        "matches": 35
       },
       {
         "tool": "custom",
         "severity": "info",
         "description": "Events defined for logging",
         "pattern": "has_events",
+        "matches": 1
+      },
+      {
+        "tool": "custom",
+        "severity": "info",
+        "description": "Custom modifiers defined",
+        "pattern": "has_modifiers",
         "matches": 1
       },
       {
