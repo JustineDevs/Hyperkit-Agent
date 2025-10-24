@@ -1,0 +1,69 @@
+{
+  "prompt": "Create a simple ERC20 token for testing",
+  "network": "hyperion",
+  "timestamp": "2025-10-24T12:03:03.360771",
+  "stages": {
+    "generation": {
+      "status": "success",
+      "contract_code": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\nimport \"@openzeppelin/contracts/token/ERC20/ERC20.sol\";\nimport \"@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol\";\nimport \"@openzeppelin/contracts/access/Ownable.sol\";\nimport \"@openzeppelin/contracts/security/Pausable.sol\";\nimport \"@openzeppelin/contracts/security/ReentrancyGuard.sol\";\n\n/**\n * @title TestToken\n * @author Your Name\n * @notice A simple ERC20 token for testing purposes, incorporating standard OpenZeppelin features.\n * @dev This contract includes minting, burning, pausing, and ownership functionalities.\n * It is built upon OpenZeppelin's secure and audited components.\n * It uses Solidity 0.8+ with built-in overflow/underflow checks.\n */\ncontract TestToken is ERC20, ERC20Burnable, Ownable, Pausable, ReentrancyGuard {\n\n    /**\n     * @notice Emitted when the contract is paused.\n     */\n    event Paused(address account);\n\n    /**\n     * @notice Emitted when the contract is unpaused.\n     */\n    event Unpaused(address account);\n\n    /**\n     * @notice Sets up the token with a name, symbol, initial supply, and owner.\n     * @param name_ The name of the token (e.g., \"Test Token\").\n     * @param symbol_ The symbol of the token (e.g., \"TEST\").\n     * @param initialSupply The total amount of tokens to mint to the deployer upon creation.\n     *        It should be provided with decimals in mind (e.g., for 18 decimals, 1 token is 1 * 10**18).\n     * @param owner The address that will be set as the contract owner.\n     */\n    constructor(\n        string memory name_,\n        string memory symbol_,\n        uint256 initialSupply,\n        address owner\n    ) ERC20(name_, symbol_) Ownable(owner) {\n        if (initialSupply > 0) {\n            _mint(owner, initialSupply);\n        }\n    }\n\n    /**\n     * @dev Hook that is called before any token transfer, including minting and burning.\n     * It ensures that token transfers cannot occur while the contract is paused.\n     * Overrides the function from ERC20.\n     */\n    function _update(address from, address to, uint256 value)\n        internal\n        override(ERC20, Pausable)\n    {\n        super._update(from, to, value);\n    }\n\n    /**\n     * @notice Creates `amount` new tokens and assigns them to the `to` address.\n     * @dev Can only be called by the contract owner.\n     * The contract must not be paused for this operation to succeed.\n     * Emits a {Transfer} event with `from` set to the zero address.\n     * @param to The address to mint the tokens to.\n     * @param amount The number of tokens to mint.\n     */\n    function mint(address to, uint256 amount) public onlyOwner nonReentrant {\n        // The `_update` hook handles the `whenNotPaused` check\n        _mint(to, amount);\n    }\n\n    /**\n     * @notice Pauses all token transfers, including mints and burns.\n     * @dev Can only be called by the contract owner.\n     * This is an emergency stop mechanism.\n     * Emits a {Paused} event.\n     */\n    function pause() public onlyOwner {\n        _pause();\n        emit Paused(msg.sender);\n    }\n\n    /**\n     * @notice Unpauses the contract, allowing token transfers to resume.\n     * @dev Can only be called by the contract owner.\n     * Emits an {Unpaused} event.\n     */\n    function unpause() public onlyOwner {\n        _unpause();\n        emit Unpaused(msg.sender);\n    }\n}",
+      "contract_name": "GeneratedContract",
+      "lines_of_code": 94
+    },
+    "audit": {
+      "status": "success",
+      "severity": "medium",
+      "findings_count": 3,
+      "findings": [
+        {
+          "tool": "custom",
+          "severity": "medium",
+          "description": "Potential integer overflow/underflow",
+          "pattern": "integer_overflow",
+          "matches": 45
+        },
+        {
+          "tool": "custom",
+          "severity": "info",
+          "description": "Events defined for logging",
+          "pattern": "has_events",
+          "matches": 3
+        },
+        {
+          "tool": "custom",
+          "severity": "info",
+          "description": "OpenZeppelin libraries imported",
+          "pattern": "uses_openzeppelin",
+          "matches": 5
+        }
+      ]
+    },
+    "deployment": {
+      "status": "error",
+      "error": "Compilation failed"
+    },
+    "testing": {
+      "status": "success",
+      "tests_passed": 2,
+      "tests_failed": 0,
+      "details": {
+        "tests": [
+          {
+            "name": "Contract parsing",
+            "status": "passed",
+            "message": "Found 4 functions: _update, mint, pause, unpause"
+          },
+          {
+            "name": "Solidity syntax",
+            "status": "passed",
+            "message": "Valid Solidity syntax detected"
+          }
+        ],
+        "passed": 2,
+        "failed": 0
+      }
+    }
+  },
+  "errors": [],
+  "warnings": [],
+  "artifacts": {}
+}

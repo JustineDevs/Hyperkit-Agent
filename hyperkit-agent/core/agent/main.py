@@ -310,119 +310,58 @@ class HyperKitAgent:
     async def deploy_contract(
         self, contract_code: str, network: str = "hyperion"
     ) -> Dict[str, Any]:
-        """
-        Deploy a smart contract to the specified network.
-
-        Args:
-            contract_code: Solidity contract code to deploy
-            network: Target network for deployment
-
-        Returns:
-            Dictionary containing deployment details
-        """
+        """Deploy contract to blockchain"""
         try:
+            logger.info(f"🚀 Deploy contract: {network}")
+            
+            # Get network config
+            networks = self.config.get('networks', {})
+            if network not in networks:
+                return {"status": "error", "error": f"Network not found: {network}"}
+            
+            net_cfg = networks[network]
+            
+            # ✅ CRITICAL: Extract ONLY the RPC URL string
+            rpc_url = net_cfg.get('rpc_url')
+            chain_id = net_cfg.get('chain_id', 133717)
+            
+            # Type checking
+            if not isinstance(rpc_url, str):
+                logger.error(f"RPC URL is {type(rpc_url)}, expected str")
+                return {"status": "error", "error": f"RPC URL type error: {type(rpc_url)}"}
+            
+            logger.info(f"Calling deployer with RPC: {rpc_url[:40]}...")
+            
+            # ✅ CRITICAL: Pass ONLY rpc_url (STRING), not the config dict
             from services.deployment.deployer import MultiChainDeployer
-            from core.utils.validation import Validator
-            from core.utils.error_handler import ErrorHandler
-
-            validator = Validator()
-            error_handler = ErrorHandler()
-
-            # Validate inputs
-            contract_result = validator.validate_contract_code(contract_code)
-            if not contract_result.is_valid:
-                error_info = error_handler.create_validation_error(
-                    "contract_code", contract_code, "; ".join(contract_result.errors)
-                )
-                return error_handler.format_error_response(error_info)
-
-            network_result = validator.validate_network_config(
-                network, self.config.get("networks", {}).get(network, "")
+            deployer = MultiChainDeployer(self.config)
+            
+            result = await deployer.deploy(
+                contract_code,      # Contract code
+                network,           # Network name
+                None,              # Constructor args (let deployer handle)
+                self.config.get('DEFAULT_PRIVATE_KEY')  # Private key
             )
-            if not network_result.is_valid:
-                error_info = error_handler.create_validation_error(
-                    "network", network, "; ".join(network_result.errors)
-                )
-                return error_handler.format_error_response(error_info)
-
-            # Check if private key is available
-            if not self.config.get("DEFAULT_PRIVATE_KEY"):
-                error_info = error_handler.create_validation_error(
-                    "private_key", "", "Private key required for deployment"
-                )
-                return error_handler.format_error_response(error_info)
-
-            # Get network configuration from the new config system
-            config_loader = get_config()
-            network_config = config_loader.get_network_config(network)
             
-            # Debug: Log the network config
-            logger.info(f"Network config for {network}: {network_config}")
-            
-            # Ensure network config has required fields
-            if not network_config or not network_config.get('rpc_url'):
-                logger.warning(f"Network config incomplete for {network}, using defaults")
-                # Use default config if not available
-                network_config = {
-                    'rpc_url': 'https://hyperion-testnet.metisdevops.link',
-                    'chain_id': 133717,
-                    'gas_price': '20000000000',
-                    'gas_limit': 8000000
-                }
-            
-            # Create deployer with proper configuration
-            deployer = MultiChainDeployer({
-                'networks': {network: network_config},
-                'default_private_key': self.config.get('DEFAULT_PRIVATE_KEY')
-            })
-            # Check if contract has constructor arguments and provide them
-            constructor_args = None
-            if "constructor(" in contract_code:
-                from eth_account import Account
-                if self.config.get('DEFAULT_PRIVATE_KEY'):
-                    account = Account.from_key(self.config['DEFAULT_PRIVATE_KEY'])
-                    
-                    # Enhanced constructor parameter detection
-                    if "name" in contract_code and "symbol" in contract_code and "initialSupply" in contract_code:
-                        # Contract has name, symbol, and initialSupply (most common pattern)
-                        constructor_args = ["Test Token", "TEST", 1000000]  # 1M tokens (will be multiplied by decimals)
-                    elif "initialOwner" in contract_code and "initialSupply" in contract_code:
-                        # Contract has both initialOwner and initialSupply
-                        constructor_args = [account.address, 1000000 * 10**18]  # 1M tokens with 18 decimals
-                    elif "initialOwner" in contract_code:
-                        # Contract only has initialOwner
-                        constructor_args = [account.address]
-                    elif "name" in contract_code and "symbol" in contract_code:
-                        # Contract has name and symbol only
-                        constructor_args = ["Test Token", "TEST"]
-                    elif "owner" in contract_code:
-                        # Generic owner parameter
-                        constructor_args = [account.address]
-            
-            deployment_result = await deployer.deploy(contract_code, network, constructor_args)
-
-            # Handle deployment result structure
-            if deployment_result.get("success"):
+            if result.get("success"):
                 return {
-                    "status": "success",
-                    "deployment": deployment_result,
-                    "network": network,
-                    "address": deployment_result.get("address"),
-                    "tx_hash": deployment_result.get("tx_hash"),
-                    "gas_used": deployment_result.get("gas_used"),
-                    "warnings": contract_result.warnings + network_result.warnings,
+                    "status": "deployed",
+                    "tx_hash": result.get("transaction_hash"),
+                    "address": result.get("contract_address"),
+                    "network": network
                 }
             else:
-                error_info = error_handler.create_deployment_error(
-                    "Contract",
-                    network,
-                    Exception(deployment_result.get("error", "Deployment failed")),
-                )
-                return error_handler.format_error_response(error_info)
+                return {
+                    "status": "error",
+                    "error": result.get("error", "Deployment failed")
+                }
+        
+        except TypeError as e:
+            logger.error(f"Type error: {e}")
+            return {"status": "error", "error": f"Type error: {str(e)}"}
         except Exception as e:
-            logger.error(f"Contract deployment failed: {e}")
-            error_info = error_handler.create_deployment_error("Contract", network, e)
-            return error_handler.format_error_response(error_info)
+            logger.error(f"Deploy error: {e}")
+            return {"status": "error", "error": str(e)}
 
     async def debug_contract(self, tx_hash: str, rpc_url: str) -> Dict[str, Any]:
         """

@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Contract parsing",
+      "status": "passed",
+      "message": "Found 4 functions: _update, mint, pause, unpause"
+    },
+    {
+      "name": "Solidity syntax",
+      "status": "passed",
+      "message": "Valid Solidity syntax detected"
+    }
+  ],
+  "passed": 2,
+  "failed": 0
+}

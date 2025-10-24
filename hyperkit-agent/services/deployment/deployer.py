@@ -37,6 +37,10 @@ class MultiChainDeployer:
         # Get network config from main config if available
         networks_config = self.config.get("networks", {})
         
+        logger.info(f"🔍 Initializing networks with config: {type(self.config)}")
+        logger.info(f"🔍 Networks config: {type(networks_config)}")
+        logger.info(f"🔍 Networks config keys: {networks_config.keys() if isinstance(networks_config, dict) else 'NOT A DICT'}")
+        
         return {
             "hyperion": {
                 "rpc_url": networks_config.get("hyperion", {}).get(
@@ -137,10 +141,43 @@ class MultiChainDeployer:
                     "details": compilation_result["errors"],
                 }
 
+            # Validate compilation result before deployment
+            logger.info(f"🔍 Compilation result type: {type(compilation_result)}")
+            logger.info(f"🔍 Compilation result keys: {compilation_result.keys() if isinstance(compilation_result, dict) else 'NOT A DICT'}")
+            
+            if not isinstance(compilation_result, dict):
+                logger.error(f"❌ Compilation result is not dict: {type(compilation_result)}")
+                raise TypeError(f"Compilation result must be dict, got {type(compilation_result)}")
+            
+            if "bytecode" not in compilation_result:
+                logger.error(f"❌ Missing bytecode in compilation result: {compilation_result}")
+                raise KeyError("Missing bytecode in compilation result")
+            
+            if "abi" not in compilation_result:
+                logger.error(f"❌ Missing ABI in compilation result: {compilation_result}")
+                raise KeyError("Missing ABI in compilation result")
+            
+            bytecode = compilation_result["bytecode"]
+            abi = compilation_result["abi"]
+            
+            logger.info(f"🔍 Extracted bytecode type: {type(bytecode)}, length: {len(bytecode) if isinstance(bytecode, str) else 'N/A'}")
+            logger.info(f"🔍 Extracted ABI type: {type(abi)}, length: {len(abi) if isinstance(abi, list) else 'N/A'}")
+            
+            # Validate types before passing to deployment
+            if not isinstance(bytecode, str):
+                logger.error(f"❌ Bytecode is not string: {type(bytecode)} = {bytecode}")
+                raise TypeError(f"Bytecode must be string, got {type(bytecode)}")
+            
+            if not isinstance(abi, list):
+                logger.error(f"❌ ABI is not list: {type(abi)} = {abi}")
+                raise TypeError(f"ABI must be list, got {type(abi)}")
+            
+            logger.info(f"✅ Deploying contract with bytecode length: {len(bytecode)}, ABI length: {len(abi)}")
+            
             # Deploy contract
             deployment_result = await self._deploy_compiled_contract(
-                compilation_result["bytecode"],
-                compilation_result["abi"],
+                bytecode,
+                abi,
                 network_config,
                 constructor_args,
                 private_key,
@@ -285,32 +322,109 @@ class MultiChainDeployer:
                     # Encode constructor arguments
                     logger.info(f"Encoding constructor args: {constructor_args}")
                     logger.info(f"Constructor ABI inputs: {constructor_abi['inputs']}")
+                    
+                    # Validate inputs is a list
+                    inputs = constructor_abi["inputs"]
+                    if not isinstance(inputs, list):
+                        logger.error(f"Constructor inputs must be list, got {type(inputs)}")
+                        raise TypeError(f"Constructor inputs must be list, got {type(inputs)}")
+                    
+                    # Extract types from inputs
+                    input_types = []
+                    for arg in inputs:
+                        if isinstance(arg, dict) and "type" in arg:
+                            input_types.append(arg["type"])
+                        else:
+                            logger.error(f"Invalid input format: {arg}")
+                            raise ValueError(f"Invalid input format: {arg}")
+                    
+                    logger.info(f"Input types: {input_types}")
+                    
                     try:
-                        constructor_data = w3.codec.encode_abi(
-                            [arg["type"] for arg in constructor_abi["inputs"]],
-                            constructor_args,
-                        )
+                        # Use Web3.py's contract encoding instead of codec.encode_abi
+                        from web3 import Web3
+                        
+                        # Create a temporary contract instance for encoding
+                        temp_contract = w3.eth.contract(abi=abi, bytecode="0x")
+                        
+                        # Encode constructor arguments using the contract's constructor
+                        constructor_data = temp_contract.constructor(*constructor_args).data_in_transaction
+                        
+                        logger.info("Constructor data encoded successfully")
                     except Exception as e:
                         logger.error(f"Failed to encode constructor args: {e}")
-                        raise
+                        logger.error(f"Input types: {input_types}")
+                        logger.error(f"Constructor args: {constructor_args}")
+                        # Fallback: try without constructor args
+                        logger.warning("Falling back to deployment without constructor args")
+                        constructor_data = b""
 
             # Create contract instance with detailed debugging
             logger.info(f"Creating contract with bytecode length: {len(bytecode)}, ABI length: {len(abi)}")
             logger.info(f"Bytecode type: {type(bytecode)}, ABI type: {type(abi)}")
             
+            # CRITICAL: Check if bytecode or abi are dicts (this is the bug!)
+            if isinstance(bytecode, dict):
+                logger.error(f"🚨 BUG FOUND: Bytecode is dict! {bytecode}")
+                # Try to extract the actual bytecode from the dict
+                if 'bin' in bytecode:
+                    bytecode = bytecode['bin']
+                    logger.info(f"✅ Extracted bytecode from dict: {len(bytecode)} chars")
+                else:
+                    raise TypeError(f"Bytecode dict missing 'bin' key: {bytecode}")
+            
+            if isinstance(abi, dict):
+                logger.error(f"🚨 BUG FOUND: ABI is dict! {abi}")
+                # Try to extract the actual ABI from the dict
+                if 'abi' in abi:
+                    abi = abi['abi']
+                    logger.info(f"✅ Extracted ABI from dict: {len(abi)} items")
+                else:
+                    raise TypeError(f"ABI dict missing 'abi' key: {abi}")
+            
             # Validate bytecode and ABI types before contract creation
             if not isinstance(bytecode, str):
+                logger.error(f"❌ Bytecode is not string: {type(bytecode)} - {bytecode}")
                 raise TypeError(f"Bytecode must be string, got {type(bytecode)}")
+            
             if not isinstance(abi, list):
+                logger.error(f"❌ ABI is not list: {type(abi)} - {abi}")
                 raise TypeError(f"ABI must be list, got {type(abi)}")
             
+            # Additional validation for bytecode content
+            if bytecode.startswith('0x'):
+                logger.info(f"✅ Bytecode starts with 0x: {bytecode[:20]}...")
+            else:
+                logger.warning(f"⚠️  Bytecode doesn't start with 0x: {bytecode[:20]}...")
+                # Fix: Add 0x prefix if missing
+                if not bytecode.startswith('0x'):
+                    bytecode = '0x' + bytecode
+                    logger.info(f"✅ Added 0x prefix: {bytecode[:20]}...")
+            
+            # Additional validation for ABI content
+            if abi and isinstance(abi, list) and len(abi) > 0:
+                logger.info(f"✅ ABI has {len(abi)} items, first item: {abi[0] if abi else 'None'}")
+            else:
+                logger.warning(f"⚠️  ABI is empty or invalid: {abi}")
+            
             try:
+                # Create contract instance with proper parameters
+                logger.info("Creating Web3 contract instance...")
                 contract = w3.eth.contract(bytecode=bytecode, abi=abi)
-                logger.info("Contract instance created successfully")
+                logger.info("✅ Contract instance created successfully")
             except Exception as e:
-                logger.error(f"Failed to create contract instance: {e}")
-                logger.error(f"Bytecode sample: {bytecode[:100]}...")
-                logger.error(f"ABI sample: {abi[:3] if isinstance(abi, list) else abi}")
+                logger.error(f"❌ Failed to create contract instance: {e}")
+                logger.error(f"Error type: {type(e).__name__}")
+                logger.error(f"Bytecode type: {type(bytecode)}, ABI type: {type(abi)}")
+                logger.error(f"Bytecode sample: {str(bytecode)[:100]}...")
+                logger.error(f"ABI sample: {str(abi)[:200]}...")
+                
+                # Check if it's a specific Web3 error
+                if "expected string or bytes-like object" in str(e):
+                    logger.error("🔍 This is the dict/string error we're trying to fix!")
+                    logger.error(f"Bytecode is: {type(bytecode)} = {bytecode[:50]}...")
+                    logger.error(f"ABI is: {type(abi)} = {abi[:3] if isinstance(abi, list) else abi}")
+                
                 raise
 
             # Build transaction
