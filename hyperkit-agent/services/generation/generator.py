@@ -8,6 +8,8 @@ import json
 import logging
 from typing import Dict, Any, Optional, List
 from pathlib import Path
+from services.generation.contract_namer import ContractNamer
+from core.config.paths import PathManager
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,10 @@ class ContractGenerator:
         self.provider = provider
         self.client = None
         self.templates = self._load_templates()
+        
+        # Initialize smart naming and path management
+        self.namer = ContractNamer()
+        self.path_manager = PathManager()
 
         # Initialize AI client based on provider
         self._initialize_client()
@@ -689,6 +695,57 @@ Generate only the Solidity contract code, no explanations or markdown formatting
     def get_template(self, template_name: str) -> str:
         """Get a specific contract template."""
         return self.templates.get(template_name, "")
+
+    def generate_contract(self, prompt: str, output_dir: str = None) -> dict:
+        """
+        Generate contract with smart naming and organization
+        
+        Args:
+            prompt: Natural language description of the contract
+            output_dir: Base output directory (optional)
+            
+        Returns:
+            Dictionary containing generation results
+        """
+        try:
+            # 1. Generate contract code from LLM
+            contract_code = asyncio.run(self.generate(prompt, ""))
+            
+            # 2. Extract smart name from prompt
+            filename = self.namer.generate_filename(prompt)
+            category = self.namer.get_category(prompt)
+            
+            logger.info(f"Generated contract: {filename} (Category: {category})")
+            
+            # 3. Organize in proper directory structure
+            if output_dir:
+                contracts_path = Path(output_dir) / "contracts" / category / "generated"
+            else:
+                contracts_path = self.path_manager.get_category_dir(category)
+            
+            contracts_path.mkdir(parents=True, exist_ok=True)
+            
+            # 4. Save file with smart name
+            file_path = contracts_path / filename
+            file_path.write_text(contract_code)
+            
+            logger.info(f"✅ Contract saved to: {file_path}")
+            
+            return {
+                "success": True,
+                "filename": filename,
+                "category": category,
+                "path": str(file_path),
+                "contract_code": contract_code,
+                "lines_of_code": len(contract_code.split('\n'))
+            }
+            
+        except Exception as e:
+            logger.error(f"Contract generation failed: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
 
 # Example usage

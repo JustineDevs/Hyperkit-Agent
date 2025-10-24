@@ -246,7 +246,7 @@ def generate(prompt, template, output, format, audit_after, interactive):
             syntax = Syntax(contract_code, "solidity", theme="monokai", line_numbers=True)
             console.print(syntax)
             
-            # Save to file
+            # Save to file with smart naming
             if output:
                 # Ensure output directory exists
                 output_path = Path(output)
@@ -254,12 +254,27 @@ def generate(prompt, template, output, format, audit_after, interactive):
                 output_path.write_text(contract_code)
                 console.print(f"\n[green]✅ Saved to: {output}[/green]")
             else:
-                # Auto-save to generated contracts directory
-                output_dir = Path("contracts/generated")
-                output_dir.mkdir(parents=True, exist_ok=True)
-                output = output_dir / f"contract_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sol"
+                # Use smart naming and organized directories
+                from services.generation.contract_namer import ContractNamer
+                from core.config.paths import PathManager
+                
+                namer = ContractNamer()
+                path_manager = PathManager()
+                
+                # Generate smart filename and category
+                filename = namer.generate_filename(prompt)
+                category = namer.get_category(prompt)
+                
+                # Create organized directory structure
+                contracts_path = path_manager.get_category_dir(category)
+                contracts_path.mkdir(parents=True, exist_ok=True)
+                
+                # Save with smart name
+                output = contracts_path / filename
                 output.write_text(contract_code)
                 console.print(f"\n[green]✅ Auto-saved to: {output}[/green]")
+                console.print(f"[cyan]Category: {category}[/cyan]")
+                console.print(f"[cyan]Smart name: {filename}[/cyan]")
             
             # Auto-audit if requested
             if audit_after:
@@ -588,7 +603,172 @@ def test(sample, verbose):
         sys.exit(1)
 
 # ============================================================================
-# 7. WORKFLOW COMMAND - Complete End-to-End
+# 7. VERIFY COMMAND - Contract Verification
+# ============================================================================
+
+@cli.command()
+@click.argument("contract_address")
+@click.argument("source_file", type=click.Path(exists=True))
+@click.option("--network", "-n", default="hyperion",
+              type=click.Choice(["hyperion", "polygon", "arbitrum", "ethereum", "metis"]))
+@click.option("--constructor-args", "-a", help="Constructor arguments (comma-separated)")
+@click.option("--contract-name", help="Contract name for verification")
+def verify(contract_address, source_file, network, constructor_args, contract_name):
+    """
+    ✅ Verify smart contracts on blockchain explorers
+    
+    Examples:
+    \b
+    hyperagent verify 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb contracts/Token.sol
+    hyperagent verify 0x... contracts/Token.sol --network ethereum --constructor-args "MyToken,MTK,1000000"
+    """
+    try:
+        config = ConfigLoader.load()
+        agent = HyperKitAgent(config)
+
+        with open(source_file, "r") as f:
+            source_code = f.read()
+        
+        console.print(Panel(
+            f"[cyan]Contract Address:[/cyan] {contract_address}\n"
+            f"[cyan]Source File:[/cyan] {Path(source_file).name}\n"
+            f"[cyan]Network:[/cyan] {network.upper()}\n"
+            f"[cyan]Constructor Args:[/cyan] {constructor_args or 'None'}",
+            title="📤 Verification Configuration",
+            expand=False
+        ))
+        
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            progress.add_task("✅ Verifying contract on explorer...", total=None)
+            result = asyncio.run(agent.verify_contract(
+                contract_address=contract_address,
+                source_code=source_code,
+                network=network
+            ))
+        
+        if result.get("status") == "success":
+            verification_result = result.get("verification_result", {})
+            status = verification_result.get("status", "unknown")
+            
+            if status == "verified":
+                console.print(Panel(
+                    f"[green]✅ Contract Verified Successfully![/green]\n"
+                    f"[cyan]Status:[/cyan] {status}\n"
+                    f"[cyan]Explorer URL:[/cyan] {verification_result.get('explorer_url', 'N/A')}\n"
+                    f"[cyan]Method:[/cyan] {verification_result.get('verification_method', 'N/A')}",
+                    title="🎉 Verification Summary",
+                    expand=False
+                ))
+            elif status == "stored_on_ipfs":
+                console.print(Panel(
+                    f"[yellow]📦 Contract Stored on IPFS[/yellow]\n"
+                    f"[cyan]IPFS Hash:[/cyan] {verification_result.get('ipfs_hash', 'N/A')}\n"
+                    f"[cyan]IPFS URL:[/cyan] {verification_result.get('ipfs_url', 'N/A')}\n"
+                    f"[cyan]Method:[/cyan] {verification_result.get('verification_method', 'N/A')}",
+                    title="📦 IPFS Storage Summary",
+                    expand=False
+                ))
+            else:
+                console.print(f"[yellow]⚠️  Verification status: {status}[/yellow]")
+        else:
+            console.print(f"[red]❌ Verification failed: {result.get('error')}[/red]")
+            sys.exit(1)
+    
+    except Exception as e:
+        console.print(f"[red]❌ Error verifying contract: {e}[/red]")
+        sys.exit(1)
+
+# ============================================================================
+# 8. TEST COMMAND - Contract Testing
+# ============================================================================
+
+@cli.command()
+@click.argument("contract_address")
+@click.argument("source_file", type=click.Path(exists=True))
+@click.option("--network", "-n", default="hyperion",
+              type=click.Choice(["hyperion", "polygon", "arbitrum", "ethereum", "metis"]))
+@click.option("--function", "-f", help="Test specific function")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
+def test(contract_address, source_file, network, function, verbose):
+    """
+    🧪 Test deployed smart contracts
+    
+    Examples:
+    \b
+    hyperagent test 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb contracts/Token.sol
+    hyperagent test 0x... contracts/Token.sol --function "balanceOf" --network ethereum
+    """
+    try:
+        config = ConfigLoader.load()
+        agent = HyperKitAgent(config)
+
+        with open(source_file, "r") as f:
+            source_code = f.read()
+        
+        console.print(Panel(
+            f"[cyan]Contract Address:[/cyan] {contract_address}\n"
+            f"[cyan]Source File:[/cyan] {Path(source_file).name}\n"
+            f"[cyan]Network:[/cyan] {network.upper()}\n"
+            f"[cyan]Function:[/cyan] {function or 'All functions'}",
+            title="🧪 Testing Configuration",
+            expand=False
+        ))
+        
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            progress.add_task("🧪 Testing contract functionality...", total=None)
+            result = asyncio.run(agent.test_contract(
+                contract_address=contract_address,
+                source_code=source_code,
+                network=network
+            ))
+        
+        if result.get("status") == "success":
+            test_results = result.get("test_results", {})
+            tests_passed = test_results.get("tests_passed", 0)
+            tests_failed = test_results.get("tests_failed", 0)
+            overall_status = test_results.get("overall_status", "unknown")
+            
+            status_emoji = "✅" if overall_status == "passed" else "❌"
+            
+            console.print(Panel(
+                f"{status_emoji} [bold]Contract Testing Complete[/bold]\n"
+                f"[cyan]Tests Passed:[/cyan] {tests_passed}\n"
+                f"[cyan]Tests Failed:[/cyan] {tests_failed}\n"
+                f"[cyan]Overall Status:[/cyan] {overall_status.upper()}",
+                title="🧪 Test Results",
+                expand=False
+            ))
+            
+            if verbose and test_results.get("test_details"):
+                console.print("\n[bold cyan]📊 Detailed Test Results:[/bold cyan]")
+                for test_detail in test_results["test_details"]:
+                    test_name = test_detail.get("test_name", "unknown")
+                    test_status = test_detail.get("status", "unknown")
+                    status_icon = "✅" if test_status == "passed" else "❌"
+                    console.print(f"  {status_icon} {test_name}: {test_status}")
+                    
+                    if test_detail.get("details"):
+                        details = test_detail["details"]
+                        for key, value in details.items():
+                            console.print(f"    • {key}: {value}")
+        else:
+            console.print(f"[red]❌ Testing failed: {result.get('error')}[/red]")
+            sys.exit(1)
+    
+    except Exception as e:
+        console.print(f"[red]❌ Error testing contract: {e}[/red]")
+        sys.exit(1)
+
+# ============================================================================
+# 9. WORKFLOW COMMAND - Complete End-to-End
 # ============================================================================
 
 @cli.command()
@@ -631,130 +811,142 @@ def workflow(prompt, network, auto_audit, auto_deploy, auto_test, auto_verificat
         if output_dir:
             Path(output_dir).mkdir(parents=True, exist_ok=True)
         
-        # ✅ NEW: Detect network environment (testnet vs mainnet)
-        network_info = detect_network_environment(network)
-        
-        # Initialize workflow results
-        workflow_state = {
-            "prompt": prompt,
-            "network": network,
-            "network_info": network_info,  # ← NEW: Network details
-            "timestamp": datetime.now().isoformat(),
-            "stages": {},
-            "errors": [],
-            "warnings": [],
-            "artifacts": {},
-            "verification": None  # ← NEW: Verification results
-        }
-        
         console.print(Panel(
             f"[cyan]Prompt:[/cyan] {prompt}\n"
-            f"[cyan]Network:[/cyan] {network.upper()} ({network_info['type']})\n"
+            f"[cyan]Network:[/cyan] {network.upper()}\n"
             f"[cyan]Pipeline:[/cyan] Generate → Audit → Deploy → Verify → Test",
-            title="🚀 Starting Workflow",
+            title="🚀 Starting 5-Stage Workflow",
             expand=False
         ))
         
-        # ===== STAGE 1: GENERATION =====
-        console.print("\n[bold cyan]📝 Stage 1/5: Generating Contract[/bold cyan]")
-        stage1_result = workflow_stage_generate(agent, prompt, output_dir, verbose)
-        workflow_state["stages"]["generation"] = stage1_result
+        # Run the complete 5-stage workflow using the new method
+        result = asyncio.run(agent.run_workflow(
+            user_prompt=prompt,
+            network=network,
+            auto_verification=auto_verification,
+            test_only=test_only
+        ))
         
-        if stage1_result["status"] != "success":
-            console.print(f"[red]❌ Generation failed: {stage1_result['error']}[/red]")
-            return
-        
-        contract_code = stage1_result["contract_code"]
-        contract_name = stage1_result.get("contract_name", "GeneratedContract")
-        
-        # ===== STAGE 2: AUDIT =====
-        console.print("\n[bold cyan]🔍 Stage 2/5: Auditing Contract[/bold cyan]")
-        stage2_result = workflow_stage_audit(agent, contract_code, output_dir, verbose)
-        workflow_state["stages"]["audit"] = stage2_result
-        
-        if stage2_result["status"] != "success" and not auto_audit:
-            console.print(f"[red]❌ Audit failed: {stage2_result['error']}[/red]")
-            return
-        
-        audit_severity = stage2_result.get("severity", "unknown")
-        
-        # ===== STAGE 3: DEPLOYMENT =====
-        deploy_result = None
-        contract_address = None
-        tx_hash = None
-        
-        if not test_only:
-            console.print("\n[bold cyan]🚀 Stage 3/5: Deploying to Blockchain[/bold cyan]")
-            stage3_result = workflow_stage_deploy(
-                agent, contract_code, network, constructor_args, output_dir, verbose
-            )
-            workflow_state["stages"]["deployment"] = stage3_result
+        if result.get("status") == "success":
+            console.print(Panel(
+                f"[green]✅ 5-Stage Workflow Completed![/green]\n"
+                f"[cyan]Stages:[/cyan] {result.get('stages_completed', 0)}/5\n"
+                f"[cyan]Network:[/cyan] {result.get('network', 'unknown')}\n"
+                f"[cyan]Test Only:[/cyan] {result.get('test_only', False)}",
+                title="🎉 Workflow Summary",
+                expand=False
+            ))
             
-            if stage3_result["status"] != "success":
-                console.print(f"[red]❌ Deployment failed: {stage3_result['error']}[/red]")
-                console.print(f"[yellow]⚠️  Skipping test stage[/yellow]")
-            else:
-                contract_address = stage3_result.get("contract_address")
-                tx_hash = stage3_result.get("tx_hash")
-                deploy_result = stage3_result
+            # Show detailed results for each stage
+            if verbose:
+                _display_workflow_results(result)
+            
+            # Save artifacts if output directory specified
+            if output_dir:
+                _save_workflow_artifacts(result, output_dir)
+            
+            # Launch interactive tester if requested
+            if interactive and result.get("deployment", {}).get("status") == "success":
+                contract_address = result.get("deployment", {}).get("contract_address")
+                if contract_address:
+                    console.print(f"[cyan]Launching interactive tester for {contract_address}[/cyan]")
+                    # Launch interactive mode
+                    asyncio.run(interactive_tester(contract_address, network))
         else:
-            console.print("\n[yellow]⏭️  Skipping deployment (test-only mode)[/yellow]")
-        
-        # ===== STAGE 4: VERIFICATION (NEW!) =====
-        if auto_verification and contract_address:
-            console.print("\n[bold cyan]✅ Stage 4/5: Verifying Contract[/bold cyan]")
-            stage4_result = workflow_stage_verify(
-                contract_code,
-                contract_address,
-                contract_name,
-                network,
-                network_info,
-                output_dir,
-                verbose
-            )
-            workflow_state["stages"]["verification"] = stage4_result
-            workflow_state["verification"] = stage4_result
-        else:
-            if not auto_verification:
-                console.print("\n[yellow]⏭️  Skipping verification[/yellow]")
-        
-        # ===== STAGE 5: TESTING =====
-        if auto_test:
-            console.print("\n[bold cyan]🧪 Stage 5/5: Testing Contract Functionality[/bold cyan]")
-            stage4_result = workflow_stage_test(
-                contract_code, 
-                contract_address, 
-                network,
-                constructor_args,
-                output_dir, 
-                verbose
-            )
-            workflow_state["stages"]["testing"] = stage4_result
-        else:
-            console.print("\n[yellow]⏭️  Skipping test stage[/yellow]")
-        
-        # ===== FINAL SUMMARY =====
-        console.print("\n" + "="*80)
-        display_workflow_summary(workflow_state, contract_address, tx_hash, network_info)
-        console.print("="*80)
-        
-        # Save workflow report
-        if output_dir:
-            report_path = Path(output_dir) / "workflow_report.json"
-            with open(report_path, "w") as f:
-                json.dump(workflow_state, f, indent=2)
-            console.print(f"\n[green]📄 Report saved to: {report_path}[/green]")
-        
-        # ===== INTERACTIVE TESTER =====
-        if interactive and contract_address:
-            console.print("\n[cyan]Launching interactive contract tester...[/cyan]")
-            launch_interactive_tester(contract_code, contract_address, network, config)
+            console.print(f"[red]❌ Workflow failed: {result.get('error', 'Unknown error')}[/red]")
+            sys.exit(1)
 
     except Exception as e:
         console.print(f"[red]❌ Fatal workflow error: {e}[/red]")
         import traceback
         console.print(traceback.format_exc())
         sys.exit(1)
+
+def _display_workflow_results(result: dict):
+    """Display detailed workflow results."""
+    console.print("\n[bold cyan]📊 Detailed Results:[/bold cyan]")
+    
+    # Generation results
+    if result.get("generation"):
+        gen = result["generation"]
+        console.print(f"[cyan]Generation:[/cyan] {gen.get('status', 'unknown')}")
+        if gen.get('contract_code'):
+            lines = len(gen['contract_code'].splitlines())
+            console.print(f"  • Lines of code: {lines}")
+    
+    # Audit results
+    if result.get("audit"):
+        audit = result["audit"]
+        console.print(f"[cyan]Audit:[/cyan] {audit.get('status', 'unknown')}")
+        if audit.get('severity'):
+            console.print(f"  • Severity: {audit['severity']}")
+    
+    # Deployment results
+    if result.get("deployment"):
+        deploy = result["deployment"]
+        console.print(f"[cyan]Deployment:[/cyan] {deploy.get('status', 'unknown')}")
+        if deploy.get('contract_address'):
+            console.print(f"  • Address: {deploy['contract_address']}")
+    
+    # Verification results
+    if result.get("verification"):
+        verify = result["verification"]
+        console.print(f"[cyan]Verification:[/cyan] {verify.get('status', 'unknown')}")
+        if verify.get('explorer_url'):
+            console.print(f"  • Explorer: {verify['explorer_url']}")
+    
+    # Testing results
+    if result.get("testing"):
+        test = result["testing"]
+        console.print(f"[cyan]Testing:[/cyan] {test.get('status', 'unknown')}")
+        if test.get('tests_passed'):
+            console.print(f"  • Tests passed: {test['tests_passed']}")
+
+def _save_workflow_artifacts(result: dict, output_dir: str):
+    """Save workflow artifacts to output directory."""
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    
+    # Save generation result
+    if result.get("generation", {}).get("contract_code"):
+        contract_file = output_path / "GeneratedContract.sol"
+        contract_file.write_text(result["generation"]["contract_code"])
+        console.print(f"[green]Contract saved: {contract_file}[/green]")
+    
+    # Save audit result
+    if result.get("audit"):
+        audit_file = output_path / "audit_report.json"
+        audit_file.write_text(json.dumps(result["audit"], indent=2))
+        console.print(f"[green]Audit report saved: {audit_file}[/green]")
+    
+    # Save deployment result
+    if result.get("deployment"):
+        deploy_file = output_path / "deployment_info.json"
+        deploy_file.write_text(json.dumps(result["deployment"], indent=2))
+        console.print(f"[green]Deployment info saved: {deploy_file}[/green]")
+    
+    # Save verification result
+    if result.get("verification"):
+        verify_file = output_path / "verification_result.json"
+        verify_file.write_text(json.dumps(result["verification"], indent=2))
+        console.print(f"[green]Verification result saved: {verify_file}[/green]")
+    
+    # Save testing result
+    if result.get("testing"):
+        test_file = output_path / "test_results.json"
+        test_file.write_text(json.dumps(result["testing"], indent=2))
+        console.print(f"[green]Test results saved: {test_file}[/green]")
+    
+    # Save complete workflow report
+    workflow_file = output_path / "workflow_report.json"
+    workflow_file.write_text(json.dumps(result, indent=2))
+    console.print(f"[green]Complete workflow report saved: {workflow_file}[/green]")
+
+async def interactive_tester(contract_address: str, network: str):
+    """Launch interactive contract tester."""
+    console.print(f"[cyan]Interactive tester for {contract_address} on {network}[/cyan]")
+    # Implementation for interactive testing
+    pass
 
 # ============================================================================
 # HELPER FUNCTIONS
