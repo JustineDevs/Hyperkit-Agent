@@ -1,13 +1,41 @@
-# HyperKit 🚀
+# HyperKit
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)]
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)]
+[![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)]
 
-**HyperKit** is a comprehensive Web3 development platform that combines AI-powered project generation, modular UI components, and cross-chain DeFi primitives. Built for the Hyperion and Andromeda ecosystems, HyperKit enables developers to rapidly prototype, deploy, and manage smart contracts, dApps, and DeFi protocols with an intuitive visual interface and powerful CLI tools.
+## Overview
 
-## ✨ Features
+**HyperKit** is your go-to SDK for building beautiful onchain applications. Ship in minutes, not weeks. Anyone can build an onchain app in 15 minutes with HyperKit. No blockchain experience required.
+
+### AI Capabilities
+- **Smart Contract Generation**: AI-powered creation of Solidity smart contracts using multiple LLM providers
+- **Code Validation**: Automated security scanning and code quality checks
+- **Multi-Model Support**: Integration with Claude, GPT, Gemini, DeepSeek, and other AI providers
+- **Intelligent Analysis**: AI-driven contract optimization and gas efficiency recommendations
+
+## Workflow Commands CLI
+
+| Command | Description |
+|---------|-------------|
+| `hyperagent generate "Create ERC20 token"` | Generate smart contracts using AI from natural language prompts |
+| `hyperagent audit contracts/Token.sol` | Audit smart contracts for security vulnerabilities |
+| `hyperagent deploy contracts/Token.sol --network hyperion` | Deploy smart contracts to blockchain networks |
+| `hyperagent workflow "Create ERC20 token" --test-only` | Complete end-to-end workflow: Generate → Audit → Deploy → Test |
+| `hyperagent interactive` | Launch interactive development shell for real-time contract development |
+| `hyperagent status` | Check system status and connectivity |
+| `hyperagent test` | Run sample workflows and test functionality |
+
+## Other Commands
+
+| Command | Description |
+|---------|-------------|
+| `hyperagent scaffold my-project --type defi` | Generate full-stack dApp scaffolds |
+| `hyperagent verify 0x742d35... --network hyperion` | Verify deployed contracts on block explorer |
+| `hyperagent dashboard` | Launch web-based visual dashboard |
+
+## Features
 
 ### 🤖 AI Project Generation
 - **Smart Contract Generation**: AI-powered creation of Solidity smart contracts
@@ -33,10 +61,9 @@
 - **Visual Dashboard**: Web-based interface for contract management
 - **Real-time Monitoring**: Live status tracking and performance metrics
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
-
 - Python 3.9 or higher
 - Node.js 16+ (for frontend components)
 - Git
@@ -47,7 +74,7 @@
 1. **Clone the repository**
    ```bash
    git clone https://github.com/JustineDevs/Hyperkit-Agent.git
-   cd hyperkit
+   cd hyperkit-agent
    ```
 
 2. **Create a virtual environment**
@@ -56,9 +83,9 @@
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. **Install HyperKit**
+3. **Install HyperKit Agent**
    ```bash
-   pip install hyperkit
+   pip install --editable .
    ```
 
 4. **Set up environment variables**
@@ -67,131 +94,82 @@
    # Edit .env with your API keys and wallet configuration
    ```
 
-5. **Initialize HyperKit**
+5. **Initialize HyperKit Agent**
    ```bash
-   hyperkit init --network hyperion
+   hyperagent status
    ```
 
-6. **Start the dashboard**
+6. **Generate your first contract**
    ```bash
-   hyperkit dashboard
+   hyperagent generate "Create a simple ERC20 token"
    ```
 
-## 🔧 HyperKit Workflow
-
-HyperKit provides a streamlined development workflow for Web3 projects:
-
-### Step 1: Generate Smart Contract
-```bash
-# Generate a DeFi vault contract using AI
-hyperkit generate contract --type vault --ai-provider claude
-# Output: Generated vault contract with security checks
-```
-
-### Step 2: Create dApp Template
-```bash
-# Create a complete dApp with frontend and backend
-hyperkit create dapp --template defi-dashboard --network hyperion
-```
-
-### Step 3: Customize UI Components
-```bash
-# Launch the visual module editor
-hyperkit modules --editor
-# Drag-and-drop interface for UI customization
-```
-
-### Step 4: Deploy to Testnet
-```bash
-# Deploy contracts to Hyperion testnet
-hyperkit deploy --network hyperion-testnet --contracts vault.sol
-```
-
-### Step 5: Monitor and Manage
-```bash
-# Open the visual dashboard
-hyperkit dashboard
-# Monitor contract status, manage deployments, and track performance
-```
-
-## 🏗️ Architecture
+## Architecture
 
 ```
 HyperKit/
-├── hyperkit/           # Core Python package
-│   ├── ai/            # AI project generation
-│   ├── modules/       # HyperKit UI modules
-│   ├── contracts/     # DeFi primitives and smart contracts
-│   ├── dashboard/     # Visual dashboard interface
-│   ├── cli/           # Command-line tools
-│   ├── sdk/           # Python SDK
-│   └── web3/          # Web3 and cross-chain integrations
-├── templates/          # Project templates and examples
-├── tests/              # Comprehensive test suite
-├── docs/               # Documentation and guides
-└── examples/           # Example projects and integrations
+├── hyperkit-agent/        # Core Python package
+│   ├── core/              # Core functionality
+│   │   ├── agent/         # AI agent and workflow management
+│   │   ├── config/        # Configuration management
+│   │   └── llm/          # LLM provider integration
+│   ├── services/          # Service modules
+│   │   ├── audit/        # Security auditing
+│   │   ├── deployment/    # Contract deployment
+│   │   ├── generation/    # Contract generation
+│   │   └── monitoring/    # Transaction monitoring
+│   ├── contracts/         # Smart contract templates
+│   │   ├── generated/    # AI-generated contracts
+│   │   ├── deployed/     # Deployed contract addresses
+│   │   └── templates/    # Contract templates
+│   ├── tests/            # Comprehensive test suite
+│   │   ├── unit/         # Unit tests
+│   │   ├── integration/  # Integration tests
+│   │   ├── e2e/         # End-to-end tests
+│   │   ├── performance/  # Performance tests
+│   │   └── security/    # Security tests
+│   └── artifacts/        # Generated artifacts
+│       ├── workflows/    # Workflow outputs
+│       ├── audits/      # Audit reports
+│       └── deployments/  # Deployment information
 ```
 
-## 🤖 Supported AI Providers
+## Documentation
 
-| Provider | Status | Features | Use Cases |
-|----------|--------|----------|-----------|
-| Claude (Anthropic) | ✅ Active | Smart contract generation, security analysis | DeFi protocols, complex contracts |
-| GPT-4 (OpenAI) | ✅ Active | Code completion, documentation | dApp development, testing |
-| Gemini (Google) | ✅ Active | Multimodal analysis, code review | UI components, visual analysis |
-| DeepSeek | ✅ Active | Code optimization, gas efficiency | Performance-critical contracts |
-| Qwen (Alibaba) | ✅ Active | Multi-language support, testing | International dApps |
+| Resource | Description | Link |
+|----------|-------------|------|
+| **Getting Started** | Quick start guide and installation | [docs.hyperionkit.xyz](https://docs.hyperionkit.xyz/) |
+| **AI Generation** | Smart contract generation guide | [docs.hyperionkit.xyz](https://docs.hyperionkit.xyz/) |
+| **CLI Reference** | Complete CLI command reference | [docs.hyperionkit.xyz](https://docs.hyperionkit.xyz/) |
+| **API Documentation** | Python SDK and API reference | [docs.hyperionkit.xyz](https://docs.hyperionkit.xyz/) |
+| **Examples** | Code examples and tutorials | [docs.hyperionkit.xyz](https://docs.hyperionkit.xyz/) |
 
-## 🌐 Supported Networks
+## Supported Networks
 
 | Network | Status | Features | Use Cases |
 |---------|--------|----------|-----------|
-| Hyperion | 🔄 Testnet | Native support, optimized | Primary development |
-| Metis | 🔄 Mainnet | Cross-chain bridging | Asset migration |
-| LazAI | 🔄 Testnet | AI-optimized blockchain | AI-powered dApps |
+| **Hyperion** | 🔄 Testnet | Native support, optimized | Primary development |
+| **Metis** | 🔄 Mainnet | Cross-chain bridging, Optimistic Rollup | Asset migration, DeFi protocols |
+| **LazAI** | 🔄 Testnet | AI-optimized blockchain | AI-powered dApps |
+| **Ethereum** | ✅ Mainnet | EVM compatibility | Legacy dApp migration |
+| **Polygon** | ✅ Mainnet | Low-cost transactions | Mass adoption dApps |
+| **Arbitrum** | ✅ Mainnet | Layer 2 scaling | High-performance DeFi |
 
-## 📚 Documentation
+## Supported AI Providers
 
-- [Getting Started Guide](https://hyperkit.readthedocs.io/en/latest/getting-started/)
-- [AI Generation Guide](https://hyperkit.readthedocs.io/en/latest/ai-generation/)
-- [HyperKit Modules](https://hyperkit.readthedocs.io/en/latest/modules/)
-- [DeFi Primitives](https://hyperkit.readthedocs.io/en/latest/defi-primitives/)
-- [Cross-Chain Development](https://hyperkit.readthedocs.io/en/latest/cross-chain/)
-- [Python SDK Reference](https://hyperkit.readthedocs.io/en/latest/sdk/)
-- [CLI Reference](https://hyperkit.readthedocs.io/en/latest/cli/)
-- [Dashboard Guide](https://hyperkit.readthedocs.io/en/latest/dashboard/)
+| Provider | Status | Features | Use Cases |
+|----------|--------|----------|-----------|
+| **Claude (Anthropic)** | ✅ Active | Smart contract generation, security analysis | DeFi protocols, complex contracts |
+| **GPT-4 (OpenAI)** | ✅ Active | Code completion, documentation | dApp development, testing |
+| **Gemini (Google)** | ✅ Active | Multimodal analysis, code review | UI components, visual analysis |
+| **DeepSeek** | ✅ Active | Code optimization, gas efficiency | Performance-critical contracts |
+| **Qwen (Alibaba)** | ✅ Active | Multi-language support, testing | International dApps |
 
-## 🧪 Testing
+## Contributing
 
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=hyperkit
-
-# Run specific test categories
-pytest tests/unit/          # Unit tests
-pytest tests/integration/   # Integration tests
-pytest tests/e2e/          # End-to-end tests
-pytest tests/contracts/    # Smart contract tests
-pytest tests/modules/      # UI module tests
-```
-
-## 🔒 Security
-
-HyperKit prioritizes security at every level:
-
-- **Smart Contract Audits**: Automated security scanning for all generated contracts
-- **Dependency Monitoring**: Continuous vulnerability scanning and updates
-- **Secure Configuration**: Environment-based secrets management
-- **Audit Logging**: Comprehensive transaction and access logging
-- **Encryption**: End-to-end encryption for all sensitive data
-- **Access Control**: Role-based permissions and multi-signature support
-
-See our [Security Policy](SECURITY.md) for detailed security practices and audit procedures.
-
-## 🤝 Contributing
+[![Contributors](https://img.shields.io/github/contributors/JustineDevs/Hyperkit-Agent.svg)](https://github.com/JustineDevs/Hyperkit-Agent/graphs/contributors)
+[![Issues](https://img.shields.io/github/issues/JustineDevs/Hyperkit-Agent.svg)](https://github.com/JustineDevs/Hyperkit-Agent/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/JustineDevs/Hyperkit-Agent.svg)](https://github.com/JustineDevs/Hyperkit-Agent/pulls)
 
 We welcome contributions from the HyperKit community! Please see our [Contributing Guide](CONTRIBUTION.md) for details.
 
@@ -200,7 +178,7 @@ We welcome contributions from the HyperKit community! Please see our [Contributi
 1. **Fork the repository**
    ```bash
    git clone https://github.com/JustineDevs/Hyperkit-Agent.git
-   cd hyperkit
+   cd hyperkit-agent
    ```
 
 2. **Set up development environment**
@@ -217,29 +195,21 @@ We welcome contributions from the HyperKit community! Please see our [Contributi
 4. **Make your changes and test**
    ```bash
    pytest
-   hyperkit test --contracts
+   hyperagent test --contracts
    ```
 
 5. **Create a changeset**
    ```bash
    npm run changeset:add
    ```
-   This documents your changes for the changelog and version management.
 
 6. **Submit a Pull Request**
-   - Follow our PR template
-   - Include tests for new features
-   - Update documentation as needed
-   - Ensure a changeset is included (required by CI)
 
 ### Version Management with Changesets
 
-HyperKit uses [Changesets](https://github.com/changesets/changesets) for version management and changelog generation. This ensures:
+[![Changesets](https://img.shields.io/badge/changesets-enabled-blue.svg)](https://github.com/changesets/changesets)
 
-- **Consistent versioning** across all packages
-- **Automatic changelog generation** from changeset files
-- **Clear release notes** for every version
-- **CI/CD integration** for automated releases
+HyperKit uses [Changesets](https://github.com/changesets/changesets) for version management and changelog generation.
 
 #### Creating Changesets
 
@@ -248,11 +218,6 @@ When making changes, create a changeset to document what changed:
 ```bash
 npm run changeset:add
 ```
-
-This will prompt you to:
-- Select which packages changed
-- Choose the type of change (patch/minor/major)
-- Write a summary of the changes
 
 #### Release Process
 
@@ -263,60 +228,27 @@ Releases are automatically created when changesets are merged to main:
 3. **Packages are published** to npm/PyPI
 4. **GitHub releases** are created with changelog
 
-For detailed information, see our [Version Management Guide](docs/VERSION_MANAGEMENT.md).
+## License
 
-#### Creating Changesets
-
-When making changes, create a changeset to document what changed:
-
-```bash
-npm run changeset:add
-```
-
-This will prompt you to:
-- Select which packages changed
-- Choose the type of change (patch/minor/major)
-- Write a summary of the changes
-
-#### Release Process
-
-Releases are automatically created when changesets are merged to main:
-
-1. **Changesets are consumed** and version numbers updated
-2. **Changelog entries** are generated automatically
-3. **Packages are published** to npm/PyPI
-4. **GitHub releases** are created with changelog
-
-For detailed information, see our [Changeset Workflow Guide](docs/CHANGESET_WORKFLOW.md).
-
-## 📄 License
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
 
-## 🆘 Support
-
-- 📖 [Documentation](https://hyperkit.readthedocs.io/)
-- 🐛 [Issue Tracker](https://github.com/hyperionkit/hyperkit/issues)
-- 💬 [Discord Community](https://discord.gg/hyperionkit)
-- 📧 [Email Support](mailto:support@hyperionkit.xyz)
-- 🐦 [Twitter](https://twitter.com/hyperionkit)
-- 📺 [YouTube](https://youtube.com/@hyperionkit)
-
-## 🗺️ Roadmap
+## Roadmap
 
 ### Month 1: Foundation & AI Generation
 - [x] Project rebranding and documentation
-- [ ] AI-powered smart contract generation
-- [ ] HyperKit modular UI system
-- [ ] Visual dashboard beta
-- [ ] Python SDK v0.1.0
+- [x] AI-powered smart contract generation
+- [x] HyperKit modular UI system
+- [x] Visual dashboard beta
+- [x] Python SDK v0.1.0
 
 ### Month 2: Expansion & CLI Tools
-- [ ] CLI tool for project scaffolding
-- [ ] DeFi primitives development
-- [ ] Cross-chain bridge integration
-- [ ] Developer onboarding program
-- [ ] Partnership activations
+- [x] CLI tool for project scaffolding
+- [x] DeFi primitives development
+- [x] Cross-chain bridge integration
+- [x] Developer onboarding program
+- [x] Partnership activations
 
 ### Month 3: Community & Features
 - [ ] Vault and swap contracts
@@ -346,15 +278,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 - [ ] Launch announcement
 - [ ] Community spotlight
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Thanks to all contributors who help make HyperKit better
 - Special thanks to the Hyperion and Andromeda communities
 - Web3 and DeFi developers for inspiration and feedback
 - AI and open-source communities for their continuous support
+- [Metis Protocol](https://docs.hyperionkit.xyz/) for Optimistic Rollup technology
+- [Hyperion Protocol](https://docs.hyperionkit.xyz/) for decentralized spatial blockchain network
 
 ---
 
 **Made with ❤️ by the HyperKit Team**
 
-[Website](https://hyperionkit.xyz) • [Documentation](https://hyperkit.readthedocs.io/) • [Discord](https://discord.gg/hyperionkit) • [Twitter](https://twitter.com/hyperionkit)
+[Website](https://hyperionkit.xyz) • [Documentation](https://docs.hyperionkit.xyz/) • [Discord](https://discord.gg/hyperionkit) • [Twitter](https://twitter.com/hyperionkit)

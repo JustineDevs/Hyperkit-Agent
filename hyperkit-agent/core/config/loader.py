@@ -189,6 +189,12 @@ class ConfigLoader:
     def to_dict(self) -> Dict[str, Any]:
         """Get the complete configuration as a dictionary."""
         return self.config.copy()
+    
+    @staticmethod
+    def load() -> Dict[str, Any]:
+        """Load configuration and return as dictionary for CLI compatibility."""
+        loader = ConfigLoader()
+        return loader.to_dict()
 
 
 # Global configuration instance
