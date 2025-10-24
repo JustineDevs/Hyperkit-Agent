@@ -17,7 +17,7 @@ with open("requirements.txt", "r") as f:
 
 setup(
     name="hyperkit-agent",
-    version="2.0.0",
+    version="2.0.1",
     author="HyperKit Team",
     author_email="team@hyperkit.ai",
     description="🚀 HyperKit AI Agent - Generate, audit, and deploy smart contracts with AI",

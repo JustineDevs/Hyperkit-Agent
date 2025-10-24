@@ -1,8 +1,21 @@
 # 🚀 HyperKit AI Agent - Production Deployment Guide
 
-**Status**: ✅ PRODUCTION READY  
-**Version**: 1.0.0  
+**Status**: ⚠️ PROTOTYPE WITH INFRASTRUCTURE IMPROVEMENTS  
+**Version**: 1.0.0 (Prototype)  
 **Date**: October 24, 2025
+
+## ⚠️ **IMPORTANT DISCLAIMER**
+
+**THIS IS A PROTOTYPE, NOT A PRODUCTION SYSTEM**
+
+- ❌ No user authentication
+- ❌ No data persistence (uses JSON files)
+- ❌ No security audit
+- ❌ No SLA or uptime guarantee
+- ❌ No legal protection
+- ⚠️ **Use at your own risk**
+- ⚠️ **Do NOT use for production deployments**
+- ⚠️ **Always audit contracts before mainnet deployment**
 
 ---
 
