@@ -12,7 +12,13 @@ class PathManager:
     """Manage all project paths"""
     
     def __init__(self, base_dir: Optional[str] = None):
-        self.base_dir = Path(base_dir) if base_dir else Path.cwd()
+        if base_dir:
+            self.base_dir = Path(base_dir)
+        else:
+            # Always use hyperkit-agent directory relative to this file
+            current_file = Path(__file__)
+            # Navigate from core/config/paths.py to hyperkit-agent root
+            self.base_dir = current_file.parent.parent.parent
         self.artifacts_dir = self.base_dir / "artifacts"
     
     @property
