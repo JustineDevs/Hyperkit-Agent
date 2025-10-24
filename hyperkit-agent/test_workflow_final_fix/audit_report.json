@@ -1,0 +1,63 @@
+{
+  "timestamp": 203118.25,
+  "contract_length": 3347,
+  "tools_used": [
+    "slither",
+    "custom"
+  ],
+  "findings": [
+    {
+      "tool": "custom",
+      "severity": "medium",
+      "description": "Potential integer overflow/underflow",
+      "pattern": "integer_overflow",
+      "matches": 45
+    },
+    {
+      "tool": "custom",
+      "severity": "info",
+      "description": "Events defined for logging",
+      "pattern": "has_events",
+      "matches": 3
+    },
+    {
+      "tool": "custom",
+      "severity": "info",
+      "description": "OpenZeppelin libraries imported",
+      "pattern": "uses_openzeppelin",
+      "matches": 5
+    }
+  ],
+  "severity": "medium",
+  "slither": {
+    "status": "error",
+    "error": "Slither failed with return code 1",
+    "stderr": ""
+  },
+  "custom": {
+    "status": "success",
+    "findings": [
+      {
+        "tool": "custom",
+        "severity": "medium",
+        "description": "Potential integer overflow/underflow",
+        "pattern": "integer_overflow",
+        "matches": 45
+      },
+      {
+        "tool": "custom",
+        "severity": "info",
+        "description": "Events defined for logging",
+        "pattern": "has_events",
+        "matches": 3
+      },
+      {
+        "tool": "custom",
+        "severity": "info",
+        "description": "OpenZeppelin libraries imported",
+        "pattern": "uses_openzeppelin",
+        "matches": 5
+      }
+    ]
+  }
+}
