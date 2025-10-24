@@ -314,53 +314,77 @@ class HyperKitAgent:
         try:
             logger.info(f"🚀 Deploy contract: {network}")
             
-            # Get network config
-            networks = self.config.get('networks', {})
-            if network not in networks:
-                return {"status": "error", "error": f"Network not found: {network}"}
+            # Get network configuration
+            if not isinstance(self.config, dict):
+                logger.error(f"Config is {type(self.config)}, expected dict")
+                return {"status": "error", "error": "Invalid config type"}
             
-            net_cfg = networks[network]
+            networks_config = self.config.get('networks', {})
+            if network not in networks_config:
+                return {
+                    "status": "error",
+                    "error": f"Network '{network}' not configured",
+                    "available_networks": list(networks_config.keys())
+                }
             
-            # ✅ CRITICAL: Extract ONLY the RPC URL string
-            rpc_url = net_cfg.get('rpc_url')
-            chain_id = net_cfg.get('chain_id', 133717)
+            network_config = networks_config[network]
             
-            # Type checking
+            # ✅ Extract ONLY RPC URL as STRING
+            rpc_url = network_config.get('rpc_url')
+            chain_id = network_config.get('chain_id', 133717)
+            
+            # Type validation
             if not isinstance(rpc_url, str):
-                logger.error(f"RPC URL is {type(rpc_url)}, expected str")
-                return {"status": "error", "error": f"RPC URL type error: {type(rpc_url)}"}
+                logger.error(f"RPC URL type: {type(rpc_url)}")
+                return {
+                    "status": "error",
+                    "error": f"RPC URL must be string, got {type(rpc_url).__name__}",
+                    "hint": "Check your .env file for HYPERION_RPC_URL"
+                }
             
-            logger.info(f"Calling deployer with RPC: {rpc_url[:40]}...")
+            logger.debug(f"RPC URL: {rpc_url[:40]}..., Chain ID: {chain_id}")
             
-            # ✅ CRITICAL: Pass ONLY rpc_url (STRING), not the config dict
+            # ✅ Call deployer with correct parameters
             from services.deployment.deployer import MultiChainDeployer
+            from services.deployment.foundry_manager import FoundryManager
+            
+            # Ensure Foundry is available
+            try:
+                FoundryManager.ensure_installed()
+            except RuntimeError:
+                logger.warning("Foundry not available, some features may be limited")
             deployer = MultiChainDeployer(self.config)
             
             result = await deployer.deploy(
-                contract_code,      # Contract code
-                network,           # Network name
-                None,              # Constructor args (let deployer handle)
-                self.config.get('DEFAULT_PRIVATE_KEY')  # Private key
+                contract_code,  # Contract code (STRING)
+                rpc_url,       # RPC URL (STRING) ← NOT dict!
+                chain_id       # Chain ID (INT)
             )
             
             if result.get("success"):
                 return {
                     "status": "deployed",
-                    "tx_hash": result.get("transaction_hash"),
-                    "address": result.get("contract_address"),
-                    "network": network
+                    "tx_hash": result.get("transaction_hash", ""),
+                    "address": result.get("contract_address", ""),
+                    "network": network,
+                    "block": result.get("block_number", "")
                 }
             else:
                 return {
                     "status": "error",
-                    "error": result.get("error", "Deployment failed")
+                    "error": result.get("error", "Deployment failed"),
+                    "recovery_suggestions": result.get("suggestions", [])
                 }
         
-        except TypeError as e:
-            logger.error(f"Type error: {e}")
-            return {"status": "error", "error": f"Type error: {str(e)}"}
+        except TypeError as te:
+            logger.error(f"Type error: {te}")
+            return {
+                "status": "error",
+                "error": f"Type mismatch: {str(te)}",
+                "fix": "Verify all parameters are correct types"
+            }
         except Exception as e:
-            logger.error(f"Deploy error: {e}")
+            logger.error(f"Deployment error: {e}", exc_info=True)
             return {"status": "error", "error": str(e)}
 
     async def debug_contract(self, tx_hash: str, rpc_url: str) -> Dict[str, Any]:
