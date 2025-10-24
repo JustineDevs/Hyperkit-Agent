@@ -18,6 +18,15 @@ from services.audit.public_contract_auditor import public_contract_auditor
 from services.monitoring.enhanced_monitor import enhanced_monitor, MonitorConfig, MonitorType
 from services.defi.primitives_generator import defi_primitives_generator, DeFiPrimitive
 
+# Security and error handling imports
+from core.handlers import safe_operation, handle_workflow_error, validate_input, log_operation
+from core.security import SecurityManager, InputValidator, AccessController
+from core.errors import (
+    ConfigurationError, NetworkError, ContractGenerationError, 
+    AuditError, DeploymentError, VerificationError, TestingError,
+    ValidationError, SecurityError, WorkflowError
+)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -218,8 +227,8 @@ class HyperKitAgent:
             Dictionary containing generated contract code and metadata
         """
         try:
-            from core.utils.validation import Validator
-            from core.utils.error_handler import ErrorHandler
+            from services.generation.generator import ContractGenerator
+            from core.config.paths import PathManager
 
             validator = Validator()
             error_handler = ErrorHandler()
@@ -265,9 +274,31 @@ class HyperKitAgent:
                 )
                 return error_handler.format_error_response(error_info)
 
+            # Use smart naming and organized directories
+            from services.generation.contract_namer import ContractNamer
+            namer = ContractNamer()
+            path_manager = PathManager()
+            
+            # Generate smart filename and category
+            filename = namer.generate_filename(prompt)
+            category = namer.get_category(prompt)
+            
+            # Create organized directory structure
+            contracts_path = path_manager.get_category_dir(category)
+            contracts_path.mkdir(parents=True, exist_ok=True)
+            
+            # Save with smart name
+            file_path = contracts_path / filename
+            file_path.write_text(contract_code)
+            
+            logger.info(f"✅ Contract saved to: {file_path}")
+
             return {
                 "status": "success",
                 "contract_code": contract_code,
+                "filename": filename,
+                "category": category,
+                "path": str(file_path),
                 "prompt": prompt,
                 "context_used": full_context,
                 "provider_used": "free_llm_router",
@@ -439,68 +470,125 @@ class HyperKitAgent:
             return {"status": "error", "error": str(e)}
 
     @safe_operation("run_workflow")
-    async def run_workflow(self, user_prompt: str) -> Dict[str, Any]:
+    async def run_workflow(
+        self, 
+        user_prompt: str, 
+        network: str = "hyperion",
+        auto_verification: bool = True,
+        test_only: bool = False
+    ) -> Dict[str, Any]:
         """
-        Execute the complete workflow: generate -> audit -> deploy.
+        Execute the complete 5-stage workflow: generate -> audit -> deploy -> verify -> test.
 
         Args:
             user_prompt: User's natural language request
+            network: Target blockchain network
+            auto_verification: Whether to auto-verify contract
+            test_only: Whether to run in test-only mode
 
         Returns:
-            Dictionary containing workflow results
+            Dictionary containing complete workflow results
         """
         try:
-            logger.info(f"Starting workflow for prompt: {user_prompt}")
+            logger.info(f"Starting 5-stage workflow for prompt: {user_prompt}")
 
-            # Step 1: RAG-enhanced context retrieval
+            # Stage 1: RAG-enhanced context retrieval
             context = ""
             if self.rag:
                 context = self.rag.retrieve(user_prompt)
 
-            # Step 2: Generate contract
+            # Stage 1: Generate contract
+            logger.info("Stage 1/5: Generating Contract")
             generation_result = await self.generate_contract(user_prompt, context)
             if generation_result["status"] != "success":
                 return generation_result
 
             contract_code = generation_result["contract_code"]
 
-            # Step 3: Audit contract
+            # Stage 2: Audit contract
+            logger.info("Stage 2/5: Auditing Contract")
             audit_result = await self.audit_contract(contract_code)
             if audit_result["status"] != "success":
                 return audit_result
 
-            # Step 4: Deploy if audit passes
-            if audit_result["severity"] in ["low", "medium"]:
-                deployment_result = await self.deploy_contract(contract_code)
-
-                # Log audit results with deployment
-                if self.alith and deployment_result["status"] == "success":
-                    # Get address from deployment result
-                    deployment_address = deployment_result.get("address")
-
-                    if deployment_address:
-                        self.alith.log_audit(
-                            deployment_address, audit_result["results"]
-                        )
-
-                return {
-                    "status": "success",
-                    "workflow": "complete",
-                    "generation": generation_result,
-                    "audit": audit_result,
-                    "deployment": deployment_result,
-                }
+            # Stage 3: Deploy if audit passes
+            deployment_result = None
+            if not test_only and audit_result.get("severity", "low") in ["low", "medium"]:
+                logger.info("Stage 3/5: Deploying to Blockchain")
+                deployment_result = await self.deploy_contract(contract_code, network)
+                
+                if deployment_result["status"] != "success":
+                    return {
+                        "status": "deployment_failed",
+                        "workflow": "stopped_at_deployment",
+                        "generation": generation_result,
+                        "audit": audit_result,
+                        "deployment": deployment_result,
+                    }
             else:
-                return {
-                    "status": "audit_failed",
-                    "workflow": "stopped_at_audit",
-                    "generation": generation_result,
-                    "audit": audit_result,
-                    "reason": f"Audit severity too high: {audit_result['severity']}",
-                }
+                logger.info("Stage 3/5: Skipped (test-only mode or audit failed)")
+                deployment_result = {"status": "skipped", "reason": "test_only" if test_only else "audit_failed"}
+
+            # Stage 4: Verify contract (if deployed)
+            verification_result = None
+            if deployment_result and deployment_result.get("status") == "success" and auto_verification:
+                logger.info("Stage 4/5: Verifying Contract")
+                from services.verification.verifier import ContractVerifier
+                
+                verifier = ContractVerifier(network, self.config)
+                contract_address = deployment_result.get("contract_address")
+                
+                if contract_address:
+                    verification_result = await verifier.verify_contract(
+                        source_code=contract_code,
+                        contract_address=contract_address
+                    )
+                else:
+                    verification_result = {"status": "skipped", "reason": "no_contract_address"}
+            else:
+                logger.info("Stage 4/5: Skipped (no deployment or verification disabled)")
+                verification_result = {"status": "skipped", "reason": "no_deployment"}
+
+            # Stage 5: Test contract (if deployed)
+            testing_result = None
+            if deployment_result and deployment_result.get("status") == "success":
+                logger.info("Stage 5/5: Testing Contract Functionality")
+                from services.testing.contract_tester import ContractTester
+                
+                contract_address = deployment_result.get("contract_address")
+                rpc_url = self.config.get('networks', {}).get(network, {}).get('rpc_url')
+                
+                if contract_address and rpc_url:
+                    tester = ContractTester(rpc_url, contract_address)
+                    testing_result = await tester.run_tests(contract_code)
+                else:
+                    testing_result = {"status": "skipped", "reason": "missing_rpc_or_address"}
+            else:
+                logger.info("Stage 5/5: Skipped (no deployment)")
+                testing_result = {"status": "skipped", "reason": "no_deployment"}
+
+            # Log audit results with deployment
+            if self.alith and deployment_result and deployment_result.get("status") == "success":
+                deployment_address = deployment_result.get("contract_address")
+                if deployment_address:
+                    self.alith.log_audit(deployment_address, audit_result.get("results", []))
+
+            # Return complete workflow results
+            return {
+                "status": "success",
+                "workflow": "complete_5_stages",
+                "stages_completed": 5,
+                "generation": generation_result,
+                "audit": audit_result,
+                "deployment": deployment_result,
+                "verification": verification_result,
+                "testing": testing_result,
+                "network": network,
+                "test_only": test_only
+            }
 
         except Exception as e:
-            logger.error(f"Workflow execution failed: {e}")
+            logger.error(f"5-stage workflow execution failed: {e}")
             return {"status": "error", "error": str(e), "workflow": "failed"}
 
     def _estimate_gas(self, contract_code: str) -> Dict[str, Any]:
@@ -1151,6 +1239,101 @@ Generate only the Solidity contract code, no explanations or markdown formatting
     async def get_supported_networks(self) -> List[str]:
         """Get list of supported networks for public contract auditing"""
         return public_contract_auditor.get_supported_networks()
+
+    @safe_operation("verify_contract")
+    async def verify_contract(self, contract_address: str, source_code: str, network: str = "hyperion") -> Dict[str, Any]:
+        """
+        Verify a smart contract on the blockchain explorer.
+        
+        Args:
+            contract_address: The deployed contract address
+            source_code: The Solidity source code
+            network: Target network for verification
+            
+        Returns:
+            Dictionary containing verification results
+        """
+        try:
+            from services.verification.verifier import ContractVerifier
+            
+            logger.info(f"Starting contract verification for {contract_address} on {network}")
+            
+            verifier = ContractVerifier(network, self.config)
+            result = await verifier.verify_contract(
+                source_code=source_code,
+                contract_address=contract_address
+            )
+            
+            return {
+                "status": "success",
+                "verification_result": result,
+                "contract_address": contract_address,
+                "network": network
+            }
+            
+        except Exception as e:
+            logger.error(f"Contract verification failed: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "contract_address": contract_address,
+                "network": network
+            }
+
+    @safe_operation("test_contract")
+    async def test_contract(self, contract_address: str, source_code: str, network: str = "hyperion") -> Dict[str, Any]:
+        """
+        Test a deployed smart contract functionality.
+        
+        Args:
+            contract_address: The deployed contract address
+            source_code: The Solidity source code
+            network: Target network for testing
+            
+        Returns:
+            Dictionary containing test results
+        """
+        try:
+            from services.testing.contract_tester import ContractTester
+            
+            # Get network configuration
+            networks_config = self.config.get('networks', {})
+            if network not in networks_config:
+                return {
+                    "status": "error",
+                    "error": f"Network '{network}' not configured",
+                    "available_networks": list(networks_config.keys())
+                }
+            
+            network_config = networks_config[network]
+            rpc_url = network_config.get('rpc_url')
+            
+            if not isinstance(rpc_url, str):
+                return {
+                    "status": "error",
+                    "error": f"RPC URL must be string, got {type(rpc_url).__name__}"
+                }
+            
+            logger.info(f"Starting contract testing for {contract_address} on {network}")
+            
+            tester = ContractTester(rpc_url, contract_address)
+            result = await tester.run_tests(source_code)
+            
+            return {
+                "status": "success",
+                "test_results": result,
+                "contract_address": contract_address,
+                "network": network
+            }
+            
+        except Exception as e:
+            logger.error(f"Contract testing failed: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "contract_address": contract_address,
+                "network": network
+            }
 
 
 # Example usage and testing
