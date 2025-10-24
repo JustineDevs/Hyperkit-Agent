@@ -123,6 +123,357 @@ contract {CONTRACT_NAME} is ERC721, Ownable, ReentrancyGuard {{
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract {CONTRACT_NAME} is ReentrancyGuard, Ownable {
+    IERC20 public token;
+    uint256 public totalDeposits;
+    uint256 public totalRewards;
+    uint256 public rewardRate;
+    uint256 public lastUpdateTime;
+    
+    mapping(address => uint256) public deposits;
+    mapping(address => uint256) public rewards;
+    mapping(address => uint256) public userRewardPerTokenPaid;
+    
+    event Deposited(address indexed user, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
+    event RewardPaid(address indexed user, uint256 reward);
+    
+    constructor(address _token) {
+        token = IERC20(_token);
+    }
+    
+    function deposit(uint256 amount) external nonReentrant {
+        require(amount > 0, "Amount must be > 0");
+        token.transferFrom(msg.sender, address(this), amount);
+        deposits[msg.sender] += amount;
+        totalDeposits += amount;
+        emit Deposited(msg.sender, amount);
+    }
+    
+    function withdraw(uint256 amount) external nonReentrant {
+        require(amount > 0, "Amount must be > 0");
+        require(deposits[msg.sender] >= amount, "Insufficient balance");
+        deposits[msg.sender] -= amount;
+        totalDeposits -= amount;
+        token.transfer(msg.sender, amount);
+        emit Withdrawn(msg.sender, amount);
+    }
+    
+    function claimRewards() external nonReentrant {
+        uint256 reward = calculateReward(msg.sender);
+        if (reward > 0) {
+            rewards[msg.sender] = 0;
+            token.transfer(msg.sender, reward);
+            emit RewardPaid(msg.sender, reward);
+        }
+    }
+}""",
+            "staking_rewards": """
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract {CONTRACT_NAME} is ReentrancyGuard, Ownable {
+    IERC20 public stakingToken;
+    IERC20 public rewardsToken;
+    
+    uint256 public periodFinish = 0;
+    uint256 public rewardRate = 0;
+    uint256 public rewardsDuration = 7 days;
+    uint256 public lastUpdateTime;
+    uint256 public rewardPerTokenStored;
+    
+    mapping(address => uint256) public userRewardPerTokenPaid;
+    mapping(address => uint256) public rewards;
+    mapping(address => uint256) private _balances;
+    
+    uint256 private _totalSupply;
+    
+    event Staked(address indexed user, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
+    event RewardPaid(address indexed user, uint256 reward);
+    
+    constructor(address _stakingToken, address _rewardsToken) {
+        stakingToken = IERC20(_stakingToken);
+        rewardsToken = IERC20(_rewardsToken);
+    }
+    
+    function stake(uint256 amount) external nonReentrant {
+        require(amount > 0, "Cannot stake 0");
+        _totalSupply += amount;
+        _balances[msg.sender] += amount;
+        stakingToken.transferFrom(msg.sender, address(this), amount);
+        emit Staked(msg.sender, amount);
+    }
+    
+    function withdraw(uint256 amount) public nonReentrant {
+        require(amount > 0, "Cannot withdraw 0");
+        _totalSupply -= amount;
+        _balances[msg.sender] -= amount;
+        stakingToken.transfer(msg.sender, amount);
+        emit Withdrawn(msg.sender, amount);
+    }
+    
+    function getReward() public nonReentrant {
+        uint256 reward = rewards[msg.sender];
+        if (reward > 0) {
+            rewards[msg.sender] = 0;
+            rewardsToken.transfer(msg.sender, reward);
+            emit RewardPaid(msg.sender, reward);
+        }
+    }
+}""",
+            "governance": """
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/governance/Governor.sol";
+import "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
+import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
+import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
+import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
+
+contract {CONTRACT_NAME} is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction {
+    constructor(
+        IVotes _token,
+        uint256 _votingDelay,
+        uint256 _votingPeriod,
+        uint256 _quorumPercentage
+    )
+        Governor("{CONTRACT_NAME}")
+        GovernorSettings(_votingDelay, _votingPeriod, 0)
+        GovernorVotes(_token)
+        GovernorVotesQuorumFraction(_quorumPercentage)
+    {}
+    
+    function votingDelay() public view override(IGovernor, GovernorSettings) returns (uint256) {
+        return super.votingDelay();
+    }
+    
+    function votingPeriod() public view override(IGovernor, GovernorSettings) returns (uint256) {
+        return super.votingPeriod();
+    }
+    
+    function quorum(uint256 blockNumber) public view override(IGovernor, GovernorVotesQuorumFraction) returns (uint256) {
+        return super.quorum(blockNumber);
+    }
+}""",
+            "lending_protocol": """
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract {CONTRACT_NAME} is ReentrancyGuard, Ownable {
+    struct Loan {
+        address borrower;
+        address lender;
+        address token;
+        uint256 amount;
+        uint256 interestRate;
+        uint256 duration;
+        uint256 startTime;
+        bool active;
+        bool repaid;
+    }
+    
+    mapping(uint256 => Loan) public loans;
+    mapping(address => uint256[]) public borrowerLoans;
+    mapping(address => uint256[]) public lenderLoans;
+    
+    uint256 public loanCounter;
+    uint256 public totalLent;
+    uint256 public totalBorrowed;
+    
+    event LoanCreated(uint256 indexed loanId, address indexed borrower, address indexed lender, uint256 amount);
+    event LoanRepaid(uint256 indexed loanId, uint256 amount);
+    
+    function createLoan(
+        address lender,
+        address token,
+        uint256 amount,
+        uint256 interestRate,
+        uint256 duration
+    ) external nonReentrant returns (uint256) {
+        require(lender != address(0), "Invalid lender");
+        require(amount > 0, "Amount must be > 0");
+        require(duration > 0, "Duration must be > 0");
+        
+        uint256 loanId = loanCounter++;
+        
+        loans[loanId] = Loan({
+            borrower: msg.sender,
+            lender: lender,
+            token: token,
+            amount: amount,
+            interestRate: interestRate,
+            duration: duration,
+            startTime: block.timestamp,
+            active: true,
+            repaid: false
+        });
+        
+        borrowerLoans[msg.sender].push(loanId);
+        lenderLoans[lender].push(loanId);
+        
+        totalBorrowed += amount;
+        
+        emit LoanCreated(loanId, msg.sender, lender, amount);
+        
+        return loanId;
+    }
+    
+    function repayLoan(uint256 loanId) external nonReentrant {
+        Loan storage loan = loans[loanId];
+        require(loan.borrower == msg.sender, "Not the borrower");
+        require(loan.active, "Loan not active");
+        require(!loan.repaid, "Loan already repaid");
+        
+        uint256 interest = (loan.amount * loan.interestRate * loan.duration) / (365 days * 10000);
+        uint256 totalAmount = loan.amount + interest;
+        
+        IERC20(loan.token).transferFrom(msg.sender, loan.lender, totalAmount);
+        
+        loan.repaid = true;
+        loan.active = false;
+        
+        emit LoanRepaid(loanId, totalAmount);
+    }
+}""",
+            "dex": """
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract {CONTRACT_NAME} is ReentrancyGuard, Ownable {
+    struct Pool {
+        address tokenA;
+        address tokenB;
+        uint256 reserveA;
+        uint256 reserveB;
+        uint256 totalSupply;
+        bool active;
+    }
+    
+    mapping(bytes32 => Pool) public pools;
+    mapping(address => mapping(address => uint256)) public liquidity;
+    
+    uint256 public constant FEE_RATE = 30; // 0.3%
+    uint256 public constant FEE_DENOMINATOR = 10000;
+    
+    event PoolCreated(bytes32 indexed poolId, address indexed tokenA, address indexed tokenB);
+    event LiquidityAdded(bytes32 indexed poolId, address indexed user, uint256 amountA, uint256 amountB);
+    event Swap(bytes32 indexed poolId, address indexed user, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut);
+    
+    function createPool(address tokenA, address tokenB) external onlyOwner returns (bytes32) {
+        require(tokenA != tokenB, "Same token");
+        require(tokenA != address(0) && tokenB != address(0), "Zero address");
+        
+        bytes32 poolId = keccak256(abi.encodePacked(tokenA, tokenB));
+        require(!pools[poolId].active, "Pool exists");
+        
+        pools[poolId] = Pool({
+            tokenA: tokenA,
+            tokenB: tokenB,
+            reserveA: 0,
+            reserveB: 0,
+            totalSupply: 0,
+            active: true
+        });
+        
+        emit PoolCreated(poolId, tokenA, tokenB);
+        return poolId;
+    }
+    
+    function addLiquidity(
+        bytes32 poolId,
+        uint256 amountA,
+        uint256 amountB
+    ) external nonReentrant {
+        Pool storage pool = pools[poolId];
+        require(pool.active, "Pool not active");
+        
+        IERC20(pool.tokenA).transferFrom(msg.sender, address(this), amountA);
+        IERC20(pool.tokenB).transferFrom(msg.sender, address(this), amountB);
+        
+        uint256 liquidityAmount;
+        if (pool.totalSupply == 0) {
+            liquidityAmount = sqrt(amountA * amountB);
+        } else {
+            liquidityAmount = min(
+                (amountA * pool.totalSupply) / pool.reserveA,
+                (amountB * pool.totalSupply) / pool.reserveB
+            );
+        }
+        
+        pool.reserveA += amountA;
+        pool.reserveB += amountB;
+        pool.totalSupply += liquidityAmount;
+        liquidity[msg.sender][poolId] += liquidityAmount;
+        
+        emit LiquidityAdded(poolId, msg.sender, amountA, amountB);
+    }
+    
+    function swap(
+        bytes32 poolId,
+        address tokenIn,
+        uint256 amountIn
+    ) external nonReentrant {
+        Pool storage pool = pools[poolId];
+        require(pool.active, "Pool not active");
+        
+        address tokenOut = tokenIn == pool.tokenA ? pool.tokenB : pool.tokenA;
+        require(tokenOut != address(0), "Invalid token");
+        
+        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        
+        uint256 amountOut = getAmountOut(amountIn, tokenIn == pool.tokenA ? pool.reserveA : pool.reserveB, tokenIn == pool.tokenA ? pool.reserveB : pool.reserveA);
+        
+        if (tokenIn == pool.tokenA) {
+            pool.reserveA += amountIn;
+            pool.reserveB -= amountOut;
+        } else {
+            pool.reserveB += amountIn;
+            pool.reserveA -= amountOut;
+        }
+        
+        IERC20(tokenOut).transfer(msg.sender, amountOut);
+        
+        emit Swap(poolId, msg.sender, tokenIn, tokenOut, amountIn, amountOut);
+    }
+    
+    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) public pure returns (uint256) {
+        uint256 amountInWithFee = amountIn * (FEE_DENOMINATOR - FEE_RATE);
+        uint256 numerator = amountInWithFee * reserveOut;
+        uint256 denominator = (reserveIn * FEE_DENOMINATOR) + amountInWithFee;
+        return numerator / denominator;
+    }
+    
+    function sqrt(uint256 x) internal pure returns (uint256) {
+        if (x == 0) return 0;
+        uint256 z = (x + 1) / 2;
+        uint256 y = x;
+        while (z < y) {
+            y = z;
+            z = (x / z + z) / 2;
+        }
+        return y;
+    }
+    
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";

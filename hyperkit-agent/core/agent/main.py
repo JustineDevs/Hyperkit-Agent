@@ -208,6 +208,7 @@ class HyperKitAgent:
     async def generate_contract(self, prompt: str, context: str = "") -> Dict[str, Any]:
         """
         Generate a smart contract based on natural language prompt using free LLM models.
+        Enhanced with DeFi protocol support for blockchain/smart contract/DeFi focus.
 
         Args:
             prompt: Natural language description of the contract
@@ -1106,6 +1107,42 @@ Generate only the Solidity contract code, no explanations or markdown formatting
                 "error": str(e),
                 "primitive_type": primitive_type
             }
+
+    @safe_operation("generate_defi_protocol")
+    async def generate_defi_protocol(self, protocol_spec: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate DeFi protocol contract based on specifications.
+        Focus: Blockchain/DeFi protocol generation with advanced features.
+
+        Args:
+            protocol_spec: Dictionary containing protocol specifications
+
+        Returns:
+            Dictionary containing generated protocol code and metadata
+        """
+        try:
+            from services.defi.protocols_generator import DeFiProtocolsGenerator
+            
+            generator = DeFiProtocolsGenerator()
+            result = await generator.generate_protocol(protocol_spec)
+            
+            logger.info(f"DeFi protocol generated: {result.get('protocol_type')}")
+            return {
+                "status": "success",
+                "protocol_code": result.get("source_code"),
+                "protocol_id": result.get("protocol_id"),
+                "protocol_type": result.get("protocol_type"),
+                "network": result.get("network"),
+                "features": result.get("features"),
+                "gas_estimate": result.get("gas_estimate"),
+                "security_level": result.get("security_level"),
+                "defi_complexity": result.get("defi_complexity"),
+                "created_at": result.get("created_at")
+            }
+            
+        except Exception as e:
+            logger.error(f"DeFi protocol generation failed: {e}")
+            return {"status": "error", "error": str(e), "severity": "critical"}
 
     async def get_supported_defi_primitives(self) -> List[str]:
         """Get list of supported DeFi primitives"""
