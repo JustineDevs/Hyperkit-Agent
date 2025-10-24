@@ -278,14 +278,14 @@ class HyperKitAgent:
             # Use smart naming and organized directories
             from services.generation.contract_namer import ContractNamer
             namer = ContractNamer()
-            path_manager = PathManager()
+            path_manager = PathManager(command_type="workflow")
             
             # Generate smart filename and category
             filename = namer.generate_filename(prompt)
             category = namer.get_category(prompt)
             
-            # Create organized directory structure
-            contracts_path = path_manager.get_category_dir(category)
+            # Create organized directory structure for workflow command
+            contracts_path = path_manager.get_workflow_dir() / category
             contracts_path.mkdir(parents=True, exist_ok=True)
             
             # Save with smart name
@@ -381,11 +381,7 @@ class HyperKitAgent:
             from services.deployment.deployer import MultiChainDeployer
             from services.deployment.foundry_manager import FoundryManager
             
-            # Ensure Foundry is available
-            try:
-                FoundryManager.ensure_installed()
-            except RuntimeError:
-                logger.warning("Foundry not available, some features may be limited")
+            # Initialize deployer (handles Foundry check internally)
             deployer = MultiChainDeployer(self.config)
             
             result = deployer.deploy(
@@ -476,7 +472,8 @@ class HyperKitAgent:
         user_prompt: str, 
         network: str = "hyperion",
         auto_verification: bool = True,
-        test_only: bool = False
+        test_only: bool = False,
+        allow_insecure: bool = False
     ) -> Dict[str, Any]:
         """
         Execute the complete 5-stage workflow: generate -> audit -> deploy -> verify -> test.
@@ -512,11 +509,46 @@ class HyperKitAgent:
             if audit_result["status"] != "success":
                 return audit_result
 
-            # Stage 3: Deploy if audit passes
+            # Stage 3: Deploy if audit passes or user confirms
             deployment_result = None
-            if not test_only and audit_result.get("severity", "low") in ["low", "medium"]:
-                logger.info("Stage 3/5: Deploying to Blockchain")
-                deployment_result = await self.deploy_contract(contract_code, network)
+            audit_severity = audit_result.get("severity", "low")
+            
+            if not test_only:
+                if audit_severity in ["low", "medium"]:
+                    logger.info("Stage 3/5: Deploying to Blockchain")
+                    deployment_result = await self.deploy_contract(contract_code, network)
+                elif audit_severity == "high":
+                    if allow_insecure:
+                        # Auto-proceed if --allow-insecure flag is set
+                        print(f"\n⚠️  Audit found HIGH severity issues.")
+                        print(f"   Severity: {audit_severity}")
+                        print(f"   Issues found: {len(audit_result.get('results', {}).get('issues', []))}")
+                        print("⚠️  Proceeding with deployment as --allow-insecure flag is set.")
+                        logger.info("Stage 3/5: Deploying to Blockchain (--allow-insecure flag set)")
+                        deployment_result = await self.deploy_contract(contract_code, network)
+                    else:
+                        # Interactive confirmation for high-severity issues
+                        print(f"\n⚠️  Audit found HIGH severity issues.")
+                        print(f"   Severity: {audit_severity}")
+                        print(f"   Issues found: {len(audit_result.get('results', {}).get('issues', []))}")
+                        
+                        try:
+                            user_input = input("Do you want to proceed with deployment anyway? (Y/n): ").strip().lower()
+                            if user_input in ['', 'y', 'yes']:
+                                print("⚠️  Proceeding with deployment as per user request.")
+                                logger.info("Stage 3/5: Deploying to Blockchain (user confirmed despite high severity)")
+                                deployment_result = await self.deploy_contract(contract_code, network)
+                            else:
+                                print("🚫 Deployment cancelled by user due to audit issues.")
+                                logger.info("Stage 3/5: Skipped (user cancelled due to high severity audit)")
+                                deployment_result = {"status": "skipped", "reason": "user_cancelled_audit"}
+                        except (EOFError, KeyboardInterrupt):
+                            print("\n🚫 Deployment cancelled due to input error.")
+                            logger.info("Stage 3/5: Skipped (input error during user confirmation)")
+                            deployment_result = {"status": "skipped", "reason": "input_error"}
+                else:
+                    logger.info("Stage 3/5: Skipped (unknown audit severity)")
+                    deployment_result = {"status": "skipped", "reason": "unknown_audit_severity"}
                 
                 # Continue workflow even if deployment fails (simulation mode)
                 if deployment_result.get("status") not in ["success", "deployed"]:
@@ -555,9 +587,12 @@ class HyperKitAgent:
                     }
                 else:
                     verification_result = {"status": "skipped", "reason": "no_contract_address"}
-            else:
-                logger.info("Stage 4/5: Skipped (no deployment or verification disabled)")
-                verification_result = {"status": "skipped", "reason": "no_deployment"}
+            elif not deployment_result:
+                logger.warning("Stage 4/5: Skipped (deployment failed)")
+                verification_result = {"status": "skipped", "reason": "deployment_failed"}
+            elif not auto_verification:
+                logger.info("Stage 4/5: Skipped (verification disabled)")
+                verification_result = {"status": "skipped", "reason": "verification_disabled"}
 
             # Stage 5: Test contract (if deployed)
             testing_result = None
@@ -580,6 +615,9 @@ class HyperKitAgent:
                     }
                 else:
                     testing_result = {"status": "skipped", "reason": "missing_rpc_or_address"}
+            elif not deployment_result:
+                logger.warning("Stage 5/5: Skipped (deployment failed)")
+                testing_result = {"status": "skipped", "reason": "deployment_failed"}
             else:
                 logger.info("Stage 5/5: Skipped (no deployment)")
                 testing_result = {"status": "skipped", "reason": "no_deployment"}

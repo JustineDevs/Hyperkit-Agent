@@ -26,10 +26,14 @@ class MultiChainDeployer:
         self.config = config or {}
         
         # Ensure Foundry is installed (optional)
+        self.foundry_manager = FoundryManager()
         try:
-            FoundryManager.ensure_installed()
-            self.foundry_available = True
-        except RuntimeError as e:
+            if self.foundry_manager.ensure_installed():
+                self.foundry_available = True
+            else:
+                logger.warning("Foundry setup failed - deployment will be simulated")
+                self.foundry_available = False
+        except Exception as e:
             logger.warning(f"Foundry setup failed: {e}")
             logger.warning("Deployment will be simulated without actual blockchain deployment")
             self.foundry_available = False
