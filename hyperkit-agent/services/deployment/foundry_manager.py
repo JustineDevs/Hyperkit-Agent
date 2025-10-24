@@ -6,6 +6,8 @@ Handles Foundry installation and version checking
 import subprocess
 import os
 import logging
+import platform
+import shutil
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -13,19 +15,46 @@ logger = logging.getLogger(__name__)
 class FoundryManager:
     """Manage Foundry installation and updates"""
     
-    @staticmethod
-    def is_installed() -> bool:
+    def __init__(self):
+        self.is_windows = platform.system() == "Windows"
+        self.forge_path = self._find_forge_path()
+    
+    def _find_forge_path(self):
+        """Find forge executable on system"""
+        # Try common locations
+        search_paths = [
+            Path.home() / ".foundry" / "bin" / "forge",
+            Path("C:/Program Files/Foundry/bin/forge.exe"),
+            Path("C:/foundry/bin/forge.exe"),
+            Path("C:/Users") / os.getenv("USERNAME", "user") / ".foundry" / "bin" / "forge.exe",
+        ]
+        
+        # Check PATH first
+        forge_in_path = shutil.which("forge")
+        if forge_in_path:
+            return Path(forge_in_path)
+        
+        # Check manual locations
+        for path in search_paths:
+            if path.exists():
+                return path
+        
+        return None
+    
+    def is_installed(self) -> bool:
         """Check if Foundry is installed"""
-        try:
-            result = subprocess.run(
-                ["forge", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            return result.returncode == 0
-        except:
-            return False
+        if self.forge_path and self.forge_path.exists():
+            try:
+                result = subprocess.run(
+                    [str(self.forge_path), "--version"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                return result.returncode == 0
+            except Exception:
+                return False
+        return False
     
     @staticmethod
     def get_version() -> str:
@@ -67,16 +96,44 @@ class FoundryManager:
             logger.error(f"Installation failed: {e}")
             return False
     
-    @staticmethod
-    def ensure_installed():
+    def ensure_installed(self):
         """Ensure Foundry is installed"""
-        if not FoundryManager.is_installed():
-            logger.warning("Foundry not installed!")
-            logger.info(f"Version: {FoundryManager.get_version()}")
-            
-            if not FoundryManager.install():
-                logger.error("Failed to install Foundry")
-                logger.warning("Continuing without Foundry - deployment features will be limited")
-                return False
+        if self.is_installed():
+            logger.info(f"✅ Foundry found at: {self.forge_path}")
+            return True
         
-        logger.info(f"Foundry ready: {FoundryManager.get_version()}")
+        logger.warning("❌ Foundry not found")
+        
+        if self.is_windows:
+            logger.error("""
+╭──────────────────────────────────────────────────╮
+│ ⚠️  Foundry Installation Required (Windows)      │
+├──────────────────────────────────────────────────┤
+│ 1. Download from:                                │
+│    https://github.com/foundry-rs/foundry/releases│
+│                                                  │
+│ 2. Extract to:                                   │
+│    C:\\Program Files\\Foundry\\                   │
+│                                                  │
+│ 3. Add to PATH:                                  │
+│    C:\\Program Files\\Foundry\\bin                │
+│                                                  │
+│ 4. Restart terminal and verify:                 │
+│    forge --version                               │
+╰──────────────────────────────────────────────────╯
+            """)
+            return False
+        
+        # For Linux/Mac: auto-install
+        try:
+            logger.info("Installing Foundry...")
+            subprocess.run(
+                ["curl", "-L", "https://foundry.paradigm.xyz", "|", "bash"],
+                shell=True,
+                check=True
+            )
+            subprocess.run(["foundryup"], check=True)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to install Foundry: {e}")
+            return False

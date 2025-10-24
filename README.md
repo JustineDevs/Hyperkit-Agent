@@ -278,6 +278,24 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 - [ ] Launch announcement
 - [ ] Community spotlight
 
+## Technical Reports
+
+### Integration & Testing Reports
+- **[Workflow Behavior Report](hyperkit-agent/REPORTS/WORKFLOW_BEHAVIOR_REPORT.md)**: Complete analysis of the 5-stage workflow system
+- **[Testing Results Report](hyperkit-agent/REPORTS/TESTING_RESULTS_REPORT.md)**: Comprehensive testing results and performance metrics
+- **[Foundry Integration Report](hyperkit-agent/REPORTS/FOUNDRY_INTEGRATION_REPORT.md)**: Multi-chain deployment integration details
+- **[Audit System Enhancement Report](hyperkit-agent/REPORTS/AUDIT_SYSTEM_ENHANCEMENT_REPORT.md)**: Enhanced vulnerability detection and security analysis
+- **[Complete Integration Report](hyperkit-agent/REPORTS/INTEGRATION_REPORT.md)**: Full integration overview and production readiness
+
+### Key Features Implemented
+- **Interactive Audit Confirmation**: User-friendly security controls for high-severity issues
+- **Smart Contract Naming**: Meaningful contract names and organized file structure
+- **Command-Based Organization**: Logical artifact organization by command type
+- **Foundry Integration**: Multi-chain deployment with Windows, Linux, macOS support
+- **Enhanced Audit System**: Comprehensive vulnerability detection for local and deployed contracts
+- **Error Handling**: Robust failure recovery and simulation mode
+- **Cross-Platform Support**: Full compatibility across operating systems
+
 ## Acknowledgments
 
 - Thanks to all contributors who help make HyperKit better
