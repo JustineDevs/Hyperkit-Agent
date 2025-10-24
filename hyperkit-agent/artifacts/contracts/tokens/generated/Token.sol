@@ -1,67 +1,84 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /**
- * @title TestToken5
+ * @title TestToken19
  * @author Your Name
- * @notice A simple, production-ready ERC20 token with a fixed supply.
- * @dev This contract implements a standard ERC20 token with features like pausable transfers,
- * burnable tokens, and ownership control, leveraging OpenZeppelin's secure contracts.
- * The initial supply of 1,000,000 tokens is minted to the contract deployer.
+ * @notice A simple ERC20 token with a fixed supply, pausable functionality,
+ * and burnable features, built using OpenZeppelin contracts.
+ * @dev This contract mints an initial supply of 1,000,000 tokens to the deployer.
+ * The contract owner can pause and unpause token transfers.
+ * Any token holder can burn their own tokens.
  */
-contract TestToken5 is ERC20, ERC20Burnable, Ownable, Pausable {
+contract TestToken19 is ERC20, ERC20Burnable, Ownable, Pausable, ReentrancyGuard {
+    /**
+     * @notice The total number of tokens to be minted at deployment.
+     * @dev The value is 1,000,000 tokens with 18 decimals.
+     */
+    uint256 public constant INITIAL_SUPPLY = 1_000_000 * 10**18;
 
     /**
-     * @notice Constructor to create the TestToken5.
+     * @dev An error indicating an invalid address (e.g., address(0)).
+     */
+    error TestToken19__InvalidAddress();
+
+    /**
+     * @dev An event emitted when the contract is paused.
+     * @param account The account that triggered the pause.
+     */
+    event Paused(address account);
+
+    /**
+     * @dev An event emitted when the contract is unpaused.
+     * @param account The account that triggered the unpause.
+     */
+    event Unpaused(address account);
+
+    /**
+     * @notice Constructs the TestToken19 contract.
      * @param initialOwner The address that will receive the initial supply and contract ownership.
      */
-    constructor(address initialOwner)
-        ERC20("TestToken5", "TT5")
-        Ownable(initialOwner)
-    {
-        uint256 initialSupply = 1_000_000 * (10**decimals());
-        _mint(initialOwner, initialSupply);
+    constructor(address initialOwner) ERC20("TestToken19", "TT19") Ownable(initialOwner) {
+        if (initialOwner == address(0)) {
+            revert TestToken19__InvalidAddress();
+        }
+        _mint(initialOwner, INITIAL_SUPPLY);
     }
 
     /**
-     * @dev Pauses all token transfers.
-     * @notice This function can only be called by the owner. It halts all token movements,
-     * including transfers and approvals, as an emergency stop mechanism.
+     * @notice Pauses all token transfers.
+     * @dev Can only be called by the contract owner.
      * Emits a {Paused} event.
+     * @custom:security See {Pausable-_pause}.
      */
-    function pause() public onlyOwner {
+    function pause() public onlyOwner nonReentrant {
         _pause();
+        emit Paused(msg.sender);
     }
 
     /**
-     * @dev Unpauses all token transfers.
-     * @notice This function can only be called by the owner. It resumes all token movements
-     * after the contract was previously paused.
+     * @notice Unpauses all token transfers.
+     * @dev Can only be called by the contract owner.
      * Emits an {Unpaused} event.
+     * @custom:security See {Pausable-_unpause}.
      */
-    function unpause() public onlyOwner {
+    function unpause() public onlyOwner nonReentrant {
         _unpause();
+        emit Unpaused(msg.sender);
     }
 
     /**
-     * @dev Hook that is called before any token transfer.
-     * @notice This internal function is overridden to incorporate the Pausable functionality.
-     * It ensures that token transfers cannot occur while the contract is paused.
-     * This affects `transfer`, `transferFrom`, `mint`, and `burn`.
-     * @param from The address from which tokens are being transferred.
-     * @param to The address to which tokens are being transferred.
-     * @param amount The amount of tokens being transferred.
+     * @dev Overrides the internal OpenZeppelin `_update` function to enforce the `whenNotPaused`
+     * modifier on all token movements (transfers, mints, and burns). This is a more
+     * gas-efficient and comprehensive approach than overriding each individual function.
      */
-    function _update(address from, address to, uint256 amount)
-        internal
-        override
-        whenNotPaused
-    {
-        super._update(from, to, amount);
+    function _update(address from, address to, uint256 value) internal override(ERC20, ERC20Pausable) whenNotPaused {
+        super._update(from, to, value);
     }
 }

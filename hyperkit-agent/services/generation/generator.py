@@ -537,9 +537,12 @@ contract {CONTRACT_NAME} is Ownable, ReentrancyGuard, Pausable {{
         try:
             # Determine contract type from prompt
             contract_type = self._determine_contract_type(prompt)
+            
+            # Extract smart contract name
+            contract_name, _ = self.namer.extract_contract_name(prompt)
 
-            # Create system prompt
-            system_prompt = self._create_system_prompt(contract_type, context)
+            # Create system prompt with contract name
+            system_prompt = self._create_system_prompt(contract_type, context, contract_name)
 
             # Generate contract using AI
             if self.provider in ["openai", "deepseek", "xai", "gpt-oss"]:
@@ -553,10 +556,10 @@ contract {CONTRACT_NAME} is Ownable, ReentrancyGuard, Pausable {{
             else:
                 raise ValueError(f"Unsupported provider: {self.provider}")
 
-            # Post-process the generated code
-            contract_code = self._post_process_contract(contract_code, contract_type)
+            # Post-process the generated code with smart contract naming
+            contract_code = self._post_process_contract(contract_code, contract_type, contract_name)
 
-            logger.info(f"Generated {contract_type} contract successfully")
+            logger.info(f"Generated {contract_type} contract '{contract_name}' successfully")
             return contract_code
 
         except Exception as e:
@@ -580,8 +583,12 @@ contract {CONTRACT_NAME} is Ownable, ReentrancyGuard, Pausable {{
         else:
             return "token"  # Default to token
 
-    def _create_system_prompt(self, contract_type: str, context: str) -> str:
+    def _create_system_prompt(self, contract_type: str, context: str, contract_name: str = None) -> str:
         """Create a system prompt for the AI model."""
+        contract_name_instruction = ""
+        if contract_name:
+            contract_name_instruction = f"\nIMPORTANT: The contract must be named '{contract_name}' (not 'Contract' or generic names)."
+        
         base_prompt = f"""
 You are an expert Solidity developer specializing in {contract_type} contracts. 
 Generate secure, production-ready smart contracts based on user requirements.
@@ -595,7 +602,7 @@ Key Requirements:
 - Include comprehensive error handling
 - Add events for important state changes
 - Use NatSpec documentation
-- Ensure gas optimization
+- Ensure gas optimization{contract_name_instruction}
 
 Security Best Practices:
 - Validate all inputs
@@ -653,7 +660,7 @@ Generate only the Solidity contract code, no explanations or markdown formatting
         response = self.client.generate_content(full_prompt)
         return response.text
 
-    def _post_process_contract(self, contract_code: str, contract_type: str) -> str:
+    def _post_process_contract(self, contract_code: str, contract_type: str, contract_name: str = None) -> str:
         """Post-process the generated contract code."""
         # Remove markdown formatting if present
         if contract_code.startswith("```solidity"):
@@ -667,18 +674,22 @@ Generate only the Solidity contract code, no explanations or markdown formatting
         if contract_type in self.templates:
             # Extract parameters from the prompt and fill template
             # This is a simplified version - in practice, you'd use NLP to extract parameters
-            contract_code = self._fill_template_parameters(contract_code, contract_type)
+            contract_code = self._fill_template_parameters(contract_code, contract_type, contract_name)
 
         return contract_code.strip()
 
-    def _fill_template_parameters(self, contract_code: str, contract_type: str) -> str:
+    def _fill_template_parameters(self, contract_code: str, contract_type: str, contract_name: str = None) -> str:
         """Fill template parameters with default values."""
+        # Use provided contract name or generate one
+        if not contract_name:
+            contract_name = "GeneratedContract"
+        
         defaults = {
-            "CONTRACT_NAME": "GeneratedContract",
-            "TOKEN_NAME": "Generated Token",
-            "TOKEN_SYMBOL": "GEN",
-            "NFT_NAME": "Generated NFT",
-            "NFT_SYMBOL": "GNFT",
+            "CONTRACT_NAME": contract_name,
+            "TOKEN_NAME": f"{contract_name} Token",
+            "TOKEN_SYMBOL": contract_name[:4].upper() if len(contract_name) >= 4 else contract_name.upper(),
+            "NFT_NAME": f"{contract_name} NFT",
+            "NFT_SYMBOL": f"{contract_name[:4].upper()}NFT" if len(contract_name) >= 4 else f"{contract_name.upper()}NFT",
             "MAX_SUPPLY": "1000000",
             "INITIAL_SUPPLY": "100000",
         }

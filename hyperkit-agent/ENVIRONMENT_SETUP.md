@@ -1,5 +1,53 @@
 # Environment Setup Guide
 
+## Required Dependencies
+
+### 1. Foundry Installation (Required for Deployment)
+
+The HyperKit AI Agent uses Foundry for smart contract compilation and deployment. You must install Foundry before using the agent.
+
+#### Windows Installation
+
+**Option 1: Automatic Installation (Recommended)**
+```bash
+# Run the installation script
+curl -L https://foundry.paradigm.xyz | bash
+
+# Restart your terminal, then run:
+foundryup
+```
+
+**Option 2: Manual Installation**
+1. Download Foundry from [GitHub Releases](https://github.com/foundry-rs/foundry/releases)
+2. Extract to `C:\Program Files\Foundry\`
+3. Add `C:\Program Files\Foundry\bin` to your PATH
+4. Restart terminal and verify: `forge --version`
+
+#### Linux/macOS Installation
+```bash
+# Install Foundry
+curl -L https://foundry.paradigm.xyz | bash
+
+# Restart terminal, then run:
+foundryup
+
+# Verify installation
+forge --version
+```
+
+#### Verify Foundry Installation
+```bash
+# Check if Foundry is installed
+forge --version
+# Should output: forge 1.4.3-nightly (or similar)
+
+# Check if forge is in PATH
+which forge
+# Should output: /home/user/.foundry/bin/forge (Linux/Mac) or C:\Program Files\Foundry\bin\forge.exe (Windows)
+```
+
+**Note**: If Foundry is not installed, the agent will run in simulation mode (no actual deployment).
+
 ## Required API Keys
 
 To use the HyperKit AI Agent, you'll need to configure the following API keys in your `.env` file:
@@ -182,6 +230,33 @@ LOG_LEVEL=INFO
 4. **Use read-only keys** when possible
 5. **Monitor API usage** to detect unauthorized access
 
+## Workflow Features
+
+### Interactive Audit Confirmation
+
+The HyperKit AI Agent includes intelligent audit confirmation for high-severity security issues:
+
+- **Low/Medium Severity**: Proceeds automatically
+- **High Severity**: Interactive confirmation required
+- **Automation Support**: Use `--allow-insecure` flag for CI/CD
+
+### Smart Contract Naming
+
+The agent generates meaningful contract names based on functionality:
+- `"Create UniswapV2-style DEX"` → `DEX.sol` with `UniswapV2Router02` contract
+- `"Create gaming NFT marketplace"` → `NFTMarketplace.sol` with `NftAuctionMarketplace` contract
+- `"Create ERC20 staking contract"` → `Staking.sol` with meaningful staking contract name
+
+### Command-Based Organization
+
+Artifacts are organized by command type:
+- `hyperagent workflow` → `artifacts/workflows/`
+- `hyperagent generate` → `artifacts/generate/`
+- `hyperagent audit` → `artifacts/audit/`
+- `hyperagent deploy` → `artifacts/deploy/`
+- `hyperagent verify` → `artifacts/verify/`
+- `hyperagent test` → `artifacts/test/`
+
 ## Testing Your Configuration
 
 After setting up your `.env` file, test the configuration:
@@ -190,11 +265,17 @@ After setting up your `.env` file, test the configuration:
 # Test the agent
 python main.py
 
+# Test workflow with interactive confirmation
+hyperagent workflow "Create a simple ERC20 token"
+
+# Test workflow with automation flag
+hyperagent workflow "Create a complex DeFi protocol" --allow-insecure
+
 # Test specific services
 python -m pytest tests/unit/test_core.py -v
 
 # Test CLI interface
-python cli.py --help
+hyperagent --help
 ```
 
 ## Troubleshooting
