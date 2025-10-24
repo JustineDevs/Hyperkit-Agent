@@ -7,7 +7,8 @@ import asyncio
 import json
 import logging
 import subprocess
-from typing import Dict, Any, Optional, List
+import functools
+from typing import Dict, Any, Optional, List, Callable
 from pathlib import Path
 from core.config.loader import get_config
 from core.intent_router import IntentRouter, IntentType
@@ -20,6 +21,96 @@ from services.defi.primitives_generator import defi_primitives_generator, DeFiPr
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def safe_operation(operation_name: str):
+    """Decorator for safe error handling on all operations (async-aware)"""
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        async def async_wrapper(*args, **kwargs) -> dict:
+            try:
+                logger.info(f"Starting operation: {operation_name}")
+                result = await func(*args, **kwargs)
+                
+                # Ensure result is dict with status
+                if not isinstance(result, dict):
+                    result = {"status": "success", "data": result}
+                
+                if "status" not in result:
+                    result["status"] = "success"
+                
+                return result
+            
+            except KeyError as e:
+                logger.error(f"Missing key in {operation_name}: {e}")
+                return {
+                    "status": "error",
+                    "error": f"Missing configuration: {str(e)}",
+                    "operation": operation_name
+                }
+            
+            except TypeError as e:
+                logger.error(f"Type error in {operation_name}: {e}")
+                return {
+                    "status": "error",
+                    "error": f"Invalid type: {str(e)}",
+                    "operation": operation_name
+                }
+            
+            except Exception as e:
+                logger.error(f"Error in {operation_name}: {e}", exc_info=True)
+                return {
+                    "status": "error",
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    "operation": operation_name
+                }
+        
+        @functools.wraps(func)
+        def sync_wrapper(*args, **kwargs) -> dict:
+            try:
+                logger.info(f"Starting operation: {operation_name}")
+                result = func(*args, **kwargs)
+                
+                # Ensure result is dict with status
+                if not isinstance(result, dict):
+                    result = {"status": "success", "data": result}
+                
+                if "status" not in result:
+                    result["status"] = "success"
+                
+                return result
+            
+            except KeyError as e:
+                logger.error(f"Missing key in {operation_name}: {e}")
+                return {
+                    "status": "error",
+                    "error": f"Missing configuration: {str(e)}",
+                    "operation": operation_name
+                }
+            
+            except TypeError as e:
+                logger.error(f"Type error in {operation_name}: {e}")
+                return {
+                    "status": "error",
+                    "error": f"Invalid type: {str(e)}",
+                    "operation": operation_name
+                }
+            
+            except Exception as e:
+                logger.error(f"Error in {operation_name}: {e}", exc_info=True)
+                return {
+                    "status": "error",
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    "operation": operation_name
+                }
+        
+        # Return async wrapper for async functions, sync for others
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
+    return decorator
 
 
 class HyperKitAgent:
@@ -113,6 +204,7 @@ class HyperKitAgent:
 
         logger.info("HyperKit Agent initialized successfully")
 
+    @safe_operation("generate_contract")
     async def generate_contract(self, prompt: str, context: str = "") -> Dict[str, Any]:
         """
         Generate a smart contract based on natural language prompt using free LLM models.
@@ -187,6 +279,7 @@ class HyperKitAgent:
             )
             return error_handler.format_error_response(error_info)
 
+    @safe_operation("audit_contract")
     async def audit_contract(self, contract_code: str) -> Dict[str, Any]:
         """
         Audit a smart contract using multiple security tools.
@@ -213,6 +306,7 @@ class HyperKitAgent:
             logger.error(f"Contract audit failed: {e}")
             return {"status": "error", "error": str(e), "severity": "critical"}
 
+    @safe_operation("deploy_contract")
     async def deploy_contract(
         self, contract_code: str, network: str = "hyperion"
     ) -> Dict[str, Any]:
@@ -261,6 +355,20 @@ class HyperKitAgent:
             # Get network configuration from the new config system
             config_loader = get_config()
             network_config = config_loader.get_network_config(network)
+            
+            # Debug: Log the network config
+            logger.info(f"Network config for {network}: {network_config}")
+            
+            # Ensure network config has required fields
+            if not network_config or not network_config.get('rpc_url'):
+                logger.warning(f"Network config incomplete for {network}, using defaults")
+                # Use default config if not available
+                network_config = {
+                    'rpc_url': 'https://hyperion-testnet.metisdevops.link',
+                    'chain_id': 133717,
+                    'gas_price': '20000000000',
+                    'gas_limit': 8000000
+                }
             
             # Create deployer with proper configuration
             deployer = MultiChainDeployer({
@@ -366,6 +474,7 @@ class HyperKitAgent:
             logger.error(f"Contract analysis failed: {e}")
             return {"status": "error", "error": str(e)}
 
+    @safe_operation("run_workflow")
     async def run_workflow(self, user_prompt: str) -> Dict[str, Any]:
         """
         Execute the complete workflow: generate -> audit -> deploy.

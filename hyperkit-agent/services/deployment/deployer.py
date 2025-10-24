@@ -113,6 +113,16 @@ class MultiChainDeployer:
                 raise ValueError(f"Unsupported network: {network}")
 
             network_config = self.networks[network]
+            
+            # Validate network config structure
+            if not isinstance(network_config, dict):
+                raise TypeError(f"Network config must be dict, got {type(network_config)}")
+            
+            if "rpc_url" not in network_config:
+                raise KeyError(f"Missing rpc_url in network config for {network}")
+            
+            if not isinstance(network_config["rpc_url"], str):
+                raise TypeError(f"RPC URL must be string, got {type(network_config['rpc_url'])}")
 
             # Network config is already in the correct format from _initialize_networks
             # No need for complex handling - just use it directly
@@ -150,8 +160,13 @@ class MultiChainDeployer:
             return deployment_result
 
         except Exception as e:
-            logger.error(f"Deployment failed: {e}")
-            return {"status": "error", "error": str(e), "network": network}
+            logger.error(f"Deployment failed: {e}", exc_info=True)
+            return {
+                "status": "error", 
+                "error": str(e), 
+                "network": network,
+                "error_type": type(e).__name__
+            }
 
     async def _compile_contract(self, contract_code: str) -> Dict[str, Any]:
         """Compile Solidity contract code."""
@@ -189,17 +204,38 @@ class MultiChainDeployer:
                 contract_name = list(contracts.keys())[0]
                 contract_data = contracts[contract_name]
 
+                bytecode = contract_data.get("bin", "")
+                abi = contract_data.get("abi", [])
+                
+                # Debug: Check types
+                logger.info(f"Bytecode type: {type(bytecode)}, length: {len(bytecode) if isinstance(bytecode, str) else 'N/A'}")
+                logger.info(f"ABI type: {type(abi)}, length: {len(abi) if isinstance(abi, (list, dict)) else 'N/A'}")
+                
+                # Ensure bytecode is string and ABI is list
+                if not isinstance(bytecode, str):
+                    logger.error(f"Bytecode is not string: {type(bytecode)}")
+                    return {"success": False, "errors": f"Invalid bytecode type: {type(bytecode)}"}
+                
+                if not isinstance(abi, list):
+                    logger.error(f"ABI is not list: {type(abi)}")
+                    return {"success": False, "errors": f"Invalid ABI type: {type(abi)}"}
+                
                 return {
                     "success": True,
-                    "bytecode": contract_data.get("bin", ""),
-                    "abi": contract_data.get("abi", []),
+                    "bytecode": bytecode,
+                    "abi": abi,
                     "contract_name": contract_name,
                 }
             else:
                 return {"success": False, "errors": result.stderr}
 
         except Exception as e:
-            return {"success": False, "errors": str(e)}
+            logger.error(f"Compilation failed: {e}", exc_info=True)
+            return {
+                "success": False, 
+                "errors": str(e),
+                "error_type": type(e).__name__
+            }
 
     async def _deploy_compiled_contract(
         self,
@@ -214,9 +250,13 @@ class MultiChainDeployer:
             from web3 import Web3
             from eth_account import Account
 
-            # Initialize Web3
-            logger.info(f"Initializing Web3 with RPC: {network_config['rpc_url']}")
-            w3 = Web3(Web3.HTTPProvider(network_config["rpc_url"]))
+            # Initialize Web3 with proper type checking
+            rpc_url = network_config.get("rpc_url")
+            if not isinstance(rpc_url, str):
+                raise TypeError(f"RPC URL must be string, got {type(rpc_url)}: {rpc_url}")
+            
+            logger.info(f"Initializing Web3 with RPC: {rpc_url}")
+            w3 = Web3(Web3.HTTPProvider(rpc_url))
 
             if not w3.is_connected():
                 raise Exception(f"Failed to connect to {network_config['rpc_url']}")
@@ -243,14 +283,35 @@ class MultiChainDeployer:
 
                 if constructor_abi and constructor_abi.get("inputs"):
                     # Encode constructor arguments
-                    constructor_data = w3.codec.encode_abi(
-                        [arg["type"] for arg in constructor_abi["inputs"]],
-                        constructor_args,
-                    )
+                    logger.info(f"Encoding constructor args: {constructor_args}")
+                    logger.info(f"Constructor ABI inputs: {constructor_abi['inputs']}")
+                    try:
+                        constructor_data = w3.codec.encode_abi(
+                            [arg["type"] for arg in constructor_abi["inputs"]],
+                            constructor_args,
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to encode constructor args: {e}")
+                        raise
 
-            # Create contract instance
+            # Create contract instance with detailed debugging
             logger.info(f"Creating contract with bytecode length: {len(bytecode)}, ABI length: {len(abi)}")
-            contract = w3.eth.contract(bytecode=bytecode, abi=abi)
+            logger.info(f"Bytecode type: {type(bytecode)}, ABI type: {type(abi)}")
+            
+            # Validate bytecode and ABI types before contract creation
+            if not isinstance(bytecode, str):
+                raise TypeError(f"Bytecode must be string, got {type(bytecode)}")
+            if not isinstance(abi, list):
+                raise TypeError(f"ABI must be list, got {type(abi)}")
+            
+            try:
+                contract = w3.eth.contract(bytecode=bytecode, abi=abi)
+                logger.info("Contract instance created successfully")
+            except Exception as e:
+                logger.error(f"Failed to create contract instance: {e}")
+                logger.error(f"Bytecode sample: {bytecode[:100]}...")
+                logger.error(f"ABI sample: {abi[:3] if isinstance(abi, list) else abi}")
+                raise
 
             # Build transaction
             
