@@ -3,7 +3,7 @@ Configuration Schema Validation for HyperKit AI Agent
 Production-ready configuration validation with Pydantic v2
 """
 
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, validator, model_validator
 from typing import Optional, Dict, Any, List
 import re
 from urllib.parse import urlparse
@@ -145,6 +145,15 @@ class HyperKitConfig(BaseModel):
     logging: Optional[LoggingConfig] = Field(None, description="Logging configuration")
     security: Optional[SecurityConfig] = Field(None, description="Security configuration")
     
+    # Additional optional fields from config.yaml
+    defaults: Optional[Dict[str, Any]] = Field(None, description="Default settings")
+    rag_system: Optional[Dict[str, Any]] = Field(None, description="RAG system configuration")
+    deployment: Optional[Dict[str, Any]] = Field(None, description="Deployment configuration")
+    monitoring: Optional[Dict[str, Any]] = Field(None, description="Monitoring configuration")
+    api: Optional[Dict[str, Any]] = Field(None, description="API configuration")
+    database: Optional[Dict[str, Any]] = Field(None, description="Database configuration")
+    development: Optional[Dict[str, Any]] = Field(None, description="Development configuration")
+    
     # Default settings
     default_network: str = Field(default="hyperion", description="Default network")
     default_ai_provider: str = Field(default="google", description="Default AI provider")
@@ -179,22 +188,22 @@ class HyperKitConfig(BaseModel):
                 raise ValueError('Private key must be 64 hexadecimal characters')
         return v
     
-    @root_validator
-    def validate_configuration(cls, values):
-        """Root validator for cross-field validation"""
+    @model_validator(mode='after')
+    def validate_configuration(self):
+        """Model validator for cross-field validation"""
         # Ensure at least one network is enabled
-        networks = values.get('networks', {})
+        networks = self.networks or {}
         enabled_networks = [name for name, config in networks.items() if config.enabled]
         if not enabled_networks:
             raise ValueError('At least one network must be enabled')
         
         # Ensure at least one AI provider is enabled
-        providers = values.get('ai_providers', {})
+        providers = self.ai_providers or {}
         enabled_providers = [name for name, config in providers.items() if config.enabled]
         if not enabled_providers:
             raise ValueError('At least one AI provider must be enabled')
         
-        return values
+        return self
     
     class Config:
         """Pydantic configuration"""

@@ -650,7 +650,7 @@ contract GovernanceContract is
         """Generate metadata for the primitive"""
         return {
             "primitive_type": primitive_type.value,
-            "version": "2.0.2",
+            "version": "2.0.3",
             "features": self._get_primitive_features(primitive_type),
             "dependencies": self._get_primitive_dependencies(primitive_type),
             "security_notes": self._get_security_notes(primitive_type),

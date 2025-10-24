@@ -11,6 +11,11 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from dotenv import load_dotenv
 from pydantic import ValidationError
+try:
+    from pydantic_settings import BaseSettings
+except ImportError:
+    # Fallback for older pydantic versions
+    from pydantic import BaseSettings
 
 # Import our new schema
 from .schema import HyperKitConfig, validate_config, get_default_config
