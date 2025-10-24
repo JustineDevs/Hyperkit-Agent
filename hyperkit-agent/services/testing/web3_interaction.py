@@ -6,7 +6,10 @@ import json
 import logging
 from typing import Dict, Any, List, Optional
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+try:
+    from web3.middleware import geth_poa_middleware
+except ImportError:
+    geth_poa_middleware = None
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +28,9 @@ class Web3Interaction:
         try:
             web3 = Web3(Web3.HTTPProvider(self.rpc_url))
             
-            # Add PoA middleware for networks like BSC, Polygon
-            web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+            # Add PoA middleware for networks like BSC, Polygon (if available)
+            if geth_poa_middleware:
+                web3.middleware_onion.inject(geth_poa_middleware, layer=0)
             
             if web3.is_connected():
                 logger.info(f"Web3 connected to {self.rpc_url}")

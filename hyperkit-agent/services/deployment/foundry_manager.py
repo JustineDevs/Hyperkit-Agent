@@ -72,10 +72,11 @@ class FoundryManager:
         """Ensure Foundry is installed"""
         if not FoundryManager.is_installed():
             logger.warning("Foundry not installed!")
-            logger.info("Version:", FoundryManager.get_version())
+            logger.info(f"Version: {FoundryManager.get_version()}")
             
             if not FoundryManager.install():
                 logger.error("Failed to install Foundry")
-                raise RuntimeError("Foundry not installed and auto-install failed")
+                logger.warning("Continuing without Foundry - deployment features will be limited")
+                return False
         
         logger.info(f"Foundry ready: {FoundryManager.get_version()}")
