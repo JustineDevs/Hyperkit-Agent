@@ -345,14 +345,14 @@ def interactive(mode):
             title="🚀 Interactive Shell",
             expand=False
         ))
-
-            while True:
-                try:
+        
+        while True:
+            try:
                 user_input = console.input("[bold cyan]hyperagent> [/bold cyan]")
-
+                
                 if user_input.lower() == "exit":
                     console.print("[yellow]Goodbye![/yellow]")
-                        break
+                    break
                 elif user_input.lower().startswith("gen"):
                     prompt = user_input[4:].strip()
                     if not prompt:
@@ -363,12 +363,12 @@ def interactive(mode):
                     console.print("Available commands: gen, audit, deploy, help, exit")
                 else:
                     console.print(f"[yellow]Unknown command: {user_input}[/yellow]")
-
-                except KeyboardInterrupt:
+            
+            except KeyboardInterrupt:
                 console.print("\n[yellow]Interrupted[/yellow]")
-                    break
+                break
     
-                except Exception as e:
+    except Exception as e:
         console.print(f"[red]❌ Error in interactive mode: {e}[/red]")
         sys.exit(1)
 
