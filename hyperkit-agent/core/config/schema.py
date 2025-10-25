@@ -154,6 +154,10 @@ class HyperKitConfig(BaseModel):
     database: Optional[Dict[str, Any]] = Field(None, description="Database configuration")
     development: Optional[Dict[str, Any]] = Field(None, description="Development configuration")
     
+    # Security extensions and Alith SDK integration
+    security_extensions: Optional[Dict[str, Any]] = Field(None, description="Security extensions configuration")
+    alith: Optional[Dict[str, Any]] = Field(None, description="Alith SDK configuration")
+    
     # Default settings
     default_network: str = Field(default="hyperion", description="Default network")
     default_ai_provider: str = Field(default="google", description="Default AI provider")

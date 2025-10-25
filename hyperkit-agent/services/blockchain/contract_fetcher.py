@@ -192,7 +192,7 @@ class ContractFetcher:
         
         # If all URLs failed
         logger.warning(f"All explorer URLs failed for network: {network}")
-            return None
+        return None
     
     def _fetch_from_sourcify(self, address: str, network: str) -> Optional[Dict[str, Any]]:
         """Fetch from Sourcify universal source registry with Hyperion-specific handling"""
@@ -239,7 +239,7 @@ class ContractFetcher:
                     ])
                     
                     logger.info(f"✅ Sourcify source found: {len(source_files)} files")
-                            return {
+                    return {
                         "source": combined_source,
                         "source_type": "sourcify_verified",
                         "confidence": 0.9 if data.get("status") == "perfect" else 0.7,
