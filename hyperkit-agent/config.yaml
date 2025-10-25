@@ -161,3 +161,82 @@ development:
   debug_mode: false
   mock_external_apis: false
   test_mode: false
+
+# Wallet Security Extensions Configuration
+security_extensions:
+  enabled: true
+  
+  # Transaction Simulation Engine (Pocket Universe Foundation)
+  simulation:
+    enabled: true
+    anvil_port: 8546
+    timeout: 5  # seconds
+    fork_block_offset: 0  # Use latest block
+  
+  # Address Reputation Database (GoPlus Security Foundation)
+  reputation:
+    enabled: true
+    backend: "networkx"  # Options: networkx, neo4j
+    seed_file: null  # Path to seed data (phisher addresses)
+    seed_sources:
+      - "scam_sniffer_api"
+      - "goplus_api"
+      - "manual_reports"
+    update_interval: 3600  # 1 hour
+    cache_enabled: true
+  
+  # Phishing Detection Module (Scam Sniffer Foundation)
+  phishing:
+    enabled: true
+    blacklist_sources:
+      - "https://api.scamsniffer.io/v1/domains"
+      - "https://raw.githubusercontent.com/MetaMask/eth-phishing-detect/master/src/config.json"
+    similarity_threshold: 0.7  # Typosquatting detection threshold
+    check_ssl_age: true
+    ssl_warning_days: 30  # Warn if SSL cert < 30 days old
+  
+  # Token Approval Tracking (Revoke.cash Foundation)
+  approval:
+    enabled: true
+    warn_unlimited: true  # Warn about unlimited approvals (2^256-1)
+    auto_revoke: false  # Require user confirmation for revokes
+    track_erc20: true
+    track_erc721: true
+    track_erc1155: true
+  
+  # ML-Based Risk Scoring
+  ml:
+    enabled: true
+    model_path: "services/security/ml/models/phishing_detector.pkl"
+    confidence_threshold: 0.9
+    retrain_interval: 86400  # 24 hours
+  
+  # Risk Aggregation Settings
+  risk_aggregation:
+    weights:
+      simulation: 0.20  # Transaction simulation weight
+      reputation: 0.25  # Address reputation weight
+      approval: 0.35    # Token approval weight (increased for unlimited approval detection)
+      phishing: 0.20    # Phishing detection weight
+    
+    thresholds:
+      critical: 86  # Auto-block
+      high: 61      # Require confirmation
+      medium: 31    # Show warning
+      low: 0        # Minimal UI
+  
+  # Enabled Security Checks
+  enabled_checks:
+    simulation: true
+    reputation: true
+    phishing: true
+    approval: true
+    ml: true
+
+# Alith SDK Integration (LazAI/Metis Partnership)
+alith:
+  enabled: false  # Set to true when ready to use Alith
+  model: "gpt-4o-mini"
+  settlement: false  # Enable on-chain settlement for production
+  inference_node: "https://inference.lazai.network"
+  private_inference: false  # Set true for TEE-based private inference

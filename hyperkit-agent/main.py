@@ -326,8 +326,22 @@ def audit(target, network, severity, output, format, explorer_url):
         if target_type == "address":
             console.print(f"[cyan]Fetching verified source code from explorer...[/cyan]")
         
-        # Run audit
-        result = asyncio.run(agent.audit_contract(source_code))
+        # Run audit with confidence tracking
+        console.print(f"[cyan]🔍 Running security audit...[/cyan]")
+        
+        # Check if we have confidence information from the target detection
+        if metadata.get("confidence"):
+            # Use confidence-aware auditing
+            audit_result = asyncio.run(agent.auditor._audit_with_confidence(source_code, metadata.get("source_origin", "unknown"), metadata.get("confidence", 0.0)))
+            audit_result.update({
+                "source_type": metadata.get("source_origin", "unknown"),
+                "confidence": metadata.get("confidence", 0.0),
+                "metadata": metadata
+            })
+            result = {"status": "success", "results": audit_result}
+        else:
+            # Standard audit
+            result = asyncio.run(agent.audit_contract(source_code))
         
         if result.get("status") == "success":
             audit_data = result.get("results", {})
@@ -1174,54 +1188,60 @@ def store_verification_on_ipfs(contract_code: str, contract_name: str,
 
 def detect_audit_target(target, network, explorer_url=None):
     """
-    Detect what type of audit target we have:
+    Detect what type of audit target we have with confidence tracking:
     - File path
-    - Contract address (with direct RPC support)
+    - Contract address (with confidence-aware source fetching)
     - Explorer URL
     - Raw bytecode
     """
-    from services.blockchain.contract_fetcher import fetch_contract_from_blockchain
+    from services.blockchain.contract_fetcher import ContractFetcher
     
     # Check if it's a file
     if Path(target).exists():
         with open(target, "r") as f:
             source_code = f.read()
-        return "file", source_code, {"type": "file", "path": target}
+        return "file", source_code, {"type": "file", "path": target, "source_origin": "local_file", "confidence": 1.0}
     
     # Check if it's an Ethereum address
     if re.match(r"^0x[a-fA-F0-9]{40}$", target):
-        # Try explorer API first (if available)
-        if explorer_url or network in ["ethereum", "polygon", "arbitrum"]:
-            try:
-                source_code, metadata = fetch_from_address(target, network, explorer_url)
-                return "address", source_code, metadata
-            except Exception as e:
-                console.print(f"[yellow]⚠️  Explorer API failed: {e}[/yellow]")
-                console.print(f"[cyan]Falling back to direct RPC...[/cyan]")
+        console.print(f"[cyan]📍 Ethereum address detected: {target}[/cyan]")
+        console.print(f"[cyan]🔍 Fetching contract source with confidence tracking...[/cyan]")
         
-        # Use direct RPC for networks without explorer API
-        console.print(f"[cyan]Fetching contract data via direct RPC...[/cyan]")
         try:
-            # Try to fetch from explorer first, then fall back to bytecode
-            source_code, metadata = fetch_from_address(target, network, None)
-            return "address", source_code, metadata
+            # Use the new contract fetcher for better source handling
+            fetcher = ContractFetcher()
+            source_result = fetcher.fetch_contract_source(target, network, None)
+            
+            if source_result and source_result.get("source"):
+                console.print(f"[green]✅ Source fetched: {source_result['source_type']} (confidence: {source_result['confidence']:.0%})[/green]")
+                return "address", source_result["source"], source_result["metadata"]
+            else:
+                console.print(f"[yellow]⚠️  No source code found, using fallback analysis[/yellow]")
+                source_code = fetch_bytecode(target, network)
+                return "address", source_code, {"type": "bytecode", "address": target, "network": network, "source_origin": "bytecode_analysis", "confidence": 0.3}
+                
         except Exception as e:
-            console.print(f"[yellow]⚠️  Explorer fetch failed: {e}[/yellow]")
+            console.print(f"[yellow]⚠️  Contract fetcher failed: {e}[/yellow]")
+            console.print(f"[cyan]Falling back to legacy method...[/cyan]")
+            
+            # Fallback to legacy method
+            if explorer_url or network in ["ethereum", "polygon", "arbitrum"]:
+                try:
+                    source_code, metadata = fetch_from_address(target, network, explorer_url)
+                    return "address", source_code, metadata
+                except Exception as e:
+                    console.print(f"[yellow]⚠️  Explorer API failed: {e}[/yellow]")
+            
             console.print(f"[cyan]Falling back to bytecode analysis...[/cyan]")
-            # Final fallback to basic bytecode
             source_code = fetch_bytecode(target, network)
-            return "address", source_code, {"type": "bytecode", "address": target, "network": network, "source_origin": "bytecode_analysis"}
+            return "address", source_code, {"type": "bytecode", "address": target, "network": network, "source_origin": "bytecode_analysis", "confidence": 0.3}
     
     # Check if it's an explorer URL
     if target.startswith("http"):
         address = extract_address_from_url(target)
-        try:
-            bytecode, metadata = fetch_contract_from_blockchain(address, network)
-            return "explorer_url", bytecode, metadata
-        except Exception as e:
-            console.print(f"[yellow]⚠️  Direct RPC failed for URL: {e}[/yellow]")
-            source_code, metadata = fetch_from_address(address, network, target)
-            return "explorer_url", source_code, metadata
+        console.print(f"[cyan]🌐 Explorer URL detected: {target}[/cyan]")
+        console.print(f"[green]✅ Extracted address: {address}[/green]")
+        return detect_audit_target(address, network, explorer_url)
     
     # Check if it's bytecode
     if target.startswith("0x") and len(target) > 100:
@@ -1485,28 +1505,67 @@ def extract_address_from_url(url):
 
 
 def display_audit_report(audit_data, metadata, format):
-    """Display formatted audit report"""
+    """Display formatted audit report with confidence information"""
     severity = audit_data.get("severity", "unknown")
     severity_color = {"critical": "red", "high": "orange3", "medium": "yellow", "low": "blue"}.get(severity, "white")
-    
-    # Show source origin information
-    source_origin = metadata.get("source_origin", "unknown")
+
+    # Extract confidence and source information
+    source_type = audit_data.get("source_type", metadata.get("source_origin", "unknown"))
+    confidence = audit_data.get("confidence", 0.0)
     contract_name = metadata.get("contract_name", "Unknown")
     verified = metadata.get("verified", False)
     
-    source_info = f"Source: {source_origin}"
+    # Determine confidence level and color
+    if confidence >= 0.8:
+        confidence_level = "HIGH"
+        confidence_color = "green"
+    elif confidence >= 0.5:
+        confidence_level = "MEDIUM"
+        confidence_color = "yellow"
+    else:
+        confidence_level = "LOW"
+        confidence_color = "red"
+
+    # Build source information
+    source_info = f"Source: {source_type}"
     if verified:
         source_info += " ✅ Verified"
     else:
         source_info += " ⚠️  Unverified"
     
+    # Add confidence information
+    confidence_info = f"Confidence: {confidence_level} ({confidence:.0%})"
+    
+    # Add warnings if low confidence
+    warnings = []
+    if confidence < 0.5:
+        warnings.append("⚠️  Low confidence source - findings may be unreliable")
+    if source_type == "bytecode_decompiled":
+        warnings.append("⚠️  Based on decompiled bytecode - may contain false positives")
+    
+    # Build report content
+    report_content = f"[{severity_color}]Overall Severity: {severity.upper()}[/{severity_color}]\n"
+    report_content += f"[cyan]Contract: {contract_name}[/cyan]\n"
+    report_content += f"[cyan]{source_info}[/cyan]\n"
+    report_content += f"[{confidence_color}]{confidence_info}[/{confidence_color}]"
+    
+    if warnings:
+        report_content += "\n\n" + "\n".join(warnings)
+
     console.print(Panel(
-        f"[{severity_color}]Overall Severity: {severity.upper()}[/{severity_color}]\n"
-        f"[cyan]Contract: {contract_name}[/cyan]\n"
-        f"[cyan]{source_info}[/cyan]",
+        report_content,
         title="🔍 Security Audit Report",
         expand=False
     ))
+    
+    # Display recommendations if available
+    recommendations = audit_data.get("recommendations")
+    if recommendations:
+        console.print(Panel(
+            recommendations,
+            title="📋 Recommendations",
+            expand=False
+        ))
     
     if format == "table":
         table = Table(title="Findings")
@@ -1981,6 +2040,155 @@ def launch_interactive_tester(contract_code: str, contract_address: str,
     
     except Exception as e:
         console.print(f"[red]❌ Interactive tester error: {e}[/red]")
+
+
+@cli.command()
+@click.argument("address")
+@click.option("--network", default="hyperion", help="Blockchain network")
+def check_address_security(address: str, network: str):
+    """Check security reputation of an address"""
+    try:
+        from services.security import ReputationDatabase
+        
+        console.print(Panel(
+            f"[cyan]Address Security Check[/cyan]\n"
+            f"Address: {address}\n"
+            f"Network: {network.upper()}",
+            title="🔍 Security Analysis",
+            expand=False
+        ))
+        
+        rep_db = ReputationDatabase()
+        risk_result = rep_db.get_risk_score(address)
+        
+        # Display results
+        risk_score = risk_result["risk_score"]
+        risk_color = "red" if risk_score >= 80 else "yellow" if risk_score >= 50 else "green"
+        
+        console.print(f"\n[{risk_color}]Risk Score: {risk_score}/100[/{risk_color}]")
+        console.print(f"[cyan]Labels: {', '.join(risk_result.get('labels', ['unknown']))}[/cyan]")
+        console.print(f"[cyan]Confidence: {int(risk_result.get('confidence', 0) * 100)}%[/cyan]")
+        
+        if risk_score >= 80:
+            console.print("\n[red]⚠️  HIGH RISK: This address may be malicious![/red]")
+        elif risk_score >= 50:
+            console.print("\n[yellow]⚠️  MEDIUM RISK: Exercise caution with this address[/yellow]")
+        else:
+            console.print("\n[green]✅ LOW RISK: No significant threats detected[/green]")
+            
+    except Exception as e:
+        console.print(f"[red]❌ Security check failed: {e}[/red]")
+
+
+@cli.command()
+@click.argument("url")
+def check_url_phishing(url: str):
+    """Check if URL is a phishing site"""
+    try:
+        from services.security import PhishingDetector
+        
+        console.print(Panel(
+            f"[cyan]Phishing Detection Check[/cyan]\n"
+            f"URL: {url}",
+            title="🌐 URL Analysis",
+            expand=False
+        ))
+        
+        detector = PhishingDetector()
+        result = detector.check_url(url)
+        
+        risk = result["risk"]
+        risk_color = "red" if risk == "CRITICAL" else "yellow" if risk == "HIGH" else "green"
+        
+        console.print(f"\n[{risk_color}]Risk Level: {risk}[/{risk_color}]")
+        console.print(f"[cyan]Reason: {result['reason']}[/cyan]")
+        console.print(f"[cyan]Confidence: {int(result.get('confidence', 0) * 100)}%[/cyan]")
+        
+        if risk in ["CRITICAL", "HIGH"]:
+            console.print("\n[red]🚨 WARNING: This site may be a phishing attempt![/red]")
+        else:
+            console.print("\n[green]✅ No phishing threats detected[/green]")
+            
+    except Exception as e:
+        console.print(f"[red]❌ Phishing check failed: {e}[/red]")
+
+
+@cli.command()
+@click.argument("wallet_address")
+@click.option("--network", default="hyperion", help="Blockchain network")
+def scan_approvals(wallet_address: str, network: str):
+    """Scan token approvals for a wallet"""
+    try:
+        from services.security import ApprovalTracker
+        from web3 import Web3
+        
+        console.print(Panel(
+            f"[cyan]Token Approval Scan[/cyan]\n"
+            f"Wallet: {wallet_address}\n"
+            f"Network: {network.upper()}",
+            title="📋 Approval Scanner",
+            expand=False
+        ))
+        
+        rpc_urls = {
+            "hyperion": "https://hyperion-testnet.metisdevops.link",
+            "polygon": "https://polygon-rpc.com",
+            "ethereum": "https://mainnet.infura.io/v3/YOUR_KEY"
+        }
+        
+        w3 = Web3(Web3.HTTPProvider(rpc_urls.get(network)))
+        tracker = ApprovalTracker(w3)
+        
+        console.print("\n[cyan]Scanning for active approvals...[/cyan]")
+        console.print("[yellow]Note: This is a framework demo. Full implementation requires token list.[/yellow]")
+        
+        # Demo output
+        console.print("\n[green]✅ Approval scan complete[/green]")
+        console.print("[cyan]To fully implement: provide token addresses to scan[/cyan]")
+        
+    except Exception as e:
+        console.print(f"[red]❌ Approval scan failed: {e}[/red]")
+
+
+@cli.command()
+@click.argument("transaction_params", required=False)
+@click.option("--to", help="Transaction recipient address")
+@click.option("--from", "from_address", help="Transaction sender address")
+@click.option("--network", default="hyperion", help="Blockchain network")
+def analyze_transaction(transaction_params: str, to: str, from_address: str, network: str):
+    """Run comprehensive security analysis on a transaction"""
+    try:
+        from services.security import SecurityAnalysisPipeline
+        import asyncio
+        
+        console.print(Panel(
+            f"[cyan]Transaction Security Analysis[/cyan]\n"
+            f"To: {to}\n"
+            f"From: {from_address}\n"
+            f"Network: {network.upper()}",
+            title="🔒 Security Analysis",
+            expand=False
+        ))
+        
+        pipeline = SecurityAnalysisPipeline()
+        
+        tx_params = {
+            "to": to or "0x0000000000000000000000000000000000000000",
+            "from": from_address or "0x0000000000000000000000000000000000000000",
+            "value": 0,
+            "data": "0x",
+            "network": network
+        }
+        
+        console.print("\n[cyan]Running security analysis...[/cyan]")
+        result = asyncio.run(pipeline.analyze_transaction(tx_params))
+        
+        # Display summary
+        summary = pipeline.get_analysis_summary(result)
+        console.print(summary)
+        
+    except Exception as e:
+        console.print(f"[red]❌ Analysis failed: {e}[/red]")
 
 
 def main():
