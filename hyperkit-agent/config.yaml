@@ -240,3 +240,10 @@ alith:
   settlement: false  # Enable on-chain settlement for production
   inference_node: "https://inference.lazai.network"
   private_inference: false  # Set true for TEE-based private inference
+
+# Pinata IPFS Integration
+pinata:
+  api_key: ""  # Your Pinata API key
+  api_secret: ""  # Your Pinata API secret
+  gateway_url: "https://gateway.pinata.cloud/ipfs/"
+  enabled: false  # Set to true when API keys are configured

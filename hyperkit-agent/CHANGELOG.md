@@ -1,5 +1,24 @@
 # hyperkit-agent
 
+## [3.0.5] - 2025-10-25
+
+### 🚀 Automated Release
+- **Version**: 3.0.5
+- **Date**: 2025-10-25
+- **Type**: Automated version bump
+
+### 📋 Changes
+- Updated version numbers across all tracked files
+- Generated changeset entry
+- Updated changelog files
+- Created git commit and tag
+
+### 🔧 Technical Details
+- **Files Updated**: 4 version files
+- **Changelog Updated**: 2 changelog files
+- **Git Tag**: v3.0.5
+
+---
 ## [3.0.4] - 2025-10-25
 
 ### 🚀 Automated Release

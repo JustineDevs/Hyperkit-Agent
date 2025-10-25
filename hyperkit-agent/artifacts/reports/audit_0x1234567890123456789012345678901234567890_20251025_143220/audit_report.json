@@ -1,0 +1,21 @@
+{
+  "contract_address": "0x1234567890123456789012345678901234567890",
+  "security_score": 85,
+  "vulnerabilities": [
+    {
+      "title": "Potential Reentrancy",
+      "severity": "MEDIUM",
+      "description": "Function may be vulnerable to reentrancy attacks",
+      "recommendation": "Use checks-effects-interactions pattern"
+    }
+  ],
+  "warnings": [
+    "Consider adding more comprehensive error handling",
+    "Gas optimization opportunities detected"
+  ],
+  "recommendations": [
+    "Implement proper access controls",
+    "Add event logging for important state changes",
+    "Consider using OpenZeppelin libraries"
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "name": "hyperkit-agent",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "HyperKit AI Agent - Smart Contract Generation, Auditing, and Deployment",
   "main": "core/agent/main.py",
   "scripts": {

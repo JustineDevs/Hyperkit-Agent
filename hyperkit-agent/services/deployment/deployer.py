@@ -57,14 +57,15 @@ class MultiChainDeployer:
             {"success": True/False, "transaction_hash": "...", "contract_address": "..."}
         """
         if not self.foundry_available:
-            logger.warning("Foundry not available - simulating deployment")
-            return {
-                "success": True,
-                "transaction_hash": "0x" + "0" * 64,  # Simulated hash
-                "contract_address": "0x" + "0" * 40,  # Simulated address
-                "simulated": True,
-                "message": "Deployment simulated - Foundry not available"
-            }
+            error_msg = (
+                "Foundry is required for deployment but is not installed or not available.\n"
+                "Install Foundry:\n"
+                "  curl -L https://foundry.paradigm.xyz | bash\n"
+                "  foundryup\n"
+                "Or visit: https://book.getfoundry.sh/getting-started/installation"
+            )
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
         
         return self.foundry_deployer.deploy(
             contract_source_code=contract_source_code,

@@ -1,0 +1,12 @@
+{
+  "contractName": "GeneratedContract",
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x"
+}
