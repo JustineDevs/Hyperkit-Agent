@@ -111,9 +111,9 @@ class SmartContractAuditor:
         try:
             logger.info("Starting comprehensive contract audit")
 
-            # Create temporary file for contract
+            # Create temporary file for contract with UTF-8 encoding
             with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".sol", delete=False
+                mode="w", suffix=".sol", delete=False, encoding='utf-8'
             ) as f:
                 f.write(contract_code)
                 temp_file = f.name

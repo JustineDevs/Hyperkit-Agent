@@ -15,7 +15,8 @@ try:
 except ImportError:
     ALITH_AVAILABLE = False
     Web3Tools = None
-    print("⚠️  WARNING: Alith SDK not available - Install with: pip install alith>=0.12.0")
+    import logging
+    logging.warning("WARNING: Alith SDK not available - Install with: pip install alith>=0.12.0")
 
 # Import real Alith implementation
 try:
@@ -23,7 +24,7 @@ try:
     REAL_ALITH_AVAILABLE = True
 except ImportError:
     REAL_ALITH_AVAILABLE = False
-    print("⚠️  WARNING: Real Alith implementation not available")
+    import logging; logging.warning("  WARNING: Real Alith implementation not available")
 
 # Import LazAI integration
 from .lazai_integration import HyperKitLazAIIntegration
@@ -55,7 +56,7 @@ class HyperKitAIAgent:
                     "settlement": False
                 })
                 log_info(LogCategory.AI_AGENT, "Real Alith agent initialized successfully")
-                print("✅ Real Alith agent initialized successfully")
+                import logging; logging.info(" Real Alith agent initialized successfully")
             except Exception as e:
                 log_error(LogCategory.AI_AGENT, "Failed to initialize real Alith agent", e)
                 print(f"❌ Failed to initialize real Alith agent: {e}")
@@ -80,7 +81,7 @@ class HyperKitAIAgent:
             self._initialize_models()
             
             log_info(LogCategory.AI_AGENT, "Real Alith AI Agent initialized successfully")
-            print("✅ Real Alith AI Agent initialized successfully")
+            import logging; logging.info(" Real Alith AI Agent initialized successfully")
         except Exception as e:
             log_error(LogCategory.AI_AGENT, "Failed to initialize Alith agent", e)
             print(f"❌ Failed to initialize Alith agent: {e}")
@@ -113,7 +114,7 @@ class HyperKitAIAgent:
                 'status': 'active'
             }
             
-            print("✅ Multiple AI models initialized successfully")
+            import logging; logging.info(" Multiple AI models initialized successfully")
         except Exception as e:
             print(f"❌ Failed to initialize models: {e}")
     
@@ -145,7 +146,7 @@ class HyperKitAIAgent:
                     'description': 'Get available AI models'
                 }
             }
-            print("✅ API endpoints configured successfully")
+            import logging; logging.info(" API endpoints configured successfully")
         except Exception as e:
             print(f"❌ Failed to setup API endpoints: {e}")
     
@@ -196,9 +197,9 @@ Generate a smart contract with the following requirements:
     
     def _mock_generation(self, requirements: Dict[str, Any]) -> str:
         """Mock contract generation with clear warnings"""
-        print("⚠️  WARNING: Using mock AI agent - Real Alith SDK not configured")
-        print("⚠️  To enable real AI: Set LAZAI_API_KEY environment variable")
-        print("⚠️  Get API key from: https://lazai.network")
+        import logging; logging.warning("  WARNING: Using mock AI agent - Real Alith SDK not configured")
+        import logging; logging.warning("  To enable real AI: Set LAZAI_API_KEY environment variable")
+        import logging; logging.warning("  Get API key from: https://lazai.network")
         
         # Return basic mock contract
         return f"""
@@ -270,9 +271,9 @@ contract {requirements.get('name', 'MockContract')} {{
     
     def _mock_audit(self, contract_code: str) -> Dict[str, Any]:
         """Mock audit with clear warnings"""
-        print("⚠️  WARNING: Using mock AI audit - Real Alith SDK not configured")
-        print("⚠️  To enable real AI: Set LAZAI_API_KEY environment variable")
-        print("⚠️  Get API key from: https://lazai.network")
+        import logging; logging.warning("  WARNING: Using mock AI audit - Real Alith SDK not configured")
+        import logging; logging.warning("  To enable real AI: Set LAZAI_API_KEY environment variable")
+        import logging; logging.warning("  Get API key from: https://lazai.network")
         
         return {
             "status": "mock",
@@ -285,7 +286,7 @@ contract {requirements.get('name', 'MockContract')} {{
     async def get_web3_tools(self) -> Optional[Web3Tools]:
         """Get Web3 tools for blockchain interaction"""
         if not self.alith_configured:
-            print("⚠️  WARNING: Web3 tools not available - Alith SDK not configured")
+            import logging; logging.warning("  WARNING: Web3 tools not available - Alith SDK not configured")
             return None
         
         return self.web3_tools

@@ -159,6 +159,12 @@ class HyperKitConfig(BaseModel):
     alith: Optional[Dict[str, Any]] = Field(None, description="Alith SDK configuration")
     pinata: Optional[Dict[str, Any]] = Field(None, description="Pinata IPFS configuration")
     
+    # Additional environment variable fields
+    lazai: Optional[Dict[str, Any]] = Field(None, description="LazAI network configuration")
+    storage: Optional[Dict[str, Any]] = Field(None, description="Storage configuration (Pinata, etc.)")
+    explorers: Optional[Dict[str, str]] = Field(None, description="Block explorer API keys")
+    environment: Optional[str] = Field(None, description="Environment (development, staging, production)")
+    
     # Default settings
     default_network: str = Field(default="hyperion", description="Default network")
     default_ai_provider: str = Field(default="google", description="Default AI provider")
@@ -213,7 +219,7 @@ class HyperKitConfig(BaseModel):
     class Config:
         """Pydantic configuration"""
         validate_assignment = True
-        extra = "forbid"  # Reject extra fields
+        extra = "allow"  # Allow extra fields from environment variables
         use_enum_values = True
 
 

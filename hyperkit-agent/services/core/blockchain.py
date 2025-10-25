@@ -12,7 +12,7 @@ try:
     POA_MIDDLEWARE_AVAILABLE = True
 except ImportError:
     POA_MIDDLEWARE_AVAILABLE = False
-    print("⚠️  WARNING: PoA middleware not available - Web3 version may be outdated")
+    import logging; logging.warning("  WARNING: PoA middleware not available - Web3 version may be outdated")
 from core.config.manager import config
 
 class HyperKitBlockchainService:
@@ -44,13 +44,13 @@ class HyperKitBlockchainService:
                 try:
                     from web3.auto import w3
                     self.account = w3.eth.account.from_key(self.private_key)
-                    print("✅ Blockchain account configured")
+                    import logging; logging.info(" Blockchain account configured")
                 except Exception as e:
                     print(f"⚠️  WARNING: Invalid private key format: {e}")
                     self.private_key = None
                     self.account = None
             else:
-                print("⚠️  WARNING: No valid private key configured - blockchain operations will be limited")
+                import logging; logging.warning("  WARNING: No valid private key configured - blockchain operations will be limited")
                 self.private_key = None
                 self.account = None
     
