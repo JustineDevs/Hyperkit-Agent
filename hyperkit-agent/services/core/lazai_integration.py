@@ -16,7 +16,8 @@ try:
     LAZAI_AVAILABLE = True
 except ImportError:
     LAZAI_AVAILABLE = False
-    print("⚠️  WARNING: LazAI SDK not available - Install with: pip install lazai alith")
+    import logging
+    logging.warning("WARNING: LazAI SDK not available - Install with: pip install lazai alith")
 
 class HyperKitLazAIIntegration:
     """
@@ -57,7 +58,7 @@ class HyperKitLazAIIntegration:
             self.agent = Agent(model="gpt-4o-mini")
             
             log_info(LogCategory.AI_AGENT, "LazAI client and agent initialized successfully")
-            print("✅ LazAI client and agent initialized successfully")
+            import logging; logging.info(" LazAI client and agent initialized successfully")
             
         except Exception as e:
             log_error(LogCategory.AI_AGENT, "Failed to initialize LazAI client", e)

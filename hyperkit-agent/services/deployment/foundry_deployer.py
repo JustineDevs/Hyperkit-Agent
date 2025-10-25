@@ -155,12 +155,12 @@ contract {contract_name} {{
             logger.info("✅ Connected to RPC")
             
             # ✅ Get deployment account
-            private_key = os.getenv("DEFAULT_PRIVATE_KEY")
+            private_key = os.getenv("DEFAULT_PRIVATE_KEY") or os.getenv("PRIVATE_KEY")  # Support both
             if not private_key:
                 return {
                     "success": False,
                     "error": "DEFAULT_PRIVATE_KEY not in .env",
-                    "suggestions": ["Add DEFAULT_PRIVATE_KEY to .env file"]
+                    "suggestions": ["Add DEFAULT_PRIVATE_KEY to .env file", "Or use PRIVATE_KEY for legacy support"]
                 }
             
             account = Account.from_key(private_key)

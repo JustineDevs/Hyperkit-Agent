@@ -1,0 +1,39 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        cd hyperkit-agent
+        python -m pip install --upgrade pip
+        pip install safety bandit
+    
+    - name: Run Safety check
+      run: |
+        cd hyperkit-agent
+        safety check --json || true
+    
+    - name: Run Bandit security scan
+      run: |
+        cd hyperkit-agent
+        bandit -r . -f json -o bandit-report.json || true
+        cat bandit-report.json || true
+

@@ -32,7 +32,7 @@ class HyperKitSecurityService:
     
     def _mock_security_audit(self, contract_code: str) -> Dict[str, Any]:
         """Mock security audit with clear warnings"""
-        print("⚠️  WARNING: Using mock security audit - Security tools not fully configured")
+        import logging; logging.warning("  WARNING: Using mock security audit - Security tools not fully configured")
         
         return {
             "status": "mock",

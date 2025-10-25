@@ -41,7 +41,7 @@ class HyperKitStorageService:
             "pinata_secret_api_key": self.pinata_secret_key,
             "Content-Type": "application/json"
         }
-        print("✅ IPFS Pinata provider configured successfully")
+        import logging; logging.info(" IPFS Pinata provider configured successfully")
     
     async def store_audit_report(self, report_data: Dict[str, Any]) -> Dict[str, Any]:
         """Store audit report on IPFS using real Pinata API"""
@@ -138,9 +138,9 @@ class HyperKitStorageService:
     
     def _mock_storage(self, report_data: Dict[str, Any]) -> Dict[str, Any]:
         """Mock storage with clear warnings"""
-        print("⚠️  WARNING: Using mock storage - IPFS not configured")
-        print("⚠️  To enable IPFS: Set PINATA_API_KEY and PINATA_SECRET_KEY")
-        print("⚠️  Get API keys from: https://app.pinata.cloud/")
+        import logging; logging.warning("  WARNING: Using mock storage - IPFS not configured")
+        import logging; logging.warning("  To enable IPFS: Set PINATA_API_KEY and PINATA_SECRET_KEY")
+        import logging; logging.warning("  Get API keys from: https://app.pinata.cloud/")
         
         return {
             "status": "mock",
@@ -183,8 +183,8 @@ class HyperKitStorageService:
     
     def _mock_retrieval(self, cid: str) -> Dict[str, Any]:
         """Mock retrieval with clear warnings"""
-        print("⚠️  WARNING: Using mock retrieval - IPFS not configured")
-        print("⚠️  To enable IPFS: Set PINATA_API_KEY and PINATA_SECRET_KEY")
+        import logging; logging.warning("  WARNING: Using mock retrieval - IPFS not configured")
+        import logging; logging.warning("  To enable IPFS: Set PINATA_API_KEY and PINATA_SECRET_KEY")
         
         return {
             "status": "mock",

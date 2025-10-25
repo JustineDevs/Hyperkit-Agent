@@ -2,60 +2,87 @@
 
 ## Supported Models
 
-HypeAgent supports a wide range of LLM providers and models to give you flexibility in choosing the right model for your needs.
+HyperAgent supports a focused set of LLM providers optimized for smart contract development and Web3 applications.
 
 ### Supported Providers
 
-#### OpenAI
-- **gpt-4o** - GPT-4o with vision and tool calling support
-- **gpt-4o-mini** - Faster, more cost-effective version of GPT-4o
-- **gpt-4.1-nano** - Ultra-fast and cost-effective model
-- **gpt-4.1-mini** - Balanced performance and cost
-- **gpt-4.1** - Latest GPT-4.1 with enhanced capabilities
-- **o4-mini** - OpenAI's reasoning model with advanced problem-solving
+#### OpenAI (Primary)
+- **gpt-4o** - GPT-4o with vision and tool calling support for contract analysis
+- **gpt-4o-mini** - Faster, cost-effective version for rapid contract generation
+- **gpt-4.1** - Latest GPT-4.1 with enhanced smart contract capabilities
 
-#### DeepSeek
-- **deepseek-chat** - DeepSeek V3 (0324) for general conversations
-- **deepseek-reasoner** - DeepSeek R1 with enhanced reasoning capabilities
+#### Anthropic (Claude)
+- **claude-3.5-sonnet** - Advanced reasoning for complex contract logic
+- **claude-3-haiku** - Fast, efficient for simple contract tasks
 
-#### XAI (Grok)
-- **grok-2** - Grok 2 model with tool calling support
-- **grok-3** - Latest Grok 3 with search capabilities
-- **grok-3-mini** - Compact version with reasoning capabilities
+#### Google (Gemini)
+- **gemini-1.5-pro** - Multimodal analysis for contract documentation
+- **gemini-1.5-flash** - Quick contract validation and testing
 
-#### Eternal AI
-- **eternalai** - Eternal AI (Llama-3.3-70B) for cost-effective inference
-
-#### Reigent
-- **reigent** - REI Network model for specialized tasks
-
-#### Venice AI
-- **venice-uncensored** - Venice Uncensored model
-- **venice-llama-4-maverick-17b** - Venice Llama-4 Maverick 17B
+#### DeepSeek (Specialized)
+- **deepseek-chat** - Cost-effective for batch contract processing
+- **deepseek-reasoner** - Enhanced reasoning for complex DeFi protocols
 
 ### Model Capabilities
 
-Each model supports different capabilities:
+Each model supports different capabilities for smart contract development:
 
-- **Tool/Skill Calls**: All models support function calling for skills
-- **Structured Output**: JSON and structured response generation
-- **Image Input**: Available on select OpenAI models (gpt-4o, gpt-4.1)
-- **Reasoning**: Enhanced reasoning on o4-mini, deepseek-reasoner, and grok-3-mini
-- **Search**: Native search functionality on gpt-4o, gpt-4o-mini, gpt-4.1-mini, gpt-4.1, and grok-3
-- **Temperature Control**: Fine-tuning response creativity (not available on reasoning models)
+- **Solidity Code Generation**: AI-powered contract creation and optimization
+- **Security Analysis**: Intelligent vulnerability detection and remediation
+- **Code Review**: Automated code quality assessment and suggestions
+- **Documentation**: Automatic contract documentation and comments
+- **Testing**: AI-generated test cases and edge case scenarios
+- **Gas Optimization**: Smart contract gas usage analysis and optimization
 
-### Pricing
+### HyperAgent Integration
 
-Models are priced per million tokens with different rates for input and output tokens. The system automatically calculates costs based on token usage and converts to credits based on the current USDC exchange rate.
+HyperAgent uses these LLM models for:
+
+#### Smart Contract Generation
+- **Contract Creation**: AI-powered Solidity code generation from natural language
+- **Template Customization**: Adapting existing contract templates to specific needs
+- **Code Optimization**: Improving contract efficiency and gas usage
+
+#### Security Auditing
+- **Vulnerability Detection**: AI-powered security analysis and threat assessment
+- **Best Practices**: Ensuring compliance with security standards and patterns
+- **Risk Assessment**: Evaluating contract risks and providing mitigation strategies
+
+#### Code Validation
+- **Syntax Checking**: Automated Solidity syntax validation
+- **Logic Verification**: Ensuring contract logic correctness
+- **Compliance Checking**: Verifying adherence to standards (ERC-20, ERC-721, etc.)
 
 ### Configuration
 
-To use these models, configure the appropriate API keys in your environment:
-- `OPENAI_API_KEY` for OpenAI models
-- `DEEPSEEK_API_KEY` for DeepSeek models
-- `XAI_API_KEY` for XAI/Grok models
-- `ETERNAL_API_KEY` for Eternal AI models
-- `REIGENT_API_KEY` for Reigent models
-- `VENICE_API_KEY` for Venice AI models
+Configure the appropriate API keys in your environment:
 
-The system will automatically route requests to the appropriate provider based on the model selected.
+```bash
+# Primary AI Models
+OPENAI_API_KEY=your_openai_api_key
+ANTHROPIC_API_KEY=your_anthropic_api_key
+GOOGLE_API_KEY=your_google_api_key
+
+# Specialized Models
+DEEPSEEK_API_KEY=your_deepseek_api_key
+
+# HyperAgent Specific
+LAZAI_API_KEY=your_lazai_api_key
+```
+
+### Model Selection Strategy
+
+HyperAgent automatically selects the best model for each task:
+
+- **Contract Generation**: GPT-4o or Claude-3.5-Sonnet
+- **Security Auditing**: Claude-3.5-Sonnet or DeepSeek-Reasoner
+- **Code Validation**: GPT-4o-mini or Gemini-1.5-Flash
+- **Documentation**: Gemini-1.5-Pro
+- **Batch Processing**: DeepSeek-Chat
+
+### Performance Optimization
+
+- **Caching**: Intelligent response caching for repeated queries
+- **Fallback**: Automatic model fallback for reliability
+- **Cost Management**: Smart model selection based on task complexity
+- **Rate Limiting**: Proper API rate limit management

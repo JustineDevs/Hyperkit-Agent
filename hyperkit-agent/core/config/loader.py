@@ -97,31 +97,128 @@ class ConfigLoader:
         # AI Provider API Keys
         if os.getenv('GOOGLE_API_KEY'):
             self.config.setdefault('ai_providers', {}).setdefault('google', {})['api_key'] = os.getenv('GOOGLE_API_KEY')
+        if os.getenv('OPENAI_API_KEY'):
+            self.config.setdefault('ai_providers', {}).setdefault('openai', {})['api_key'] = os.getenv('OPENAI_API_KEY')
+        if os.getenv('ANTHROPIC_API_KEY'):
+            self.config.setdefault('ai_providers', {}).setdefault('anthropic', {})['api_key'] = os.getenv('ANTHROPIC_API_KEY')
+        if os.getenv('LAZAI_API_KEY'):
+            self.config.setdefault('ai_providers', {}).setdefault('lazai', {})['api_key'] = os.getenv('LAZAI_API_KEY')
+            self.config.setdefault('ai_providers', {}).setdefault('lazai', {})['model'] = 'gpt-4o-mini'  # Default model
+            self.config.setdefault('ai_providers', {}).setdefault('lazai', {})['enabled'] = True
+        
+        # LazAI Network Configuration
+        if os.getenv('LAZAI_EVM_ADDRESS'):
+            self.config.setdefault('lazai', {})['evm_address'] = os.getenv('LAZAI_EVM_ADDRESS')
+        if os.getenv('LAZAI_RSA_PRIVATE_KEY'):
+            self.config.setdefault('lazai', {})['rsa_private_key'] = os.getenv('LAZAI_RSA_PRIVATE_KEY')
+        if os.getenv('IPFS_JWT'):
+            self.config.setdefault('lazai', {})['ipfs_jwt'] = os.getenv('IPFS_JWT')
         
         # Network RPC URLs - only for networks defined in config.yaml
         defined_networks = self.config.get('networks', {}).keys()
         for network_name in defined_networks:
             rpc_key = f'{network_name.upper()}_RPC_URL'
+            chain_id_key = f'{network_name.upper()}_CHAIN_ID'
+            explorer_key = f'{network_name.upper()}_EXPLORER_URL'
+            
             if os.getenv(rpc_key):
                 self.config['networks'][network_name]['rpc_url'] = os.getenv(rpc_key)
+            if os.getenv(chain_id_key):
+                self.config['networks'][network_name]['chain_id'] = int(os.getenv(chain_id_key))
+            if os.getenv(explorer_key):
+                self.config['networks'][network_name]['explorer_url'] = os.getenv(explorer_key)
+        
+        # Default Network
+        if os.getenv('DEFAULT_NETWORK'):
+            self.config['default_network'] = os.getenv('DEFAULT_NETWORK')
+        
+        # Wallet Configuration
+        if os.getenv('DEFAULT_PRIVATE_KEY'):
+            self.config['default_private_key'] = os.getenv('DEFAULT_PRIVATE_KEY')
+        elif os.getenv('PRIVATE_KEY'):  # Legacy support
+            self.config['default_private_key'] = os.getenv('PRIVATE_KEY')
+        
+        # IPFS Storage Configuration
+        if os.getenv('PINATA_API_KEY'):
+            self.config.setdefault('storage', {}).setdefault('pinata', {})['api_key'] = os.getenv('PINATA_API_KEY')
+        if os.getenv('PINATA_SECRET_KEY'):
+            self.config.setdefault('storage', {}).setdefault('pinata', {})['secret_key'] = os.getenv('PINATA_SECRET_KEY')
+        elif os.getenv('PINATA_API_SECRET'):  # Legacy support
+            self.config.setdefault('storage', {}).setdefault('pinata', {})['secret_key'] = os.getenv('PINATA_API_SECRET')
+        
+        # Explorer API Keys
+        if os.getenv('ETHEREUM_EXPLORER_API_KEY'):
+            self.config.setdefault('explorers', {})['ethereum'] = os.getenv('ETHEREUM_EXPLORER_API_KEY')
+        if os.getenv('POLYGON_EXPLORER_API_KEY'):
+            self.config.setdefault('explorers', {})['polygon'] = os.getenv('POLYGON_EXPLORER_API_KEY')
+        if os.getenv('ARBITRUM_EXPLORER_API_KEY'):
+            self.config.setdefault('explorers', {})['arbitrum'] = os.getenv('ARBITRUM_EXPLORER_API_KEY')
+        if os.getenv('METIS_EXPLORER_API_KEY'):
+            self.config.setdefault('explorers', {})['metis'] = os.getenv('METIS_EXPLORER_API_KEY')
         
         # Obsidian Configuration
         if os.getenv('OBSIDIAN_VAULT_PATH'):
             self.config.setdefault('rag', {}).setdefault('obsidian', {})['vault_path'] = os.getenv('OBSIDIAN_VAULT_PATH')
+        if os.getenv('OBSIDIAN_MCP_API_KEY'):
+            self.config.setdefault('rag', {}).setdefault('obsidian', {})['api_key'] = os.getenv('OBSIDIAN_MCP_API_KEY')
+        if os.getenv('OBSIDIAN_HOST'):
+            self.config.setdefault('rag', {}).setdefault('obsidian', {})['host'] = os.getenv('OBSIDIAN_HOST')
+        if os.getenv('MCP_ENABLED'):
+            self.config.setdefault('rag', {}).setdefault('obsidian', {})['mcp_enabled'] = os.getenv('MCP_ENABLED').lower() == 'true'
+        if os.getenv('DOCKER_ENABLED'):
+            self.config.setdefault('rag', {}).setdefault('obsidian', {})['docker_enabled'] = os.getenv('DOCKER_ENABLED').lower() == 'true'
         
-        if os.getenv('OBSIDIAN_API_KEY'):
-            self.config.setdefault('rag', {}).setdefault('obsidian', {})['api_key'] = os.getenv('OBSIDIAN_API_KEY')
-        
-        if os.getenv('OBSIDIAN_API_URL'):
-            self.config.setdefault('rag', {}).setdefault('obsidian', {})['api_url'] = os.getenv('OBSIDIAN_API_URL')
-        
-        # Private Key
-        if os.getenv('DEFAULT_PRIVATE_KEY'):
-            self.config['default_private_key'] = os.getenv('DEFAULT_PRIVATE_KEY')
-        
-        # Log Level
+        # Logging Configuration
         if os.getenv('LOG_LEVEL'):
-            self.config.setdefault('defaults', {})['log_level'] = os.getenv('LOG_LEVEL')
+            self.config.setdefault('logging', {})['level'] = os.getenv('LOG_LEVEL')
+        if os.getenv('STRUCTURED_LOGGING'):
+            self.config.setdefault('logging', {})['structured'] = os.getenv('STRUCTURED_LOGGING').lower() == 'true'
+        if os.getenv('ENVIRONMENT'):
+            self.config['environment'] = os.getenv('ENVIRONMENT')
+        if os.getenv('DEBUG'):
+            self.config.setdefault('logging', {})['debug'] = os.getenv('DEBUG').lower() == 'true'
+        if os.getenv('VERBOSE'):
+            self.config.setdefault('logging', {})['verbose'] = os.getenv('VERBOSE').lower() == 'true'
+        
+        # Security Configuration
+        if os.getenv('SECURITY_EXTENSIONS_ENABLED'):
+            self.config.setdefault('security', {})['extensions_enabled'] = os.getenv('SECURITY_EXTENSIONS_ENABLED').lower() == 'true'
+        if os.getenv('SLITHER_ENABLED'):
+            self.config.setdefault('security', {})['slither_enabled'] = os.getenv('SLITHER_ENABLED').lower() == 'true'
+        if os.getenv('MYTHRIL_ENABLED'):
+            self.config.setdefault('security', {})['mythril_enabled'] = os.getenv('MYTHRIL_ENABLED').lower() == 'true'
+        if os.getenv('EDB_ENABLED'):
+            self.config.setdefault('security', {})['edb_enabled'] = os.getenv('EDB_ENABLED').lower() == 'true'
+        if os.getenv('RATE_LIMIT'):
+            self.config.setdefault('security', {})['rate_limit'] = int(os.getenv('RATE_LIMIT'))
+        
+        # Deployment Configuration
+        if os.getenv('GAS_PRICE_MULTIPLIER'):
+            self.config.setdefault('deployment', {})['gas_price_multiplier'] = float(os.getenv('GAS_PRICE_MULTIPLIER'))
+        if os.getenv('DEPLOYMENT_GAS_LIMIT'):
+            self.config.setdefault('deployment', {})['gas_limit'] = int(os.getenv('DEPLOYMENT_GAS_LIMIT'))
+        if os.getenv('CONFIRMATION_BLOCKS'):
+            self.config.setdefault('deployment', {})['confirmation_blocks'] = int(os.getenv('CONFIRMATION_BLOCKS'))
+        if os.getenv('AUTO_VERIFY'):
+            self.config.setdefault('deployment', {})['auto_verify'] = os.getenv('AUTO_VERIFY').lower() == 'true'
+        
+        # Development Configuration
+        if os.getenv('TEST_MODE'):
+            self.config.setdefault('development', {})['test_mode'] = os.getenv('TEST_MODE').lower() == 'true'
+        if os.getenv('CACHE_DIR'):
+            self.config.setdefault('development', {})['cache_dir'] = os.getenv('CACHE_DIR')
+        
+        # Alith SDK Configuration
+        if os.getenv('ALITH_ENABLED'):
+            self.config.setdefault('alith', {})['enabled'] = os.getenv('ALITH_ENABLED').lower() == 'true'
+        if os.getenv('ALITH_MODEL'):
+            self.config.setdefault('alith', {})['model'] = os.getenv('ALITH_MODEL')
+        if os.getenv('ALITH_SETTLEMENT'):
+            self.config.setdefault('alith', {})['settlement'] = os.getenv('ALITH_SETTLEMENT').lower() == 'true'
+        if os.getenv('ALITH_INFERENCE_NODE'):
+            self.config.setdefault('alith', {})['inference_node'] = os.getenv('ALITH_INFERENCE_NODE')
+        if os.getenv('ALITH_PRIVATE_INFERENCE'):
+            self.config.setdefault('alith', {})['private_inference'] = os.getenv('ALITH_PRIVATE_INFERENCE').lower() == 'true'
     
     def get_validated_config(self) -> HyperKitConfig:
         """Get the validated configuration object."""
