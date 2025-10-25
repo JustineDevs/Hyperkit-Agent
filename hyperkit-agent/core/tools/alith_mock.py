@@ -1,9 +1,28 @@
-# Mock implementation for alith-sdk
-# This is a placeholder until the actual SDK is available
+"""
+⚠️ WARNING: MOCK IMPLEMENTATION FOR TESTING/DEVELOPMENT ONLY ⚠️
+
+This is NOT a real Alith SDK integration. This is a placeholder for testing.
+
+TO USE REAL ALITH SDK:
+1. Install: pip install alith>=0.12.0
+2. Get API keys from LazAI Network: https://lazai.network
+3. Configure in config.yaml:
+   alith:
+     enabled: true
+     model: "gpt-4o-mini"
+     api_key: "your_key"
+4. Remove this mock and use: from alith import Agent
+
+DO NOT USE THIS IN PRODUCTION.
+"""
 
 
 class AlithClient:
-    """Mock AlithClient for testing purposes"""
+    """
+    ⚠️ MOCK IMPLEMENTATION - NOT REAL ALITH SDK
+    
+    This is a placeholder for testing only. Replace with real Alith SDK for production.
+    """
 
     def __init__(self, api_key: str = None, base_url: str = None):
         self.api_key = api_key

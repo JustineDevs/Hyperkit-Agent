@@ -5,7 +5,11 @@ Blockchain explorer API integration for contract verification.
 import json
 import logging
 import requests
+import subprocess
+import tempfile
+import os
 from typing import Dict, Any, Optional
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +51,10 @@ class ExplorerAPI:
                 'api_key': self.config.get('arbiscan_api_key')
             },
             'hyperion': {
-                'api_url': None,  # No explorer support
-                'explorer_url': None,
-                'api_key': None
+                'api_url': 'https://hyperion-testnet-explorer.metisdevops.link/api',
+                'explorer_url': 'https://hyperion-testnet-explorer.metisdevops.link',
+                'api_key': None,  # Blockscout doesn't require API key
+                'verifier_type': 'blockscout'
             },
             'metis': {
                 'api_url': 'https://api.andromeda-explorer.metis.io/api',
@@ -68,7 +73,8 @@ class ExplorerAPI:
         """Check if the network has explorer API support."""
         return (
             self.explorer_config.get('api_url') is not None and
-            self.explorer_config.get('api_key') is not None
+            (self.explorer_config.get('api_key') is not None or 
+             self.explorer_config.get('verifier_type') == 'blockscout')
         )
     
     async def verify_contract(
@@ -97,58 +103,142 @@ class ExplorerAPI:
                     "error": f"No explorer support for {self.network}"
                 }
             
-            # Prepare verification data
-            verification_data = {
-                'apikey': self.explorer_config['api_key'],
-                'module': 'contract',
-                'action': 'verifysourcecode',
-                'contractaddress': contract_address,
-                'sourcecode': source_code,
-                'codeformat': 'solidity-single-file',
-                'contractname': contract_name,
-                'compilerversion': 'v0.8.20+commit.a1b79de6',
-                'optimizationUsed': 1,
-                'runs': 200
-            }
+            # Use Foundry verification for Blockscout (Hyperion)
+            if self.explorer_config.get('verifier_type') == 'blockscout':
+                return await self._verify_with_foundry(
+                    source_code, contract_address, constructor_args, contract_name
+                )
             
-            if constructor_args:
-                verification_data['constructorArguements'] = constructor_args
-            
-            # Submit verification request
-            response = requests.post(
-                self.explorer_config['api_url'],
-                data=verification_data,
-                timeout=30
+            # Use traditional API for other explorers
+            return await self._verify_with_api(
+                source_code, contract_address, constructor_args, contract_name
             )
-            
-            if response.status_code == 200:
-                result = response.json()
-                
-                if result.get('status') == '1':
-                    # Verification submitted successfully
-                    return {
-                        "status": "submitted",
-                        "guid": result.get('result'),
-                        "explorer_url": f"{self.explorer_config['explorer_url']}/address/{contract_address}",
-                        "message": "Verification submitted successfully"
-                    }
-                else:
-                    return {
-                        "status": "failed",
-                        "error": result.get('message', 'Unknown error'),
-                        "result": result
-                    }
-            else:
-                return {
-                    "status": "failed",
-                    "error": f"HTTP {response.status_code}: {response.text}"
-                }
                 
         except Exception as e:
             logger.error(f"Explorer verification failed: {e}")
             return {
                 "status": "error",
                 "error": str(e)
+            }
+    
+    async def _verify_with_foundry(
+        self,
+        source_code: str,
+        contract_address: str,
+        constructor_args: Optional[str] = None,
+        contract_name: str = "GeneratedContract"
+    ) -> Dict[str, Any]:
+        """Verify contract using Blockscout API directly (Foundry-compatible)."""
+        try:
+            # Use Blockscout API directly for verification
+            verification_data = {
+                'addressHash': contract_address,
+                'name': contract_name,
+                'compilerVersion': '0.8.20',
+                'optimization': True,
+                'contractSourceCode': source_code,
+                'constructorArguments': constructor_args or '',
+                'autodetectConstructorArguments': False
+            }
+            
+            logger.info(f"Submitting verification to Blockscout API: {self.explorer_config['api_url']}")
+            
+            # Submit verification request to Blockscout
+            response = requests.post(
+                f"{self.explorer_config['api_url']}/api",
+                json=verification_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=60
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if result.get('status') == 'ok':
+                    return {
+                        "status": "success",
+                        "explorer_url": f"{self.explorer_config['explorer_url']}/address/{contract_address}",
+                        "message": "Contract verified successfully on Blockscout",
+                        "verification_method": "blockscout_api",
+                        "result": result
+                    }
+                else:
+                    return {
+                        "status": "failed",
+                        "error": result.get('message', 'Verification failed'),
+                        "verification_method": "blockscout_api",
+                        "result": result
+                    }
+            else:
+                return {
+                    "status": "failed",
+                    "error": f"HTTP {response.status_code}: {response.text}",
+                    "verification_method": "blockscout_api"
+                }
+                    
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "verification_method": "blockscout_api"
+            }
+    
+    async def _verify_with_api(
+        self,
+        source_code: str,
+        contract_address: str,
+        constructor_args: Optional[str] = None,
+        contract_name: str = "GeneratedContract"
+    ) -> Dict[str, Any]:
+        """Verify contract using traditional explorer API."""
+        # Prepare verification data
+        verification_data = {
+            'apikey': self.explorer_config['api_key'],
+            'module': 'contract',
+            'action': 'verifysourcecode',
+            'contractaddress': contract_address,
+            'sourcecode': source_code,
+            'codeformat': 'solidity-single-file',
+            'contractname': contract_name,
+            'compilerversion': 'v0.8.20+commit.a1b79de6',
+            'optimizationUsed': 1,
+            'runs': 200
+        }
+        
+        if constructor_args:
+            verification_data['constructorArguements'] = constructor_args
+        
+        # Submit verification request
+        response = requests.post(
+            self.explorer_config['api_url'],
+            data=verification_data,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            
+            if result.get('status') == '1':
+                # Verification submitted successfully
+                return {
+                    "status": "submitted",
+                    "guid": result.get('result'),
+                    "explorer_url": f"{self.explorer_config['explorer_url']}/address/{contract_address}",
+                    "message": "Verification submitted successfully",
+                    "verification_method": "explorer_api"
+                }
+            else:
+                return {
+                    "status": "failed",
+                    "error": result.get('message', 'Unknown error'),
+                    "result": result,
+                    "verification_method": "explorer_api"
+                }
+        else:
+            return {
+                "status": "failed",
+                "error": f"HTTP {response.status_code}: {response.text}",
+                "verification_method": "explorer_api"
             }
     
     def get_verification_status(self, contract_address: str) -> Dict[str, Any]:

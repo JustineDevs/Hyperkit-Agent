@@ -1,0 +1,17 @@
+{
+  "type": "api_docs",
+  "timestamp": "20251025_143220",
+  "version": "1.0.0",
+  "title": "HyperKit Agent API Documentation",
+  "description": "Complete API documentation for HyperKit Agent",
+  "sections": [
+    {
+      "title": "Authentication",
+      "content": "All API requests require authentication using API keys."
+    },
+    {
+      "title": "Endpoints",
+      "content": "The API provides endpoints for contract generation, auditing, and deployment."
+    }
+  ]
+}
