@@ -1,629 +1,637 @@
-# 🏗️ **HyperKit AI Agent - Architecture Diagrams**
+# HyperKit AI Agent - Architecture Diagrams
 
-**Prepared by**: Justine (CPOO)  
-**Date**: October 23, 2025  
 **Version**: 1.0.0  
+**Last Updated**: October 27, 2025
+
+## Table of Contents
+
+1. [System Overview](#system-overview)
+2. [Service Architecture](#service-architecture)
+3. [Data Flow Diagrams](#data-flow-diagrams)
+4. [Security Architecture](#security-architecture)
+5. [Deployment Architecture](#deployment-architecture)
+6. [API Architecture](#api-architecture)
 
 ---
 
-## 📋 **SYSTEM OVERVIEW**
+## System Overview
 
-The HyperKit AI Agent is a comprehensive smart contract generation and deployment platform built with modern microservices architecture.
-
----
-
-## 🎯 **HIGH-LEVEL ARCHITECTURE**
+### High-Level System Architecture
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
-        A[Next.js Frontend]
-        B[WebSocket Client]
-        C[API Client]
-    end
-    
-    subgraph "API Gateway"
-        D[FastAPI Gateway]
-        E[Authentication]
-        F[Rate Limiting]
-    end
-    
-    subgraph "Backend Services"
-        G[Contract Generator]
-        H[Compiler Service]
-        I[Deployer Service]
-        J[Audit Service]
-    end
-    
-    subgraph "AI Layer"
-        K[LLM Router]
-        L[Model 1: GPT-4]
-        M[Model 2: Claude]
-    end
-    
-    subgraph "Data Layer"
-        N[PostgreSQL]
-        O[Redis Cache]
-        P[File Storage]
-    end
-    
-    subgraph "Blockchain"
-        Q[Ethereum]
-        R[Polygon]
-        S[BSC]
-    end
-    
-    A --> D
-    B --> D
-    C --> D
-    D --> G
-    D --> H
-    D --> I
-    D --> J
-    G --> K
-    K --> L
-    K --> M
-    H --> N
-    I --> N
-    J --> N
-    I --> Q
-    I --> R
-    I --> S
-    D --> O
-```
-
----
-
-## 🔄 **REQUEST FLOW DIAGRAM**
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant F as Frontend
-    participant A as API Gateway
-    participant G as Generator
-    participant C as Compiler
-    participant D as Deployer
-    participant DB as Database
-    participant BC as Blockchain
-    
-    U->>F: Generate Contract
-    F->>A: POST /contracts/generate
-    A->>G: Process Request
-    G->>DB: Store Contract
-    G-->>A: Contract ID
-    A-->>F: Response
-    F->>A: POST /contracts/compile
-    A->>C: Compile Contract
-    C->>DB: Update Status
-    C-->>A: Compilation Result
-    A-->>F: Bytecode + ABI
-    F->>A: POST /contracts/deploy
-    A->>D: Deploy Contract
-    D->>BC: Send Transaction
-    BC-->>D: Transaction Hash
-    D->>DB: Update Deployment
-    D-->>A: Deployment Result
-    A-->>F: Contract Address
-```
-
----
-
-## 🗄️ **DATABASE SCHEMA**
-
-```mermaid
-erDiagram
-    USERS ||--o{ DEPLOYMENTS : creates
-    USERS ||--o{ AUDIT_LOGS : generates
-    USERS ||--o{ JOBS : owns
-    DEPLOYMENTS ||--o{ JOBS : has
-    DEPLOYMENTS ||--o{ SECURITY_AUDITS : has
-    
-    USERS {
-        uuid id PK
-        string email UK
-        string password_hash
-        string api_key UK
-        timestamp created_at
-        string tier
-    }
-    
-    DEPLOYMENTS {
-        uuid id PK
-        uuid user_id FK
-        string contract_address
-        text contract_code
-        string network
-        string status
-        timestamp created_at
-        bigint gas_used
-        string transaction_hash
-        text error_message
-    }
-    
-    JOBS {
-        uuid id PK
-        uuid deployment_id FK
-        uuid user_id FK
-        string task_name
-        string status
-        string celery_task_id
-        int retries
-        int max_retries
-        timestamp created_at
-        timestamp updated_at
-    }
-    
-    AUDIT_LOGS {
-        uuid id PK
-        uuid user_id FK
-        string action
-        uuid resource_id
-        json details
-        timestamp created_at
-    }
-    
-    SECURITY_AUDITS {
-        uuid id PK
-        uuid deployment_id FK
-        string tool_name
-        string severity
-        text finding
-        text recommendation
-        string status
-        timestamp created_at
-    }
-```
-
----
-
-## 🔧 **MICROSERVICES ARCHITECTURE**
-
-```mermaid
-graph TB
-    subgraph "API Gateway"
-        A[FastAPI Gateway]
-        B[Authentication Service]
-        C[Rate Limiting Service]
+    subgraph "Client Layer"
+        CLI[CLI Interface]
+        API[API Gateway]
+        WEB[Web Interface]
     end
     
     subgraph "Core Services"
-        D[Contract Generator Service]
-        E[Compiler Service]
-        F[Deployer Service]
-        G[Audit Service]
+        AI[AI Agent Service]
+        BC[Blockchain Service]
+        ST[Storage Service]
+        SEC[Security Service]
+        MON[Monitoring Service]
+        RAG[RAG Service]
+        VER[Verification Service]
     end
     
-    subgraph "AI Services"
-        H[LLM Router Service]
-        I[Model 1 Service]
-        J[Model 2 Service]
+    subgraph "External Services"
+        LAZAI[LazAI API]
+        PINATA[Pinata IPFS]
+        HYPERION[Hyperion Network]
+        EXPLORER[Block Explorer]
     end
     
-    subgraph "Background Jobs"
-        K[Celery Worker 1]
-        L[Celery Worker 2]
-        M[Celery Worker 3]
-    end
+    CLI --> AI
+    API --> AI
+    WEB --> AI
     
-    subgraph "Data Services"
-        N[PostgreSQL]
-        O[Redis]
-        P[File Storage]
-    end
+    AI --> LAZAI
+    BC --> HYPERION
+    ST --> PINATA
+    VER --> EXPLORER
     
-    A --> D
-    A --> E
-    A --> F
-    A --> G
-    D --> H
-    H --> I
-    H --> J
-    E --> K
-    F --> L
-    G --> M
-    K --> N
-    L --> N
-    M --> N
-    A --> O
-    D --> P
+    AI --> RAG
+    AI --> SEC
+    BC --> MON
+    ST --> MON
+```
+
+### Component Interaction Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant AI
+    participant BC
+    participant ST
+    participant SEC
+    
+    User->>CLI: Generate contract
+    CLI->>AI: Generate request
+    AI->>AI: Process with Alith SDK
+    AI-->>CLI: Contract code
+    
+    CLI->>SEC: Audit contract
+    SEC->>SEC: Security analysis
+    SEC-->>CLI: Audit report
+    
+    CLI->>BC: Deploy contract
+    BC->>BC: Deploy to Hyperion
+    BC-->>CLI: Deployment result
+    
+    CLI->>ST: Store audit report
+    ST->>ST: Store on IPFS
+    ST-->>CLI: Storage result
 ```
 
 ---
 
-## 🌐 **DEPLOYMENT ARCHITECTURE**
+## Service Architecture
+
+### Core Services Detailed View
 
 ```mermaid
-graph TB
-    subgraph "Load Balancer"
-        A[Nginx/HAProxy]
+graph LR
+    subgraph "AI Agent Service"
+        AI1[Contract Generation]
+        AI2[Contract Auditing]
+        AI3[Model Management]
+        AI4[API Endpoints]
     end
     
-    subgraph "Application Tier"
-        B[FastAPI App 1]
-        C[FastAPI App 2]
-        D[FastAPI App 3]
+    subgraph "Blockchain Service"
+        BC1[Contract Deployment]
+        BC2[Transaction Monitoring]
+        BC3[Network Operations]
+        BC4[Gas Estimation]
     end
     
-    subgraph "Worker Tier"
-        E[Celery Worker 1]
-        F[Celery Worker 2]
-        G[Celery Worker 3]
+    subgraph "Storage Service"
+        ST1[IPFS Operations]
+        ST2[File Management]
+        ST3[Metadata Tracking]
+        ST4[CID Management]
     end
     
-    subgraph "Data Tier"
-        H[PostgreSQL Primary]
-        I[PostgreSQL Replica]
-        J[Redis Cluster]
+    subgraph "Security Service"
+        SEC1[Vulnerability Detection]
+        SEC2[Pattern Analysis]
+        SEC3[Security Scoring]
+        SEC4[Threat Monitoring]
     end
     
-    subgraph "Storage Tier"
-        K[File Storage]
-        L[Backup Storage]
+    subgraph "Monitoring Service"
+        MON1[Health Checks]
+        MON2[Performance Metrics]
+        MON3[Error Tracking]
+        MON4[Alert Management]
     end
     
-    A --> B
-    A --> C
-    A --> D
-    B --> H
-    C --> H
-    D --> H
-    E --> H
-    F --> H
-    G --> H
-    H --> I
-    B --> J
-    C --> J
-    D --> J
-    E --> K
-    F --> K
-    G --> K
-    H --> L
+    subgraph "RAG Service"
+        RAG1[Vector Storage]
+        RAG2[Similarity Search]
+        RAG3[Document Indexing]
+        RAG4[Knowledge Retrieval]
+    end
+    
+    subgraph "Verification Service"
+        VER1[Explorer Integration]
+        VER2[Verification Workflow]
+        VER3[Status Tracking]
+        VER4[Multi-Network Support]
+    end
+```
+
+### Service Dependencies
+
+```mermaid
+graph TD
+    AI[AI Agent] --> RAG[RAG Service]
+    AI --> SEC[Security Service]
+    AI --> ST[Storage Service]
+    
+    BC[Blockchain] --> MON[Monitoring Service]
+    BC --> VER[Verification Service]
+    
+    ST --> MON[Monitoring Service]
+    ST --> RAG[RAG Service]
+    
+    SEC --> MON[Monitoring Service]
+    
+    MON --> AI[AI Agent]
+    MON --> BC[Blockchain]
+    MON --> ST[Storage Service]
+    MON --> SEC[Security Service]
 ```
 
 ---
 
-## 🔐 **SECURITY ARCHITECTURE**
+## Data Flow Diagrams
+
+### Contract Generation Flow
 
 ```mermaid
-graph TB
-    subgraph "External"
-        A[Internet]
-        B[Users]
-        C[API Clients]
-    end
+flowchart TD
+    A[User Input] --> B[CLI/API]
+    B --> C[AI Agent Service]
+    C --> D[Alith SDK]
+    D --> E[Contract Code]
+    E --> F[Code Validation]
+    F --> G[Security Analysis]
+    G --> H[Quality Check]
+    H --> I[Artifact Generation]
+    I --> J[Storage on IPFS]
+    J --> K[Response to User]
     
-    subgraph "Security Layer"
-        D[WAF]
-        E[Rate Limiting]
-        F[Authentication]
-        G[Authorization]
-    end
-    
-    subgraph "Application Layer"
-        H[API Gateway]
-        I[Services]
-        J[Database]
-    end
-    
-    subgraph "Data Layer"
-        K[Encrypted Storage]
-        L[Audit Logs]
-        M[Backup]
-    end
-    
-    A --> D
-    B --> D
-    C --> D
-    D --> E
-    E --> F
-    F --> G
-    G --> H
-    H --> I
-    I --> J
-    J --> K
-    I --> L
-    K --> M
+    F --> L[Security Issues?]
+    L -->|Yes| M[Generate Recommendations]
+    L -->|No| H
+    M --> H
 ```
 
----
-
-## 📊 **MONITORING ARCHITECTURE**
+### Contract Auditing Flow
 
 ```mermaid
-graph TB
-    subgraph "Application"
-        A[FastAPI App]
-        B[Celery Workers]
-        C[Database]
-    end
+flowchart TD
+    A[Contract Code] --> B[Security Service]
+    B --> C[Pattern Detection]
+    B --> D[Slither Analysis]
+    B --> E[Mythril Analysis]
     
-    subgraph "Metrics Collection"
-        D[Prometheus]
-        E[Grafana]
-        F[AlertManager]
-    end
-    
-    subgraph "Logging"
-        G[Structured Logs]
-        H[Log Aggregation]
-        I[Log Analysis]
-    end
-    
-    subgraph "Health Checks"
-        J[Health Endpoints]
-        K[Uptime Monitoring]
-        L[Performance Monitoring]
-    end
-    
-    A --> D
-    B --> D
-    C --> D
-    D --> E
+    C --> F[Vulnerability Report]
     D --> F
-    A --> G
-    B --> G
-    C --> G
-    G --> H
-    H --> I
-    A --> J
-    B --> J
-    C --> J
-    J --> K
-    K --> L
-```
-
----
-
-## 🔄 **ASYNC PROCESSING FLOW**
-
-```mermaid
-graph TB
-    subgraph "User Request"
-        A[User Submits Request]
-    end
-    
-    subgraph "API Layer"
-        B[FastAPI Receives]
-        C[Validates Request]
-        D[Creates Job]
-    end
-    
-    subgraph "Queue System"
-        E[Redis Queue]
-        F[Job Queue]
-    end
-    
-    subgraph "Worker Processing"
-        G[Celery Worker]
-        H[Processes Job]
-        I[Updates Status]
-    end
-    
-    subgraph "Database"
-        J[PostgreSQL]
-        K[Job Status]
-    end
-    
-    subgraph "Real-time Updates"
-        L[WebSocket]
-        M[User Notification]
-    end
-    
-    A --> B
-    B --> C
-    C --> D
-    D --> E
     E --> F
-    F --> G
-    G --> H
-    H --> I
-    I --> J
-    J --> K
-    K --> L
-    L --> M
+    
+    F --> G[Security Scoring]
+    G --> H[Recommendations]
+    H --> I[Audit Report]
+    I --> J[Store on IPFS]
+    J --> K[Return to User]
+```
+
+### Deployment Flow
+
+```mermaid
+flowchart TD
+    A[Contract Code] --> B[Blockchain Service]
+    B --> C[Compile Contract]
+    C --> D[Estimate Gas]
+    D --> E[Deploy to Hyperion]
+    E --> F[Transaction Receipt]
+    F --> G[Verify Deployment]
+    G --> H[Store Deployment Info]
+    H --> I[Monitor Transaction]
+    I --> J[Return Result]
 ```
 
 ---
 
-## 🌍 **NETWORK TOPOLOGY**
+## Security Architecture
+
+### Security Layers
 
 ```mermaid
 graph TB
-    subgraph "Internet"
-        A[Users]
-        B[API Clients]
+    subgraph "External Security"
+        API_KEY[API Key Authentication]
+        RATE_LIMIT[Rate Limiting]
+        CORS[CORS Protection]
     end
     
-    subgraph "CDN"
-        C[CloudFlare]
+    subgraph "Application Security"
+        INPUT_VAL[Input Validation]
+        CODE_SCAN[Code Scanning]
+        VULN_DET[Vulnerability Detection]
     end
     
+    subgraph "Infrastructure Security"
+        ENCRYPT[Data Encryption]
+        SECURE_STORAGE[Secure Storage]
+        NETWORK_SEC[Network Security]
+    end
+    
+    subgraph "Monitoring Security"
+        AUDIT_LOG[Audit Logging]
+        THREAT_DET[Threat Detection]
+        INCIDENT_RESP[Incident Response]
+    end
+    
+    API_KEY --> INPUT_VAL
+    RATE_LIMIT --> CODE_SCAN
+    CORS --> VULN_DET
+    
+    INPUT_VAL --> ENCRYPT
+    CODE_SCAN --> SECURE_STORAGE
+    VULN_DET --> NETWORK_SEC
+    
+    ENCRYPT --> AUDIT_LOG
+    SECURE_STORAGE --> THREAT_DET
+    NETWORK_SEC --> INCIDENT_RESP
+```
+
+### Security Scanning Pipeline
+
+```mermaid
+flowchart LR
+    A[Contract Code] --> B[Pattern Detection]
+    A --> C[Slither Analysis]
+    A --> D[Mythril Analysis]
+    A --> E[Custom Rules]
+    
+    B --> F[Security Report]
+    C --> F
+    D --> F
+    E --> F
+    
+    F --> G[Vulnerability Classification]
+    G --> H[Risk Assessment]
+    H --> I[Recommendations]
+    I --> J[Security Score]
+    J --> K[Final Report]
+```
+
+---
+
+## Deployment Architecture
+
+### Production Deployment
+
+```mermaid
+graph TB
     subgraph "Load Balancer"
-        D[HAProxy]
+        LB[NGINX Load Balancer]
     end
     
     subgraph "Application Servers"
-        E[App Server 1]
-        F[App Server 2]
-        G[App Server 3]
+        APP1[HyperKit Agent 1]
+        APP2[HyperKit Agent 2]
+        APP3[HyperKit Agent 3]
     end
     
-    subgraph "Database Cluster"
-        H[PostgreSQL Primary]
-        I[PostgreSQL Replica]
+    subgraph "Database Layer"
+        REDIS[Redis Cache]
+        POSTGRES[PostgreSQL]
     end
     
-    subgraph "Cache Layer"
-        J[Redis Cluster]
-    end
-    
-    subgraph "Blockchain Networks"
-        K[Ethereum]
-        L[Polygon]
-        M[BSC]
-    end
-    
-    A --> C
-    B --> C
-    C --> D
-    D --> E
-    D --> F
-    D --> G
-    E --> H
-    F --> H
-    G --> H
-    H --> I
-    E --> J
-    F --> J
-    G --> J
-    E --> K
-    E --> L
-    E --> M
-```
-
----
-
-## 📈 **SCALABILITY ARCHITECTURE**
-
-```mermaid
-graph TB
-    subgraph "Auto Scaling"
-        A[Horizontal Pod Autoscaler]
-        B[Vertical Pod Autoscaler]
-    end
-    
-    subgraph "Application Tier"
-        C[FastAPI Pods]
-        D[Celery Worker Pods]
-    end
-    
-    subgraph "Data Tier"
-        E[PostgreSQL Cluster]
-        F[Redis Cluster]
+    subgraph "External Services"
+        LAZAI[LazAI API]
+        PINATA[Pinata IPFS]
+        HYPERION[Hyperion Network]
     end
     
     subgraph "Monitoring"
-        G[Metrics Server]
-        H[Kubernetes Metrics]
+        PROMETHEUS[Prometheus]
+        GRAFANA[Grafana]
+        ALERTMANAGER[AlertManager]
     end
     
-    A --> C
-    A --> D
-    B --> C
-    B --> D
-    C --> E
-    D --> E
-    C --> F
-    D --> F
-    G --> A
-    H --> A
+    LB --> APP1
+    LB --> APP2
+    LB --> APP3
+    
+    APP1 --> REDIS
+    APP2 --> REDIS
+    APP3 --> REDIS
+    
+    APP1 --> POSTGRES
+    APP2 --> POSTGRES
+    APP3 --> POSTGRES
+    
+    APP1 --> LAZAI
+    APP2 --> PINATA
+    APP3 --> HYPERION
+    
+    APP1 --> PROMETHEUS
+    APP2 --> PROMETHEUS
+    APP3 --> PROMETHEUS
+    
+    PROMETHEUS --> GRAFANA
+    PROMETHEUS --> ALERTMANAGER
 ```
 
----
-
-## 🔧 **DEVELOPMENT ARCHITECTURE**
+### Docker Container Architecture
 
 ```mermaid
 graph TB
-    subgraph "Development"
-        A[Local Development]
-        B[Git Repository]
-        C[CI/CD Pipeline]
+    subgraph "Docker Host"
+        subgraph "HyperKit Agent Container"
+            APP[HyperKit Agent App]
+            LOG[Logging Service]
+            MON[Monitoring Agent]
+        end
+        
+        subgraph "Database Container"
+            DB[PostgreSQL]
+            CACHE[Redis]
+        end
+        
+        subgraph "Monitoring Container"
+            PROM[Prometheus]
+            GRAF[Grafana]
+        end
     end
     
-    subgraph "Testing"
-        D[Unit Tests]
-        E[Integration Tests]
-        F[E2E Tests]
+    subgraph "External Services"
+        LAZAI[LazAI API]
+        PINATA[Pinata IPFS]
+        HYPERION[Hyperion Network]
     end
     
-    subgraph "Staging"
-        G[Staging Environment]
-        H[Test Database]
-        I[Test Blockchain]
-    end
+    APP --> DB
+    APP --> CACHE
+    APP --> LAZAI
+    APP --> PINATA
+    APP --> HYPERION
     
-    subgraph "Production"
-        J[Production Environment]
-        K[Production Database]
-        L[Mainnet]
-    end
-    
-    A --> B
-    B --> C
-    C --> D
-    C --> E
-    C --> F
-    D --> G
-    E --> G
-    F --> G
-    G --> H
-    G --> I
-    G --> J
-    J --> K
-    J --> L
+    LOG --> PROM
+    MON --> PROM
+    PROM --> GRAF
 ```
 
 ---
 
-## 📋 **COMPONENT RESPONSIBILITIES**
+## API Architecture
 
-### **Frontend (Next.js + CSS)**
-- User interface and experience
-- Real-time updates via WebSocket
-- Form validation and error handling
-- Responsive design for all devices
+### REST API Structure
 
-### **API Gateway (FastAPI)**
-- Request routing and validation
-- Authentication and authorization
-- Rate limiting and security
-- Response formatting
+```mermaid
+graph TB
+    subgraph "API Gateway"
+        GATEWAY[NGINX Gateway]
+    end
+    
+    subgraph "API Routes"
+        V1[/api/v1]
+        V2[/api/v2]
+    end
+    
+    subgraph "Service Endpoints"
+        AI_ENDPOINTS[AI Agent Endpoints]
+        BC_ENDPOINTS[Blockchain Endpoints]
+        ST_ENDPOINTS[Storage Endpoints]
+        SEC_ENDPOINTS[Security Endpoints]
+        MON_ENDPOINTS[Monitoring Endpoints]
+        RAG_ENDPOINTS[RAG Endpoints]
+        VER_ENDPOINTS[Verification Endpoints]
+    end
+    
+    subgraph "Middleware"
+        AUTH[Authentication]
+        RATE[Rate Limiting]
+        LOG[Logging]
+        VAL[Validation]
+    end
+    
+    GATEWAY --> V1
+    GATEWAY --> V2
+    
+    V1 --> AUTH
+    V2 --> AUTH
+    
+    AUTH --> RATE
+    RATE --> LOG
+    LOG --> VAL
+    
+    VAL --> AI_ENDPOINTS
+    VAL --> BC_ENDPOINTS
+    VAL --> ST_ENDPOINTS
+    VAL --> SEC_ENDPOINTS
+    VAL --> MON_ENDPOINTS
+    VAL --> RAG_ENDPOINTS
+    VAL --> VER_ENDPOINTS
+```
 
-### **Backend Services**
-- **Contract Generator**: AI-powered contract creation
-- **Compiler Service**: Solidity compilation with Foundry
-- **Deployer Service**: Multi-chain deployment
-- **Audit Service**: Security analysis and reporting
+### WebSocket Architecture
 
-### **AI Layer**
-- **LLM Router**: Model selection and routing
-- **Model Services**: GPT-4, Claude, and other LLMs
-- **Prompt Engineering**: Optimized prompts for contract generation
-
-### **Data Layer**
-- **PostgreSQL**: Primary database for all data
-- **Redis**: Caching and session management
-- **File Storage**: Contract source code and artifacts
-
-### **Background Processing**
-- **Celery Workers**: Async job processing
-- **Job Queues**: Task distribution and management
-- **Retry Logic**: Automatic retry for failed jobs
+```mermaid
+graph TB
+    subgraph "WebSocket Server"
+        WS[WebSocket Server]
+    end
+    
+    subgraph "Real-time Events"
+        CONTRACT[Contract Events]
+        DEPLOY[Deployment Events]
+        AUDIT[Audit Events]
+        MONITOR[Monitoring Events]
+    end
+    
+    subgraph "Client Connections"
+        CLI_CLIENT[CLI Client]
+        WEB_CLIENT[Web Client]
+        API_CLIENT[API Client]
+    end
+    
+    WS --> CONTRACT
+    WS --> DEPLOY
+    WS --> AUDIT
+    WS --> MONITOR
+    
+    CONTRACT --> CLI_CLIENT
+    DEPLOY --> WEB_CLIENT
+    AUDIT --> API_CLIENT
+    MONITOR --> CLI_CLIENT
+    MONITOR --> WEB_CLIENT
+    MONITOR --> API_CLIENT
+```
 
 ---
 
-## 🎯 **INTEGRATION POINTS**
+## Sample Integration Scripts
 
-### **Aaron (CTO) - Backend Integration**
-- Database schema and migrations
-- API endpoint implementation
-- Celery task configuration
-- Security and authentication
+### Python Integration Example
 
-### **Tristan (CMFO) - Frontend Integration**
-- Next.js component development
-- WebSocket integration
-- API client implementation
-- UI/UX design and styling
+```python
+# hyperkit_integration.py
+import asyncio
+from hyperkit_agent import HyperKitClient
 
-### **Justine (CPOO) - Product Integration**
-- End-to-end testing
-- Documentation and guides
-- Team coordination
-- Quality assurance
+async def main():
+    # Initialize client
+    client = HyperKitClient(
+        api_key="your_api_key",
+        base_url="https://api.hyperkit.ai"
+    )
+    
+    # Generate contract
+    print("Generating contract...")
+    contract = await client.generate_contract({
+        "name": "MyToken",
+        "type": "ERC20",
+        "features": ["mintable", "burnable", "pausable"],
+        "security": "high"
+    })
+    
+    print(f"Contract generated: {contract.name}")
+    print(f"Security score: {contract.security_score}")
+    
+    # Audit contract
+    print("Auditing contract...")
+    audit = await client.audit_contract(contract.code)
+    
+    print(f"Audit completed: {audit.security_score}/100")
+    if audit.vulnerabilities:
+        print("Vulnerabilities found:")
+        for vuln in audit.vulnerabilities:
+            print(f"  - {vuln.type}: {vuln.description}")
+    
+    # Deploy contract
+    print("Deploying contract...")
+    deployment = await client.deploy_contract(
+        contract.code,
+        constructor_args=["MyToken", "MTK", 1000000]
+    )
+    
+    print(f"Contract deployed at: {deployment.address}")
+    print(f"Transaction hash: {deployment.tx_hash}")
+    
+    # Store audit report
+    print("Storing audit report...")
+    storage = await client.store_audit_report(audit)
+    
+    print(f"Audit report stored: {storage.cid}")
+    print(f"IPFS URL: {storage.url}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### JavaScript Integration Example
+
+```javascript
+// hyperkit_integration.js
+const { HyperKitClient } = require('@hyperkit/agent-sdk');
+
+async function main() {
+    // Initialize client
+    const client = new HyperKitClient({
+        apiKey: 'your_api_key',
+        baseUrl: 'https://api.hyperkit.ai'
+    });
+    
+    try {
+        // Generate contract
+        console.log('Generating contract...');
+        const contract = await client.generateContract({
+            name: 'MyToken',
+            type: 'ERC20',
+            features: ['mintable', 'burnable', 'pausable'],
+            security: 'high'
+        });
+        
+        console.log(`Contract generated: ${contract.name}`);
+        console.log(`Security score: ${contract.securityScore}`);
+        
+        // Audit contract
+        console.log('Auditing contract...');
+        const audit = await client.auditContract(contract.code);
+        
+        console.log(`Audit completed: ${audit.securityScore}/100`);
+        if (audit.vulnerabilities.length > 0) {
+            console.log('Vulnerabilities found:');
+            audit.vulnerabilities.forEach(vuln => {
+                console.log(`  - ${vuln.type}: ${vuln.description}`);
+            });
+        }
+        
+        // Deploy contract
+        console.log('Deploying contract...');
+        const deployment = await client.deployContract(
+            contract.code,
+            ['MyToken', 'MTK', 1000000]
+        );
+        
+        console.log(`Contract deployed at: ${deployment.address}`);
+        console.log(`Transaction hash: ${deployment.txHash}`);
+        
+        // Store audit report
+        console.log('Storing audit report...');
+        const storage = await client.storeAuditReport(audit);
+        
+        console.log(`Audit report stored: ${storage.cid}`);
+        console.log(`IPFS URL: ${storage.url}`);
+        
+    } catch (error) {
+        console.error('Error:', error.message);
+    }
+}
+
+main();
+```
+
+### CLI Usage Examples
+
+```bash
+# Generate a contract
+./hyperagent generate \
+  --requirements "ERC20 token with mint and burn functions" \
+  --output my_token.sol
+
+# Audit a contract
+./hyperagent audit \
+  --contract-file my_token.sol \
+  --security-level high \
+  --output audit_report.json
+
+# Deploy a contract
+./hyperagent deploy \
+  --contract-file my_token.sol \
+  --network hyperion \
+  --constructor-args "MyToken,MTK,1000000"
+
+# Verify a contract
+./hyperagent verify \
+  --address 0x1234567890123456789012345678901234567890 \
+  --source-file my_token.sol \
+  --compiler-version 0.8.19
+
+# Monitor system health
+./hyperagent monitor --health --metrics --transactions
+```
 
 ---
 
-*Architecture Diagrams v1.0.0 - Prepared by Justine (CPOO) - October 23, 2025*
+*Last Updated: October 27, 2025*

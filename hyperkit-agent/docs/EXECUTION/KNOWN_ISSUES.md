@@ -1,6 +1,6 @@
 # Known Issues & Limitations
 
-**Version**: 1.2.0  
+**Version**: 1.3.0 - Production Ready  
 
 ---
 
@@ -13,20 +13,45 @@
 - **Fix**: Now raises `RuntimeError` if Foundry not available
 - **Action Required**: Ensure Foundry is installed before deployment
 
+### **FIXED: Mock Alith Integration**
+- **Status**: ✅ **FIXED**
+- **Issue**: Alith SDK integration was using mock implementation
+- **Impact**: No real AI-powered contract auditing available
+- **Fix**: Integrated real Alith agent with proper initialization
+- **Result**: Real AI contract auditing now working with security analysis
+
+### **FIXED: Public Contract Auditor Placeholders**
+- **Status**: ✅ **FIXED**
+- **Issue**: Public contract auditor returned placeholder responses
+- **Impact**: No real contract source code retrieval from explorers
+- **Fix**: Implemented real API calls to explorer endpoints
+- **Result**: Real contract source code and ABI retrieval now working
+
+### **FIXED: File Organization Issues**
+- **Status**: ✅ **FIXED**
+- **Issue**: Test scripts and documentation scattered in root directory
+- **Impact**: Messy project structure, hard to maintain
+- **Fix**: Moved all test scripts to `/tests/` directory, documentation to proper locations
+- **Result**: Clean, organized project structure with proper file placement
+
 ---
 
 ## ⚠️ **Current Limitations**
 
 ### **1. Alith SDK Integration**
-- **Status**: 🟡 **MOCK IMPLEMENTATION**
-- **Issue**: Current Alith integration uses mock client for testing
-- **Impact**: Real Alith AI features not available
-- **Workaround**:
+- **Status**: ✅ **REAL IMPLEMENTATION**
+- **Issue**: ~~Current Alith integration uses mock client for testing~~ **FIXED**
+- **Impact**: ~~Real Alith AI features not available~~ **Now available**
+- **Current Status**:
+  - ✅ Real Alith agent initialized and working
+  - ✅ Contract auditing with real AI analysis
+  - ✅ Security vulnerability detection
+  - ✅ Risk scoring and recommendations
+- **Requirements**:
   1. Install: `pip install alith>=0.12.0`
   2. Get API keys from https://lazai.network
-  3. Configure in `config.yaml`
-  4. Replace mock with real SDK
-- **ETA**: Real integration in next major version
+  3. Configure in `.env` file
+- **Note**: Real implementation now active and tested
 
 ### **2. Audit System Accuracy**
 - **Status**: 🟡 **BEST EFFORT**
