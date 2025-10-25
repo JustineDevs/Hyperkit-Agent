@@ -13,7 +13,6 @@ from pathlib import Path
 from core.config.loader import get_config
 from core.intent_router import IntentRouter, IntentType
 from services.debug.edb_integration import EDBIntegration
-from services.onchain.alith_integration import AlithIntegration
 from services.audit.public_contract_auditor import public_contract_auditor
 from services.monitoring.enhanced_monitor import enhanced_monitor, MonitorConfig, MonitorType
 from services.defi.primitives_generator import defi_primitives_generator, DeFiPrimitive
@@ -186,13 +185,6 @@ class HyperKitAgent:
         else:
             self.security_pipeline = None
         
-        # Initialize Alith Integration
-        self.alith = AlithIntegration()
-
-        # Initialize mock Alith client
-        from core.tools.alith_mock import AlithClient
-
-        self.alith = AlithClient()
         
         # Initialize LangChain agent if available
         self.langchain_agent = None
