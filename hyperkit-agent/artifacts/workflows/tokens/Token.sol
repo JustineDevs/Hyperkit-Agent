@@ -3,74 +3,82 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 /**
- * @title TestToken
- * @author Smart Contract Generator
- * @notice A secure, production-ready ERC20 token named 'TestToken' (TEST).
- * @dev This contract implements a standard ERC20 token with a fixed supply of 1,000,000 tokens.
- * It integrates OpenZeppelin's secure, community-vetted implementations for ERC20,
- * ownership control (Ownable), pausable token transfers (Pausable), and user-initiated
- * token burning (Burnable).
+ * @title SimpleToken
+ * @dev A basic ERC20 token implementation with minting, burning, and pausable capabilities.
+ * This contract uses OpenZeppelin's battle-tested libraries for security and standard compliance.
+ * - 'ERC20' for the core token functionality.
+ * - 'ERC20Burnable' to allow users to burn their own tokens.
+ * - 'Ownable' for access control, restricting sensitive functions like minting and pausing to the owner.
+ * - 'Pausable' to halt token transfers in case of an emergency.
+ *
+ * The contract owner is set during deployment and can be transferred later.
+ * The owner has the exclusive right to mint new tokens and to pause/unpause the contract.
+ * All token transfers, including minting and burning, are disabled when the contract is paused.
  */
-contract TestToken is ERC20, ERC20Burnable, ERC20Pausable, Ownable {
+contract SimpleToken is ERC20, ERC20Burnable, Ownable, Pausable {
+
     /**
-     * @notice Initializes the contract, sets the token name, symbol, and initial owner.
-     * @dev Mints the total supply of 1,000,000 tokens to the `initialOwner`.
-     * The `initialOwner` is also granted ownership of the contract, which allows
-     * them to call privileged functions like `pause` and `unpause`.
-     * @param initialOwner The address to receive the entire initial supply and contract ownership.
+     * @dev Initializes the contract, sets the token name, symbol, and the initial owner.
+     * @param initialOwner The address that will be set as the contract owner.
      */
-    constructor(address initialOwner)
-        ERC20("TestToken", "TEST")
-        Ownable(initialOwner)
-    {
-        // The total supply is 1,000,000 tokens.
-        // Since ERC20 decimals are typically 18, we multiply by 10**18.
-        uint256 initialSupply = 1_000_000 * 10**decimals();
-        _mint(initialOwner, initialSupply);
+    constructor(address initialOwner) ERC20("Simple Token", "STKN") Ownable(initialOwner) {
+        // The Ownable constructor sets the initial owner to the provided address.
+        // The ERC20 constructor sets the name and symbol.
     }
 
     /**
-     * @notice Pauses all token transfers, approvals, and burns.
-     * @dev This function can only be called by the contract owner. It serves as an
-     * emergency stop mechanism. Emits a {Paused} event.
+     * @dev Pauses all token transfers.
+     * Can only be called by the owner.
+     * Emits a {Paused} event.
+     *
      * Requirements:
      * - The contract must not be already paused.
-     * - The caller must be the owner.
      */
     function pause() public onlyOwner {
         _pause();
     }
 
     /**
-     * @notice Resumes all token transfers, approvals, and burns.
-     * @dev This function can only be called by the contract owner to lift a previously
-     * triggered pause. Emits an {Unpaused} event.
+     * @dev Unpauses all token transfers.
+     * Can only be called by the owner.
+     * Emits an {Unpaused} event.
+     *
      * Requirements:
      * - The contract must be paused.
-     * - The caller must be the owner.
      */
     function unpause() public onlyOwner {
         _unpause();
     }
 
     /**
-     * @dev Overrides the internal `_update` function from ERC20 to apply the `whenNotPaused`
-     * modifier from the ERC20Pausable extension. This is the core mechanism that ensures
-     * all state-changing token operations (transfers, mints, burns) are halted when
-     * the contract is paused.
+     * @dev Creates `amount` tokens and assigns them to `to`, increasing the total supply.
+     * Can only be called by the owner.
+     * The contract must not be paused for minting to occur.
+     * Emits a {Transfer} event with `from` set to the zero address.
      *
-     * This override is required by the Solidity compiler because `_update` is defined in both
-     * parent contracts (`ERC20` and `ERC20Pausable`).
+     * @param to The address that will receive the minted tokens.
+     * @param amount The amount of tokens to mint.
      *
-     * See {ERC20-_update} and {Pausable-whenNotPaused}.
+     * Requirements:
+     * - `to` cannot be the zero address.
+     */
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
+    }
+
+    /**
+     * @dev Hook that is called before any token transfer, including minting and burning.
+     * Overridden to apply the `whenNotPaused` modifier, ensuring that token transfers
+     * are not possible while the contract is paused.
+     * This override combines the logic from both ERC20 and Pausable contracts.
      */
     function _update(address from, address to, uint256 value)
         internal
-        override(ERC20, ERC20Pausable)
+        override(ERC20, Pausable)
     {
         super._update(from, to, value);
     }
