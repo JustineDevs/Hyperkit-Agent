@@ -2,8 +2,9 @@
 # Core dependencies for the HyperKit AI Agent system
 # Updated for production readiness with pinned versions
 
-# Python Version - Production Ready
-python>=3.10,<4.0
+# Python Version - Production Ready (handled by CI/CD workflow)
+# Note: Python version is specified in .github/workflows/ci-cd.yml matrix
+# and should be declared in pyproject.toml for packaging metadata
 
 # Core Framework
 click>=8.1.0,<9.0
