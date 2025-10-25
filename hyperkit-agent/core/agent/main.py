@@ -173,6 +173,19 @@ class HyperKitAgent:
         # Initialize EDB Integration
         self.edb = EDBIntegration()
         
+        # Initialize Security Pipeline (if enabled)
+        security_config = self.config.get("security_extensions", {})
+        if security_config.get("enabled", False):
+            try:
+                from services.security import SecurityAnalysisPipeline
+                self.security_pipeline = SecurityAnalysisPipeline(security_config)
+                logger.info("✅ Security Analysis Pipeline initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize security pipeline: {e}")
+                self.security_pipeline = None
+        else:
+            self.security_pipeline = None
+        
         # Initialize Alith Integration
         self.alith = AlithIntegration()
 
@@ -508,6 +521,37 @@ class HyperKitAgent:
             audit_result = await self.audit_contract(contract_code)
             if audit_result["status"] != "success":
                 return audit_result
+
+            # Stage 2.5: Enhanced Security Analysis (NEW)
+            security_analysis = None
+            if hasattr(self, 'security_pipeline') and self.security_pipeline:
+                logger.info("Stage 2.5/5: Running Enhanced Security Analysis")
+                try:
+                    from services.security import SecurityAnalysisPipeline
+                    if not hasattr(self, 'security_pipeline'):
+                        self.security_pipeline = SecurityAnalysisPipeline()
+                    
+                    # Analyze the generated contract before deployment
+                    tx_params = {
+                        "to": None,  # Not deployed yet
+                        "from": self.config.get("deployer_address", "0x0000000000000000000000000000000000000000"),
+                        "data": contract_code,
+                        "value": 0,
+                        "network": network
+                    }
+                    
+                    security_analysis = await self.security_pipeline.analyze_transaction(tx_params)
+                    
+                    # Log security analysis results
+                    logger.info(f"Security Analysis: Risk Level = {security_analysis.get('risk_level', 'unknown')}")
+                    logger.info(f"Security Analysis: Risk Score = {security_analysis.get('risk_score', 0)}/100")
+                    
+                    # Print security summary
+                    print("\n" + self.security_pipeline.get_analysis_summary(security_analysis))
+                    
+                except Exception as e:
+                    logger.warning(f"Security analysis failed: {e}")
+                    security_analysis = {"risk_level": "unknown", "error": str(e)}
 
             # Stage 3: Deploy if audit passes or user confirms
             deployment_result = None

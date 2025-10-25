@@ -13,10 +13,12 @@ logger = logging.getLogger(__name__)
 class HybridLLMRouter:
     """Routes requests to cloud-based AI providers: Google Gemini and OpenAI."""
 
-    def __init__(self):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize cloud-based AI clients."""
+        self.config = config or {}
         self.gemini_available = False
         self.openai_available = False
+        self.alith_available = False
 
         # Initialize Google Gemini
         google_key = os.getenv("GOOGLE_API_KEY")
@@ -52,6 +54,23 @@ class HybridLLMRouter:
                 logger.warning(f"Failed to initialize OpenAI: {e}")
         else:
             logger.warning("OpenAI API key not found or invalid")
+        
+        # Initialize Alith SDK (NEW)
+        alith_config = self.config.get("alith", {})
+        if alith_config.get("enabled", False) and openai_key:  # Alith requires OpenAI key
+            try:
+                from services.alith import HyperKitAlithAgent, is_alith_available
+                
+                if is_alith_available():
+                    self.alith_agent = HyperKitAlithAgent(alith_config)
+                    self.alith_available = True
+                    logger.info("✅ Alith AI agent initialized for advanced auditing")
+                else:
+                    logger.warning("Alith SDK not installed. Install with: pip install alith")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Alith: {e}")
+        else:
+            logger.info("Alith SDK not enabled in configuration")
 
     def route(
         self, prompt: str, task_type: str = "general", prefer_local: bool = False
