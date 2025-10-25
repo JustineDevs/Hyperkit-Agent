@@ -7,79 +7,80 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
 /**
- * @title SimpleToken
- * @dev A basic ERC20 token implementation with minting, burning, and pausable capabilities.
- * This contract uses OpenZeppelin's battle-tested libraries for security and standard compliance.
- * - 'ERC20' for the core token functionality.
- * - 'ERC20Burnable' to allow users to burn their own tokens.
- * - 'Ownable' for access control, restricting sensitive functions like minting and pausing to the owner.
- * - 'Pausable' to halt token transfers in case of an emergency.
- *
- * The contract owner is set during deployment and can be transferred later.
- * The owner has the exclusive right to mint new tokens and to pause/unpause the contract.
- * All token transfers, including minting and burning, are disabled when the contract is paused.
+ * @title SimpleERC20
+ * @author Your Name
+ * @notice A basic ERC20 token with minting, burning, and pausable features.
+ * @dev This contract uses OpenZeppelin's battle-tested contracts to ensure security.
+ * It includes:
+ * - ERC20: The standard token implementation.
+ * - ERC20Burnable: Allows users to burn their own tokens via the `burn` and `burnFrom` functions.
+ * - Ownable: Restricts sensitive functions like minting and pausing to the owner.
+ * - Pausable: Allows the owner to halt all token transfers in an emergency.
  */
-contract SimpleToken is ERC20, ERC20Burnable, Ownable, Pausable {
-
+contract SimpleERC20 is ERC20, ERC20Burnable, Ownable, Pausable {
     /**
-     * @dev Initializes the contract, sets the token name, symbol, and the initial owner.
-     * @param initialOwner The address that will be set as the contract owner.
+     * @notice Constructs the ERC20 token.
+     * @param name The name of the token (e.g., "MyToken").
+     * @param symbol The symbol of the token (e.g., "MTK").
+     * @param initialOwner The address that will be set as the owner of the contract.
+     * The owner has exclusive rights to mint new tokens and to pause/unpause the contract.
+     * @param initialSupply The total amount of tokens to be minted and sent to the `initialOwner`
+     * upon deployment. For a token with 18 decimals, to mint 1,000,000 tokens, this value
+     * should be `1000000 * 10**18`.
      */
-    constructor(address initialOwner) ERC20("Simple Token", "STKN") Ownable(initialOwner) {
-        // The Ownable constructor sets the initial owner to the provided address.
-        // The ERC20 constructor sets the name and symbol.
+    constructor(
+        string memory name,
+        string memory symbol,
+        address initialOwner,
+        uint256 initialSupply
+    ) ERC20(name, symbol) Ownable(initialOwner) {
+        if (initialSupply > 0) {
+            _mint(initialOwner, initialSupply);
+        }
     }
 
     /**
-     * @dev Pauses all token transfers.
-     * Can only be called by the owner.
+     * @notice Halts all token transfers.
+     * @dev Can only be called by the contract owner.
      * Emits a {Paused} event.
-     *
-     * Requirements:
-     * - The contract must not be already paused.
+     * See {Pausable-_pause}.
      */
     function pause() public onlyOwner {
         _pause();
     }
 
     /**
-     * @dev Unpauses all token transfers.
-     * Can only be called by the owner.
+     * @notice Resumes token transfers after they have been paused.
+     * @dev Can only be called by the contract owner.
      * Emits an {Unpaused} event.
-     *
-     * Requirements:
-     * - The contract must be paused.
+     * See {Pausable-_unpause}.
      */
     function unpause() public onlyOwner {
         _unpause();
     }
 
     /**
-     * @dev Creates `amount` tokens and assigns them to `to`, increasing the total supply.
-     * Can only be called by the owner.
-     * The contract must not be paused for minting to occur.
-     * Emits a {Transfer} event with `from` set to the zero address.
-     *
+     * @notice Creates `amount` new tokens and assigns them to the `to` address.
+     * @dev Can only be called by the contract owner.
+     * Emits a {Transfer} event with the `from` address set to the zero address.
      * @param to The address that will receive the minted tokens.
      * @param amount The amount of tokens to mint.
-     *
-     * Requirements:
-     * - `to` cannot be the zero address.
      */
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
     }
 
     /**
-     * @dev Hook that is called before any token transfer, including minting and burning.
-     * Overridden to apply the `whenNotPaused` modifier, ensuring that token transfers
-     * are not possible while the contract is paused.
-     * This override combines the logic from both ERC20 and Pausable contracts.
+     * @dev Internal hook that is called before any token transfer, including minting and burning.
+     * This override ensures that token transfers are not possible while the contract is paused.
+     * It calls the parent implementation after checking the paused state.
+     * See {ERC20-_update} and {Pausable}.
      */
     function _update(address from, address to, uint256 value)
         internal
-        override(ERC20, Pausable)
+        override(ERC20, ERC20Burnable)
     {
+        require(!paused(), "ERC20Pausable: token transfer while paused");
         super._update(from, to, value);
     }
 }

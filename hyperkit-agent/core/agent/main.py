@@ -719,10 +719,10 @@ class HyperKitAgent:
                 testing_result = {"status": "skipped", "reason": "no_deployment"}
 
             # Log audit results with deployment
-            if self.alith and deployment_result and deployment_result.get("status") == "success":
+            if self.ai_agent and hasattr(self.ai_agent, 'lazai_integration') and deployment_result and deployment_result.get("status") == "success":
                 deployment_address = deployment_result.get("contract_address")
                 if deployment_address:
-                    self.alith.log_audit(deployment_address, audit_result.get("results", []))
+                    self.ai_agent.lazai_integration.log_audit(deployment_address, audit_result.get("results", []))
 
             # Return complete workflow results
             return {
@@ -1120,10 +1120,12 @@ Generate only the Solidity contract code, no explanations or markdown formatting
     ) -> Dict[str, Any]:
         """Handle simple contract workflow"""
         # Log audit onchain
-        audit_log_result = await self.alith.log_audit(
-            deployment_result.get("address", ""),
-            audit_result
-        )
+        audit_log_result = None
+        if self.ai_agent and hasattr(self.ai_agent, 'lazai_integration'):
+            audit_log_result = await self.ai_agent.lazai_integration.log_audit(
+                deployment_result.get("address", ""),
+                audit_result
+            )
         
         result = {
             "status": "success",
@@ -1244,10 +1246,12 @@ Generate only the Solidity contract code, no explanations or markdown formatting
             
             if result.get("status") == "success":
                 # Log audit onchain using Alith
-                audit_log_result = await self.alith.log_audit(
-                    address,
-                    result.get("analysis", {})
-                )
+                audit_log_result = None
+                if self.ai_agent and hasattr(self.ai_agent, 'lazai_integration'):
+                    audit_log_result = await self.ai_agent.lazai_integration.log_audit(
+                        address,
+                        result.get("analysis", {})
+                    )
                 result["audit_logged"] = audit_log_result
             
             return result
