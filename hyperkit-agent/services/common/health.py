@@ -3,6 +3,7 @@ Health Check System for HyperKit AI Agent
 Production-ready health monitoring and status reporting
 """
 
+import os
 import time
 import logging
 from typing import Dict, Any, List, Optional
@@ -191,7 +192,8 @@ def check_ai_health() -> Dict[str, Any]:
         api_keys = {
             'google': bool(os.getenv('GOOGLE_API_KEY')),
             'openai': bool(os.getenv('OPENAI_API_KEY')),
-            'anthropic': bool(os.getenv('ANTHROPIC_API_KEY'))
+            'anthropic': bool(os.getenv('ANTHROPIC_API_KEY')),
+            'lazai': bool(os.getenv('LAZAI_API_KEY'))
         }
         
         configured_providers = sum(api_keys.values())

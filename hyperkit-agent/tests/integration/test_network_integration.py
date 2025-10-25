@@ -137,8 +137,8 @@ class TestNetworkIntegration:
     @pytest.mark.asyncio
     async def test_hyperion_contract_deployment(self, deployer):
         """Test contract deployment on Hyperion testnet."""
-        if not os.getenv('HYPERION_PRIVATE_KEY'):
-            pytest.skip("Hyperion private key not configured")
+        if not os.getenv('DEFAULT_PRIVATE_KEY'):
+            pytest.skip("Private key not configured (DEFAULT_PRIVATE_KEY)")
         
         contract_code = """
         pragma solidity ^0.8.0;
@@ -162,8 +162,8 @@ class TestNetworkIntegration:
     @pytest.mark.asyncio
     async def test_metis_contract_deployment(self, deployer):
         """Test contract deployment on Metis Andromeda."""
-        if not os.getenv('METIS_PRIVATE_KEY'):
-            pytest.skip("Metis private key not configured")
+        if not os.getenv('DEFAULT_PRIVATE_KEY'):
+            pytest.skip("Private key not configured (DEFAULT_PRIVATE_KEY)")
         
         contract_code = """
         pragma solidity ^0.8.0;
@@ -187,8 +187,8 @@ class TestNetworkIntegration:
     @pytest.mark.asyncio
     async def test_lazai_contract_deployment(self, deployer):
         """Test contract deployment on LazAI testnet."""
-        if not os.getenv('LAZAI_PRIVATE_KEY'):
-            pytest.skip("LazAI private key not configured")
+        if not os.getenv('DEFAULT_PRIVATE_KEY'):
+            pytest.skip("Private key not configured (DEFAULT_PRIVATE_KEY)")
         
         contract_code = """
         pragma solidity ^0.8.0;
@@ -212,8 +212,8 @@ class TestNetworkIntegration:
     @pytest.mark.asyncio
     async def test_cross_chain_deployment(self, deployer):
         """Test cross-chain contract deployment."""
-        if not os.getenv('HYPERION_PRIVATE_KEY') or not os.getenv('METIS_PRIVATE_KEY'):
-            pytest.skip("Cross-chain private keys not configured")
+        if not os.getenv('DEFAULT_PRIVATE_KEY') or not os.getenv('DEFAULT_PRIVATE_KEY'):
+            pytest.skip("Private key not configured (DEFAULT_PRIVATE_KEY)")
         
         contract_code = """
         pragma solidity ^0.8.0;
@@ -299,8 +299,8 @@ class TestNetworkIntegration:
     @pytest.mark.asyncio
     async def test_network_balance_check(self, deployer):
         """Test network balance check functionality."""
-        if not os.getenv('HYPERION_PRIVATE_KEY'):
-            pytest.skip("Hyperion private key not configured")
+        if not os.getenv('DEFAULT_PRIVATE_KEY'):
+            pytest.skip("Private key not configured (DEFAULT_PRIVATE_KEY)")
         
         result = await deployer.check_balance("hyperion")
         assert result["status"] == "success"
@@ -310,8 +310,8 @@ class TestNetworkIntegration:
     @pytest.mark.asyncio
     async def test_network_transaction_status(self, deployer):
         """Test network transaction status checking."""
-        if not os.getenv('HYPERION_PRIVATE_KEY'):
-            pytest.skip("Hyperion private key not configured")
+        if not os.getenv('DEFAULT_PRIVATE_KEY'):
+            pytest.skip("Private key not configured (DEFAULT_PRIVATE_KEY)")
         
         # This would require a real transaction hash
         # For now, we'll test the function exists

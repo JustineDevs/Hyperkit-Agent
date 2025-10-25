@@ -32,7 +32,7 @@ class HyperKitRAGService:
     
     def _mock_storage(self, document: str, metadata: Dict[str, Any]) -> str:
         """Mock vector storage with clear warnings"""
-        print("⚠️  WARNING: Using mock vector storage - RAG system not fully configured")
+        import logging; logging.warning("  WARNING: Using mock vector storage - RAG system not fully configured")
         
         return "mock_vector_id_12345"
     
@@ -51,7 +51,7 @@ class HyperKitRAGService:
     
     def _mock_search(self, query: str, limit: int) -> List[Dict[str, Any]]:
         """Mock similarity search with clear warnings"""
-        print("⚠️  WARNING: Using mock similarity search - RAG system not fully configured")
+        import logging; logging.warning("  WARNING: Using mock similarity search - RAG system not fully configured")
         
         return [
             {

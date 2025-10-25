@@ -1,4 +1,4 @@
-# Configuration Files
+# HyperAgent Configuration Files
 
 All linters, type checkers, and test settings are stored here for standardization.
 

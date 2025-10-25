@@ -50,7 +50,7 @@ def contract(ctx, contract, network, private_key, gas_limit, gas_price):
             # Deploy contract
             result = asyncio.run(agent.deploy_contract(contract_code, network))
             
-            if result['status'] == 'success':
+            if result.get('status') in ['success', 'deployed']:
                 console.print(f"✅ Contract deployed successfully")
                 console.print(f"📄 Contract address: {result.get('address', 'N/A')}")
                 console.print(f"🔗 Transaction hash: {result.get('tx_hash', 'N/A')}")
@@ -58,6 +58,10 @@ def contract(ctx, contract, network, private_key, gas_limit, gas_price):
                 console.print(f"🔗 Explorer: https://hyperion-testnet-explorer.metisdevops.link/address/{result.get('address', '')}")
             else:
                 console.print(f"❌ Deployment failed: {result.get('error', 'Unknown error')}", style="red")
+                if result.get('recovery_suggestions'):
+                    console.print("\n💡 Suggestions:")
+                    for suggestion in result.get('recovery_suggestions', []):
+                        console.print(f"  • {suggestion}")
                 
     except Exception as e:
         console.print(f"❌ Error: {e}", style="red")

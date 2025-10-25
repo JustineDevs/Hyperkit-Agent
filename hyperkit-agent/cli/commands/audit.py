@@ -16,18 +16,27 @@ def audit_group():
     pass
 
 @audit_group.command()
-@click.option('--contract', '-c', required=True, help='Contract file path')
+@click.option('--contract', '-c', help='Contract file path')
+@click.option('--address', '-a', help='Contract address to audit')
+@click.option('--network', '-n', default='hyperion', help='Network for address-based audit')
 @click.option('--output', '-o', help='Output file for audit report')
 @click.option('--format', '-f', default='json', help='Output format (json, markdown, html)')
 @click.option('--severity', '-s', help='Minimum severity level (low, medium, high, critical)')
 @click.pass_context
-def contract(ctx, contract, output, format, severity):
+def contract(ctx, contract, address, network, output, format, severity):
     """Audit a smart contract for security issues"""
     import asyncio
     from core.agent.main import HyperKitAgent
     from core.config.loader import get_config
     
-    console.print(f"🔍 Auditing contract: {contract}")
+    # Validate input - either contract file or address must be provided
+    if not contract and not address:
+        console.print("❌ Error: Either --contract or --address must be provided", style="red")
+        return
+    
+    if contract and address:
+        console.print("❌ Error: Cannot specify both --contract and --address", style="red")
+        return
     
     try:
         # Initialize agent
@@ -39,14 +48,38 @@ def contract(ctx, contract, output, format, severity):
             TextColumn("[progress.description]{task.description}"),
             console=console,
         ) as progress:
-            task = progress.add_task("Running security audit...", total=None)
-            
-            # Read contract file
-            with open(contract, 'r') as f:
-                contract_code = f.read()
-            
-            # Run audit
-            result = asyncio.run(agent.audit_contract(contract_code))
+            if contract:
+                console.print(f"🔍 Auditing contract file: {contract}")
+                task = progress.add_task("Reading contract file...", total=None)
+                
+                # Read contract file
+                with open(contract, 'r') as f:
+                    contract_code = f.read()
+                
+                progress.update(task, description="Running security audit...")
+                # Run audit
+                result = asyncio.run(agent.audit_contract(contract_code))
+                
+            else:  # address-based audit
+                console.print(f"🔍 Auditing contract address: {address}")
+                console.print(f"🌐 Network: {network}")
+                task = progress.add_task("Fetching contract from blockchain...", total=None)
+                
+                # Fetch contract from blockchain
+                from services.blockchain.contract_fetcher import ContractFetcher
+                fetcher = ContractFetcher()
+                contract_result = fetcher.fetch_contract_source(address, network)
+                
+                if not contract_result or not contract_result.get("source"):
+                    console.print(f"❌ Error: Could not fetch contract source for {address}", style="red")
+                    console.print(f"💡 This contract may not be verified on the explorer", style="yellow")
+                    return
+                
+                contract_code = contract_result["source"]
+                
+                progress.update(task, description="Running security audit...")
+                # Run audit
+                result = asyncio.run(agent.audit_contract(contract_code))
             
             if result['status'] == 'success':
                 console.print(f"✅ Audit completed")

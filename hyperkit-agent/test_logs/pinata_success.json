@@ -1,0 +1,11 @@
+{
+  "IpfsHash": "QmZmK29wje34KGxGBd2urr5Be982NtPM6hccHvfnPEgBLD",
+  "PinSize": 142,
+  "Timestamp": "2025-10-25T12:31:03.850Z",
+  "ID": "befc807a-ba24-46d8-8108-caae2145e86e",
+  "Name": "test_pinata.txt",
+  "NumberOfFiles": 1,
+  "MimeType": "text/plain",
+  "GroupId": null,
+  "Keyvalues": null
+}
