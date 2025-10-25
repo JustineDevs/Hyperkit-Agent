@@ -24,6 +24,7 @@ google-generativeai>=0.3.0,<1.0
 openai>=1.3.0,<2.0
 anthropic>=0.7.0,<1.0
 alith>=0.12.0,<1.0  # AI agent framework for Web3 (LazAI/Metis partnership)
+lazai>=0.1.0,<1.0  # LazAI network integration
 
 # Configuration & Data
 pyyaml>=6.0.0,<7.0

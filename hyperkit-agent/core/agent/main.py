@@ -16,6 +16,7 @@ from services.debug.edb_integration import EDBIntegration
 from services.audit.public_contract_auditor import public_contract_auditor
 from services.monitoring.enhanced_monitor import enhanced_monitor, MonitorConfig, MonitorType
 from services.defi.primitives_generator import defi_primitives_generator, DeFiPrimitive
+from services.core.ai_agent import HyperKitAIAgent
 
 # Security and error handling imports
 from core.handlers import safe_operation, handle_workflow_error, validate_input, log_operation, ErrorHandler
@@ -169,6 +170,9 @@ class HyperKitAgent:
         
         # Scaffolder removed - focusing on smart contracts only
         
+        # Initialize LazAI Integration (Real AI Agent)
+        self.ai_agent = HyperKitAIAgent()
+        
         # Initialize EDB Integration
         self.edb = EDBIntegration()
         
@@ -222,8 +226,8 @@ class HyperKitAgent:
     @safe_operation("generate_contract")
     async def generate_contract(self, prompt: str, context: str = "") -> Dict[str, Any]:
         """
-        Generate a smart contract based on natural language prompt using free LLM models.
-        Enhanced with DeFi protocol support for blockchain/smart contract/DeFi focus.
+        Generate a smart contract based on natural language prompt.
+        Tries LazAI first, falls back to free LLM models.
 
         Args:
             prompt: Natural language description of the contract
@@ -233,6 +237,33 @@ class HyperKitAgent:
             Dictionary containing generated contract code and metadata
         """
         try:
+            # Try LazAI integration first
+            if self.ai_agent and hasattr(self.ai_agent, 'lazai_integration'):
+                if self.ai_agent.lazai_integration.lazai_configured:
+                    try:
+                        logger.info("🤖 Using LazAI for contract generation")
+                        requirements = {
+                            "prompt": prompt,
+                            "context": context,
+                            "type": "smart_contract"
+                        }
+                        result = await self.ai_agent.generate_contract(requirements)
+                        if result and result.get("status") == "success":
+                            return {
+                                "status": "success",
+                                "contract_code": result.get("contract_code", ""),
+                                "method": "lazai",
+                                "provider": "LazAI Network",
+                                "metadata": {
+                                    "ai_powered": True,
+                                    "lazai_integration": True
+                                }
+                            }
+                    except Exception as e:
+                        logger.warning(f"LazAI generation failed, falling back to free LLM: {e}")
+
+            # Fallback to existing free LLM implementation
+            logger.info("🆓 Using free LLM for contract generation")
             from services.generation.generator import ContractGenerator
             from core.config.paths import PathManager
 
@@ -320,7 +351,8 @@ class HyperKitAgent:
     @safe_operation("audit_contract")
     async def audit_contract(self, contract_code: str) -> Dict[str, Any]:
         """
-        Audit a smart contract using multiple security tools.
+        Audit a smart contract using AI-powered analysis.
+        Tries LazAI first, falls back to static analysis tools.
 
         Args:
             contract_code: Solidity contract code to audit
@@ -329,7 +361,29 @@ class HyperKitAgent:
             Dictionary containing audit results and severity level
         """
         try:
-            # Import audit service
+            # Try LazAI AI-powered audit first
+            if self.ai_agent and hasattr(self.ai_agent, 'lazai_integration'):
+                if self.ai_agent.lazai_integration.lazai_configured:
+                    try:
+                        logger.info("🤖 Using LazAI for AI-powered contract audit")
+                        result = await self.ai_agent.audit_contract(contract_code)
+                        if result and result.get("status") == "success":
+                            return {
+                                "status": "success",
+                                "results": result.get("results", {}),
+                                "severity": result.get("severity", "unknown"),
+                                "method": "lazai",
+                                "provider": "LazAI Network",
+                                "metadata": {
+                                    "ai_powered": True,
+                                    "lazai_integration": True
+                                }
+                            }
+                    except Exception as e:
+                        logger.warning(f"LazAI audit failed, falling back to static analysis: {e}")
+
+            # Fallback to existing static analysis implementation
+            logger.info("🔍 Using static analysis tools for contract audit")
             from services.audit.auditor import SmartContractAuditor
 
             auditor = SmartContractAuditor()
@@ -339,6 +393,12 @@ class HyperKitAgent:
                 "status": "success",
                 "results": audit_results,
                 "severity": audit_results.get("severity", "unknown"),
+                "method": "static_analysis",
+                "provider": "Slither/Mythril",
+                "metadata": {
+                    "ai_powered": False,
+                    "static_analysis": True
+                }
             }
         except Exception as e:
             logger.error(f"Contract audit failed: {e}")

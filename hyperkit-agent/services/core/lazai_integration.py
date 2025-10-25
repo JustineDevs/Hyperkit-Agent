@@ -26,7 +26,7 @@ class HyperKitLazAIIntegration:
     
     def __init__(self):
         self.config = config
-        self.evm_address = "0xa43b752b6e941263eb5a7e3b96e2e0dea1a586ff"
+        self.evm_address = self.config.get('LAZAI_EVM_ADDRESS', '0xa43b752b6e941263eb5a7e3b96e2e0dea1a586ff')
         self.private_key = self.config.get('PRIVATE_KEY')
         self.rsa_private_key = self.config.get('LAZAI_RSA_PRIVATE_KEY')
         self.ipfs_jwt = self.config.get('IPFS_JWT')
