@@ -109,12 +109,32 @@ class PublicContractAuditor:
                 logger.error(f"Unsupported network: {network}")
                 return None
             
-            # For now, return a placeholder - in real implementation, 
-            # this would query the actual explorer API
+            # Query the actual explorer API for source code
             logger.info(f"Querying {api_url} for contract {address}")
             
-            # TODO: Implement actual API calls to get source code
-            return "// Placeholder source code - implement actual API calls"
+            # Make actual API call to get source code
+            import requests
+            try:
+                response = requests.get(f"{api_url}/api?module=contract&action=getsourcecode&address={address}")
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("status") == "1" and data.get("result"):
+                        source_code = data["result"][0].get("SourceCode", "")
+                        if source_code and source_code != "":
+                            logger.info(f"Successfully retrieved source code for {address}")
+                            return source_code
+                        else:
+                            logger.warning(f"No source code available for {address}")
+                            return None
+                    else:
+                        logger.warning(f"API returned error for {address}: {data.get('message', 'Unknown error')}")
+                        return None
+                else:
+                    logger.error(f"API request failed with status {response.status_code}")
+                    return None
+            except Exception as e:
+                logger.error(f"Failed to query explorer API: {e}")
+                return None
             
         except Exception as e:
             logger.error(f"Failed to get contract source: {e}")
@@ -127,8 +147,31 @@ class PublicContractAuditor:
             if not api_url:
                 return None
             
-            # TODO: Implement actual API calls to get ABI
-            return []
+            # Make actual API call to get ABI
+            import requests
+            try:
+                response = requests.get(f"{api_url}/api?module=contract&action=getabi&address={address}")
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("status") == "1" and data.get("result"):
+                        abi_str = data["result"]
+                        if abi_str and abi_str != "":
+                            import json
+                            abi = json.loads(abi_str)
+                            logger.info(f"Successfully retrieved ABI for {address}")
+                            return abi
+                        else:
+                            logger.warning(f"No ABI available for {address}")
+                            return []
+                    else:
+                        logger.warning(f"API returned error for {address}: {data.get('message', 'Unknown error')}")
+                        return []
+                else:
+                    logger.error(f"API request failed with status {response.status_code}")
+                    return []
+            except Exception as e:
+                logger.error(f"Failed to query explorer API for ABI: {e}")
+                return []
             
         except Exception as e:
             logger.error(f"Failed to get contract ABI: {e}")
@@ -166,14 +209,41 @@ class PublicContractAuditor:
             }
     
     async def _run_static_analysis(self, source_code: str) -> Dict[str, Any]:
-        """Run static analysis on source code"""
-        # This would integrate with existing audit tools
-        return {
-            "static_analysis": "completed",
-            "vulnerabilities_found": 0,
-            "warnings": 0,
-            "gas_optimizations": []
-        }
+        """Run static analysis on source code using real tools"""
+        try:
+            # Import the real audit tools
+            from services.audit.auditor import HyperKitAuditor
+            
+            # Create auditor instance
+            auditor = HyperKitAuditor()
+            
+            # Run real security audit
+            audit_result = await auditor.audit_contract_security(source_code)
+            
+            # Parse results
+            vulnerabilities = audit_result.get("vulnerabilities", [])
+            warnings = audit_result.get("warnings", [])
+            recommendations = audit_result.get("recommendations", [])
+            
+            return {
+                "static_analysis": "completed",
+                "vulnerabilities_found": len(vulnerabilities),
+                "warnings": len(warnings),
+                "gas_optimizations": [r for r in recommendations if "gas" in r.lower()],
+                "vulnerabilities": vulnerabilities,
+                "warnings": warnings,
+                "recommendations": recommendations,
+                "security_score": audit_result.get("security_score", 0)
+            }
+        except Exception as e:
+            logger.error(f"Static analysis failed: {e}")
+            return {
+                "static_analysis": "failed",
+                "error": str(e),
+                "vulnerabilities_found": 0,
+                "warnings": 0,
+                "gas_optimizations": []
+            }
     
     async def _analyze_bytecode(self, address: str) -> Dict[str, Any]:
         """Analyze contract bytecode when source is not available"""

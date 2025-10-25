@@ -40,8 +40,7 @@ class HyperKitAlithAgent:
             self.agent = Agent(
                 name="HyperKit Security Agent",
                 model=self.model,
-                preamble=self.config.get("preamble", self._default_preamble()),
-                settlement=self.settlement
+                preamble=self.config.get("preamble", self._default_preamble())
             )
             logger.info(f"✅ Alith Agent initialized (model={self.model}, settlement={self.settlement})")
         except Exception as e:
