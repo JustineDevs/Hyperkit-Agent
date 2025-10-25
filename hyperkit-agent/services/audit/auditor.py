@@ -11,6 +11,9 @@ import tempfile
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 
+# Import the new contract fetcher
+from services.blockchain.contract_fetcher import ContractFetcher
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,6 +32,7 @@ class SmartContractAuditor:
         """
         self.config = config or {}
         self.tools_available = self._check_tools_availability()
+        self.contract_fetcher = ContractFetcher()
         self.severity_weights = {
             "critical": 10,
             "high": 7,
@@ -36,6 +40,26 @@ class SmartContractAuditor:
             "low": 1,
             "info": 0.5,
         }
+        
+        # Initialize Alith AI auditor (if enabled and available)
+        self.alith_agent = None
+        if self.config.get("alith_enabled", False):
+            try:
+                from services.alith import HyperKitAlithAgent, is_alith_available
+                
+                if is_alith_available():
+                    alith_config = self.config.get("alith", {})
+                    self.alith_agent = HyperKitAlithAgent(alith_config)
+                    self.tools_available["alith"] = True
+                    logger.info("✅ Alith AI auditor initialized")
+                else:
+                    logger.warning("Alith SDK not available")
+                    self.tools_available["alith"] = False
+            except Exception as e:
+                logger.warning(f"Failed to initialize Alith auditor: {e}")
+                self.tools_available["alith"] = False
+        else:
+            self.tools_available["alith"] = False
 
         logger.info(
             f"SmartContractAuditor initialized. Available tools: {self.tools_available}"
@@ -102,11 +126,15 @@ class SmartContractAuditor:
                 "severity": "unknown",
             }
 
+            # Run all available tools and collect results
+            tool_results = {}
+            
             # Run Slither analysis
             if self.tools_available["slither"]:
                 slither_results = await self._run_slither(temp_file)
                 audit_results["slither"] = slither_results
                 audit_results["tools_used"].append("slither")
+                tool_results["slither"] = slither_results.get("findings", [])
                 audit_results["findings"].extend(slither_results.get("findings", []))
 
             # Run Mythril analysis
@@ -114,18 +142,56 @@ class SmartContractAuditor:
                 mythril_results = await self._run_mythril(temp_file)
                 audit_results["mythril"] = mythril_results
                 audit_results["tools_used"].append("mythril")
+                tool_results["mythril"] = mythril_results.get("findings", [])
                 audit_results["findings"].extend(mythril_results.get("findings", []))
 
             # Run custom pattern analysis
             custom_results = await self._run_custom_patterns(contract_code)
             audit_results["custom"] = custom_results
             audit_results["tools_used"].append("custom")
+            tool_results["custom"] = custom_results.get("findings", [])
             audit_results["findings"].extend(custom_results.get("findings", []))
+            
+            # Run Alith AI analysis (NEW)
+            if self.tools_available.get("alith") and self.alith_agent:
+                try:
+                    logger.info("Running Alith AI security analysis...")
+                    ai_results = await self.alith_agent.audit_contract(contract_code)
+                    
+                    if ai_results.get("success"):
+                        audit_results["alith"] = ai_results
+                        audit_results["tools_used"].append("alith_ai")
+                        
+                        # Convert AI findings to standard format
+                        ai_findings = []
+                        for vuln in ai_results.get("vulnerabilities", []):
+                            ai_findings.append({
+                                "type": vuln.get("title", "AI-detected vulnerability"),
+                                "severity": vuln.get("severity", "medium").lower(),
+                                "description": vuln.get("description", ""),
+                                "location": vuln.get("location", "Unknown"),
+                                "recommendation": vuln.get("recommendation", ""),
+                                "tool": "alith_ai",
+                                "confidence": ai_results.get("confidence", 0.85)
+                            })
+                        
+                        tool_results["alith_ai"] = ai_findings
+                        audit_results["findings"].extend(ai_findings)
+                        logger.info(f"Alith AI found {len(ai_findings)} potential issues")
+                    else:
+                        logger.warning(f"Alith AI analysis failed: {ai_results.get('error')}")
+                except Exception as e:
+                    logger.warning(f"Alith AI analysis error: {e}")
 
-            # Calculate overall severity
-            audit_results["severity"] = self._calculate_severity(
-                audit_results["findings"]
-            )
+            # Apply consensus scoring and deduplication
+            consensus_findings = self._deduplicate_and_score(audit_results["findings"], tool_results)
+            audit_results["findings"] = consensus_findings
+
+            # Calculate overall severity with confidence
+            audit_results["severity"] = self._calculate_severity(consensus_findings)
+            audit_results["consensus_score"] = self._calculate_confidence(consensus_findings, tool_results)
+            audit_results["accuracy_estimate"] = self._get_accuracy_estimate(audit_results["consensus_score"])
+            audit_results["disclaimer"] = self._get_audit_disclaimer(audit_results["consensus_score"])
 
             # Clean up temporary file
             Path(temp_file).unlink(missing_ok=True)
@@ -137,33 +203,323 @@ class SmartContractAuditor:
             logger.error(f"Audit failed: {e}")
             return {"status": "error", "error": str(e), "severity": "critical"}
 
-    async def audit_deployed_contract(self, contract_address: str, rpc_url: str) -> Dict[str, Any]:
+    async def audit_deployed_contract(self, contract_address: str, network: str, api_key: str = None) -> Dict[str, Any]:
         """
-        Audit a deployed contract by fetching its source code and analyzing it.
+        Audit a deployed contract with confidence tracking and source verification.
         
         Args:
             contract_address: Address of the deployed contract
-            rpc_url: RPC URL for the blockchain network
+            network: Blockchain network name
+            api_key: Optional API key for explorer access
             
         Returns:
-            Dictionary containing audit results
+            Dictionary containing audit results with confidence scoring
         """
         try:
-            logger.info(f"Auditing deployed contract: {contract_address}")
+            logger.info(f"Auditing deployed contract {contract_address} on {network}")
             
-            # Try to fetch source code from explorer
-            source_code = await self._fetch_contract_source(contract_address, rpc_url)
+            # Fetch contract source with confidence tracking
+            source_result = self.contract_fetcher.fetch_contract_source(contract_address, network, api_key)
             
-            if source_code:
-                # Audit the fetched source code
-                return await self.audit(source_code)
-            else:
-                # If no source code available, perform bytecode analysis
-                return await self._audit_bytecode(contract_address, rpc_url)
+            if not source_result or not source_result.get("source"):
+                return {
+                    "status": "error",
+                    "error": "Could not fetch contract source code",
+                    "severity": "unknown",
+                    "source_type": "not_found",
+                    "confidence": 0.0
+                }
+            
+            # Extract source and metadata
+            source_code = source_result["source"]
+            source_type = source_result["source_type"]
+            confidence = source_result["confidence"]
+            metadata = source_result["metadata"]
+            
+            logger.info(f"Source type: {source_type}, Confidence: {confidence}")
+            
+            # Run audit with confidence-aware analysis
+            audit_result = await self._audit_with_confidence(source_code, source_type, confidence)
+            
+            # Add source metadata to results
+            audit_result.update({
+                "source_type": source_type,
+                "confidence": confidence,
+                "metadata": metadata,
+                "recommendations": self.contract_fetcher.get_source_recommendation(source_type)
+            })
+            
+            return audit_result
                 
         except Exception as e:
-            logger.error(f"Deployed contract audit failed: {e}")
-            return {"status": "error", "error": str(e), "severity": "critical"}
+            logger.error(f"Error auditing deployed contract {contract_address}: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "severity": "unknown",
+                "source_type": "error",
+                "confidence": 0.0
+            }
+
+    async def _audit_with_confidence(self, source_code: str, source_type: str, confidence: float) -> Dict[str, Any]:
+        """
+        Run audit with confidence-aware analysis and filtering.
+        
+        Args:
+            source_code: Contract source code
+            source_type: Type of source (verified_source, bytecode_decompiled, etc.)
+            confidence: Confidence score (0-1)
+            
+        Returns:
+            Audit results with confidence adjustments
+        """
+        try:
+            # Run standard audit
+            audit_result = await self.audit(source_code)
+            
+            # Apply confidence-based adjustments
+            if source_type == "bytecode_decompiled":
+                # Filter out likely false positives from decompilation
+                audit_result = self._filter_bytecode_artifacts(audit_result)
+                # Reduce severity based on confidence
+                audit_result = self._adjust_severity_by_confidence(audit_result, confidence)
+            
+            # Add confidence warnings
+            if confidence < 0.5:
+                audit_result["warnings"] = audit_result.get("warnings", [])
+                audit_result["warnings"].extend([
+                    "⚠️  Low confidence source - findings may be unreliable",
+                    "⚠️  Consider verifying source code for accurate results"
+                ])
+            
+            return audit_result
+            
+        except Exception as e:
+            logger.error(f"Error in confidence-aware audit: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "severity": "unknown"
+            }
+
+    def _filter_bytecode_artifacts(self, audit_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Filter out likely false positives from bytecode decompilation."""
+        if "findings" not in audit_result:
+            return audit_result
+        
+        filtered_findings = []
+        for finding in audit_result["findings"]:
+            # Skip findings that are likely decompilation artifacts
+            description = finding.get("description", "").lower()
+            if any(artifact in description for artifact in [
+                "decompiled", "bytecode", "reconstructed", "simulated"
+            ]):
+                continue
+            filtered_findings.append(finding)
+        
+        audit_result["findings"] = filtered_findings
+        return audit_result
+
+    def _adjust_severity_by_confidence(self, audit_result: Dict[str, Any], confidence: float) -> Dict[str, Any]:
+        """Adjust severity based on source confidence."""
+        if confidence >= 0.8:
+            return audit_result  # High confidence, no adjustment
+        
+        # Reduce severity for low confidence sources
+        severity_mapping = {
+            "critical": "high" if confidence < 0.5 else "critical",
+            "high": "medium" if confidence < 0.5 else "high",
+            "medium": "low" if confidence < 0.3 else "medium",
+            "low": "info" if confidence < 0.3 else "low"
+        }
+        
+        current_severity = audit_result.get("severity", "unknown")
+        if current_severity in severity_mapping:
+            audit_result["severity"] = severity_mapping[current_severity]
+            audit_result["confidence_adjusted"] = True
+        
+        return audit_result
+
+    def _deduplicate_and_score(self, all_findings: List[Dict[str, Any]], tool_results: Dict[str, List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+        """Score findings based on agreement between tools"""
+        consensus = {}
+        
+        for finding in all_findings:
+            # Create unique identifier for the finding
+            issue_id = f"{finding.get('type', 'unknown')}_{finding.get('location', 'unknown')}_{finding.get('description', '')[:50]}"
+            
+            if issue_id not in consensus:
+                consensus[issue_id] = {
+                    "finding": finding,
+                    "tool_agreement": 0,
+                    "tools_found": [],
+                    "severity_scores": []
+                }
+            
+            consensus[issue_id]["tool_agreement"] += 1
+            consensus[issue_id]["tools_found"].append(finding.get("tool", "unknown"))
+            consensus[issue_id]["severity_scores"].append(finding.get("severity", "info"))
+        
+        # Only keep findings agreed on by 2+ tools or high-confidence single tool findings
+        high_confidence = []
+        for issue_id, data in consensus.items():
+            if data["tool_agreement"] >= 2:
+                # Multi-tool consensus - high confidence
+                finding = data["finding"].copy()
+                finding["consensus_confidence"] = 0.9
+                finding["tool_agreement"] = data["tool_agreement"]
+                finding["tools_found"] = data["tools_found"]
+                high_confidence.append(finding)
+            elif data["tool_agreement"] == 1 and data["finding"].get("severity") in ["critical", "high"]:
+                # Single tool but high severity - medium confidence
+                finding = data["finding"].copy()
+                finding["consensus_confidence"] = 0.6
+                finding["tool_agreement"] = 1
+                finding["tools_found"] = data["tools_found"]
+                high_confidence.append(finding)
+        
+        return high_confidence
+
+    def _calculate_confidence(self, findings: List[Dict[str, Any]], tool_results: Dict[str, List[Dict[str, Any]]]) -> float:
+        """Calculate overall confidence based on tool agreement and findings quality"""
+        if not findings:
+            return 0.0
+        
+        # Base confidence from tool agreement
+        total_agreement = sum(f.get("tool_agreement", 1) for f in findings)
+        max_possible = len(findings) * len(tool_results)
+        agreement_ratio = total_agreement / max_possible if max_possible > 0 else 0
+        
+        # Confidence boost for verified source
+        source_confidence = 0.8  # Default for local files
+        
+        # Final confidence calculation
+        final_confidence = (agreement_ratio * 0.6) + (source_confidence * 0.4)
+        return min(final_confidence, 0.95)  # Cap at 95%
+
+    def _get_accuracy_estimate(self, confidence: float) -> str:
+        """Get realistic accuracy estimate based on confidence"""
+        if confidence >= 0.9:
+            return "85-90%"
+        elif confidence >= 0.7:
+            return "75-85%"
+        elif confidence >= 0.5:
+            return "60-75%"
+        else:
+            return "30-60%"
+
+    def _get_audit_disclaimer(self, confidence: float) -> str:
+        """Get appropriate disclaimer based on confidence level"""
+        if confidence >= 0.8:
+            return """
+✅ Your contract was audited using multiple tools with high confidence.
+📊 Confidence Score: {:.0%}
+
+⚠️  IMPORTANT:
+   - This audit is NOT a substitute for professional security review
+   - Critical findings should be reviewed by human auditors
+   - Before mainnet deployment, hire a professional firm
+   - Common exploits: reentrancy, overflow, access control
+
+🔗 Next Steps:
+   1. Fix HIGH/CRITICAL findings
+   2. Submit for professional audit (Trail of Bits, OpenZeppelin)
+   3. Deploy to testnet first
+   4. Monitor on mainnet with insurance
+            """.format(confidence).strip()
+        else:
+            return """
+⚠️  LOW CONFIDENCE AUDIT - Use with caution
+
+📊 Confidence Score: {:.0%}
+
+❌ LIMITATIONS:
+   - Source code may be incomplete or unverified
+   - Findings may contain false positives
+   - This audit is NOT suitable for production decisions
+
+🔗 RECOMMENDATIONS:
+   1. Verify source code on Sourcify or block explorer
+   2. Request original source from contract author
+   3. For production, hire professional auditors
+   4. Deploy to testnet for additional testing
+            """.format(confidence).strip()
+
+    async def audit_with_human_review(self, contract_code: str, severity_threshold: str = "critical") -> Dict[str, Any]:
+        """Flag critical findings for human review"""
+        try:
+            # Run standard audit
+            audit_result = await self.audit(contract_code)
+            
+            if audit_result.get("status") != "success":
+                return audit_result
+            
+            findings = audit_result.get("findings", [])
+            
+            # Filter critical findings
+            critical_findings = [
+                f for f in findings 
+                if f.get("severity") in ["critical", "high"] and 
+                   severity_threshold in ["critical", "high"]
+            ]
+            
+            if critical_findings:
+                return {
+                    "status": "pending_human_review",
+                    "findings": critical_findings,
+                    "total_findings": len(findings),
+                    "critical_count": len(critical_findings),
+                    "action": "Human auditor required before deployment",
+                    "estimated_review_time": "4-24 hours",
+                    "severity_threshold": severity_threshold,
+                    "human_review_required": True,
+                    "review_link": self._generate_review_link(critical_findings),
+                    "disclaimer": """
+🚨 CRITICAL FINDINGS DETECTED - HUMAN REVIEW REQUIRED
+
+⚠️  The following critical security issues were found:
+   - These findings require expert human analysis
+   - Do NOT deploy to mainnet without professional review
+   - Consider hiring a professional audit firm
+
+🔗 Next Steps:
+   1. Submit for human review (see link below)
+   2. Fix all critical/high findings
+   3. Re-audit after fixes
+   4. Professional audit recommended for mainnet
+                    """.strip()
+                }
+            else:
+                return {
+                    "status": "auto_approved",
+                    "findings": findings,
+                    "confidence": audit_result.get("consensus_score", 0.0),
+                    "human_review_required": False,
+                    "disclaimer": """
+✅ NO CRITICAL FINDINGS - Auto-approved for testing
+
+📊 Confidence Score: {:.0%}
+
+⚠️  IMPORTANT:
+   - This audit is suitable for testnet deployment
+   - For mainnet, professional audit still recommended
+   - Monitor contract behavior after deployment
+                    """.format(audit_result.get("consensus_score", 0.0)).strip()
+                }
+                
+        except Exception as e:
+            logger.error(f"Human review audit failed: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "human_review_required": True
+            }
+
+    def _generate_review_link(self, critical_findings: List[Dict[str, Any]]) -> str:
+        """Generate a link for human review submission"""
+        # This would integrate with a human review system
+        # For now, return a placeholder
+        return "https://hyperkit.xyz/audit-review/submit"
 
     async def _fetch_contract_source(self, contract_address: str, rpc_url: str) -> Optional[str]:
         """Fetch contract source code from blockchain explorer."""
@@ -212,7 +568,7 @@ class SmartContractAuditor:
                 "--print-json-summary"
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, encoding='utf-8')
 
             findings = []
             
@@ -312,7 +668,7 @@ class SmartContractAuditor:
                 "10",
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, encoding='utf-8')
 
             findings = []
 
