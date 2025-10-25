@@ -19,22 +19,59 @@ def generate_group():
 @click.option('--type', '-t', required=True, help='Contract type (ERC20, ERC721, DeFi, etc.)')
 @click.option('--name', '-n', required=True, help='Contract name')
 @click.option('--output', '-o', help='Output directory')
+@click.option('--network', default='hyperion', help='Target network')
 @click.option('--template', help='Use specific template')
-def contract(type, name, output, template):
-    """Generate a smart contract"""
-    console.print(f"🚀 Generating {type} contract: {name}")
+@click.pass_context
+def contract(ctx, type, name, output, network, template):
+    """Generate a smart contract with AI"""
+    import asyncio
+    from core.agent.main import HyperKitAgent
+    from core.config.loader import get_config
     
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console,
-    ) as progress:
-        task = progress.add_task("Generating contract...", total=None)
+    console.print(f"🚀 Generating {type} contract: {name}")
+    console.print(f"🌐 Network: {network}")
+    
+    try:
+        # Initialize agent
+        config = get_config().to_dict()
+        agent = HyperKitAgent(config)
         
-        # TODO: Implement actual contract generation
-        console.print(f"✅ Generated {type} contract: {name}")
-        if output:
-            console.print(f"📁 Output directory: {output}")
+        # Create prompt
+        prompt = f"Create a {type} smart contract named {name}"
+        if template:
+            prompt += f" using {template} template"
+        
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Generating contract with AI...", total=None)
+            
+            # Run generation
+            result = asyncio.run(agent.generate_contract(prompt))
+            
+            if result['status'] == 'success':
+                contract_code = result['contract_code']
+                file_path = result['path']
+                
+                console.print(f"✅ Generated {type} contract: {name}")
+                console.print(f"📁 Saved to: {file_path}")
+                console.print(f"📊 Provider: {result.get('provider_used', 'AI')}")
+                console.print(f"🤖 Method: {result.get('method', 'AI')}")
+                
+                if output:
+                    import shutil
+                    shutil.copy(file_path, output)
+                    console.print(f"📁 Copied to: {output}")
+            else:
+                console.print(f"❌ Generation failed: {result.get('error', 'Unknown error')}", style="red")
+                
+    except Exception as e:
+        console.print(f"❌ Error: {e}", style="red")
+        if ctx.obj.get('debug'):
+            import traceback
+            console.print(traceback.format_exc())
 
 @generate_group.command()
 @click.option('--category', '-c', help='Template category')

@@ -98,11 +98,12 @@ class ConfigLoader:
         if os.getenv('GOOGLE_API_KEY'):
             self.config.setdefault('ai_providers', {}).setdefault('google', {})['api_key'] = os.getenv('GOOGLE_API_KEY')
         
-        # Network RPC URLs
-        for network_name in ['hyperion', 'metis', 'lazai', 'polygon', 'arbitrum', 'ethereum']:
+        # Network RPC URLs - only for networks defined in config.yaml
+        defined_networks = self.config.get('networks', {}).keys()
+        for network_name in defined_networks:
             rpc_key = f'{network_name.upper()}_RPC_URL'
             if os.getenv(rpc_key):
-                self.config.setdefault('networks', {}).setdefault(network_name, {})['rpc_url'] = os.getenv(rpc_key)
+                self.config['networks'][network_name]['rpc_url'] = os.getenv(rpc_key)
         
         # Obsidian Configuration
         if os.getenv('OBSIDIAN_VAULT_PATH'):

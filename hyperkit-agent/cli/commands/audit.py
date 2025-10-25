@@ -20,21 +20,63 @@ def audit_group():
 @click.option('--output', '-o', help='Output file for audit report')
 @click.option('--format', '-f', default='json', help='Output format (json, markdown, html)')
 @click.option('--severity', '-s', help='Minimum severity level (low, medium, high, critical)')
-def contract(contract, output, format, severity):
+@click.pass_context
+def contract(ctx, contract, output, format, severity):
     """Audit a smart contract for security issues"""
+    import asyncio
+    from core.agent.main import HyperKitAgent
+    from core.config.loader import get_config
+    
     console.print(f"🔍 Auditing contract: {contract}")
     
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console,
-    ) as progress:
-        task = progress.add_task("Running security audit...", total=None)
+    try:
+        # Initialize agent
+        config = get_config().to_dict()
+        agent = HyperKitAgent(config)
         
-        # TODO: Implement actual auditing
-        console.print(f"✅ Audit completed")
-        if output:
-            console.print(f"📄 Report saved to: {output}")
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Running security audit...", total=None)
+            
+            # Read contract file
+            with open(contract, 'r') as f:
+                contract_code = f.read()
+            
+            # Run audit
+            result = asyncio.run(agent.audit_contract(contract_code))
+            
+            if result['status'] == 'success':
+                console.print(f"✅ Audit completed")
+                console.print(f"🔍 Severity: {result.get('severity', 'unknown').upper()}")
+                console.print(f"📊 Method: {result.get('method', 'AI')}")
+                console.print(f"🤖 Provider: {result.get('provider', 'AI')}")
+                
+                # Save report if output specified
+                if output:
+                    import json
+                    with open(output, 'w') as f:
+                        if format == 'json':
+                            json.dump(result, f, indent=2)
+                        else:
+                            f.write(f"# Security Audit Report\n\n")
+                            f.write(f"**Contract:** {contract}\n")
+                            f.write(f"**Severity:** {result.get('severity', 'unknown')}\n")
+                            f.write(f"**Method:** {result.get('method', 'AI')}\n")
+                            f.write(f"**Provider:** {result.get('provider', 'AI')}\n\n")
+                            f.write(f"**Results:**\n")
+                            f.write(json.dumps(result.get('results', {}), indent=2))
+                    console.print(f"📄 Report saved to: {output}")
+            else:
+                console.print(f"❌ Audit failed: {result.get('error', 'Unknown error')}", style="red")
+                
+    except Exception as e:
+        console.print(f"❌ Error: {e}", style="red")
+        if ctx.obj.get('debug'):
+            import traceback
+            console.print(traceback.format_exc())
 
 @audit_group.command()
 @click.option('--directory', '-d', help='Directory to audit')

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-HyperKit Agent CLI - Main Entry Point
+HyperAgent CLI - Main Entry Point
 Clean, modular CLI structure for production deployment
 """
 
@@ -22,6 +22,7 @@ from cli.commands.audit import audit_group
 from cli.commands.verify import verify_group
 from cli.commands.monitor import monitor_group
 from cli.commands.config import config_group
+from cli.commands.workflow import workflow_group
 from cli.utils.health import health_check
 from cli.utils.version import show_version
 
@@ -33,7 +34,7 @@ console = Console()
 @click.pass_context
 def cli(ctx, verbose, debug):
     """
-    HyperKit Agent - Professional Web3 Development Platform
+    HyperAgent - Professional Web3 Development Platform
     
     Comprehensive smart contract generation, auditing, deployment, and management
     Production-ready with monitoring, caching, and error handling
@@ -54,6 +55,7 @@ cli.add_command(audit_group, name='audit')
 cli.add_command(verify_group, name='verify')
 cli.add_command(monitor_group, name='monitor')
 cli.add_command(config_group, name='config')
+cli.add_command(workflow_group, name='workflow')
 
 # Add utility commands
 @cli.command()
