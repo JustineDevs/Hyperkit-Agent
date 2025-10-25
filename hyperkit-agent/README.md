@@ -7,6 +7,20 @@
 
 **HyperKit AI Agent** is a comprehensive AI-powered system that combines smart contract generation, auditing, debugging, and deployment capabilities. Built for the Hyperion and Andromeda ecosystems, it enables developers to rapidly prototype, deploy, and manage smart contracts with natural language prompts.
 
+## ⚠️ **Current Status & Limitations**
+
+**Production Readiness**: 🟡 **Beta - Active Development**
+
+### **Known Limitations:**
+- **Alith SDK**: Currently using mock implementation for testing. Real integration requires `pip install alith` and API keys from https://lazai.network
+- **Deployment**: Requires Foundry installation. Will fail with clear error if not installed (no fake success)
+- **Audit Accuracy**: 80-85% for verified contracts, 30% for bytecode-only. Professional audit recommended for production
+- **Multi-File Contracts**: Single-file only. Use `forge flatten` for complex projects
+
+📖 **See [Known Issues](docs/KNOWN_ISSUES.md) for complete list and workarounds**
+
+---
+
 ## ✨ Features
 
 ### 🤖 AI-Powered Contract Generation

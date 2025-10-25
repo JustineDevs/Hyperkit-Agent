@@ -157,6 +157,7 @@ class HyperKitConfig(BaseModel):
     # Security extensions and Alith SDK integration
     security_extensions: Optional[Dict[str, Any]] = Field(None, description="Security extensions configuration")
     alith: Optional[Dict[str, Any]] = Field(None, description="Alith SDK configuration")
+    pinata: Optional[Dict[str, Any]] = Field(None, description="Pinata IPFS configuration")
     
     # Default settings
     default_network: str = Field(default="hyperion", description="Default network")
