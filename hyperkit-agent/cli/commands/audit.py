@@ -311,10 +311,89 @@ def batch(ctx, directory, file, recursive, network, output, format, severity):
     console.print("\n✅ Batch audit completed")
 
 @audit_group.command()
-@click.option('--report', '-r', required=True, help='Audit report file')
-def report(report):
+@click.option('--report', '-r', required=True, help='Audit report file (JSON or Markdown)')
+@click.option('--format', '-f', help='Output format (table, json, markdown)')
+def report(report, format):
     """View audit report"""
-    console.print(f"📊 Viewing audit report: {report}")
+    from pathlib import Path
+    import json
+    from rich.table import Table
+    from rich.markdown import Markdown
     
-    # TODO: Implement report viewing
-    console.print("✅ Report displayed")
+    report_path = Path(report)
+    
+    if not report_path.exists():
+        console.print(f"❌ Error: Report file not found: {report}", style="red")
+        return
+    
+    try:
+        # Determine file type
+        if report_path.suffix == '.json':
+            with open(report_path, 'r') as f:
+                data = json.load(f)
+            
+            # Display based on format
+            if format == 'json':
+                console.print(json.dumps(data, indent=2))
+            else:
+                # Display as table (default)
+                console.print(f"\n📊 Audit Report: {report_path.name}\n")
+                
+                # Basic info
+                console.print(f"[cyan]Status:[/cyan] {data.get('status', 'unknown')}")
+                console.print(f"[cyan]Severity:[/cyan] {data.get('severity', 'unknown').upper()}")
+                console.print(f"[cyan]Method:[/cyan] {data.get('method', 'AI')}")
+                console.print(f"[cyan]Provider:[/cyan] {data.get('provider', 'AI')}")
+                
+                # Issues table
+                if 'results' in data and 'issues' in data['results']:
+                    issues = data['results']['issues']
+                    
+                    if issues:
+                        console.print(f"\n🔍 Found {len(issues)} issues:\n")
+                        
+                        table = Table(title="Security Issues")
+                        table.add_column("Severity", style="yellow")
+                        table.add_column("Type", style="cyan")
+                        table.add_column("Description")
+                        
+                        for issue in issues:
+                            severity_color = {
+                                'critical': 'red',
+                                'high': 'red',
+                                'medium': 'yellow',
+                                'low': 'green'
+                            }.get(issue.get('severity', '').lower(), 'white')
+                            
+                            table.add_row(
+                                f"[{severity_color}]{issue.get('severity', 'unknown').upper()}[/{severity_color}]",
+                                issue.get('type', 'unknown'),
+                                issue.get('description', 'No description')
+                            )
+                        
+                        console.print(table)
+                    else:
+                        console.print("\n✅ No security issues found")
+        
+        elif report_path.suffix == '.md':
+            with open(report_path, 'r') as f:
+                md_content = f.read()
+            
+            if format == 'markdown':
+                console.print(md_content)
+            else:
+                # Render markdown
+                md = Markdown(md_content)
+                console.print(md)
+        
+        else:
+            console.print(f"❌ Error: Unsupported report format: {report_path.suffix}", style="red")
+            console.print("Supported formats: .json, .md")
+            return
+        
+        console.print(f"\n✅ Report displayed successfully")
+        
+    except json.JSONDecodeError as e:
+        console.print(f"❌ Error: Invalid JSON format: {e}", style="red")
+    except Exception as e:
+        console.print(f"❌ Error reading report: {e}", style="red")
