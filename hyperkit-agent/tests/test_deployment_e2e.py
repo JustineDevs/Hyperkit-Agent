@@ -32,16 +32,18 @@ class TestDeploymentE2E:
         assert hasattr(deployer, 'get_network_config')
     
     def test_network_config(self, deployer):
-        """Test network configuration"""
-        # Test supported networks
-        networks = ['ethereum', 'polygon', 'arbitrum', 'hyperion', 'andromeda', 'metis']
+        """Test network configuration for primary networks"""
+        # Test primary supported networks
+        networks = ['hyperion', 'lazai', 'metis']
         
         for network in networks:
             config = deployer.get_network_config(network)
-            assert config is not None
+            assert config is not None, f"Network {network} config not found"
             assert 'chain_id' in config
             assert 'explorer_url' in config
             assert 'rpc_url' in config
+            assert 'status' in config
+            assert config['status'] in ['testnet', 'mainnet']
     
     def test_unsupported_network(self, deployer):
         """Test unsupported network returns None"""

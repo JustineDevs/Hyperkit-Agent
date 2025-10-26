@@ -46,9 +46,10 @@ HyperKit is an AI-powered platform for smart contract development, security audi
 - Detailed vulnerability analysis with remediation suggestions
 
 ### 🌐 **Multi-Chain Deployment**
-- Ethereum, Polygon, Arbitrum, Hyperion, Andromeda, Metis
+- **Primary Networks**: Hyperion (Testnet), LazAI (Testnet), Metis (Mainnet)
 - Foundry-based compilation and deployment
 - Gas optimization and transaction monitoring
+- Optimized for AI-powered blockchain deployment
 
 ### ✅ **Automatic Verification**
 - Blockscout and Etherscan integration
@@ -121,14 +122,15 @@ forge build
 
 ## 🌍 Supported Networks
 
-| Network | Chain ID | Explorer |
-|---------|----------|----------|
-| Ethereum | 1 | https://etherscan.io |
-| Polygon | 137 | https://polygonscan.com |
-| Arbitrum | 42161 | https://arbiscan.io |
-| **Hyperion** | 1001 | https://hyperion-testnet-explorer.metisdevops.link |
-| Andromeda | 1088 | https://andromeda-explorer.metisdevops.link |
-| Metis | 1088 | https://andromeda-explorer.metisdevops.link |
+HyperKit AI Agent focuses on three primary networks optimized for AI-powered smart contract deployment:
+
+| Network | Chain ID | Status | Explorer |
+|---------|----------|--------|----------|
+| **Hyperion Testnet** | 1001 | 🚧 Testnet (Mainnet Coming Soon) | [Explorer](https://hyperion-testnet-explorer.metisdevops.link) |
+| **LazAI Testnet** | 8888 | 🚧 Testnet (Mainnet Coming Soon) | [Explorer](https://lazai-explorer.example.com) |
+| **Metis Mainnet** | 1088 | ✅ Mainnet | [Explorer](https://andromeda-explorer.metis.io) |
+
+> **Note**: Hyperion and LazAI are currently in testnet phase. Mainnet launches are coming soon!
 
 ## 📚 Usage Examples
 
@@ -148,17 +150,17 @@ hyperagent workflow run "Create a gaming token" --network hyperion
 hyperagent audit contract 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
 
 # Audit multiple contracts
-hyperagent audit batch contracts.txt --network ethereum
+hyperagent audit batch contracts.txt --network hyperion
 ```
 
 ### Deploy a Custom Contract
 
 ```bash
 # Deploy a contract
-hyperagent deploy --contract MyToken.sol --network polygon
+hyperagent deploy --contract MyToken.sol --network hyperion
 
 # Verify after deployment
-hyperagent verify contract 0xYourContractAddress --network polygon
+hyperagent verify contract 0xYourContractAddress --network hyperion
 ```
 
 ### Monitor Deployments

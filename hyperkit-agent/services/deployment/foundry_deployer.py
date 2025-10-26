@@ -19,37 +19,35 @@ class FoundryDeployer:
             self.forge_bin = "forge"
     
     def get_network_config(self, network: str) -> dict:
-        """Get network configuration"""
+        """
+        Get network configuration for primary supported networks
+        
+        Primary Networks:
+        - Hyperion Testnet (Mainnet Coming Soon)
+        - LazAI Testnet (Mainnet Coming Soon)
+        - Metis Mainnet
+        """
         networks = {
-            "ethereum": {
-                "chain_id": 1,
-                "explorer_url": "https://etherscan.io",
-                "rpc_url": "https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
-            },
-            "polygon": {
-                "chain_id": 137,
-                "explorer_url": "https://polygonscan.com",
-                "rpc_url": "https://polygon-rpc.com"
-            },
-            "arbitrum": {
-                "chain_id": 42161,
-                "explorer_url": "https://arbiscan.io",
-                "rpc_url": "https://arb1.arbitrum.io/rpc"
-            },
             "hyperion": {
                 "chain_id": 1001,
                 "explorer_url": "https://hyperion-testnet-explorer.metisdevops.link",
-                "rpc_url": "https://hyperion-testnet.metisdevops.link"
+                "rpc_url": "https://hyperion-testnet.metisdevops.link",
+                "status": "testnet",
+                "mainnet_coming_soon": True
             },
-            "andromeda": {
-                "chain_id": 1088,
-                "explorer_url": "https://andromeda-explorer.metisdevops.link",
-                "rpc_url": "https://andromeda.metis.io/?owner=1088"
+            "lazai": {
+                "chain_id": 8888,  # Update with actual LazAI chain ID
+                "explorer_url": "https://lazai-explorer.example.com",  # Update with actual explorer
+                "rpc_url": "https://lazai-testnet-rpc.example.com",  # Update with actual RPC
+                "status": "testnet",
+                "mainnet_coming_soon": True
             },
             "metis": {
                 "chain_id": 1088,
-                "explorer_url": "https://andromeda-explorer.metisdevops.link",
-                "rpc_url": "https://andromeda.metis.io/?owner=1088"
+                "explorer_url": "https://andromeda-explorer.metis.io",
+                "rpc_url": "https://andromeda.metis.io/?owner=1088",
+                "status": "mainnet",
+                "mainnet_coming_soon": False
             }
         }
         return networks.get(network)
