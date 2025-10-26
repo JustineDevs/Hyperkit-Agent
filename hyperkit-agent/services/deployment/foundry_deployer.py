@@ -288,20 +288,47 @@ libs = ["lib"]
                         })
                     except TypeError as e:
                         if "Incorrect argument count" in str(e):
-                            logger.warning(f"Constructor argument count mismatch: {e}")
-                            logger.info("Attempting to deploy with hardcoded values as fallback")
-                            # Fallback to hardcoded values
-                            tx = contract_factory.constructor(
-                                "GAMEX Token",  # name
-                                "GAMEX",       # symbol
-                                account.address  # initialOwner
-                            ).build_transaction({
-                                'from': account.address,
-                                'nonce': w3.eth.get_transaction_count(account.address),
-                                'gas': 3000000,
-                                'gasPrice': w3.eth.gas_price,
-                                'chainId': chain_id
-                            })
+                            logger.error(f"🚨 DEPLOYMENT FAILED: Constructor argument mismatch")
+                            logger.error(f"Contract expects different number of arguments than ABI")
+                            logger.error(f"Error: {e}")
+                            logger.error(f"Extracted args: {extracted_args}")
+                            logger.error(f"Contract source shows constructor with {len(extracted_args)} parameters")
+                            
+                            # Show the actual constructor signature from the contract
+                            import re
+                            constructor_match = re.search(r'constructor\s*\(([^)]*)\)', contract_source_code)
+                            if constructor_match:
+                                constructor_params = constructor_match.group(1)
+                                logger.error(f"Contract constructor signature: constructor({constructor_params})")
+                            
+                            # Show the ABI constructor info
+                            constructor_abi = None
+                            for item in abi:
+                                if item.get('type') == 'constructor':
+                                    constructor_abi = item
+                                    break
+                            
+                            if constructor_abi:
+                                logger.error(f"ABI constructor inputs: {len(constructor_abi.get('inputs', []))}")
+                                for i, input_param in enumerate(constructor_abi.get('inputs', [])):
+                                    logger.error(f"  {i}: {input_param.get('type')} {input_param.get('name')}")
+                            
+                            return {
+                                "success": False,
+                                "error": f"Constructor argument count mismatch: {e}",
+                                "details": {
+                                    "contract_args": len(extracted_args),
+                                    "abi_args": len(constructor_abi.get('inputs', [])) if constructor_abi else 0,
+                                    "contract_signature": constructor_params if constructor_match else "unknown",
+                                    "extracted_args": extracted_args
+                                },
+                                "suggestions": [
+                                    "Check contract compilation - ABI may be incorrect",
+                                    "Verify constructor parameter types match ABI",
+                                    "Try compiling contract manually with Foundry",
+                                    "Check for OpenZeppelin import issues"
+                                ]
+                            }
                         else:
                             raise
                 else:

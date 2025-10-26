@@ -85,7 +85,10 @@ def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_ins
         
         # Process results
         if result['status'] == 'success':
-            _display_success_results(result, network, test_only, verbose)
+            success = _display_success_results(result, network, test_only, verbose)
+            if not success:
+                console.print(f"\n[red bold]❌ WORKFLOW TERMINATED DUE TO CRITICAL FAILURE[/red bold]")
+                return
         else:
             _display_error_results(result)
             
@@ -142,11 +145,36 @@ def _display_success_results(result: dict, network: str, test_only: bool, verbos
                 f"Address: {deploy.get('address', 'N/A')}\nTX: {deploy.get('tx_hash', 'N/A')[:18]}..."
             )
         else:
+            # FAIL LOUD - Don't fake success
+            error_msg = deploy.get('error', 'Unknown deployment error')
+            suggestions = deploy.get('suggestions', [])
+            
             table.add_row(
                 "3. Deployment",
-                "[yellow]⚠️ Skipped[/yellow]",
-                f"Reason: {deploy.get('reason', 'N/A')}"
+                "[red]❌ FAILED[/red]",
+                f"Error: {error_msg}"
             )
+            
+            # Show detailed error information
+            console.print(f"\n[red bold]🚨 DEPLOYMENT FAILED[/red bold]")
+            console.print(f"[red]Error: {error_msg}[/red]")
+            
+            if suggestions:
+                console.print(f"\n[yellow]💡 Suggestions:[/yellow]")
+                for suggestion in suggestions:
+                    console.print(f"  • {suggestion}")
+            
+            # Show deployment details if available
+            details = deploy.get('details', {})
+            if details:
+                console.print(f"\n[cyan]🔍 Technical Details:[/cyan]")
+                for key, value in details.items():
+                    console.print(f"  {key}: {value}")
+            
+            # FAIL THE WORKFLOW - Don't continue
+            console.print(f"\n[red bold]❌ WORKFLOW FAILED - DEPLOYMENT STAGE BROKEN[/red bold]")
+            console.print(f"[yellow]Fix the deployment issue before continuing.[/yellow]")
+            return False
     elif test_only:
         table.add_row(
             "3. Deployment",
@@ -195,7 +223,9 @@ def _display_success_results(result: dict, network: str, test_only: bool, verbos
     if gen and gen.get('path'):
         console.print(f"[bold cyan]📁 Contract File:[/bold cyan] [white]{gen.get('path')}[/white]")
     
+    # Only show success if we actually succeeded
     console.print(f"\n[green bold]🎉 All stages completed successfully![/green bold]")
+    return True
 
 def _display_error_results(result: dict):
     """Display error results"""

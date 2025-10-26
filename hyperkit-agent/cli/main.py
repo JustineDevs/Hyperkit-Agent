@@ -83,5 +83,11 @@ def test_rag():
     """Test RAG connections (Obsidian, IPFS, Local)"""
     test_rag_command()
 
+@cli.command()
+def limitations():
+    """Show all known limitations and broken features"""
+    from cli.utils.limitations import show_limitations
+    show_limitations()
+
 if __name__ == '__main__':
     cli()
