@@ -1,38 +1,82 @@
 """
-Health Check Utilities
-System health monitoring for HyperKit Agent
+Health Check Utility - BRUTAL REALITY CHECK
+
+Shows actual runtime health, not static badges.
+Fails loud if dependencies are missing.
 """
 
+import click
 from rich.console import Console
-from rich.panel import Panel
 from rich.table import Table
+from rich.panel import Panel
+from rich.text import Text
+from core.validation.production_validator import validate_production_mode, get_production_validator
 
 console = Console()
 
 def health_check():
-    """Perform comprehensive system health check"""
-    console.print("🏥 HyperKit Agent Health Check")
-    console.print("=" * 50)
+    """
+    Perform comprehensive health check with brutal honesty.
+    Shows actual runtime status, not static badges.
+    """
+    console.print("\n[bold blue]🔍 HYPERAGENT BRUTAL HEALTH CHECK[/bold blue]")
+    console.print("=" * 60)
     
-    # Check core components
-    components = [
-        ("Core Agent", "✅ Operational"),
-        ("Blockchain Connection", "✅ Connected"),
-        ("AI Services", "✅ Available"),
-        ("Storage System", "✅ Accessible"),
-        ("Security Tools", "✅ Ready"),
-        ("Monitoring", "✅ Active")
-    ]
+    # Validate production mode
+    validator = get_production_validator()
+    validation_results = validator.validate_production_mode()
     
-    table = Table(title="System Status")
-    table.add_column("Component", style="cyan")
-    table.add_column("Status", style="green")
+    # Create status table
+    table = Table(title="Runtime Health Status", show_header=True, header_style="bold magenta")
+    table.add_column("Component", style="cyan", no_wrap=True)
+    table.add_column("Status", justify="center")
+    table.add_column("Details", style="white")
     
-    for component, status in components:
-        table.add_row(component, status)
+    # Add validation results to table
+    for dep_name, result in validation_results['validation_results'].items():
+        if result['status'] == 'success':
+            status_icon = "✅"
+            status_text = Text("PASS", style="green")
+        elif result['status'] == 'warning':
+            status_icon = "⚠️"
+            status_text = Text("WARN", style="yellow")
+        else:
+            status_icon = "❌"
+            status_text = Text("FAIL", style="red")
+        
+        table.add_row(
+            dep_name.replace('_', ' ').title(),
+            f"{status_icon} {status_text}",
+            result.get('message', 'No details')
+        )
     
     console.print(table)
     
-    # Overall health status
-    console.print("\n🎯 Overall Status: [green]HEALTHY[/green]")
-    console.print("📊 All systems operational and ready for production use")
+    # Show overall status
+    if validation_results['production_mode']:
+        console.print("\n[bold green]🟢 PRODUCTION MODE ENABLED[/bold green]")
+        console.print("All critical dependencies are available and functional.")
+        console.print("System is ready for production operations.")
+    else:
+        console.print("\n[bold red]🔴 SAFE MODE ONLY[/bold red]")
+        console.print("Critical dependencies are missing. System will run in safe mode.")
+        
+        if validation_results['critical_failures']:
+            console.print("\n[bold red]CRITICAL FAILURES:[/bold red]")
+            for failure in validation_results['critical_failures']:
+                console.print(f"  ❌ {failure}")
+        
+        if validation_results['warnings']:
+            console.print("\n[bold yellow]WARNINGS:[/bold yellow]")
+            for warning in validation_results['warnings']:
+                console.print(f"  ⚠️ {warning}")
+    
+    # Show next steps
+    if not validation_results['production_mode']:
+        console.print("\n[bold blue]NEXT STEPS:[/bold blue]")
+        console.print("1. Install missing dependencies")
+        console.print("2. Configure required environment variables")
+        console.print("3. Run: hyperagent status --validate")
+        console.print("4. Test with: hyperagent workflow run 'test' --network hyperion")
+    
+    return validation_results['production_mode']

@@ -16,7 +16,8 @@ except ImportError:
     ALITH_AVAILABLE = False
     Web3Tools = None
     import logging
-    logging.warning("WARNING: Alith SDK not available - Install with: pip install alith>=0.12.0")
+    logging.error("CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0")
+    logging.error("SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK")
 
 # Import real Alith implementation
 try:

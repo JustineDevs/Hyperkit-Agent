@@ -17,6 +17,7 @@ from services.audit.public_contract_auditor import public_contract_auditor
 from services.monitoring.enhanced_monitor import enhanced_monitor, MonitorConfig, MonitorType
 from services.defi.primitives_generator import defi_primitives_generator, DeFiPrimitive
 from services.core.ai_agent import HyperKitAIAgent
+from core.validation.production_validator import enforce_production_mode, is_production_mode
 
 # Security and error handling imports
 from core.handlers import safe_operation, handle_workflow_error, validate_input, log_operation, ErrorHandler
@@ -224,6 +225,7 @@ class HyperKitAgent:
     async def generate_contract(self, prompt: str, context: str = "") -> Dict[str, Any]:
         """
         Generate a smart contract based on natural language prompt.
+        ENFORCES PRODUCTION MODE - no silent fallbacks to mock implementations.
         Tries LazAI first, falls back to free LLM models.
 
         Args:
@@ -233,6 +235,9 @@ class HyperKitAgent:
         Returns:
             Dictionary containing generated contract code and metadata
         """
+        # Enforce production mode for contract generation
+        enforce_production_mode("Contract Generation")
+        
         try:
             # Try LazAI integration first
             if self.ai_agent and hasattr(self.ai_agent, 'lazai_integration'):
@@ -406,7 +411,10 @@ class HyperKitAgent:
     async def deploy_contract(
         self, contract_code: str, network: str = "hyperion"
     ) -> Dict[str, Any]:
-        """Deploy contract to blockchain"""
+        """Deploy contract to blockchain - ENFORCES PRODUCTION MODE"""
+        # Enforce production mode for deployment
+        enforce_production_mode("Contract Deployment")
+        
         try:
             logger.info(f"🚀 Deploy contract: {network}")
             
