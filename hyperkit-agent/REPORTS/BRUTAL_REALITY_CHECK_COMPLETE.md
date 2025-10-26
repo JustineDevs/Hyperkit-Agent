@@ -59,7 +59,7 @@ We've systematically addressed **every single brutal reality check question** fr
 ---
 
 ### **4. Security Audit Log** ✅
-**File**: `SECURITY_AUDIT_LOG.md` (274 lines)
+**File**: `docs/SECURITY_AUDIT_LOG.md` (274 lines)
 
 **What it tracks**:
 - Every vulnerability with unique ID (SA-YYYYMMDD-NNN)
@@ -73,7 +73,7 @@ We've systematically addressed **every single brutal reality check question** fr
 ---
 
 ### **5. Emergency Response Playbook** ✅
-**File**: `EMERGENCY_RESPONSE.md` (510 lines)
+**File**: `docs/EMERGENCY_RESPONSE.md` (510 lines)
 
 **What it provides**:
 - P0-P3 severity classification
@@ -103,7 +103,7 @@ We've systematically addressed **every single brutal reality check question** fr
 ---
 
 ### **7. Reality Check Results Dashboard** ✅
-**File**: `REALITY_CHECK_RESULTS.md` (450+ lines)
+**File**: `REPORTS/REALITY_CHECK_RESULTS.md` (450+ lines)
 
 **What it provides**:
 - Comprehensive scoring across 8 categories
@@ -299,10 +299,10 @@ We've systematically addressed **every single brutal reality check question** fr
 
 1. `tests/test_new_developer_onboarding.sh` - 233 lines
 2. `tests/security/test_contract_security.py` - 300+ lines
-3. `SECURITY_AUDIT_LOG.md` - 274 lines
-4. `EMERGENCY_RESPONSE.md` - 510 lines
+3. `docs/SECURITY_AUDIT_LOG.md` - 274 lines
+4. `docs/EMERGENCY_RESPONSE.md` - 510 lines
 5. `scripts/emergency_patch.sh` - Executable
-6. `REALITY_CHECK_RESULTS.md` - 450+ lines
+6. `REPORTS/REALITY_CHECK_RESULTS.md` - 450+ lines
 7. `.github/workflows/test.yml` - Updated with cleanroom tests
 
 **Total New Documentation**: 2,000+ lines  
@@ -366,9 +366,9 @@ But it **IS** a B+ because we have:
 
 ## 📞 **NEXT STEPS**
 
-1. **Review**: Read REALITY_CHECK_RESULTS.md for detailed scores
+1. **Review**: Read `REPORTS/REALITY_CHECK_RESULTS.md` for detailed scores
 2. **Test**: Run `./tests/test_new_developer_onboarding.sh`
-3. **Audit**: Review `SECURITY_AUDIT_LOG.md`
+3. **Audit**: Review `docs/SECURITY_AUDIT_LOG.md`
 4. **Practice**: Try `./scripts/emergency_patch.sh` (on test branch)
 5. **Decide**: Use on testnet now, mainnet after Q1 2025 audit
 

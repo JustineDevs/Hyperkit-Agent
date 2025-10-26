@@ -493,9 +493,9 @@ HyperKit Security Team
 
 ## 📚 Related Documentation
 
-- [SECURITY.md](./SECURITY.md) - Security policy and bug bounty
+- [SECURITY.md](../SECURITY.md) - Security policy and bug bounty
 - [SECURITY_AUDIT_LOG.md](./SECURITY_AUDIT_LOG.md) - Vulnerability tracking
-- [CONTRIBUTING.md](./CONTRIBUTING.md) - Security requirements for contributors
+- [CONTRIBUTING.md](../CONTRIBUTING.md) - Security requirements for contributors
 
 ---
 
