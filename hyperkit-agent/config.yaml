@@ -1,7 +1,13 @@
 ai_providers:
-  google_api_key: ''
-  lazai_rsa_private_key: ''
-  openai_api_key: ''
+  google:
+    api_key: 'YOUR_GOOGLE_API_KEY_HERE'
+    model: 'gemini-pro'
+  openai:
+    api_key: 'YOUR_OPENAI_API_KEY_HERE'
+    model: 'gpt-4'
+  anthropic:
+    api_key: 'YOUR_ANTHROPIC_API_KEY_HERE'
+    model: 'claude-3-sonnet'
 networks:
   ethereum:
     chain_id: 1
