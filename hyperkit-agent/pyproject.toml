@@ -94,7 +94,7 @@ Issues = "https://github.com/JustineDevs/Hyperkit-Agent/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["core*", "services*", "tests*"]
+include = ["core*", "services*", "tests*", "cli*"]
 
 [tool.black]
 line-length = 88
