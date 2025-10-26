@@ -235,10 +235,10 @@ Each entry follows this structure:
 
 ## 📚 Related Documentation
 
-- [Security Policy](./SECURITY.md) - Vulnerability reporting and bounty program
-- [Contributing Guide](./CONTRIBUTING.md) - Security requirements for contributions
-- [CI/CD Pipeline](./.github/workflows/test.yml) - Automated security scanning
-- [Production Readiness Report](./REPORTS/PRODUCTION_READINESS_COMPLETE.md) - Security posture assessment
+- [Security Policy](../SECURITY.md) - Vulnerability reporting and bounty program
+- [Contributing Guide](../CONTRIBUTING.md) - Security requirements for contributions
+- [CI/CD Pipeline](../.github/workflows/test.yml) - Automated security scanning
+- [Emergency Response Plan](./EMERGENCY_RESPONSE.md) - Incident handling procedures
 
 ---
 

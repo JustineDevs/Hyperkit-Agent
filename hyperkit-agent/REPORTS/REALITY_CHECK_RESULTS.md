@@ -257,7 +257,7 @@ if not network_config:
 | ✅ **YES** | Complete audit log established | **9/10** |
 
 **What Exists:**
-- `SECURITY_AUDIT_LOG.md` - All vulnerabilities logged
+- `docs/SECURITY_AUDIT_LOG.md` - All vulnerabilities logged
 - Unique IDs (SA-YYYYMMDD-NNN format)
 - Severity classification
 - Fix timeline tracking
@@ -411,7 +411,7 @@ if audit_result['status'] != 'success':
 | ✅ **YES** | Complete emergency response playbook | **9/10** |
 
 **What Exists:**
-- `EMERGENCY_RESPONSE.md` (510 lines)
+- `docs/EMERGENCY_RESPONSE.md` (510 lines)
 - P0-P3 severity classification
 - 6-phase incident response
 - Emergency patch script
