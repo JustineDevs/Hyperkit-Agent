@@ -11,6 +11,32 @@
 
 **Production Readiness**: 🟡 **Beta - Active Development**
 
+### **🔄 PRODUCTION MODE vs SAFE MODE**
+
+HyperAgent operates in two distinct modes:
+
+#### **🟢 PRODUCTION MODE**
+- **All critical dependencies available and functional**
+- **Real AI-powered contract generation and auditing**
+- **Actual blockchain deployment and verification**
+- **Full workflow capabilities**
+
+#### **🔴 SAFE MODE**
+- **Missing critical dependencies detected**
+- **Operations blocked with clear error messages**
+- **No silent fallbacks to mock implementations**
+- **System fails loud and clear**
+
+**Check your mode**: `hyperagent health`
+
+### **Critical Dependencies for Production Mode:**
+- ✅ **Alith SDK**: `pip install alith>=0.12.0` (Real AI agent, not mock)
+- ✅ **Foundry**: `curl -L https://foundry.paradigm.xyz | bash` (Deployment)
+- ✅ **Web3 Connection**: Valid Hyperion RPC URL
+- ✅ **AI Providers**: At least one API key (OpenAI, Google, Anthropic)
+- ✅ **Private Key**: `DEFAULT_PRIVATE_KEY` environment variable
+- ✅ **Hyperion RPC**: `HYPERION_RPC_URL` environment variable
+
 ### **Known Limitations:**
 - **Alith SDK**: Currently using mock implementation for testing. Real integration requires `pip install alith` and API keys from https://lazai.network
 - **Deployment**: Requires Foundry installation. Will fail with clear error if not installed (no fake success)

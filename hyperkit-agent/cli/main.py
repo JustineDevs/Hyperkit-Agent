@@ -35,10 +35,18 @@ console = Console()
 @click.pass_context
 def cli(ctx, verbose, debug):
     """
-    HyperAgent - Professional Web3 Development Platform
+    🚀 HyperAgent - AI-Powered Smart Contract Development Platform
     
-    Comprehensive smart contract generation, auditing, deployment, and management
-    Production-ready with monitoring, caching, and error handling
+    HyperAgent combines AI-powered contract generation, comprehensive auditing,
+    and seamless deployment for the Hyperion ecosystem.
+    
+    🔄 PRODUCTION MODE vs SAFE MODE:
+    - 🟢 PRODUCTION MODE: All dependencies available, full functionality
+    - 🔴 SAFE MODE: Missing dependencies, operations blocked with clear errors
+    
+    Check your mode: hyperagent status
+    
+    For detailed documentation: https://github.com/JustineDevs/HyperAgent
     """
     ctx.ensure_object(dict)
     ctx.obj['verbose'] = verbose
@@ -60,8 +68,9 @@ cli.add_command(workflow_group, name='workflow')
 
 # Add utility commands
 @cli.command()
-def health():
-    """Check system health and status"""
+def status():
+    """Check system health and production mode status"""
+    from cli.utils.health import health_check
     health_check()
 
 @cli.command()

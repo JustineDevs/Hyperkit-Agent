@@ -126,24 +126,36 @@ class ProductionModeValidator:
             version = getattr(alith, '__version__', 'unknown')
             
             # Test if it's the real Alith SDK, not a mock
-            if hasattr(alith, 'Agent') and hasattr(alith, 'Web3Tools'):
-                # Test basic functionality
-                try:
-                    # Try to create an agent instance to verify it's functional
-                    agent = alith.Agent()
+            # Check for core classes: Agent, LazAIClient, Tool
+            required_classes = ['Agent', 'LazAIClient', 'Tool']
+            missing_classes = [cls for cls in required_classes if not hasattr(alith, cls)]
+            
+            if missing_classes:
+                return {
+                    'status': 'error',
+                    'message': f'Alith package found but missing required classes: {", ".join(missing_classes)}'
+                }
+            
+            # Test basic functionality
+            try:
+                # Try to create an agent instance to verify it's functional
+                agent = alith.Agent()
+                
+                # Test that agent has expected attributes
+                if hasattr(agent, 'model') and hasattr(agent, 'name'):
                     return {
                         'status': 'success',
                         'message': f'Real Alith SDK {version} available and functional'
                     }
-                except Exception as e:
+                else:
                     return {
                         'status': 'error',
-                        'message': f'Alith SDK installed but not functional: {e}'
+                        'message': 'Alith Agent created but missing expected attributes'
                     }
-            else:
+            except Exception as e:
                 return {
                     'status': 'error',
-                    'message': 'Alith package found but missing required classes (Agent, Web3Tools)'
+                    'message': f'Alith SDK installed but not functional: {e}'
                 }
         except ImportError:
             return {
