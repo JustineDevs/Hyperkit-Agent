@@ -248,7 +248,21 @@ libs = ["lib"]
             bytecode = artifact["bytecode"]["object"]
             abi = artifact["abi"]
             
-            logger.info("✅ Artifacts loaded")
+            logger.info(f"✅ Artifacts loaded from: {artifact_file}")
+            
+            # Debug: Log constructor info
+            constructor_abi = None
+            for item in abi:
+                if item.get('type') == 'constructor':
+                    constructor_abi = item
+                    break
+            
+            if constructor_abi:
+                logger.info(f"Constructor inputs: {len(constructor_abi.get('inputs', []))}")
+                for i, input_param in enumerate(constructor_abi.get('inputs', [])):
+                    logger.info(f"  {i}: {input_param.get('type')} {input_param.get('name')}")
+            else:
+                logger.info("No constructor found in ABI")
             
             # ✅ Deploy contract
             logger.info("Deploying contract...")
@@ -271,106 +285,54 @@ libs = ["lib"]
                     'chainId': chain_id
                 })
             else:
-                # Fallback: extract from contract code
-                from .constructor_parser import ConstructorArgumentParser
-                parser = ConstructorArgumentParser()
-                extracted_args = parser.generate_constructor_args(contract_source_code, account.address)
+                # Use ABI constructor info instead of source code parsing
+                constructor_abi = None
+                for item in abi:
+                    if item.get('type') == 'constructor':
+                        constructor_abi = item
+                        break
                 
-                if extracted_args:
-                    logger.info(f"Using extracted constructor args: {extracted_args}")
-                    try:
-                        tx = contract_factory.constructor(*extracted_args).build_transaction({
-                            'from': account.address,
-                            'nonce': w3.eth.get_transaction_count(account.address),
-                            'gas': 3000000,
-                            'gasPrice': w3.eth.gas_price,
-                            'chainId': chain_id
-                        })
-                    except TypeError as e:
-                        if "Incorrect argument count" in str(e):
-                            logger.error(f"🚨 DEPLOYMENT FAILED: Constructor argument mismatch")
-                            logger.error(f"Contract expects different number of arguments than ABI")
-                            logger.error(f"Error: {e}")
-                            logger.error(f"Extracted args: {extracted_args}")
-                            logger.error(f"Contract source shows constructor with {len(extracted_args)} parameters")
-                            
-                            # Show the actual constructor signature from the contract
-                            import re
-                            constructor_match = re.search(r'constructor\s*\(([^)]*)\)', contract_source_code)
-                            if constructor_match:
-                                constructor_params = constructor_match.group(1)
-                                logger.error(f"Contract constructor signature: constructor({constructor_params})")
-                            
-                            # Show the ABI constructor info
-                            constructor_abi = None
-                            for item in abi:
-                                if item.get('type') == 'constructor':
-                                    constructor_abi = item
-                                    break
-                            
-                            if constructor_abi:
-                                logger.error(f"ABI constructor inputs: {len(constructor_abi.get('inputs', []))}")
-                                for i, input_param in enumerate(constructor_abi.get('inputs', [])):
-                                    logger.error(f"  {i}: {input_param.get('type')} {input_param.get('name')}")
-                            
-                            return {
-                                "success": False,
-                                "error": f"Constructor argument count mismatch: {e}",
-                                "details": {
-                                    "contract_args": len(extracted_args),
-                                    "abi_args": len(constructor_abi.get('inputs', [])) if constructor_abi else 0,
-                                    "contract_signature": constructor_params if constructor_match else "unknown",
-                                    "extracted_args": extracted_args
-                                },
-                                "suggestions": [
-                                    "Check contract compilation - ABI may be incorrect",
-                                    "Verify constructor parameter types match ABI",
-                                    "Try compiling contract manually with Foundry",
-                                    "Check for OpenZeppelin import issues"
-                                ]
-                            }
-                        else:
-                            raise
-                else:
-                    # Check if contract has empty constructor but uses Ownable(msg.sender)
-                    if "Ownable(msg.sender)" in contract_source_code and "constructor()" in contract_source_code:
-                        # This is a common pattern - empty constructor but Ownable needs an address
-                        logger.info("Contract has empty constructor but uses Ownable(msg.sender) - using deployer address")
-                        tx = contract_factory.constructor(account.address).build_transaction({
-                            'from': account.address,
-                            'nonce': w3.eth.get_transaction_count(account.address),
-                            'gas': 3000000,
-                            'gasPrice': w3.eth.gas_price,
-                            'chainId': chain_id
-                        })
-                    else:
-                        # Check if contract has empty constructor
-                        result = parser.extract_constructor_params(contract_source_code)
+                if constructor_abi and constructor_abi.get('inputs'):
+                    # Generate arguments based on ABI constructor inputs
+                    abi_args = []
+                    for input_param in constructor_abi.get('inputs', []):
+                        param_type = input_param.get('type', '')
+                        param_name = input_param.get('name', '')
                         
-                        if result and len(result[1]) == 0:
-                            # Empty constructor - no arguments needed
-                            logger.info("Contract has empty constructor, deploying without arguments")
-                            tx = contract_factory.constructor().build_transaction({
-                                'from': account.address,
-                                'nonce': w3.eth.get_transaction_count(account.address),
-                                'gas': 3000000,
-                                'gasPrice': w3.eth.gas_price,
-                                'chainId': chain_id
-                            })
+                        if param_type == 'address':
+                            abi_args.append(account.address)
+                        elif param_type.startswith('uint'):
+                            abi_args.append(1000000)  # Default supply
+                        elif param_type == 'string':
+                            if 'name' in param_name.lower():
+                                abi_args.append("GAMEX Token")
+                            elif 'symbol' in param_name.lower():
+                                abi_args.append("GAMEX")
+                            else:
+                                abi_args.append("Default")
+                        elif param_type == 'bool':
+                            abi_args.append(False)
                         else:
-                            # Last resort: use hardcoded values (this is what was causing the bug)
-                            logger.warning("No constructor args found, using hardcoded values")
-                            tx = contract_factory.constructor(
-                                contract_name,  # name
-                                contract_name[:4],  # symbol (first 4 chars)
-                                1000000  # totalSupply
-                            ).build_transaction({
-                                'from': account.address,
-                                'nonce': w3.eth.get_transaction_count(account.address),
-                                'gas': 3000000,
-                                'gasPrice': w3.eth.gas_price,
-                                'chainId': chain_id
-                            })
+                            abi_args.append(0)
+                    
+                    logger.info(f"Using ABI-based constructor args: {abi_args}")
+                    tx = contract_factory.constructor(*abi_args).build_transaction({
+                        'from': account.address,
+                        'nonce': w3.eth.get_transaction_count(account.address),
+                        'gas': 3000000,
+                        'gasPrice': w3.eth.gas_price,
+                        'chainId': chain_id
+                    })
+                else:
+                    # No constructor or no inputs - deploy without arguments
+                    logger.info("No constructor inputs found, deploying without arguments")
+                    tx = contract_factory.constructor().build_transaction({
+                        'from': account.address,
+                        'nonce': w3.eth.get_transaction_count(account.address),
+                        'gas': 3000000,
+                        'gasPrice': w3.eth.gas_price,
+                        'chainId': chain_id
+                    })
             
             signed_tx = account.sign_transaction(tx)
             tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)

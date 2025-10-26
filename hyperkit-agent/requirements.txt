@@ -14,10 +14,10 @@ python-dotenv>=1.0.0,<2.0
 
 # Web3 & Blockchain
 web3>=7.6.0,<8.0
-eth-account>=0.13.0,<1.0  # Updated to match web3 requirements
-eth-utils>=2.0.0,<3.0
-eth-keys>=0.4.0,<0.5
-eth-typing>=3.0.0,<4.0
+eth-account>=0.13.6,<1.0  # Updated to match web3 requirements
+eth-utils>=5.0.0,<6.0
+eth-keys>=0.5.0,<0.6
+eth-typing>=5.0.0,<6.0
 
 # AI/LLM Providers
 google-generativeai>=0.3.0,<1.0
