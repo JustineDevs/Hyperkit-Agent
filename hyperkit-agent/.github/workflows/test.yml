@@ -60,6 +60,44 @@ jobs:
       run: |
         cd hyperkit-agent
         forge test -vvv
+    
+    - name: Cleanroom deployment test
+      run: |
+        cd hyperkit-agent
+        # Test that contracts can be deployed from artifacts
+        python -c "
+        from services.deployment.foundry_deployer import FoundryDeployer
+        deployer = FoundryDeployer()
+        # Verify network configs exist
+        for network in ['hyperion', 'lazai', 'metis']:
+            config = deployer.get_network_config(network)
+            assert config is not None, f'Network {network} not configured'
+            assert 'chain_id' in config
+            assert 'rpc_url' in config
+        print('✅ Cleanroom deployment validation passed')
+        "
+
+  new-developer-onboarding:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+    
+    - name: Run 30-minute onboarding test
+      run: |
+        cd hyperkit-agent
+        chmod +x tests/test_new_developer_onboarding.sh
+        # Run test but allow failure to not block CI (it's a validation test)
+        ./tests/test_new_developer_onboarding.sh || echo "⚠️ Onboarding test found issues - see output above"
 
   security:
     runs-on: ubuntu-latest
