@@ -44,6 +44,8 @@ HyperKit is an AI-powered platform for smart contract development, security audi
 - Integration with Slither, Mythril, and custom analyzers
 - Confidence scoring and consensus-based reporting
 - Detailed vulnerability analysis with remediation suggestions
+- **Batch auditing** for multiple contracts with recursive directory scanning
+- Report generation in JSON and Markdown formats
 
 ### 🌐 **Multi-Chain Deployment**
 - **Primary Networks**: Hyperion (Testnet), LazAI (Testnet), Metis (Mainnet)
@@ -146,11 +148,20 @@ hyperagent workflow run "Create a gaming token" --network hyperion
 ### Audit an Existing Contract
 
 ```bash
-# Audit a contract address
-hyperagent audit contract 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+# Audit a single contract file
+hyperagent audit contract --contract MyToken.sol
 
-# Audit multiple contracts
-hyperagent audit batch contracts.txt --network hyperion
+# Audit a contract address from blockchain
+hyperagent audit contract --address 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb --network hyperion
+
+# Batch audit all contracts in a directory
+hyperagent audit batch --directory ./contracts --recursive
+
+# Batch audit from a file list
+hyperagent audit batch --file contracts.txt --output ./audit-reports
+
+# View audit report
+hyperagent audit report --report audit-reports/MyToken_audit.json
 ```
 
 ### Deploy a Custom Contract
