@@ -23,6 +23,7 @@ from cli.commands.verify import verify_group
 from cli.commands.monitor import monitor_group
 from cli.commands.config import config_group
 from cli.commands.workflow import workflow_group
+from cli.commands.test_rag import test_rag_command
 from cli.utils.health import health_check
 from cli.utils.version import show_version
 
@@ -67,6 +68,11 @@ def health():
 def version():
     """Show version information"""
     show_version()
+
+@cli.command()
+def test_rag():
+    """Test RAG connections (Obsidian, IPFS, Local)"""
+    test_rag_command()
 
 if __name__ == '__main__':
     cli()

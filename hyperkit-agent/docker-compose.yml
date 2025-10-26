@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  mcp-obsidian:
+    image: ghcr.io/oleksandrkucherenko/obsidian-mcp:latest
+    container_name: mcp-obsidian
+    restart: unless-stopped
+    environment:
+      - API_KEY=${OBSIDIAN_API_KEY}
+      - API_HOST=host.docker.internal  # Windows/Mac
+      # For Linux: API_HOST=172.17.0.1
+      - API_PORT=27124
+      - DEBUG=mcp:*
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Linux only
+    ports:
+      - "3333:3333"
+    networks:
+      - hyperkit-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  hyperkit-network:
+    driver: bridge

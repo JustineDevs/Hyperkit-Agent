@@ -1,571 +1,319 @@
 """
-Enhanced Obsidian RAG Integration for Knowledge Base
-Uses Obsidian vault as a markdown-based knowledge repository with API support
+Enhanced Obsidian RAG Service with MCP Support
+
+This service provides integration with Obsidian vaults through:
+1. Local REST API plugin
+2. MCP (Model Context Protocol) server
+3. Direct file system access (fallback)
+
+Supports both local and Docker-based MCP setups.
 """
 
 import os
-import logging
-import asyncio
-from pathlib import Path
-from typing import List, Dict, Any, Optional
 import json
-
-# LangChain is now completely optional - we use simple MCP instead
-LANGCHAIN_AVAILABLE = False
-
-try:
-    from services.obsidian_api import ObsidianAPI
-    from .defi_patterns import defi_patterns
-    from services.mcp.simple_mcp_client import get_simple_mcp_client
-
-    OBSIDIAN_API_AVAILABLE = True
-except ImportError:
-    OBSIDIAN_API_AVAILABLE = False
-    defi_patterns = None
-
-try:
-    from services.mcp.obsidian_mcp_client import ObsidianMCPClient
-
-    OBSIDIAN_MCP_AVAILABLE = True
-except ImportError:
-    OBSIDIAN_MCP_AVAILABLE = False
+import logging
+import requests
+import asyncio
+from typing import Dict, List, Optional, Any
+from pathlib import Path
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 
 class ObsidianRAGEnhanced:
-    """Enhanced RAG system using Obsidian vault as knowledge base with API support."""
-
-    def __init__(
-        self,
-        vault_path: str = "~/hyperkit-kb",
-        use_api: bool = True,
-        api_key: Optional[str] = None,
-        api_url: str = "http://localhost:27124",
-        use_mcp: bool = False,
-        mcp_config: Optional[Dict[str, Any]] = None,
-    ):
+    """
+    Enhanced Obsidian RAG service with MCP support.
+    
+    Features:
+    - Local REST API integration
+    - MCP server support (local and Docker)
+    - Intelligent content retrieval
+    - Connection testing and validation
+    - Fallback mechanisms
+    """
+    
+    def __init__(self, vault_path: str = "", use_mcp: bool = True, mcp_config: dict = None):
         """
-        Initialize Enhanced Obsidian RAG system.
-
+        Initialize Obsidian RAG service.
+        
         Args:
-            vault_path: Path to Obsidian vault
-            use_api: Whether to use Obsidian API (if available)
-            api_key: Obsidian API key
-            api_url: Obsidian API URL
+            vault_path: Path to Obsidian vault (fallback)
+            use_mcp: Whether to use MCP server
+            mcp_config: MCP configuration overrides
         """
-        self.vault_path = Path(vault_path).expanduser()
-        self.vectorstore = None
-        self.documents = []
-        self.use_api = use_api and OBSIDIAN_API_AVAILABLE
-        self.api_client = None
-        self.use_mcp = use_mcp and OBSIDIAN_MCP_AVAILABLE
-        self.mcp_client = None
+        self.use_mcp = use_mcp
+        self.vault_path = vault_path or os.getenv("OBSIDIAN_VAULT_PATH", "")
         self.mcp_config = mcp_config or {}
-
-        # Initialize API client if requested and available
-        if self.use_api and api_key:
-            try:
-                self.api_client = ObsidianAPI(api_key, api_url)
-                if self.api_client.test_connection():
-                    logger.info("Connected to Obsidian API successfully")
-                else:
-                    logger.warning(
-                        "Failed to connect to Obsidian API, falling back to file-based RAG"
-                    )
-                    self.use_api = False
-            except Exception as e:
-                logger.warning(
-                    f"Obsidian API initialization failed: {e}, falling back to file-based RAG"
-                )
-                self.use_api = False
-
-        # Initialize MCP client if requested and available
-        if self.use_mcp and self.mcp_config:
-            try:
-                # Use simple MCP client instead of Docker-based
-                self.mcp_client = get_simple_mcp_client(
-                    api_key=self.mcp_config.get('api_key', ''),
-                    base_url=self.mcp_config.get('api_url', 'http://localhost:27124')
-                )
-                logger.info("Simple MCP client initialized")
-            except Exception as e:
-                logger.warning(f"Failed to initialize simple MCP client: {e}. Using API-based RAG.")
-                self.use_mcp = False
-
-        # Set up RAG system - prioritize simple MCP, then API, then DeFi patterns only
-        if self.use_mcp and self.mcp_client:
-            self._setup_simple_mcp_rag()
-        elif self.use_api and OBSIDIAN_API_AVAILABLE:
-            self._setup_api_rag()
+        
+        # MCP Configuration
+        if use_mcp:
+            self._setup_mcp_connection()
         else:
-            # Fallback to DeFi patterns only
-            self.documents = []
-            logger.info("Using DeFi patterns only (no external RAG system available)")
-
-        logger.info(
-            f"Enhanced Obsidian RAG initialized with {'Simple MCP' if self.use_mcp else 'API' if self.use_api else 'DeFi Patterns'} method"
-        )
-
-    def _setup_simple_mcp_rag(self):
-        """Set up RAG using simple MCP client."""
+            self._setup_direct_access()
+    
+    def _setup_mcp_connection(self):
+        """Setup MCP connection (local or Docker)."""
         try:
-            # Load all knowledge base content from simple MCP
-            self.documents = self._load_documents_from_simple_mcp()
-            logger.info(f"Simple MCP RAG set up with {len(self.documents)} documents")
+            # Get configuration from environment
+            self.api_key = os.getenv("OBSIDIAN_API_KEY")
+            self.mcp_enabled = os.getenv("MCP_ENABLED", "false").lower() == "true"
+            self.mcp_docker = os.getenv("MCP_DOCKER", "false").lower() == "true"
+            
+            if not self.api_key:
+                raise ValueError("OBSIDIAN_API_KEY not set in .env")
+            
+            # Determine API base URL
+            if self.mcp_docker:
+                # Docker setup
+                mcp_host = os.getenv("MCP_HOST", "localhost")
+                mcp_port = os.getenv("MCP_PORT", "3333")
+                self.api_base_url = f"http://{mcp_host}:{mcp_port}"
+                logger.info(f"Using Docker MCP server: {self.api_base_url}")
+            else:
+                # Local setup
+                self.api_base_url = os.getenv("OBSIDIAN_API_BASE_URL", "http://localhost:27124")
+                logger.info(f"Using local Obsidian REST API: {self.api_base_url}")
+            
+            # Test connection
+            self._test_connection()
+            
         except Exception as e:
-            logger.error(f"Failed to set up simple MCP RAG: {e}")
-            self.documents = []
-
-    def _setup_mcp_rag(self):
-        """Set up RAG using MCP Docker client (deprecated)."""
+            logger.error(f"Failed to setup MCP connection: {e}")
+            logger.warning("Falling back to direct file access")
+            self._setup_direct_access()
+    
+    def _setup_direct_access(self):
+        """Setup direct file system access as fallback."""
+        self.use_mcp = False
+        self.api_base_url = None
+        self.api_key = None
+        
+        if not self.vault_path or not Path(self.vault_path).exists():
+            logger.warning("No valid vault path configured for direct access")
+            return
+        
+        logger.info(f"Using direct file access: {self.vault_path}")
+    
+    def _test_connection(self):
+        """Test Obsidian API connection."""
         try:
-            # Load all knowledge base content from MCP (synchronous fallback)
-            self.documents = self._load_documents_from_mcp_sync()
-            logger.info(f"MCP Docker RAG set up with {len(self.documents)} documents")
-        except Exception as e:
-            logger.error(f"Failed to set up MCP RAG: {e}")
-            self.documents = []
-
-    def _setup_api_rag(self):
-        """Set up RAG using Obsidian API."""
-        try:
-            # Load all knowledge base content
-            self.documents = self._load_documents_from_api()
-            logger.info(f"Loaded {len(self.documents)} documents from Obsidian API")
-        except Exception as e:
-            logger.error(f"Failed to set up API RAG: {e}")
-            self.documents = []
-
-    def _setup_langchain_rag(self):
-        """Set up RAG using LangChain components."""
-        try:
-            if not self.vault_path.exists():
-                logger.warning(f"Obsidian vault not found at {self.vault_path}")
-                return
-
-            # Use free local embeddings
-            self.embeddings = HuggingFaceEmbeddings(
-                model_name="sentence-transformers/all-MiniLM-L6-v2"
+            headers = {"Authorization": f"Bearer {self.api_key}"}
+            
+            # Test basic connection
+            response = requests.get(
+                f"{self.api_base_url}/vault/",
+                headers=headers,
+                timeout=5
             )
-
-            # Load documents from vault
-            self.loader = ObsidianLoader(str(self.vault_path))
-            self.documents = self.loader.load()
-
-            # Split documents into chunks
-            self.splitter = MarkdownTextSplitter(chunk_size=1000, chunk_overlap=200)
-            self.chunks = self.splitter.split_documents(self.documents)
-
-            # Create vector store
-            self.vectorstore = Chroma.from_documents(
-                documents=self.chunks,
-                embedding=self.embeddings,
-                persist_directory="./data/obsidian_vectors",
-            )
-
-            logger.info(f"LangChain RAG set up with {len(self.chunks)} chunks")
-        except Exception as e:
-            logger.error(f"Failed to set up LangChain RAG: {e}")
-            self.documents = []
-
-    # File-based RAG removed - using cloud-based MCP Docker and API only
-
-    async def _load_documents_from_mcp(self) -> List[Dict[str, Any]]:
-        """Load documents from MCP Docker client."""
-        if not self.mcp_client:
-            return []
-
-        try:
-            # Get all notes from MCP
-            notes = await self.mcp_client.get_all_notes()
-            documents = []
-
-            for note in notes:
-                file_path = note.get("path", "")
-                # Only include knowledge base files
-                if any(
-                    folder in file_path
-                    for folder in ["Contracts/", "Audits/", "Templates/", "Prompts/"]
-                ):
-                    content = await self.mcp_client.get_note_content(file_path)
-                    if content:
-                        documents.append(
-                            {
-                                "page_content": content,
-                                "metadata": {
-                                    "source": file_path,
-                                    "name": note.get("name", ""),
-                                    "size": len(content),
-                                },
-                            }
-                        )
-
-            return documents
-        except Exception as e:
-            logger.error(f"Failed to load documents from MCP: {e}")
-            return []
-
-    def _load_documents_from_simple_mcp(self) -> List[Dict[str, Any]]:
-        """Load documents from simple MCP client."""
-        try:
-            if not self.mcp_client:
-                return []
             
-            # Get notes from simple MCP
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                notes = loop.run_until_complete(self.mcp_client.get_notes(limit=1000))
-                return notes
-            finally:
-                loop.close()
-            
+            if response.status_code == 200:
+                logger.info("✅ Obsidian MCP connection successful")
+                return True
+            else:
+                raise ConnectionError(f"API returned {response.status_code}: {response.text}")
+                
         except Exception as e:
-            logger.error(f"Failed to load documents from simple MCP: {e}")
-            return []
-
-    def _load_documents_from_mcp_sync(self) -> List[Dict[str, Any]]:
-        """Load documents from MCP Docker client (synchronous version)."""
-        try:
-            # For now, return empty documents to avoid async issues
-            # In a real implementation, you would make synchronous HTTP calls
-            logger.info("MCP Docker RAG initialized (async disabled for compatibility)")
-            return []
-            
-        except Exception as e:
-            logger.error(f"Failed to load documents from MCP: {e}")
-            return []
-
-    def _load_documents_from_api(self) -> List[Dict[str, Any]]:
-        """Load documents from Obsidian API."""
-        if not self.api_client:
-            return []
-
-        try:
-            # Get all notes from the vault
-            notes = self.api_client.get_all_notes()
-            documents = []
-
-            for note in notes:
-                file_path = note.get("path", "")
-                # Only include knowledge base files
-                if any(
-                    folder in file_path
-                    for folder in ["Contracts/", "Audits/", "Templates/", "Prompts/"]
-                ):
-                    content = self.api_client.get_note_content(file_path)
-                    if content:
-                        documents.append(
-                            {
-                                "page_content": content,
-                                "metadata": {
-                                    "source": file_path,
-                                    "title": note.get("name", ""),
-                                    "created": note.get("created", ""),
-                                    "modified": note.get("modified", ""),
-                                },
-                            }
-                        )
-
-            return documents
-        except Exception as e:
-            logger.error(f"Failed to load documents from API: {e}")
-            return []
-
-    def retrieve(self, query: str, k: int = 3) -> str:
+            logger.error(f"❌ Obsidian MCP connection failed: {e}")
+            raise
+    
+    async def retrieve(self, query: str, max_results: int = 5) -> str:
         """
-        Retrieve relevant context for a query.
-
+        Retrieve relevant content from Obsidian vault.
+        
         Args:
             query: Search query
-            k: Number of documents to retrieve
-
+            max_results: Maximum number of results to return
+            
         Returns:
-            Retrieved context as string
+            Concatenated relevant content
         """
-        # Get DeFi patterns context
-        defi_context = ""
-        if defi_patterns:
-            defi_context = defi_patterns.get_patterns_for_query(query)
-        
-        # Get other context sources (prioritize working APIs)
-        other_context = ""
-        if self.use_mcp and self.mcp_client:
-            other_context = self._retrieve_from_simple_mcp(query, k)
-        elif self.use_api and self.api_client:
-            other_context = self._retrieve_from_api(query, k)
-        else:
-            other_context = self._retrieve_simple(query, k)
-        
-        # Combine contexts
-        contexts = [ctx for ctx in [defi_context, other_context] if ctx.strip()]
-        return "\n\n---\n\n".join(contexts) if contexts else ""
-
-    def _retrieve_from_simple_mcp(self, query: str, k: int) -> str:
-        """Retrieve using simple MCP client."""
         try:
-            if not self.mcp_client:
-                return ""
-            
-            # Search notes using simple MCP
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                results = loop.run_until_complete(self.mcp_client.search_notes(query, limit=k))
-                if results:
-                    context_parts = []
-                    for result in results[:k]:
-                        content = result.get('content', '')
-                        if content:
-                            context_parts.append(content)
-                    return "\n\n".join(context_parts)
-                return ""
-            finally:
-                loop.close()
-            
+            if self.use_mcp:
+                return await self._retrieve_via_mcp(query, max_results)
+            else:
+                return await self._retrieve_via_filesystem(query, max_results)
+                
         except Exception as e:
-            logger.error(f"Simple MCP retrieval failed: {e}")
-            return ""
-
-    def _retrieve_from_mcp(self, query: str, k: int) -> str:
-        """Retrieve using MCP Docker client (deprecated)."""
+            logger.error(f"Content retrieval failed: {e}")
+            return f"Error retrieving content: {e}"
+    
+    async def _retrieve_via_mcp(self, query: str, max_results: int) -> str:
+        """Retrieve content via MCP server."""
         try:
-            # For now, return empty context to avoid async issues
-            # In a real implementation, you would make synchronous HTTP calls
-            logger.info("MCP retrieval disabled (async compatibility)")
-            return ""
+            headers = {"Authorization": f"Bearer {self.api_key}"}
             
+            # Search for relevant files
+            search_params = {
+                "query": query,
+                "limit": max_results,
+                "include_content": True
+            }
+            
+            response = requests.get(
+                f"{self.api_base_url}/search",
+                headers=headers,
+                params=search_params,
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                raise Exception(f"Search failed: {response.status_code}")
+            
+            results = response.json()
+            
+            # Extract content from results
+            content_parts = []
+            for result in results.get("results", []):
+                file_path = result.get("path", "")
+                content = result.get("content", "")
+                
+                if content:
+                    content_parts.append(f"## {file_path}\n{content}\n")
+            
+            if content_parts:
+                combined_content = "\n".join(content_parts)
+                logger.info(f"Retrieved {len(content_parts)} files via MCP")
+                return combined_content
+            else:
+                logger.warning("No content found via MCP")
+                return "No relevant content found"
+                
         except Exception as e:
             logger.error(f"MCP retrieval failed: {e}")
-            return ""
-
-    def _retrieve_from_api(self, query: str, k: int) -> str:
-        """Retrieve using loaded documents from API."""
-        if not self.documents:
-            return ""
-
+            raise
+    
+    async def _retrieve_via_filesystem(self, query: str, max_results: int) -> str:
+        """Retrieve content via direct file system access."""
         try:
-            # Use simple keyword-based search on loaded documents
-            relevant_docs = []
-            query_lower = query.lower()
-
-            for doc in self.documents:
-                content = doc.get("page_content", "")
-                if query_lower in content.lower():
-                    relevant_docs.append(content)
-                    if len(relevant_docs) >= k:
-                        break
-
-            # If no exact matches, get documents with partial matches
-            if not relevant_docs:
-                for doc in self.documents:
-                    content = doc.get("page_content", "")
-                    # Check for partial matches with individual words
-                    query_words = query_lower.split()
-                    if any(
-                        word in content.lower() for word in query_words if len(word) > 3
-                    ):
-                        relevant_docs.append(content)
-                        if len(relevant_docs) >= k:
+            if not self.vault_path or not Path(self.vault_path).exists():
+                return "Vault path not configured or accessible"
+            
+            vault_path = Path(self.vault_path)
+            content_parts = []
+            
+            # Search through markdown files
+            for md_file in vault_path.rglob("*.md"):
+                try:
+                    content = md_file.read_text(encoding='utf-8')
+                    
+                    # Simple keyword matching
+                    if any(keyword.lower() in content.lower() for keyword in query.split()):
+                        content_parts.append(f"## {md_file.name}\n{content[:1000]}...\n")
+                        
+                        if len(content_parts) >= max_results:
                             break
-
-            return "\n\n---\n\n".join(relevant_docs)
-        except Exception as e:
-            logger.error(f"API retrieval failed: {e}")
-            return self._retrieve_simple(query, k)
-
-    def _retrieve_with_vectorstore(self, query: str, k: int) -> str:
-        """Retrieve using vector store similarity search."""
-        try:
-            docs = self.vectorstore.similarity_search(query, k=k)
-            return "\n\n---\n\n".join([doc.page_content for doc in docs])
-        except Exception as e:
-            logger.error(f"Vector store retrieval failed: {e}")
-            return self._retrieve_simple(query, k)
-
-    def _retrieve_simple(self, query: str, k: int) -> str:
-        """Simple keyword-based retrieval."""
-        query_lower = query.lower()
-        relevant_docs = []
-
-        for doc in self.documents:
-            content = doc.get("page_content", "")
-            if query_lower in content.lower():
-                relevant_docs.append(content)
-                if len(relevant_docs) >= k:
-                    break
-
-        return "\n\n---\n\n".join(relevant_docs)
-
-    def update_vault(self):
-        """Update vault content."""
-        if self.use_api:
-            self.documents = self._load_documents_from_api()
-            logger.info(f"Vault updated via API: {len(self.documents)} documents")
-        else:
-            if LANGCHAIN_AVAILABLE:
-                self._setup_langchain_rag()
+                            
+                except Exception as e:
+                    logger.warning(f"Error reading {md_file}: {e}")
+                    continue
+            
+            if content_parts:
+                combined_content = "\n".join(content_parts)
+                logger.info(f"Retrieved {len(content_parts)} files via filesystem")
+                return combined_content
             else:
-                self._setup_simple_rag()
-
-    def get_contract_templates(self) -> List[Dict[str, Any]]:
-        """Get contract templates from the vault."""
-        if self.use_api and self.api_client:
-            return self.api_client.get_contract_templates()
-        else:
-            return self._get_documents_by_folder("Templates/")
-
-    def get_audit_checklists(self) -> List[Dict[str, Any]]:
-        """Get audit checklists from the vault."""
-        if self.use_api and self.api_client:
-            return self.api_client.get_audit_checklists()
-        else:
-            return self._get_documents_by_folder("Audits/")
-
-    def get_prompt_templates(self) -> List[Dict[str, Any]]:
-        """Get prompt templates from the vault."""
-        if self.use_api and self.api_client:
-            return self.api_client.get_prompt_templates()
-        else:
-            return self._get_documents_by_folder("Prompts/")
-
-    def get_contract_patterns(self) -> List[Dict[str, Any]]:
-        """Get contract patterns from the vault."""
-        if self.use_api and self.api_client:
-            return self.api_client.get_contract_patterns()
-        else:
-            return self._get_documents_by_folder("Contracts/")
-
-    def _get_documents_by_folder(self, folder_path: str) -> List[Dict[str, Any]]:
-        """Get documents from a specific folder."""
-        folder_docs = []
-        for doc in self.documents:
-            source = doc.get("metadata", {}).get("source", "")
-            if folder_path in source:
-                folder_docs.append(doc)
-        return folder_docs
-
-    def create_contract_note(
-        self,
-        contract_name: str,
-        contract_code: str,
-        description: str = "",
-        category: str = "Custom",
-    ) -> bool:
-        """Create a contract note in the vault."""
-        if self.use_api and self.api_client:
-            return self.api_client.create_contract_note(
-                contract_name, contract_code, description, category
-            )
-        else:
-            logger.warning("Contract note creation only available with API mode")
-            return False
-
-    def create_audit_report(
-        self, contract_name: str, audit_results: Dict[str, Any]
-    ) -> bool:
-        """Create an audit report in the vault."""
-        if self.use_api and self.api_client:
-            return self.api_client.create_audit_report(contract_name, audit_results)
-        else:
-            logger.warning("Audit report creation only available with API mode")
-            return False
-
-    def create_langchain_agent(self, tools: List = None, system_prompt: str = None) -> Optional[Any]:
-        """
-        Create a LangChain agent for advanced RAG operations
-        
-        Args:
-            tools: List of tools for the agent
-            system_prompt: System prompt for the agent
-            
-        Returns:
-            LangChain agent or None if not available
-        """
-        if not LANGCHAIN_AVAILABLE:
-            logger.warning("LangChain not available for agent creation")
-            return None
-        
-        try:
-            # Default tools for RAG operations
-            if tools is None:
-                tools = [
-                    self._create_search_tool(),
-                    self._create_retrieve_tool(),
-                    self._create_stats_tool()
-                ]
-            
-            # Default system prompt
-            if system_prompt is None:
-                system_prompt = """You are a helpful assistant specialized in smart contract development and DeFi protocols. 
-                You have access to a knowledge base of smart contract patterns, security best practices, and DeFi protocols.
-                Use the available tools to search and retrieve relevant information from the knowledge base."""
-            
-            # Create agent with Google Gemini instead of OpenAI
-            from core.llm.router import HybridLLMRouter
-            llm_router = HybridLLMRouter()
-            
-            # Use the existing LLM router instead of OpenAI
-            agent = create_agent(
-                model="gemini:gemini-1.5-flash",  # Using Google Gemini model
-                tools=tools,
-                system_prompt=system_prompt
-            )
-            
-            return agent
-            
+                logger.warning("No content found via filesystem")
+                return "No relevant content found"
+                
         except Exception as e:
-            logger.error(f"Failed to create LangChain agent: {e}")
-            return None
+            logger.error(f"Filesystem retrieval failed: {e}")
+            raise
     
-    def _create_search_tool(self):
-        """Create a search tool for the agent"""
-        @tool
-        def search_knowledge_base(query: str) -> str:
-            """Search the knowledge base for relevant information"""
-            return self.retrieve(query, k=5)
-        
-        return search_knowledge_base
+    async def get_vault_info(self) -> Dict[str, Any]:
+        """Get vault information."""
+        try:
+            if self.use_mcp:
+                headers = {"Authorization": f"Bearer {self.api_key}"}
+                response = requests.get(
+                    f"{self.api_base_url}/vault/",
+                    headers=headers,
+                    timeout=5
+                )
+                
+                if response.status_code == 200:
+                    return response.json()
+                else:
+                    raise Exception(f"Failed to get vault info: {response.status_code}")
+            else:
+                # Return filesystem-based info
+                vault_path = Path(self.vault_path)
+                if vault_path.exists():
+                    md_files = list(vault_path.rglob("*.md"))
+                    return {
+                        "path": str(vault_path),
+                        "file_count": len(md_files),
+                        "access_method": "filesystem"
+                    }
+                else:
+                    return {"error": "Vault path not accessible"}
+                    
+        except Exception as e:
+            logger.error(f"Failed to get vault info: {e}")
+            return {"error": str(e)}
     
-    def _create_retrieve_tool(self):
-        """Create a retrieve tool for the agent"""
-        @tool
-        def retrieve_document_content(query: str, limit: int = 3) -> str:
-            """Retrieve specific document content from the knowledge base"""
-            return self.retrieve(query, k=limit)
+    def test_connection(self) -> Dict[str, Any]:
+        """Test connection and return status."""
+        try:
+            if self.use_mcp:
+                self._test_connection()
+                vault_info = asyncio.run(self.get_vault_info())
+                return {
+                    "status": "success",
+                    "method": "mcp",
+                    "api_url": self.api_base_url,
+                    "vault_info": vault_info
+                }
+            else:
+                vault_path = Path(self.vault_path)
+                if vault_path.exists():
+                    md_files = list(vault_path.rglob("*.md"))
+                    return {
+                        "status": "success",
+                        "method": "filesystem",
+                        "vault_path": str(vault_path),
+                        "file_count": len(md_files)
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "method": "filesystem",
+                        "error": "Vault path not accessible"
+                    }
+                    
+        except Exception as e:
+            return {
+                "status": "error",
+                "method": "mcp" if self.use_mcp else "filesystem",
+                "error": str(e)
+            }
+
+
+# Convenience function for easy testing
+async def test_obsidian_rag():
+    """Test function for Obsidian RAG connection."""
+    try:
+        rag = ObsidianRAGEnhanced(use_mcp=True)
         
-        return retrieve_document_content
-    
-    def _create_stats_tool(self):
-        """Create a stats tool for the agent"""
-        @tool
-        def get_knowledge_base_info() -> str:
-            """Get information about the knowledge base"""
-            stats = self.get_knowledge_base_stats()
-            return f"Knowledge base contains {stats['total_documents']} documents using {stats['method']} method"
+        # Test connection
+        connection_status = rag.test_connection()
+        print(f"Connection Status: {connection_status}")
         
-        return get_knowledge_base_info
+        if connection_status["status"] == "success":
+            # Test retrieval
+            result = await rag.retrieve("test query", max_results=3)
+            print(f"Retrieval Test: {len(result)} characters returned")
+            return True
+        else:
+            print(f"Connection failed: {connection_status}")
+            return False
+            
+    except Exception as e:
+        print(f"Test failed: {e}")
+        return False
 
-    def get_knowledge_base_stats(self) -> Dict[str, Any]:
-        """Get statistics about the knowledge base."""
-        stats = {
-            "total_documents": len(self.documents),
-            "method": "MCP-based" if self.use_mcp else ("API-based" if self.use_api else "File-based"),
-            "langchain_available": LANGCHAIN_AVAILABLE,
-            "api_available": OBSIDIAN_API_AVAILABLE,
-            "mcp_available": OBSIDIAN_MCP_AVAILABLE,
-            "mcp_enabled": self.use_mcp,
-            "mcp_running": self.mcp_client.is_running if self.mcp_client else False,
-        }
 
-        if self.use_api and self.api_client:
-            try:
-                vault_info = self.api_client.get_vault_info()
-                stats["vault_info"] = vault_info
-            except Exception as e:
-                logger.error(f"Failed to get vault info: {e}")
-
-        return stats
+if __name__ == "__main__":
+    # Run test
+    success = asyncio.run(test_obsidian_rag())
+    print(f"✅ Obsidian RAG test: {'PASSED' if success else 'FAILED'}")
