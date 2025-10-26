@@ -151,19 +151,29 @@ Copy and paste these natural language prompts:
 ```bash
 # ERC20 Token
 hyperagent workflow run "Create a simple ERC20 token with 1M supply" --network hyperion
+```
 
+```bash
 # Gaming Token
 hyperagent workflow run "Create a gaming token with rewards and staking" --network hyperion
+```
 
+```bash
 # NFT Collection
 hyperagent workflow run "Create an ERC721 NFT collection with 10K supply" --network metis
+```
 
+```bash
 # DAO Governance
 hyperagent workflow run "Create a DAO with proposal and voting system" --network hyperion
+```
 
+```bash
 # DeFi Staking
 hyperagent workflow run "Create a staking contract with 10% APY" --network metis
+```
 
+```bash
 # Multisig Wallet
 hyperagent workflow run "Create a 2-of-3 multisig wallet" --network hyperion
 ```

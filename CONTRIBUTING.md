@@ -1,179 +1,339 @@
-# Contributing to HyperKit
+# Contributing to HyperKit AI Agent
 
-Thank you for your interest in contributing to HyperKit! This document provides guidelines for contributing to the project.
+Thank you for your interest in contributing to HyperKit! This document provides guidelines and instructions for contributing.
 
-## 🤝 How to Contribute
+## 📋 Table of Contents
 
-### **Ways to Contribute**
-- 🐛 **Bug Reports**: Report issues and bugs
-- 💡 **Feature Requests**: Suggest new features
-- 📝 **Documentation**: Improve documentation
-- 🔧 **Code Contributions**: Submit code changes
-- 🧪 **Testing**: Help with testing and QA
+- [Code of Conduct](#code-of-conduct)
+- [Getting Started](#getting-started)
+- [Development Workflow](#development-workflow)
+- [Code Standards](#code-standards)
+- [Testing Requirements](#testing-requirements)
+- [Pull Request Process](#pull-request-process)
+- [Security Guidelines](#security-guidelines)
 
-### **Getting Started**
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
+## 🤝 Code of Conduct
 
-## 📋 Development Guidelines
+- Be respectful and inclusive
+- Provide constructive feedback
+- Focus on what's best for the community
+- Show empathy towards other community members
 
-### **Code Standards**
-- Follow PEP 8 for Python code
-- Use type hints for function parameters and returns
-- Write comprehensive docstrings
-- Maintain test coverage above 80%
+## 🚀 Getting Started
 
-### **Commit Message Format**
-```
-type(scope): description
+### Prerequisites
 
-[optional body]
+- Python 3.10+
+- Node.js 18+ (for versioning scripts)
+- Foundry (for Solidity development)
+- Git
 
-[optional footer]
-```
+### Setup
 
-**Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
-
-**Examples**:
-- `feat(generation): add smart naming system`
-- `fix(deployment): resolve RPC timeout issues`
-- `docs(api): update CLI reference`
-
-### **Pull Request Process**
-1. Ensure your branch is up to date with main
-2. Run all tests: `python -m pytest`
-3. Check code style: `python -m flake8`
-4. Update documentation if needed
-5. Request review from maintainers
-
-## 🧪 Testing
-
-### **Running Tests**
 ```bash
-# Unit tests
-python -m pytest tests/unit/
+# Clone the repository
+git clone https://github.com/JustineDevs/Hyperkit-Agent.git
+cd Hyperkit-Agent/hyperkit-agent
 
-# Integration tests
-python -m pytest tests/integration/
+# Install dependencies
+pip install -e .[dev]
 
-# End-to-end tests
-python -m pytest tests/e2e/
+# Install Foundry (if not already installed)
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
 
-# All tests
-python -m pytest
+# Install OpenZeppelin contracts
+forge install OpenZeppelin/openzeppelin-contracts
+
+# Run tests to verify setup
+pytest tests/ -v
+forge test
 ```
 
-### **Test Coverage**
+## 🔄 Development Workflow
+
+### Branch Strategy
+
+- `main` - Production-ready code
+- `develop` - Integration branch for features
+- `feature/*` - New features
+- `fix/*` - Bug fixes
+- `docs/*` - Documentation updates
+
+### Making Changes
+
+1. **Fork the repository**
+2. **Create a feature branch**:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+3. **Make your changes**
+4. **Write/update tests**
+5. **Run the full test suite**:
+   ```bash
+   pytest tests/ -v --cov
+   forge test
+   ```
+6. **Commit your changes**:
+   ```bash
+   git commit -m "feat: add awesome feature"
+   ```
+7. **Push to your fork**:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+8. **Create a Pull Request**
+
+## 📝 Code Standards
+
+### Python Code Style
+
+- Follow PEP 8
+- Use Black for formatting: `black hyperkit-agent/`
+- Use isort for imports: `isort hyperkit-agent/`
+- Use type hints
+- Maximum line length: 120 characters
+
+### Solidity Code Style
+
+- Follow Solidity style guide
+- Use Solidity 0.8.20+
+- Include NatSpec comments
+- Use named imports from OpenZeppelin
+- Run `forge fmt` before committing
+
+### Naming Conventions
+
+- **Python**: `snake_case` for functions/variables, `PascalCase` for classes
+- **Solidity**: `PascalCase` for contracts, `camelCase` for functions
+- **Files**: `kebab-case` for file names
+
+### Documentation
+
+- Document all public APIs
+- Include docstrings for all functions/classes
+- Update README.md if adding new features
+- Add examples for complex functionality
+
+## 🧪 Testing Requirements
+
+### Required Tests
+
+All contributions must include:
+
+1. **Unit Tests**: Test individual functions/methods
+2. **Integration Tests**: Test component interactions
+3. **Security Tests**: For security-sensitive code
+4. **Contract Tests**: For Solidity changes
+
+### Test Coverage
+
+- Minimum 80% code coverage for Python
+- All critical paths must be tested
+- Include edge cases and error conditions
+
+### Running Tests
+
 ```bash
-# Generate coverage report
-python -m pytest --cov=hyperkit-agent --cov-report=html
+# Run Python tests
+pytest tests/ -v --cov=hyperkit-agent
+
+# Run Solidity tests
+cd hyperkit-agent && forge test -vvv
+
+# Run specific test file
+pytest tests/test_specific.py -v
+
+# Run with debugging
+pytest tests/ -v -s
 ```
 
-## 📚 Documentation
+## 🔀 Pull Request Process
 
-### **Documentation Types**
-- **Public Docs** (`/docs/`): User-facing documentation
-- **Developer Docs** (`/hyperkit-agent/docs/`): Technical documentation
-- **Code Comments**: Inline code documentation
-- **API Docs**: Auto-generated from docstrings
+### Before Submitting
 
-### **Writing Documentation**
-- Use clear, concise language
-- Include examples and code snippets
-- Keep documentation up to date
-- Follow the existing style guide
+- [ ] All tests pass
+- [ ] Code is formatted (black, isort)
+- [ ] No linter errors (flake8)
+- [ ] Documentation is updated
+- [ ] Commit messages follow convention
+- [ ] No merge conflicts with main
+
+### PR Title Format
+
+Use conventional commits:
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `test:` - Test additions/changes
+- `refactor:` - Code refactoring
+- `chore:` - Maintenance tasks
+
+Example: `feat: add batch audit functionality`
+
+### PR Description Template
+
+```markdown
+## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+Describe testing performed
+
+## Checklist
+- [ ] Tests pass
+- [ ] Code formatted
+- [ ] Documentation updated
+- [ ] No security issues
+```
+
+### Review Process
+
+1. Automated checks must pass (CI/CD)
+2. At least one maintainer approval required
+3. No unresolved conversations
+4. All requested changes addressed
+
+## 🔒 Security Guidelines
+
+### Security Best Practices
+
+- Never commit secrets or API keys
+- Use environment variables for sensitive data
+- Follow principle of least privilege
+- Validate all user inputs
+- Use parameterized queries
+- Keep dependencies updated
+
+### Reporting Security Issues
+
+**DO NOT** open a public issue for security vulnerabilities.
+
+Instead, email: security@hyperkit.dev
+
+Include:
+- Description of the vulnerability
+- Steps to reproduce
+- Potential impact
+- Suggested fix (if any)
+
+### Security Testing
+
+Run security scans before submitting:
+
+```bash
+# Python security scan
+bandit -r hyperkit-agent/
+
+# Dependency check
+safety check
+
+# Solidity security analysis
+cd hyperkit-agent && slither .
+```
+
+## 📦 Adding Dependencies
+
+### Python Dependencies
+
+1. Add to `pyproject.toml` under `dependencies`
+2. Pin version ranges appropriately
+3. Test with `pip install -e .`
+4. Update `requirements.txt`
+5. Document why the dependency is needed
+
+### Solidity Dependencies
+
+1. Use `forge install` for libraries
+2. Update `foundry.toml` remappings
+3. Document in README
+4. Ensure compatibility with existing contracts
 
 ## 🐛 Bug Reports
 
-### **Before Reporting**
-1. Check existing issues
-2. Ensure you're using the latest version
-3. Try to reproduce the issue
-4. Gather relevant information
+### Before Reporting
 
-### **Bug Report Template**
+- Check existing issues
+- Verify it's reproducible
+- Test on latest version
+
+### Bug Report Template
+
 ```markdown
-**Bug Description**
-A clear description of the bug.
+**Describe the bug**
+Clear description
 
-**Steps to Reproduce**
-1. Go to '...'
-2. Click on '...'
-3. See error
-
-**Expected Behavior**
-What you expected to happen.
-
-**Actual Behavior**
-What actually happened.
+**To Reproduce**
+Steps to reproduce:
+1. Step 1
+2. Step 2
+3. Expected vs actual
 
 **Environment**
-- OS: [e.g., Windows 10]
-- Python version: [e.g., 3.9.0]
-- HyperKit version: [e.g., 1.0.0]
+- OS: [e.g., Ubuntu 22.04]
+- Python: [e.g., 3.11]
+- Version: [e.g., 4.1.11]
 
-**Additional Context**
-Any other relevant information.
+**Additional context**
+Any other relevant information
 ```
 
 ## 💡 Feature Requests
 
-### **Feature Request Template**
-```markdown
-**Feature Description**
-A clear description of the feature.
+### Feature Request Template
 
-**Use Case**
-Why is this feature needed?
+```markdown
+**Problem Statement**
+What problem does this solve?
 
 **Proposed Solution**
-How should this feature work?
+How should it work?
 
-**Alternatives**
-Other solutions you've considered.
+**Alternatives Considered**
+Other approaches you've thought about
 
 **Additional Context**
-Any other relevant information.
+Mockups, examples, etc.
 ```
 
-## 🔒 Security
+## 📊 Performance Guidelines
 
-### **Security Issues**
-For security-related issues, please email security@hyperkit.dev instead of creating a public issue.
+- Profile code for bottlenecks
+- Optimize critical paths
+- Document performance considerations
+- Include benchmarks for performance changes
 
-### **Security Guidelines**
-- Never commit secrets or API keys
-- Use environment variables for sensitive data
-- Follow secure coding practices
-- Report vulnerabilities responsibly
+## 🎓 Learning Resources
 
-## 📞 Community
+- [Solidity Documentation](https://docs.soliditylang.org/)
+- [Web3.py Documentation](https://web3py.readthedocs.io/)
+- [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts/)
+- [Foundry Book](https://book.getfoundry.sh/)
 
-### **Getting Help**
-- 📖 **Documentation**: Check the docs first
-- 💬 **Discussions**: Use GitHub Discussions
-- 🐛 **Issues**: Create an issue for bugs
-- 💡 **Ideas**: Use Discussions for feature ideas
+## 📞 Getting Help
 
-### **Code of Conduct**
-We are committed to providing a welcoming and inclusive environment. Please read and follow our [Code of Conduct](./CODE_OF_CONDUCT.md).
+- GitHub Discussions for questions
+- Discord for real-time chat
+- Documentation for guides
 
 ## 🏆 Recognition
 
-Contributors will be recognized in:
-- CONTRIBUTORS.md file
-- Release notes
-- Project documentation
-- Community acknowledgments
+Contributors will be:
+- Listed in CONTRIBUTORS.md
+- Credited in release notes
+- Recognized in project documentation
 
-## 📄 License
+## 📜 License
 
-By contributing to HyperKit, you agree that your contributions will be licensed under the same license as the project.
+By contributing, you agree that your contributions will be licensed under the MIT License.
 
 ---
 
 Thank you for contributing to HyperKit! 🚀
+
