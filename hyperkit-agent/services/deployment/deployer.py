@@ -10,6 +10,7 @@ from typing import Dict, Any, Optional
 # Import Foundry components
 from .foundry_deployer import FoundryDeployer
 from .foundry_manager import FoundryManager
+from .constructor_parser import ConstructorArgumentParser
 
 logger = logging.getLogger(__name__)
 
@@ -43,15 +44,16 @@ class MultiChainDeployer:
         
         logger.info("✅ MultiChainDeployer initialized with Foundry")
     
-    def deploy(self, contract_source_code: str, rpc_url: str, chain_id: int = 133717, contract_name: str = "Contract") -> dict:
+    def deploy(self, contract_source_code: str, rpc_url: str, chain_id: int = 133717, contract_name: str = "Contract", deployer_address: str = None) -> dict:
         """
-        Deploy contract using Foundry (production-ready)
+        Deploy contract using Foundry with proper constructor argument extraction
         
         Args:
             contract_source_code: Solidity contract code (STRING)
             rpc_url: RPC endpoint URL (STRING)
             chain_id: Blockchain chain ID (INT)
             contract_name: Contract name for deployment
+            deployer_address: Address of the deployer (for constructor args)
         
         Returns:
             {"success": True/False, "transaction_hash": "...", "contract_address": "..."}
@@ -67,11 +69,34 @@ class MultiChainDeployer:
             logger.error(error_msg)
             raise RuntimeError(error_msg)
         
+        # Extract constructor arguments from contract code
+        parser = ConstructorArgumentParser()
+        constructor_args = parser.generate_constructor_args(contract_source_code, deployer_address or "0x0000000000000000000000000000000000000000")
+        
+        # Log what we're using
+        logger.info(f"Constructor args extracted: {constructor_args}")
+        
+        # If ERC20, verify name/symbol match expectations
+        name, symbol = parser.extract_erc20_name_symbol(contract_source_code)
+        if name and symbol:
+            logger.info(f"Deploying ERC20: {name} ({symbol})")
+        
+        # Validate constructor args
+        validation = parser.validate_constructor_args(contract_source_code, constructor_args)
+        if not validation["success"]:
+            logger.error(f"Constructor validation failed: {validation['error']}")
+            return {
+                "success": False,
+                "error": f"Constructor validation failed: {validation['error']}",
+                "validation_details": validation
+            }
+        
         return self.foundry_deployer.deploy(
             contract_source_code=contract_source_code,
             rpc_url=rpc_url,
             chain_id=chain_id,
-            contract_name=contract_name
+            contract_name=contract_name,
+            constructor_args=constructor_args
         )
     
     def get_network_config(self, network_name: str) -> Dict[str, Any]:

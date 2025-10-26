@@ -146,6 +146,24 @@ class ConfigLoader:
         elif os.getenv('PINATA_API_SECRET'):  # Legacy support
             self.config.setdefault('storage', {}).setdefault('pinata', {})['secret_key'] = os.getenv('PINATA_API_SECRET')
         
+        # Obsidian RAG Configuration
+        if os.getenv('OBSIDIAN_API_KEY'):
+            self.config.setdefault('rag', {}).setdefault('obsidian', {})['api_key'] = os.getenv('OBSIDIAN_API_KEY')
+        if os.getenv('OBSIDIAN_API_BASE_URL'):
+            self.config.setdefault('rag', {}).setdefault('obsidian', {})['api_base_url'] = os.getenv('OBSIDIAN_API_BASE_URL')
+        if os.getenv('OBSIDIAN_VAULT_PATH'):
+            self.config.setdefault('rag', {}).setdefault('obsidian', {})['vault_path'] = os.getenv('OBSIDIAN_VAULT_PATH')
+        
+        # MCP Configuration
+        if os.getenv('MCP_ENABLED'):
+            self.config.setdefault('mcp', {})['enabled'] = os.getenv('MCP_ENABLED', 'false').lower() == 'true'
+        if os.getenv('MCP_DOCKER'):
+            self.config.setdefault('mcp', {})['docker'] = os.getenv('MCP_DOCKER', 'false').lower() == 'true'
+        if os.getenv('MCP_HOST'):
+            self.config.setdefault('mcp', {})['host'] = os.getenv('MCP_HOST')
+        if os.getenv('MCP_PORT'):
+            self.config.setdefault('mcp', {})['port'] = os.getenv('MCP_PORT')
+        
         # Explorer API Keys
         if os.getenv('ETHEREUM_EXPLORER_API_KEY'):
             self.config.setdefault('explorers', {})['ethereum'] = os.getenv('ETHEREUM_EXPLORER_API_KEY')

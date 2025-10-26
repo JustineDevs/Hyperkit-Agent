@@ -1,0 +1,36 @@
+{
+  "timestamp": "144364.234",
+  "overall_status": "partial",
+  "components": {
+    "obsidian": {
+      "status": "success",
+      "test_result": true
+    },
+    "enhanced_retriever": {
+      "obsidian": {
+        "status": "success",
+        "method": "filesystem",
+        "vault_path": "C:\\Users\\JustineDevs\\Downloads\\Hyperkit",
+        "file_count": 8
+      },
+      "ipfs": {
+        "status": "not_configured"
+      },
+      "local": {
+        "status": "no_files",
+        "path": "knowledge"
+      }
+    },
+    "configuration": {
+      "obsidian_api_key": true,
+      "obsidian_vault_path": true,
+      "mcp_enabled": true,
+      "mcp_docker": false
+    },
+    "content_retrieval": {
+      "content_length": 3122,
+      "has_content": true,
+      "preview": "## Source 1: Obsidian (Relevance: 0.01)\n## Security-Checklist.md\n# Smart Contract Security Audit Checklist\n\n## Pre-Audit Preparation\n\n### Code Quality\n- [ ] Code follows Solidity style guide\n- [ ] Pro..."
+    }
+  }
+}

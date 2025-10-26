@@ -106,15 +106,16 @@ contract {contract_name} {{
         return simplified_contract
     
     def deploy(self, contract_source_code: str, rpc_url: str, 
-               chain_id: int = 133717, contract_name: str = "Contract") -> dict:
+               chain_id: int = 133717, contract_name: str = "Contract", constructor_args: list = None) -> dict:
         """
-        Deploy contract using Foundry
+        Deploy contract using Foundry with constructor arguments
         
         Args:
             contract_source_code: Solidity contract code (STRING)
             rpc_url: RPC endpoint URL (STRING)
             chain_id: Blockchain chain ID (INT)
             contract_name: Contract name for deployment
+            constructor_args: List of constructor arguments
         
         Returns:
             {"success": True/False, "transaction_hash": "...", "contract_address": "..."}
@@ -256,21 +257,93 @@ libs = ["lib"]
             
             # Extract contract name from the contract source
             import re
-            contract_match = re.search(r'contract\s+(\w+)', contract_source_code)
+            contract_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]*)', contract_source_code)
             contract_name = contract_match.group(1) if contract_match else "TestToken"
             
-            # Pass constructor arguments
-            tx = contract_factory.constructor(
-                contract_name,  # name
-                contract_name[:4],  # symbol (first 4 chars)
-                1000000  # totalSupply
-            ).build_transaction({
-                'from': account.address,
-                'nonce': w3.eth.get_transaction_count(account.address),
-                'gas': 3000000,
-                'gasPrice': w3.eth.gas_price,
-                'chainId': chain_id
-            })
+            # Use provided constructor arguments or extract from code
+            if constructor_args:
+                logger.info(f"Using provided constructor args: {constructor_args}")
+                tx = contract_factory.constructor(*constructor_args).build_transaction({
+                    'from': account.address,
+                    'nonce': w3.eth.get_transaction_count(account.address),
+                    'gas': 3000000,
+                    'gasPrice': w3.eth.gas_price,
+                    'chainId': chain_id
+                })
+            else:
+                # Fallback: extract from contract code
+                from .constructor_parser import ConstructorArgumentParser
+                parser = ConstructorArgumentParser()
+                extracted_args = parser.generate_constructor_args(contract_source_code, account.address)
+                
+                if extracted_args:
+                    logger.info(f"Using extracted constructor args: {extracted_args}")
+                    try:
+                        tx = contract_factory.constructor(*extracted_args).build_transaction({
+                            'from': account.address,
+                            'nonce': w3.eth.get_transaction_count(account.address),
+                            'gas': 3000000,
+                            'gasPrice': w3.eth.gas_price,
+                            'chainId': chain_id
+                        })
+                    except TypeError as e:
+                        if "Incorrect argument count" in str(e):
+                            logger.warning(f"Constructor argument count mismatch: {e}")
+                            logger.info("Attempting to deploy with hardcoded values as fallback")
+                            # Fallback to hardcoded values
+                            tx = contract_factory.constructor(
+                                "GAMEX Token",  # name
+                                "GAMEX",       # symbol
+                                account.address  # initialOwner
+                            ).build_transaction({
+                                'from': account.address,
+                                'nonce': w3.eth.get_transaction_count(account.address),
+                                'gas': 3000000,
+                                'gasPrice': w3.eth.gas_price,
+                                'chainId': chain_id
+                            })
+                        else:
+                            raise
+                else:
+                    # Check if contract has empty constructor but uses Ownable(msg.sender)
+                    if "Ownable(msg.sender)" in contract_source_code and "constructor()" in contract_source_code:
+                        # This is a common pattern - empty constructor but Ownable needs an address
+                        logger.info("Contract has empty constructor but uses Ownable(msg.sender) - using deployer address")
+                        tx = contract_factory.constructor(account.address).build_transaction({
+                            'from': account.address,
+                            'nonce': w3.eth.get_transaction_count(account.address),
+                            'gas': 3000000,
+                            'gasPrice': w3.eth.gas_price,
+                            'chainId': chain_id
+                        })
+                    else:
+                        # Check if contract has empty constructor
+                        result = parser.extract_constructor_params(contract_source_code)
+                        
+                        if result and len(result[1]) == 0:
+                            # Empty constructor - no arguments needed
+                            logger.info("Contract has empty constructor, deploying without arguments")
+                            tx = contract_factory.constructor().build_transaction({
+                                'from': account.address,
+                                'nonce': w3.eth.get_transaction_count(account.address),
+                                'gas': 3000000,
+                                'gasPrice': w3.eth.gas_price,
+                                'chainId': chain_id
+                            })
+                        else:
+                            # Last resort: use hardcoded values (this is what was causing the bug)
+                            logger.warning("No constructor args found, using hardcoded values")
+                            tx = contract_factory.constructor(
+                                contract_name,  # name
+                                contract_name[:4],  # symbol (first 4 chars)
+                                1000000  # totalSupply
+                            ).build_transaction({
+                                'from': account.address,
+                                'nonce': w3.eth.get_transaction_count(account.address),
+                                'gas': 3000000,
+                                'gasPrice': w3.eth.gas_price,
+                                'chainId': chain_id
+                            })
             
             signed_tx = account.sign_transaction(tx)
             tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)

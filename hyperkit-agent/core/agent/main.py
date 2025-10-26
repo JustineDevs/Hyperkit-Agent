@@ -161,9 +161,6 @@ class HyperKitAgent:
         
         self.rag = ObsidianRAGEnhanced(
             vault_path="",  # MCP Docker handles vault access
-            use_api=False,  # No local API - MCP Docker only
-            api_key=None,
-            api_url=None,
             use_mcp=mcp_enabled,
             mcp_config=mcp_config,
         )
@@ -273,10 +270,10 @@ class HyperKitAgent:
             # Validate input
             prompt_result = validator.validate_prompt(prompt)
             if not prompt_result.is_valid:
-                error_info = error_handler.create_validation_error(
-                    "prompt", prompt, "; ".join(prompt_result.errors)
+                return error_handler.handle_error(
+                    ValueError("Invalid prompt"), 
+                    f"prompt validation failed: {'; '.join(prompt_result.errors)}"
                 )
-                return error_handler.format_error_response(error_info)
 
             # Sanitize input
             prompt = validator.sanitize_input(prompt)
@@ -285,7 +282,11 @@ class HyperKitAgent:
             # Retrieve context from Obsidian vault
             rag_context = ""
             if self.rag:
-                rag_context = self.rag.retrieve(prompt)
+                try:
+                    rag_context = await self.rag.retrieve(prompt)
+                except Exception as e:
+                    logger.warning(f"RAG context retrieval failed: {e}")
+                    rag_context = ""
 
             # Combine all context
             full_context = f"{context}\n\n{rag_context}".strip()
@@ -343,10 +344,7 @@ class HyperKitAgent:
             }
         except Exception as e:
             logger.error(f"Contract generation failed: {e}")
-            error_info = error_handler.handle_error(
-                e, {"prompt": prompt, "context": context}
-            )
-            return error_handler.format_error_response(error_info)
+            return error_handler.handle_error(e, f"Contract generation failed: {e}")
 
     @safe_operation("audit_contract")
     async def audit_contract(self, contract_code: str) -> Dict[str, Any]:
@@ -445,23 +443,59 @@ class HyperKitAgent:
             # ✅ Call deployer with correct parameters
             from services.deployment.deployer import MultiChainDeployer
             from services.deployment.foundry_manager import FoundryManager
+            from services.deployment.verifier import DeploymentVerifier
+            from web3 import Web3
             
             # Initialize deployer (handles Foundry check internally)
             deployer = MultiChainDeployer(self.config)
             
+            # Get deployer address for constructor args
+            deployer_address = self.config.get('default_private_key')
+            if deployer_address:
+                from eth_account import Account
+                account = Account.from_key(deployer_address)
+                deployer_address = account.address
+            
             result = deployer.deploy(
                 contract_code,  # Contract code (STRING)
                 rpc_url,       # RPC URL (STRING) ← NOT dict!
-                chain_id       # Chain ID (INT)
+                chain_id,      # Chain ID (INT)
+                deployer_address=deployer_address
             )
             
             if result.get("success"):
+                contract_address = result.get("contract_address", "")
+                
+                # ✅ Post-deployment verification
+                try:
+                    w3 = Web3(Web3.HTTPProvider(rpc_url))
+                    verifier = DeploymentVerifier(w3)
+                    
+                    verification_result = verifier.verify_contract_deployment(
+                        contract_address, 
+                        contract_code
+                    )
+                    
+                    if verification_result["success"]:
+                        logger.info("✅ Deployment verification passed")
+                    else:
+                        logger.error("❌ Deployment verification failed")
+                        logger.error(f"Verification error: {verification_result.get('error', 'Unknown')}")
+                        
+                        # Add verification details to result
+                        result["verification"] = verification_result
+                        
+                except Exception as e:
+                    logger.warning(f"Post-deployment verification failed: {e}")
+                    result["verification"] = {"success": False, "error": str(e)}
+                
                 return {
                     "status": "deployed",
                     "tx_hash": result.get("transaction_hash", ""),
-                    "address": result.get("contract_address", ""),
+                    "address": contract_address,
                     "network": network,
-                    "block": result.get("block_number", "")
+                    "block": result.get("block_number", ""),
+                    "verification": result.get("verification", {"success": True})
                 }
             else:
                 return {
@@ -558,7 +592,11 @@ class HyperKitAgent:
             # Stage 1: RAG-enhanced context retrieval
             context = ""
             if self.rag:
-                context = self.rag.retrieve(user_prompt)
+                try:
+                    context = await self.rag.retrieve(user_prompt)
+                except Exception as e:
+                    logger.warning(f"RAG context retrieval failed: {e}")
+                    context = ""
 
             # Stage 1: Generate contract
             logger.info("Stage 1/5: Generating Contract")
@@ -1030,8 +1068,14 @@ Generate only the Solidity contract code, no explanations or markdown formatting
             logger.info(f"Intent classified as: {intent_type.value}")
             
             # 2. Get RAG context
-            context = self.rag.retrieve(user_prompt)
-            logger.info(f"RAG context retrieved: {len(context)} characters")
+            context = ""
+            if self.rag:
+                try:
+                    context = await self.rag.retrieve(user_prompt)
+                    logger.info(f"RAG context retrieved: {len(context)} characters")
+                except Exception as e:
+                    logger.warning(f"RAG context retrieval failed: {e}")
+                    context = ""
             
             # 3. Generate smart contracts
             contract_result = await self.generate_contract(user_prompt, context)

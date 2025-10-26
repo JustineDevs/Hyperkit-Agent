@@ -9,6 +9,8 @@ import logging
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from services.generation.contract_namer import ContractNamer
+from services.generation.prompt_parser import PromptParser, ContractSpec, TokenSpec
+from services.rag.enhanced_retriever import retrieve_context
 from core.config.paths import PathManager
 
 logger = logging.getLogger(__name__)
@@ -33,8 +35,9 @@ class ContractGenerator:
         self.client = None
         self.templates = self._load_templates()
         
-        # Initialize smart naming and path management
+        # Initialize smart naming, prompt parsing, and path management
         self.namer = ContractNamer()
+        self.parser = PromptParser()
         self.path_manager = PathManager()
 
         # Initialize AI client based on provider
@@ -535,14 +538,18 @@ contract {CONTRACT_NAME} is Ownable, ReentrancyGuard, Pausable {{
             Generated Solidity contract code
         """
         try:
+            # Parse prompt to extract specifications
+            spec = self.parser.parse_prompt(prompt)
+            
+            # Retrieve additional context from RAG system if not provided
+            if not context:
+                context = await retrieve_context(prompt, max_results=3)
+            
             # Determine contract type from prompt
             contract_type = self._determine_contract_type(prompt)
-            
-            # Extract smart contract name
-            contract_name, _ = self.namer.extract_contract_name(prompt)
 
-            # Create system prompt with contract name
-            system_prompt = self._create_system_prompt(contract_type, context, contract_name)
+            # Create system prompt with extracted specifications
+            system_prompt = self._create_system_prompt(contract_type, context, spec)
 
             # Generate contract using AI
             if self.provider in ["openai", "deepseek", "xai", "gpt-oss"]:
@@ -556,10 +563,16 @@ contract {CONTRACT_NAME} is Ownable, ReentrancyGuard, Pausable {{
             else:
                 raise ValueError(f"Unsupported provider: {self.provider}")
 
-            # Post-process the generated code with smart contract naming
-            contract_code = self._post_process_contract(contract_code, contract_type, contract_name)
+            # Validate and fix the generated code to match specifications
+            contract_code = self.parser.validate_and_fix_contract(contract_code, spec)
 
-            logger.info(f"Generated {contract_type} contract '{contract_name}' successfully")
+            # Post-process the generated code
+            contract_code = self._post_process_contract(contract_code, contract_type, spec)
+
+            logger.info(f"Generated {contract_type} contract '{spec.contract_name}' successfully")
+            if spec.token_spec:
+                logger.info(f"Token: {spec.token_spec.name} ({spec.token_spec.symbol})")
+            
             return contract_code
 
         except Exception as e:
@@ -583,11 +596,31 @@ contract {CONTRACT_NAME} is Ownable, ReentrancyGuard, Pausable {{
         else:
             return "token"  # Default to token
 
-    def _create_system_prompt(self, contract_type: str, context: str, contract_name: str = None) -> str:
+    def _create_system_prompt(self, contract_type: str, context: str, spec) -> str:
         """Create a system prompt for the AI model."""
+        # Build contract name instruction
         contract_name_instruction = ""
-        if contract_name:
-            contract_name_instruction = f"\nIMPORTANT: The contract must be named '{contract_name}' (not 'Contract' or generic names)."
+        if spec.contract_name:
+            contract_name_instruction = f"\nCRITICAL: The contract must be named '{spec.contract_name}' (not 'Contract' or generic names)."
+        
+        # Build token specification instruction
+        token_instruction = ""
+        if spec.token_spec:
+            token_instruction = f"""
+CRITICAL TOKEN SPECIFICATION:
+- Token Name: "{spec.token_spec.name}"
+- Token Symbol: "{spec.token_spec.symbol}"
+- Decimals: {spec.token_spec.decimals}
+- Max Supply: {spec.token_spec.max_supply or 'unlimited'}
+- Initial Supply: {spec.token_spec.initial_supply or 'default'}
+
+The ERC20 constructor MUST use: ERC20("{spec.token_spec.name}", "{spec.token_spec.symbol}")
+"""
+        
+        # Build features instruction
+        features_instruction = ""
+        if spec.features:
+            features_instruction = f"\nREQUIRED FEATURES: {', '.join(spec.features)}"
         
         base_prompt = f"""
 You are an expert Solidity developer specializing in {contract_type} contracts. 
@@ -602,7 +635,7 @@ Key Requirements:
 - Include comprehensive error handling
 - Add events for important state changes
 - Use NatSpec documentation
-- Ensure gas optimization{contract_name_instruction}
+- Ensure gas optimization{contract_name_instruction}{token_instruction}{features_instruction}
 
 Security Best Practices:
 - Validate all inputs
@@ -660,7 +693,7 @@ Generate only the Solidity contract code, no explanations or markdown formatting
         response = self.client.generate_content(full_prompt)
         return response.text
 
-    def _post_process_contract(self, contract_code: str, contract_type: str, contract_name: str = None) -> str:
+    def _post_process_contract(self, contract_code: str, contract_type: str, spec) -> str:
         """Post-process the generated contract code."""
         # Remove markdown formatting if present
         if contract_code.startswith("```solidity"):
@@ -674,20 +707,23 @@ Generate only the Solidity contract code, no explanations or markdown formatting
         if contract_type in self.templates:
             # Extract parameters from the prompt and fill template
             # This is a simplified version - in practice, you'd use NLP to extract parameters
-            contract_code = self._fill_template_parameters(contract_code, contract_type, contract_name)
+            contract_code = self._fill_template_parameters(contract_code, contract_type, spec)
 
         return contract_code.strip()
 
-    def _fill_template_parameters(self, contract_code: str, contract_type: str, contract_name: str = None) -> str:
-        """Fill template parameters with default values."""
+    def _fill_template_parameters(self, contract_code: str, contract_type: str, spec) -> str:
+        """Fill template parameters with values from spec."""
         # Use provided contract name or generate one
-        if not contract_name:
-            contract_name = "GeneratedContract"
+        contract_name = spec.contract_name if spec.contract_name else "GeneratedContract"
+        
+        # Use token spec if available
+        token_name = spec.token_spec.name if spec.token_spec else f"{contract_name} Token"
+        token_symbol = spec.token_spec.symbol if spec.token_spec else (contract_name[:4].upper() if len(contract_name) >= 4 else contract_name.upper())
         
         defaults = {
             "CONTRACT_NAME": contract_name,
-            "TOKEN_NAME": f"{contract_name} Token",
-            "TOKEN_SYMBOL": contract_name[:4].upper() if len(contract_name) >= 4 else contract_name.upper(),
+            "TOKEN_NAME": token_name,
+            "TOKEN_SYMBOL": token_symbol,
             "NFT_NAME": f"{contract_name} NFT",
             "NFT_SYMBOL": f"{contract_name[:4].upper()}NFT" if len(contract_name) >= 4 else f"{contract_name.upper()}NFT",
             "MAX_SUPPLY": "1000000",
