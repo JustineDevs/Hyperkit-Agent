@@ -1,10 +1,13 @@
 import os
 import json
 import subprocess
+import logging
 from pathlib import Path
 from web3 import Web3
 from eth_account import Account
-import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 class FoundryDeployer:
     """Deploy contracts using Foundry"""
@@ -54,7 +57,7 @@ class FoundryDeployer:
     def deploy_contract(self, contract_source_code: str, network: str, constructor_args: list = None) -> dict:
         """Deploy a contract using Foundry"""
         try:
-            logging.info(f"Deploying contract on {network}")
+            logger.info(f"Deploying contract on {network}")
             
             # ✅ Get network configuration
             network_config = self.get_network_config(network)
@@ -77,7 +80,7 @@ class FoundryDeployer:
                     "suggestions": ["Check RPC URL", "Verify network is online"]
                 }
             
-            logging.info("✅ Connected to RPC")
+            logger.info("✅ Connected to RPC")
             
             # ✅ Get deployment account
             private_key = os.getenv("DEFAULT_PRIVATE_KEY") or os.getenv("PRIVATE_KEY")  # Support both
@@ -89,7 +92,7 @@ class FoundryDeployer:
                 }
             
             account = Account.from_key(private_key)
-            logging.info(f"✅ Using account: {account.address}")
+            logger.info(f"✅ Using account: {account.address}")
             
             # ✅ Use existing compiled artifacts
             # Look for existing artifacts in the project
@@ -128,7 +131,7 @@ class FoundryDeployer:
                                     if item.get('type') == 'constructor':
                                         if len(item.get('inputs', [])) == 5:  # GamingToken has 5 inputs
                                             artifact_file = json_file
-                                            logging.info(f"✅ Found artifact with 5 constructor inputs: {artifact_file}")
+                                            logger.info(f"✅ Found artifact with 5 constructor inputs: {artifact_file}")
                                             break
                                         break
                                 if artifact_file:
@@ -149,7 +152,7 @@ class FoundryDeployer:
             bytecode = artifact["bytecode"]["object"]
             abi = artifact["abi"]
             
-            logging.info(f"✅ Artifacts loaded from: {artifact_file}")
+            logger.info(f"✅ Artifacts loaded from: {artifact_file}")
             
             # Debug: Log constructor info
             constructor_abi = None
@@ -159,14 +162,14 @@ class FoundryDeployer:
                     break
             
             if constructor_abi:
-                logging.info(f"Constructor inputs: {len(constructor_abi.get('inputs', []))}")
+                logger.info(f"Constructor inputs: {len(constructor_abi.get('inputs', []))}")
                 for i, input_param in enumerate(constructor_abi.get('inputs', [])):
-                    logging.info(f"  {i}: {input_param.get('type')} {input_param.get('name')}")
+                    logger.info(f"  {i}: {input_param.get('type')} {input_param.get('name')}")
             else:
-                logging.info("No constructor found in ABI")
+                logger.info("No constructor found in ABI")
             
             # ✅ Deploy contract
-            logging.info("Deploying contract...")
+            logger.info("Deploying contract...")
             
             contract_factory = w3.eth.contract(abi=abi, bytecode=bytecode)
             
@@ -177,7 +180,7 @@ class FoundryDeployer:
             
             # Use provided constructor arguments or extract from code
             if constructor_args:
-                logging.info(f"Using provided constructor args: {constructor_args}")
+                logger.info(f"Using provided constructor args: {constructor_args}")
                 tx = contract_factory.constructor(*constructor_args).build_transaction({
                     'from': account.address,
                     'nonce': w3.eth.get_transaction_count(account.address),
@@ -200,7 +203,7 @@ class FoundryDeployer:
                         param_type = input_param.get('type', '')
                         param_name = input_param.get('name', '')
                         
-                        logging.info(f"Generating arg for {param_name}: {param_type}")
+                        logger.info(f"Generating arg for {param_name}: {param_type}")
                         
                         if param_type == 'address':
                             abi_args.append(account.address)
@@ -223,7 +226,7 @@ class FoundryDeployer:
                         else:
                             abi_args.append(0)
                     
-                    logging.info(f"Using ABI-based constructor args: {abi_args}")
+                    logger.info(f"Using ABI-based constructor args: {abi_args}")
                     tx = contract_factory.constructor(*abi_args).build_transaction({
                         'from': account.address,
                         'nonce': w3.eth.get_transaction_count(account.address),
@@ -233,7 +236,7 @@ class FoundryDeployer:
                     })
                 else:
                     # No constructor or no inputs - deploy without arguments
-                    logging.info("No constructor inputs found, deploying without arguments")
+                    logger.info("No constructor inputs found, deploying without arguments")
                     tx = contract_factory.constructor().build_transaction({
                         'from': account.address,
                         'nonce': w3.eth.get_transaction_count(account.address),
@@ -246,14 +249,14 @@ class FoundryDeployer:
             signed_tx = account.sign_transaction(tx)
             tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
             
-            logging.info(f"✅ Transaction sent: {tx_hash.hex()}")
+            logger.info(f"✅ Transaction sent: {tx_hash.hex()}")
             
             # Wait for receipt
             receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
             
             if receipt.status == 1:
                 contract_address = receipt.contractAddress
-                logging.info(f"✅ Contract deployed at: {contract_address}")
+                logger.info(f"✅ Contract deployed at: {contract_address}")
                 
                 return {
                     "success": True,
