@@ -1,150 +1,74 @@
-"""
-Foundry-based smart contract deployer
-Uses Foundry (forge) for compilation and deployment
-Replaces solcx for better cross-platform support
-"""
-
 import os
 import json
 import subprocess
-import logging
 from pathlib import Path
-from typing import Dict, Any
 from web3 import Web3
 from eth_account import Account
-
-logger = logging.getLogger(__name__)
+import logging
 
 class FoundryDeployer:
-    """Deploy smart contracts using Foundry (forge)"""
+    """Deploy contracts using Foundry"""
     
-    def __init__(self, foundry_home: str = None):
-        """
-        Initialize Foundry deployer
-        
-        Args:
-            foundry_home: Path to foundry installation (auto-detected if None)
-        """
-        self.foundry_home = foundry_home or os.getenv("FOUNDRY_HOME", "~/.foundry")
-        self.foundry_path = Path(self.foundry_home).expanduser()
-        
-        # Handle Windows .exe extension
-        import platform
-        if platform.system() == "Windows":
-            self.forge_bin = self.foundry_path / "bin" / "forge.exe"
-        else:
-            self.forge_bin = self.foundry_path / "bin" / "forge"
-        
+    def __init__(self):
+        self.forge_bin = Path(__file__).parent.parent.parent / "foundry" / "forge.exe"
         if not self.forge_bin.exists():
-            logger.warning(f"Foundry not found at {self.forge_bin}")
-            logger.info("Install Foundry: curl -L https://foundry.paradigm.xyz | bash")
-        
-        logger.info(f"Using Foundry at: {self.forge_bin}")
+            # Try system forge
+            self.forge_bin = "forge"
     
-    def _create_simplified_contract(self, original_source: str, contract_name: str) -> str:
-        """Create a simplified contract without external dependencies"""
-        # Extract contract name from original source (avoid keywords)
-        import re
-        contract_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]*)', original_source)
-        if contract_match:
-            contract_name = contract_match.group(1)
-        else:
-            contract_name = "TestToken"  # Default fallback
-        
-        # Create a basic ERC20 implementation without OpenZeppelin
-        simplified_contract = f'''// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-/**
- * @title {contract_name}
- * @dev Simple ERC20 token implementation
- */
-contract {contract_name} {{
-    string public name;
-    string public symbol;
-    uint8 public decimals = 18;
-    uint256 public totalSupply;
+    def get_network_config(self, network: str) -> dict:
+        """Get network configuration"""
+        networks = {
+            "ethereum": {
+                "chain_id": 1,
+                "explorer_url": "https://etherscan.io",
+                "rpc_url": "https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY"
+            },
+            "polygon": {
+                "chain_id": 137,
+                "explorer_url": "https://polygonscan.com",
+                "rpc_url": "https://polygon-rpc.com"
+            },
+            "arbitrum": {
+                "chain_id": 42161,
+                "explorer_url": "https://arbiscan.io",
+                "rpc_url": "https://arb1.arbitrum.io/rpc"
+            },
+            "hyperion": {
+                "chain_id": 1001,
+                "explorer_url": "https://hyperion-testnet-explorer.metisdevops.link",
+                "rpc_url": "https://hyperion-testnet.metisdevops.link"
+            },
+            "andromeda": {
+                "chain_id": 1088,
+                "explorer_url": "https://andromeda-explorer.metisdevops.link",
+                "rpc_url": "https://andromeda.metis.io/?owner=1088"
+            },
+            "metis": {
+                "chain_id": 1088,
+                "explorer_url": "https://andromeda-explorer.metisdevops.link",
+                "rpc_url": "https://andromeda.metis.io/?owner=1088"
+            }
+        }
+        return networks.get(network)
     
-    mapping(address => uint256) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
-    
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-    
-    constructor(string memory _name, string memory _symbol, uint256 _totalSupply) {{
-        name = _name;
-        symbol = _symbol;
-        totalSupply = _totalSupply * 10**decimals;
-        balanceOf[msg.sender] = totalSupply;
-        emit Transfer(address(0), msg.sender, totalSupply);
-    }}
-    
-    function transfer(address to, uint256 value) public returns (bool) {{
-        require(balanceOf[msg.sender] >= value, "Insufficient balance");
-        balanceOf[msg.sender] -= value;
-        balanceOf[to] += value;
-        emit Transfer(msg.sender, to, value);
-        return true;
-    }}
-    
-    function approve(address spender, uint256 value) public returns (bool) {{
-        allowance[msg.sender][spender] = value;
-        emit Approval(msg.sender, spender, value);
-        return true;
-    }}
-    
-    function transferFrom(address from, address to, uint256 value) public returns (bool) {{
-        require(balanceOf[from] >= value, "Insufficient balance");
-        require(allowance[from][msg.sender] >= value, "Insufficient allowance");
-        balanceOf[from] -= value;
-        balanceOf[to] += value;
-        allowance[from][msg.sender] -= value;
-        emit Transfer(from, to, value);
-        return true;
-    }}
-}}'''
-        return simplified_contract
-    
-    def deploy(self, contract_source_code: str, rpc_url: str, 
-               chain_id: int = 133717, contract_name: str = "Contract", constructor_args: list = None) -> dict:
-        """
-        Deploy contract using Foundry with constructor arguments
-        
-        Args:
-            contract_source_code: Solidity contract code (STRING)
-            rpc_url: RPC endpoint URL (STRING)
-            chain_id: Blockchain chain ID (INT)
-            contract_name: Contract name for deployment
-            constructor_args: List of constructor arguments
-        
-        Returns:
-            {"success": True/False, "transaction_hash": "...", "contract_address": "..."}
-        """
+    def deploy_contract(self, contract_source_code: str, network: str, constructor_args: list = None) -> dict:
+        """Deploy a contract using Foundry"""
         try:
-            # Type validation
-            if not isinstance(contract_source_code, str):
-                raise TypeError(f"source_code must be str, got {type(contract_source_code)}")
+            logging.info(f"Deploying contract on {network}")
             
-            if not isinstance(rpc_url, str):
-                raise TypeError(f"rpc_url must be str, got {type(rpc_url)}")
-            
-            if not isinstance(chain_id, int):
-                raise TypeError(f"chain_id must be int, got {type(chain_id)}")
-            
-            logger.info(f"Deploying via Foundry to RPC: {rpc_url[:40]}... (Chain: {chain_id})")
-            
-            # ✅ Check Foundry installation
-            if not self.forge_bin.exists():
+            # ✅ Get network configuration
+            network_config = self.get_network_config(network)
+            if not network_config:
                 return {
                     "success": False,
-                    "error": f"Foundry not installed at {self.forge_bin}",
-                    "suggestions": [
-                        "Install Foundry: curl -L https://foundry.paradigm.xyz | bash",
-                        "Set FOUNDRY_HOME if installed elsewhere"
-                    ]
+                    "error": f"Network {network} not supported",
+                    "suggestions": ["Check network configuration", "Use supported networks"]
                 }
             
-            # ✅ Verify RPC connection
+            rpc_url = network_config["rpc_url"]
+            chain_id = network_config["chain_id"]
+            
+            # ✅ Connect to RPC
             w3 = Web3(Web3.HTTPProvider(rpc_url))
             if not w3.is_connected():
                 return {
@@ -153,7 +77,7 @@ contract {contract_name} {{
                     "suggestions": ["Check RPC URL", "Verify network is online"]
                 }
             
-            logger.info("✅ Connected to RPC")
+            logging.info("✅ Connected to RPC")
             
             # ✅ Get deployment account
             private_key = os.getenv("DEFAULT_PRIVATE_KEY") or os.getenv("PRIVATE_KEY")  # Support both
@@ -165,81 +89,58 @@ contract {contract_name} {{
                 }
             
             account = Account.from_key(private_key)
-            logger.info(f"✅ Using account: {account.address}")
+            logging.info(f"✅ Using account: {account.address}")
             
-            # ✅ Create temporary Foundry project
-            project_dir = Path("/tmp/hyperagent_foundry")
-            project_dir.mkdir(exist_ok=True)
+            # ✅ Use existing compiled artifacts
+            # Look for existing artifacts in the project
+            project_root = Path(__file__).parent.parent.parent
+            out_dir = project_root / "out"
             
-            # Create Foundry.toml
-            foundry_toml = project_dir / "foundry.toml"
-            foundry_toml.write_text("""
-[profile.default]
-src = "src"
-out = "out"
-libs = ["lib"]
-""")
-            
-            # Create contract file
-            src_dir = project_dir / "src"
-            src_dir.mkdir(exist_ok=True)
-            contract_file = src_dir / f"{contract_name}.sol"
-            
-            # Create a simplified contract without external dependencies
-            # Remove OpenZeppelin imports and create a basic ERC20 implementation
-            simplified_source = self._create_simplified_contract(contract_source_code, contract_name)
-            contract_file.write_text(simplified_source)
-            
-            logger.info(f"✅ Created contract file: {contract_file}")
-            
-            # ✅ Compile with forge
-            logger.info("Compiling contract with Foundry...")
-            
-            compile_cmd = [
-                str(self.forge_bin),
-                "build",
-                "--root", str(project_dir),
-                "--out", str(project_dir / "out")
-            ]
-            
-            result = subprocess.run(
-                compile_cmd,
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
-            
-            if result.returncode != 0:
-                logger.error(f"Compilation failed: {result.stderr}")
+            if not out_dir.exists():
                 return {
                     "success": False,
-                    "error": f"Compilation failed: {result.stderr}",
-                    "suggestions": ["Check contract syntax", "Verify imports"]
+                    "error": "No compiled artifacts found. Run 'forge build' first.",
+                    "suggestions": ["Run 'forge build' in project root", "Check if contracts directory exists"]
                 }
             
-            logger.info("✅ Compilation successful")
-            
-            # ✅ Read compiled artifacts
-            # Find the actual artifact file (it might be in a different location)
-            out_dir = project_dir / "out"
+            # Find the specific contract artifact
             artifact_file = None
+            potential_paths = [
+                out_dir / "GamingToken.sol" / "GameToken.json",  # Our specific case
+                out_dir / f"{contract_name}.sol" / f"{contract_name}.json",
+                out_dir / f"{contract_name}.json"
+            ]
             
-            # Look for JSON files in the out directory
-            for json_file in out_dir.rglob("*.json"):
-                try:
-                    with open(json_file) as f:
-                        artifact_data = json.load(f)
-                        if "bytecode" in artifact_data and "abi" in artifact_data:
-                            artifact_file = json_file
-                            break
-                except:
-                    continue
+            for path in potential_paths:
+                if path.exists():
+                    artifact_file = path
+                    break
+            
+            # If not found, look for any JSON files in the out directory
+            if not artifact_file:
+                for json_file in out_dir.rglob("*.json"):
+                    try:
+                        with open(json_file) as f:
+                            artifact_data = json.load(f)
+                            if "bytecode" in artifact_data and "abi" in artifact_data:
+                                # Check if this has the right constructor signature
+                                for item in artifact_data['abi']:
+                                    if item.get('type') == 'constructor':
+                                        if len(item.get('inputs', [])) == 5:  # GamingToken has 5 inputs
+                                            artifact_file = json_file
+                                            logging.info(f"✅ Found artifact with 5 constructor inputs: {artifact_file}")
+                                            break
+                                        break
+                                if artifact_file:
+                                    break
+                    except:
+                        continue
             
             if not artifact_file or not artifact_file.exists():
                 return {
                     "success": False,
                     "error": f"Artifact not found in {out_dir}",
-                    "suggestions": ["Check compilation output", "Verify contract name"]
+                    "suggestions": ["Run 'forge build' in project root", "Check contract name"]
                 }
             
             with open(artifact_file) as f:
@@ -248,7 +149,7 @@ libs = ["lib"]
             bytecode = artifact["bytecode"]["object"]
             abi = artifact["abi"]
             
-            logger.info(f"✅ Artifacts loaded from: {artifact_file}")
+            logging.info(f"✅ Artifacts loaded from: {artifact_file}")
             
             # Debug: Log constructor info
             constructor_abi = None
@@ -258,14 +159,14 @@ libs = ["lib"]
                     break
             
             if constructor_abi:
-                logger.info(f"Constructor inputs: {len(constructor_abi.get('inputs', []))}")
+                logging.info(f"Constructor inputs: {len(constructor_abi.get('inputs', []))}")
                 for i, input_param in enumerate(constructor_abi.get('inputs', [])):
-                    logger.info(f"  {i}: {input_param.get('type')} {input_param.get('name')}")
+                    logging.info(f"  {i}: {input_param.get('type')} {input_param.get('name')}")
             else:
-                logger.info("No constructor found in ABI")
+                logging.info("No constructor found in ABI")
             
             # ✅ Deploy contract
-            logger.info("Deploying contract...")
+            logging.info("Deploying contract...")
             
             contract_factory = w3.eth.contract(abi=abi, bytecode=bytecode)
             
@@ -276,7 +177,7 @@ libs = ["lib"]
             
             # Use provided constructor arguments or extract from code
             if constructor_args:
-                logger.info(f"Using provided constructor args: {constructor_args}")
+                logging.info(f"Using provided constructor args: {constructor_args}")
                 tx = contract_factory.constructor(*constructor_args).build_transaction({
                     'from': account.address,
                     'nonce': w3.eth.get_transaction_count(account.address),
@@ -299,10 +200,17 @@ libs = ["lib"]
                         param_type = input_param.get('type', '')
                         param_name = input_param.get('name', '')
                         
+                        logging.info(f"Generating arg for {param_name}: {param_type}")
+                        
                         if param_type == 'address':
                             abi_args.append(account.address)
-                        elif param_type.startswith('uint'):
-                            abi_args.append(1000000)  # Default supply
+                        elif param_type == 'uint256':
+                            if 'initialSupply' in param_name.lower():
+                                abi_args.append(1000000)  # Initial supply
+                            elif 'maxSupply' in param_name.lower():
+                                abi_args.append(10000000)  # Max supply
+                            else:
+                                abi_args.append(1000000)
                         elif param_type == 'string':
                             if 'name' in param_name.lower():
                                 abi_args.append("GAMEX Token")
@@ -315,7 +223,7 @@ libs = ["lib"]
                         else:
                             abi_args.append(0)
                     
-                    logger.info(f"Using ABI-based constructor args: {abi_args}")
+                    logging.info(f"Using ABI-based constructor args: {abi_args}")
                     tx = contract_factory.constructor(*abi_args).build_transaction({
                         'from': account.address,
                         'nonce': w3.eth.get_transaction_count(account.address),
@@ -325,7 +233,7 @@ libs = ["lib"]
                     })
                 else:
                     # No constructor or no inputs - deploy without arguments
-                    logger.info("No constructor inputs found, deploying without arguments")
+                    logging.info("No constructor inputs found, deploying without arguments")
                     tx = contract_factory.constructor().build_transaction({
                         'from': account.address,
                         'nonce': w3.eth.get_transaction_count(account.address),
@@ -334,46 +242,37 @@ libs = ["lib"]
                         'chainId': chain_id
                     })
             
+            # Sign and send transaction
             signed_tx = account.sign_transaction(tx)
-            tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+            tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
             
-            logger.info(f"✅ TX sent: {tx_hash.hex()}")
+            logging.info(f"✅ Transaction sent: {tx_hash.hex()}")
             
-            # ✅ Wait for receipt
+            # Wait for receipt
             receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=300)
             
-            contract_address = receipt['contractAddress']
-            
-            logger.info(f"✅ Deployed to: {contract_address}")
-            
-            return {
-                "success": True,
-                "transaction_hash": tx_hash.hex(),
-                "contract_address": contract_address,
-                "gas_used": receipt['gasUsed'],
-                "block_number": receipt['blockNumber']
-            }
-        
-        except TypeError as te:
-            logger.error(f"Type error: {te}")
-            return {
-                "success": False,
-                "error": f"Type error: {str(te)}",
-                "suggestions": ["Ensure rpc_url is a string", "Check all parameters types"]
-            }
-        except subprocess.TimeoutExpired:
-            logger.error("Compilation timeout")
-            return {
-                "success": False,
-                "error": "Compilation timeout",
-                "suggestions": ["Contract too complex", "Try simpler contract"]
-            }
+            if receipt.status == 1:
+                contract_address = receipt.contractAddress
+                logging.info(f"✅ Contract deployed at: {contract_address}")
+                
+                return {
+                    "success": True,
+                    "contract_address": contract_address,
+                    "tx_hash": tx_hash.hex(),
+                    "gas_used": receipt.gasUsed,
+                    "block_number": receipt.blockNumber
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": "Transaction failed",
+                    "suggestions": ["Check gas limit", "Verify contract code"]
+                }
+                
         except Exception as e:
-            logger.error(f"Deploy error: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Deployment error: {str(e)}")
             return {
                 "success": False,
                 "error": str(e),
-                "error_type": type(e).__name__
+                "suggestions": ["Check contract code", "Verify network connection", "Check account balance"]
             }

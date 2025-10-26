@@ -1,369 +1,353 @@
-# HyperKit AI Agent 🚀
+# 🚀 HyperKit AI Agent
 
+> **AI-Powered Smart Contract Development, Security Auditing, and Multi-Chain Deployment Platform**
+
+[![Tests](https://github.com/JustineDevs/Hyperkit-Agent/actions/workflows/test.yml/badge.svg)](https://github.com/JustineDevs/Hyperkit-Agent/actions)
+[![Coverage](https://codecov.io/gh/JustineDevs/Hyperkit-Agent/branch/main/graph/badge.svg)](https://codecov.io/gh/JustineDevs/Hyperkit-Agent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Solidity 0.8.20+](https://img.shields.io/badge/solidity-0.8.20+-lightgrey.svg)](https://soliditylang.org/)
 
-**HyperKit AI Agent** is a comprehensive AI-powered system that combines smart contract generation, auditing, debugging, and deployment capabilities. Built for the Hyperion and Andromeda ecosystems, it enables developers to rapidly prototype, deploy, and manage smart contracts with natural language prompts.
+## 📋 Table of Contents
 
-## ⚠️ **Current Status & Limitations**
+- [What is HyperKit?](#-what-is-hyperkit)
+- [Key Features](#-key-features)
+- [Quick Start](#-quick-start)
+- [Supported Networks](#-supported-networks)
+- [Usage Examples](#-usage-examples)
+- [Architecture](#-architecture)
+- [Development](#-development)
+- [Contributing](#-contributing)
+- [Security](#-security)
+- [License](#-license)
 
-**Production Readiness**: 🟡 **Beta - Active Development**
+## 🎯 What is HyperKit?
 
-### **🔄 PRODUCTION MODE vs SAFE MODE**
+HyperKit is an AI-powered platform for smart contract development, security auditing, and multi-chain deployment. It combines Large Language Models (LLMs), Retrieval-Augmented Generation (RAG), and blockchain technology to streamline the entire smart contract lifecycle.
 
-HyperAgent operates in two distinct modes:
+### **Why HyperKit?**
 
-#### **🟢 PRODUCTION MODE**
-- **All critical dependencies available and functional**
-- **Real AI-powered contract generation and auditing**
-- **Actual blockchain deployment and verification**
-- **Full workflow capabilities**
+- **AI-Powered Generation**: Create production-ready smart contracts from natural language
+- **Multi-Source Auditing**: Comprehensive security analysis with consensus scoring
+- **One-Command Deployment**: Deploy to multiple chains with a single command
+- **Auto-Verification**: Automatic contract verification on block explorers
+- **Built-in Testing**: Integrated testing framework with Foundry
 
-#### **🔴 SAFE MODE**
-- **Missing critical dependencies detected**
-- **Operations blocked with clear error messages**
-- **No silent fallbacks to mock implementations**
-- **System fails loud and clear**
+## ✨ Key Features
 
-**Check your mode**: `hyperagent health`
+### 🤖 **AI-Powered Smart Contract Generation**
+- Natural language to Solidity conversion
+- Template-based generation (ERC20, ERC721, DeFi, DAO)
+- Best practices and security patterns built-in
 
-### **Critical Dependencies for Production Mode:**
-- ✅ **Alith SDK**: `pip install alith>=0.12.0` (Real AI agent, not mock)
-- ✅ **Foundry**: `curl -L https://foundry.paradigm.xyz | bash` (Deployment)
-- ✅ **Web3 Connection**: Valid Hyperion RPC URL
-- ✅ **AI Providers**: At least one API key (OpenAI, Google, Anthropic)
-- ✅ **Private Key**: `DEFAULT_PRIVATE_KEY` environment variable
-- ✅ **Hyperion RPC**: `HYPERION_RPC_URL` environment variable
+### 🔍 **Multi-Source Security Auditing**
+- Integration with Slither, Mythril, and custom analyzers
+- Confidence scoring and consensus-based reporting
+- Detailed vulnerability analysis with remediation suggestions
 
-### **Known Limitations:**
-- **Alith SDK**: Currently using mock implementation for testing. Real integration requires `pip install alith` and API keys from https://lazai.network
-- **Deployment**: Requires Foundry installation. Will fail with clear error if not installed (no fake success)
-- **Audit Accuracy**: 80-85% for verified contracts, 30% for bytecode-only. Professional audit recommended for production
-- **Multi-File Contracts**: Single-file only. Use `forge flatten` for complex projects
+### 🌐 **Multi-Chain Deployment**
+- Ethereum, Polygon, Arbitrum, Hyperion, Andromeda, Metis
+- Foundry-based compilation and deployment
+- Gas optimization and transaction monitoring
 
-📖 **See [Known Issues](docs/KNOWN_ISSUES.md) for complete list and workarounds**
+### ✅ **Automatic Verification**
+- Blockscout and Etherscan integration
+- Source code verification
+- Contract metadata publishing
 
----
-
-## ✨ Features
-
-### 🤖 AI-Powered Contract Generation
-- **Natural Language to Solidity**: Generate smart contracts from plain English descriptions
-- **Google Gemini Integration**: Powered by Google Gemini 2.5 Pro with free $300 credits
-- **Template Library**: Pre-built templates for tokens, NFTs, DeFi vaults, and more
-- **Context-Aware Generation**: RAG-powered knowledge retrieval for better results
-
-### 🔍 Comprehensive Auditing
-- **Multi-Tool Analysis**: Integration with Slither, Mythril, and custom pattern detection
-- **Severity Assessment**: Automated risk scoring and vulnerability classification
-- **Real-time Debugging**: EDB integration for transaction replay and debugging
-- **Security Best Practices**: Built-in checks for common vulnerabilities
-
-### 🌐 Hyperion Testnet Deployment
-- **Hyperion Focus**: Primary support for Hyperion testnet deployment
-- **Gas Optimization**: Automatic gas estimation and optimization
-- **Contract Verification**: Automated verification on Hyperion explorer
-- **EIP-712 Signing**: Secure structured data signing capabilities
-
-### 🧠 RAG Knowledge System
-- **Simple MCP Integration**: Direct Obsidian API integration for knowledge retrieval
-- **Smart Contract Patterns**: Comprehensive DeFi patterns knowledge base (3,018 chunks)
-- **Context Retrieval**: Relevant knowledge injection for better generation
-- **Graceful Fallback**: DeFi patterns only when external systems unavailable
-
-## 🆓 Google Gemini Integration
-
-The HyperKit Agent is powered by **Google Gemini** for completely free smart contract generation:
-
-### Google Gemini Features
-- **Model**: Gemini-2.5-Pro (Latest and most powerful!)
-- **Free Credits**: $300 included with Google account
-- **High Quality**: Professional-grade Solidity contracts
-- **Fast Response**: Quick generation times
-- **Reliable**: Stable and consistent results
-
-### Obsidian Knowledge Base
-- **Simple MCP**: Direct API integration without Docker complexity
-- **RAG Integration**: Automatic context retrieval for better generation
-- **DeFi Patterns**: Built-in knowledge base with 3,018 security patterns
-
-### Setup Free Models
-```bash
-# Install Ollama and models
-python setup_free_models.py
-
-# Test free models
-python test_free_models.py
-
-# Generate with local models
-python cli.py generate "Create ERC20 token" --provider local --use-rag
-```
+### 🧪 **Integrated Testing**
+- Unit, integration, and end-to-end testing
+- Foundry test suite
+- Coverage reporting
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.9 or higher
-- Node.js 16+ (for frontend components)
+- Python 3.10+
+- Node.js 18+ (for versioning)
+- Foundry (for Solidity compilation)
 - Git
-- Hyperion/Andromeda wallet (for testing)
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/JustineDevs/Hyperkit-Agent.git
-   cd hyperkit-agent
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/JustineDevs/Hyperkit-Agent.git
+cd Hyperkit-Agent/hyperkit-agent
 
-2. **Create a virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+# Install dependencies
+pip install -e .
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+# Install Foundry
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
 
-4. **Set up environment variables**
-   ```bash
-   cp env.example .env
-   # Edit .env with your API keys and configuration
-   ```
+# Install OpenZeppelin contracts
+forge install OpenZeppelin/openzeppelin-contracts
 
-5. **Test API keys**
-   ```bash
-   python test_api_keys.py
-   # Or use the setup command
-   python setup.py test-apis
-   ```
+# Set up environment
+cp env.example .env
+# Edit .env with your configuration
+```
 
-6. **Run the agent**
-   ```bash
-   python main.py
-   ```
+### Configuration
 
-## 🤖 AI Provider Support
+Create a `.env` file with your configuration:
 
-HyperKit AI Agent supports multiple AI providers with automatic fallback:
+```env
+# AI Provider API Keys
+GOOGLE_API_KEY=your_google_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
 
-### Supported Providers
-- **OpenAI** - GPT-4, GPT-3.5 (Recommended)
-- **DeepSeek** - Cost-effective alternative with high quality
-- **xAI** - Grok models for advanced reasoning
-- **GPT-OSS** - Open source GPT implementations
-- **Anthropic** - Claude models for safety and reliability
-- **Google** - Gemini models for multimodal capabilities
-- **Alibaba DashScope** - Qwen models for Chinese language support
+# Blockchain Configuration
+DEFAULT_PRIVATE_KEY=your_private_key_here
+HYPERION_RPC_URL=https://hyperion-testnet.metisdevops.link
+```
 
-### Provider Selection
-The agent automatically selects the best available provider based on your configured API keys. You can also specify a provider manually:
+### Verify Installation
 
 ```bash
-# Auto-select best available provider
-python cli.py generate "Create a simple ERC20 token"
+# Test the CLI
+hyperagent --help
 
-# Use specific provider
-python cli.py generate "Create a DeFi vault" --provider deepseek
+# Run tests
+pytest tests/ -v
+
+# Build contracts
+forge build
 ```
 
-## 🔧 Usage
+## 🌍 Supported Networks
 
-### Command Line Interface
+| Network | Chain ID | Explorer |
+|---------|----------|----------|
+| Ethereum | 1 | https://etherscan.io |
+| Polygon | 137 | https://polygonscan.com |
+| Arbitrum | 42161 | https://arbiscan.io |
+| **Hyperion** | 1001 | https://hyperion-testnet-explorer.metisdevops.link |
+| Andromeda | 1088 | https://andromeda-explorer.metisdevops.link |
+| Metis | 1088 | https://andromeda-explorer.metisdevops.link |
+
+## 📚 Usage Examples
+
+### Generate and Deploy a Token
 
 ```bash
-# Interactive mode
-python main.py
+# Generate, audit, and deploy a gaming token
+hyperagent workflow run "Create a gaming token" --network hyperion
 
-# Direct prompt
-python main.py "Create a simple ERC20 token with minting functionality"
-
-# With specific network
-python main.py "Deploy a staking contract" --network hyperion
+# Output: Contract address, transaction hash, gas used
 ```
 
-### Python API
+### Audit an Existing Contract
 
-```python
-import asyncio
-from core.agent.main import HyperKitAgent
+```bash
+# Audit a contract address
+hyperagent audit contract 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
 
-async def main():
-    config = {
-        'openai_api_key': 'your-api-key',
-        'networks': {
-            'hyperion': 'https://hyperion-testnet.metisdevops.link'
-        }
-    }
-    
-    agent = HyperKitAgent(config)
-    
-    # Generate and deploy a contract
-    result = await agent.run_workflow(
-        "Create a DeFi vault contract with yield farming"
-    )
-    
-    print(result)
-
-asyncio.run(main())
+# Audit multiple contracts
+hyperagent audit batch contracts.txt --network ethereum
 ```
 
-### Workflow Example
+### Deploy a Custom Contract
 
-```python
-# 1. Generate contract
-generation_result = await agent.generate_contract(
-    "Create an ERC20 token with burn functionality"
-)
+```bash
+# Deploy a contract
+hyperagent deploy --contract MyToken.sol --network polygon
 
-# 2. Audit contract
-audit_result = await agent.audit_contract(
-    generation_result['contract_code']
-)
+# Verify after deployment
+hyperagent verify contract 0xYourContractAddress --network polygon
+```
 
-# 3. Deploy if audit passes
-if audit_result['severity'] in ['low', 'medium']:
-    deployment_result = await agent.deploy_contract(
-        generation_result['contract_code'],
-        network='hyperion'
-    )
+### Monitor Deployments
+
+```bash
+# Check system health
+hyperagent monitor health
+
+# View metrics
+hyperagent monitor metrics
+
+# Watch logs
+hyperagent monitor logs --follow
 ```
 
 ## 🏗️ Architecture
 
 ```
-hyperkit-agent/
-├── core/                    # Core agent implementation
-│   ├── agent/              # Main agent class
-│   ├── tools/              # Agent tools and utilities
-│   └── prompts/            # Prompt templates
-├── services/               # Service modules
-│   ├── generation/         # Contract generation
-│   ├── audit/             # Security auditing
-│   ├── deployment/        # Multi-chain deployment
-│   └── rag/              # RAG knowledge system
-├── blockchain/            # Blockchain integration
-│   ├── contracts/        # Smart contract templates
-│   ├── scripts/         # Deployment scripts
-│   └── tests/           # Contract tests
-├── api/                 # API endpoints
-├── frontend/           # Web interface
-└── docs/              # Documentation
+HyperKit AI Agent
+├── AI Layer (LLM + RAG)
+│   ├── Contract Generation
+│   ├── Security Analysis
+│   └── Code Optimization
+├── Blockchain Layer
+│   ├── Multi-Chain Support
+│   ├── Transaction Management
+│   └── Smart Contract Interaction
+├── Security Layer
+│   ├── Static Analysis (Slither, Mythril)
+│   ├── Dynamic Testing
+│   └── Consensus Scoring
+└── Storage Layer
+    ├── Vector Database (RAG)
+    ├── Artifact Management
+    └── Audit Reports
 ```
 
-## 🤖 Supported AI Providers
+### **5-Stage Workflow**
 
-| Provider | Status | Features | Use Cases |
-|----------|--------|----------|-----------|
-| Claude (Anthropic) | ✅ Active | Smart contract generation, security analysis | DeFi protocols, complex contracts |
-| GPT-4 (OpenAI) | ✅ Active | Code completion, documentation | dApp development, testing |
-| Gemini (Google) | ✅ Active | Multimodal analysis, code review | UI components, visual analysis |
-| DeepSeek | ✅ Active | Code optimization, gas efficiency | Performance-critical contracts |
-| Qwen (Alibaba) | ✅ Active | Multi-language support, testing | International dApps |
+1. **Generate**: AI-powered contract creation
+2. **Audit**: Multi-source security analysis
+3. **Deploy**: Foundry-based deployment
+4. **Verify**: Auto-verification on explorers
+5. **Test**: Comprehensive testing suite
 
-## 🌐 Supported Networks
+## 🛠️ Development
 
-| Network | Status | Features | Use Cases |
-|---------|--------|----------|-----------|
-| Hyperion | 🔄 Testnet | Native support, optimized | Primary development |
-| Andromeda | 🔄 Testnet | Cross-chain bridging | Asset migration |
-| Ethereum | 🔄 Testnet | Bridge integration | Cross-chain DeFi |
-| Polygon | 🔄 Testnet | Layer 2 scaling | High-throughput dApps |
-| Arbitrum | 🔄 Testnet | Optimistic rollups | Advanced DeFi protocols |
+### Project Structure
 
-## 🔒 Security Features
+```
+hyperkit-agent/
+├── cli/                # Command-line interface
+├── core/               # Core functionality
+│   ├── agent/          # AI agent logic
+│   ├── config/         # Configuration management
+│   └── tools/          # Utility tools
+├── services/           # Service implementations
+│   ├── audit/          # Security auditing
+│   ├── deployment/     # Contract deployment
+│   ├── generation/     # Contract generation
+│   └── verification/   # Contract verification
+├── tests/              # Test suite
+│   ├── unit/           # Unit tests
+│   ├── integration/    # Integration tests
+│   └── security/       # Security tests
+├── docs/               # Documentation
+└── artifacts/          # Generated contracts and reports
+```
 
-- **Multi-Tool Auditing**: Slither, Mythril, and custom pattern analysis
-- **Vulnerability Detection**: Automated detection of common security issues
-- **Gas Optimization**: Built-in gas estimation and optimization
-- **Access Control**: Secure private key management
-- **Audit Logging**: Comprehensive transaction and access logging
-
-## 🧪 Testing
+### Running Tests
 
 ```bash
 # Run all tests
-pytest
+pytest tests/ -v
 
 # Run with coverage
-pytest --cov=core --cov=services
+pytest tests/ --cov=hyperkit-agent --cov-report=html
 
-# Run specific test categories
-pytest tests/unit/          # Unit tests
-pytest tests/integration/   # Integration tests
-pytest tests/contracts/    # Smart contract tests
+# Run Solidity tests
+forge test -vvv
+
+# Run specific test
+pytest tests/test_audit.py::test_contract_audit -v
 ```
 
-## 📚 Documentation
+### Code Quality
 
-- [Getting Started Guide](docs/getting-started.md)
-- [API Reference](docs/api-reference.md)
-- [Security Best Practices](docs/security.md)
-- [Deployment Guide](docs/deployment.md)
-- [Contributing Guide](docs/contributing.md)
+```bash
+# Format code
+black hyperkit-agent/
+isort hyperkit-agent/
+
+# Lint
+flake8 hyperkit-agent/ --max-line-length=120
+
+# Type checking
+mypy hyperkit-agent/
+
+# Security scan
+bandit -r hyperkit-agent/
+```
 
 ## 🤝 Contributing
 
-We welcome contributions from the HyperKit community! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-### Quick Start for Contributors
+### Quick Contribution Workflow
 
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Make your changes and test**
-   ```bash
-   pytest
-   ```
-4. **Submit a Pull Request**
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Add tests
+5. Run tests and linters
+6. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
 
-## 📄 License
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 🔒 Security
 
-## 🆘 Support
+Security is our top priority. We follow industry best practices:
 
-- 📖 [Documentation](https://hyperkit.readthedocs.io/)
-- 🐛 [Issue Tracker](https://github.com/hyperionkit/hyperkit-agent/issues)
-- 💬 [Discord Community](https://discord.gg/hyperionkit)
-- 📧 [Email Support](mailto:support@hyperionkit.xyz)
-- 🐦 [Twitter](https://twitter.com/hyperionkit)
+- **Code Audits**: Regular security audits
+- **Dependency Scanning**: Automated vulnerability detection
+- **Secure Defaults**: Secure configuration out of the box
+- **Bug Bounty**: Rewards for responsible disclosure
 
-## 🗺️ Roadmap
+### Reporting Security Issues
 
-### Phase 1: Core Agent (Completed)
-- [x] AI-powered contract generation
-- [x] Multi-tool auditing system
-- [x] Multi-chain deployment
-- [x] RAG knowledge system
+**DO NOT** open a public issue for security vulnerabilities.
 
-### Phase 2: Advanced Features (In Progress)
-- [ ] Web interface and dashboard
-- [ ] Community agent marketplace
-- [ ] Advanced debugging tools
-- [ ] Performance optimization
+Email: security@hyperkit.dev
 
-### Phase 3: Ecosystem Integration (Planned)
-- [ ] Hyperion mainnet integration
-- [ ] Andromeda bridge support
-- [ ] DeFi protocol templates
-- [ ] Governance system
+See [SECURITY.md](SECURITY.md) for details.
+
+## 📊 Current Status
+
+### **Production Ready** ✅
+- Multi-chain deployment
+- Security auditing
+- Contract verification
+- CLI interface
+
+### **In Development** 🚧
+- Batch operations
+- Advanced analytics
+- Multi-signature support
+- Governance tools
+
+### **Known Limitations** ⚠️
+- Deployment requires pre-compiled artifacts (run `forge build`)
+- Some AI features require valid API keys
+- Limited to EVM-compatible chains
+
+See `hyperagent limitations` for detailed status.
+
+## 📖 Documentation
+
+- [Architecture Overview](docs/README.md)
+- [API Reference](docs/API_REFERENCE.md)
+- [Developer Guide](docs/DEVELOPER_GUIDE.md)
+- [Security Best Practices](docs/SECURITY_BEST_PRACTICES.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## 🙏 Acknowledgments
 
-- Thanks to all contributors who help make HyperKit Agent better
-- Special thanks to the Hyperion and Andromeda communities
-- Web3 and DeFi developers for inspiration and feedback
-- AI and open-source communities for their continuous support
+- [OpenZeppelin](https://openzeppelin.com/) for secure smart contract libraries
+- [Foundry](https://getfoundry.sh/) for blazing fast Solidity toolkit
+- [Alith SDK](https://alith.ai/) for AI agent framework
+- [Metis](https://metis.io/) for Hyperion testnet support
+
+## 📞 Support
+
+- **Documentation**: [docs/](docs/)
+- **Discord**: [Join our community](https://discord.gg/hyperkit)
+- **GitHub Issues**: [Report bugs](https://github.com/JustineDevs/Hyperkit-Agent/issues)
+- **Email**: support@hyperkit.dev
+
+## 🗺️ Roadmap
+
+See [ROADMAP.md](docs/ROADMAP.md) for planned features and milestones.
 
 ---
 
-**Made with ❤️ by the HyperKit Team**
+**Built with ❤️ by the HyperKit Team**
 
-[Website](https://hyperionkit.xyz) • [Documentation](https://hyperkit.readthedocs.io/) • [Discord](https://discord.gg/hyperionkit) • [Twitter](https://twitter.com/hyperionkit)
+⭐ Star us on GitHub if you find HyperKit useful!
