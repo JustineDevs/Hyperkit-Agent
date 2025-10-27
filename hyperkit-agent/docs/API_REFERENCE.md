@@ -914,4 +914,15 @@ const deployment = await client.deployContract(contract.code);
 
 ---
 
-*Last Updated: October 27, 2025*
+## Related Documentation
+
+- **[Technical Documentation](TECHNICAL_DOCUMENTATION.md)** - System architecture and implementation details
+- **[Integration Guide](INTEGRATOR_GUIDE.md)** - Integration patterns and best practices  
+- **[Security Setup](SECURITY_SETUP.md)** - Security configuration and best practices
+- **[Production Mode](PRODUCTION_MODE.md)** - Production deployment guidelines
+- **[Emergency Response](EMERGENCY_RESPONSE.md)** - Incident response procedures
+
+---
+
+*Last Updated: October 27, 2025*  
+*Location*: `/hyperkit-agent/docs/API_REFERENCE.md`

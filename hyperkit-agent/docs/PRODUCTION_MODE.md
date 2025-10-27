@@ -249,7 +249,10 @@ Before using HyperAgent in production:
 
 ## 🔗 Related Documentation
 
-- [Installation Guide](docs/INSTALLATION.md)
-- [Configuration Guide](docs/CONFIGURATION.md)
-- [Known Issues](docs/KNOWN_ISSUES.md)
-- [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
+- [Technical Documentation](TECHNICAL_DOCUMENTATION.md) - System architecture and implementation details
+- [API Reference](API_REFERENCE.md) - Complete API documentation
+- [Integration Guide](INTEGRATOR_GUIDE.md) - Integration patterns and best practices
+- [Security Setup](SECURITY_SETUP.md) - Security configuration
+- [Emergency Response](EMERGENCY_RESPONSE.md) - Incident response procedures
+- [Known Issues](EXECUTION/KNOWN_ISSUES.md) - Current known issues
+- [External Monitoring](EXTERNAL_MONITORING.md) - Monitoring setup guide

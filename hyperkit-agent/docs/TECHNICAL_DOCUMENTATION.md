@@ -657,15 +657,28 @@ logs = logger.export_logs()
 
 ---
 
+## Related Documentation
+
+- **[API Reference](API_REFERENCE.md)** - Complete API documentation
+- **[Integration Guide](INTEGRATOR_GUIDE.md)** - Integration patterns and best practices
+- **[Security Setup](SECURITY_SETUP.md)** - Security configuration
+- **[Emergency Response](EMERGENCY_RESPONSE.md)** - Incident response procedures
+- **[Production Mode](PRODUCTION_MODE.md)** - Production deployment guidelines
+- **[Security Audit Log](SECURITY_AUDIT_LOG.md)** - Security audit history
+- **[GitHub Setup](GITHUB_SETUP.md)** - CI/CD and GitHub configuration
+
 ## Support
 
 For technical support and questions:
 
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/HyperKit/hyperkit-agent/issues)
+- **Documentation**: [hyperkit-agent/docs/](.)
+- **Reports**: [hyperkit-agent/REPORTS/](../REPORTS/)
+- **Archived Reports**: [ACCOMPLISHED/](../../ACCOMPLISHED/)
+- **Issues**: [GitHub Issues](https://github.com/JustineDevs/Hyperkit-Agent/issues)
 - **Discord**: [HyperKit Community](https://discord.gg/hyperkit)
 - **Email**: support@hyperkit.ai
 
 ---
 
-*Last Updated: October 27, 2025*
+*Last Updated: October 27, 2025*  
+*Location*: `/hyperkit-agent/docs/TECHNICAL_DOCUMENTATION.md`
