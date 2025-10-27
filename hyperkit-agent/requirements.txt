@@ -78,6 +78,10 @@ typing-extensions>=4.12.0,<5.0
 # Additional utilities
 urllib3>=2.5.0,<3.0
 
+# Vector Database & RAG
+chromadb>=0.4.0,<1.0  # Vector database for embeddings and similarity search
+ipfshttpclient>=0.8.0,<1.0  # IPFS integration for decentralized vector storage
+
 # Removed dependencies for production readiness:
 # - solcx (Windows incompatibility - using Foundry CLI instead)
 # - langchain (deprecated, unnecessary)
