@@ -20,7 +20,7 @@ We take security vulnerabilities seriously. If you discover a security vulnerabi
 
 Instead, please report them via one of the following methods:
 
-1. **Email (Preferred)**: Send details to [security@hyperionkit.xyz](mailto:security@hyperionkit.xyz)
+1. **Email (Preferred)**: Send details to [hyperkitdev@gmail.com](mailto:hyperkitdev@gmail.com)
 2. **GitHub Security Advisory**: Use GitHub's private vulnerability reporting feature
 3. **Encrypted Communication**: Use our PGP key for sensitive reports
 

@@ -112,7 +112,7 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 | ✅ **10/10 E2E Tests Passing** | Comprehensive deployment validation | `pytest tests/` |
 | ✅ **Batch Audit Implementation** | Audit multiple contracts efficiently | Fully functional |
 | ✅ **Network Migration Complete** | Focused on 3 primary networks | Hyperion, LazAI, Metis |
-| ✅ **Security Policy + Bug Bounty** | $50-$5,000 reward program | SECURITY.md |
+| ✅ **Security Policy + Bug Bounty** | TBD reward program | SECURITY.md |
 | ✅ **Professional Documentation** | Contributing, Security, Templates | All docs complete |
 | ✅ **Honest Status Reporting** | No fake success messages | `hyperagent limitations` |
 | ✅ **Dynamic Versioning** | Git-integrated version tracking | `hyperagent version` |
@@ -736,11 +736,11 @@ Special thanks to all contributors, security researchers, and community members 
 
 ### 🔗 Quick Links
 
-- 🌐 **Website**: [Coming Soon]
+- 🌐 **Website**: [Hyperionkit.xyz](http://hyperionkit.xyz/)
 - 📚 **Documentation**: [GitHub Docs](https://github.com/JustineDevs/Hyperkit-Agent)
-- 💬 **Discord**: [Join Community] (Coming Soon)
-- 🐦 **Twitter**: [@HyperKitAgent] (Coming Soon)
-- 📧 **Contact**: security@hyperkit.dev (for security issues)
+- 💬 **Discord**: [Join Community](https://discord.com/invite/MDh7jY8vWe)
+- 🐦 **Twitter**: [@HyperKitAgent](https://x.com/HyperionKit)
+- 📧 **Contact**: Hyperkitdev@gmail.com (for security issues)
 - 💰 **Bug Bounty**: See [SECURITY.md](./SECURITY.md)
 
 ---
