@@ -238,6 +238,54 @@ safety check
 cd hyperkit-agent && slither .
 ```
 
+## 📁 Handling Large Files and Binary Data
+
+### **Never Commit Large Files**
+
+The following file types are **never** allowed in git:
+
+- `.exe`, `.dll`, `.so` (executables)
+- `.bin`, `.data`, `.vectors` (large binary data)
+- Files over 5MB
+- Generated artifacts or caches
+
+All large files are already listed in `.gitignore`.
+
+### **Working with Vector/RAG Data**
+
+If you need to work with vector embeddings or RAG data:
+
+1. **Generate vectors on-demand:**
+   ```bash
+   python scripts/generate_vectors.py
+   ```
+
+2. **Download from release** (if needed):
+   ```bash
+   bash scripts/download_vectors.sh
+   ```
+
+3. **Never** commit large data files directly
+
+### **If You Must Store Large Data**
+
+- Host in a GitHub Release
+- Use cloud storage (S3, GCS) with public access
+- Create a download script
+- Document the process in the README
+
+### **File Size Check**
+
+Before committing, check file sizes:
+
+```bash
+# Find large files
+find . -type f -size +1M -not -path "*/\.git/*"
+
+# Check git history for large files
+git rev-list --objects --all | git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' | grep blob | sort -k3 -n | tail -10
+```
+
 ## 📦 Adding Dependencies
 
 ### Python Dependencies
