@@ -80,7 +80,9 @@ urllib3>=2.5.0,<3.0
 
 # Vector Database & RAG
 chromadb>=0.4.0,<1.0  # Vector database for embeddings and similarity search
-ipfshttpclient>=0.8.0,<1.0  # IPFS integration for decentralized vector storage
+# ipfshttpclient - MOVED TO OPTIONAL: Install separately for IPFS RAG features
+# Install with: pip install ipfshttpclient (if available for your Python version)
+# Note: IPFS RAG is production-ready but optional. Core system works without it.
 
 # Removed dependencies for production readiness:
 # - solcx (Windows incompatibility - using Foundry CLI instead)

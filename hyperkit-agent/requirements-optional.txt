@@ -1,0 +1,36 @@
+# HyperKit AI Agent - Optional Dependencies
+# These features are production-ready but not required for core operations
+
+# IPFS RAG Integration (Production-Ready)
+# Note: May not be compatible with all Python versions (3.10-3.12)
+# If installation fails, IPFS RAG features will be disabled but core system will work
+# 
+# To install IPFS features:
+#   pip install -r requirements-optional.txt
+#
+# Or manually:
+#   pip install ipfshttpclient
+#
+# IPFS RAG provides:
+# - Decentralized vector storage
+# - CID-based version tracking  
+# - Multi-gateway fallback
+# - Pinata integration
+#
+# Without IPFS:
+# - Vector generation still works locally
+# - RAG features still functional
+# - Only upload/fetch from IPFS is disabled
+
+# Try to install, but don't fail if incompatible
+ipfshttpclient>=0.8.0a0  # Using alpha constraint for better compatibility
+
+# Alternative: Use local IPFS node
+# Install IPFS: https://docs.ipfs.io/install/
+# Then use: ipfs daemon
+
+# Pinata API alternative (no package needed)
+# Set environment variables:
+#   PINATA_API_KEY=your_key
+#   PINATA_SECRET_KEY=your_secret
+

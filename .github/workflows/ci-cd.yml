@@ -37,7 +37,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools wheel
           cd hyperkit-agent
-          pip install -r requirements.txt  # Now includes Alith SDK and all dev tools
+          # Install core dependencies (ipfshttpclient moved to optional)
+          pip install -r requirements.txt
+          # Try to install optional dependencies (continue on failure)
+          pip install -r requirements-optional.txt || echo "⚠️ Optional dependencies not available"
       
       - name: Verify Alith SDK installation
         run: |
