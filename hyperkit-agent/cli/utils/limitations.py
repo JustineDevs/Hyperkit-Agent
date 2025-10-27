@@ -31,17 +31,17 @@ def show_limitations():
     limitations = [
         # Critical Broken Commands
         ("deploy", "❌ BROKEN", "Constructor argument mismatch - ABI vs contract signature", "HIGH - No deployments work"),
+        ("verify", "❌ STUB", "All TODO comments - no real implementation", "HIGH - No verification"),
+        ("monitor", "❌ STUB", "All TODO comments - no real implementation", "MEDIUM - No monitoring"),
+        ("config", "❌ STUB", "All TODO comments - no real implementation", "MEDIUM - No config management"),
         
         # Partially Working Commands
         ("workflow", "⚠️ PARTIAL", "Deployment stage fails - constructor bug", "HIGH - End-to-end broken"),
-        ("audit", "⚠️ PARTIAL", "Batch audit implemented, some features pending", "LOW - Core works"),
-        ("generate", "✅ WORKING", "AI-powered contract generation works", "NONE - Fully functional"),
-        ("verify", "✅ IMPLEMENTED", "Real Explorer API integration exists", "NONE - Actually works"),
-        ("monitor", "✅ IMPLEMENTED", "Real system metrics with psutil", "NONE - Actually works"),
-        ("config", "✅ IMPLEMENTED", "Real file-based config management", "NONE - Actually works"),
+        ("generate", "⚠️ PARTIAL", "Templates are hardcoded stubs", "MEDIUM - Limited templates"),
+        ("audit", "⚠️ PARTIAL", "Batch audit and report viewing not implemented", "LOW - Core works"),
         
-        # Dynamic Commands
-        ("version", "✅ DYNAMIC", "Pulls version from Git + pyproject.toml", "NONE - Actually works"),
+        # Fake Commands
+        ("version", "❌ FAKE", "Hardcoded static data, not dynamic", "LOW - Misleading info"),
         
         # Working Commands
         ("status", "✅ WORKING", "Real health check with production validator", "NONE - Actually works"),
@@ -56,33 +56,35 @@ def show_limitations():
     # Show critical issues
     console.print("\n[bold red]🚨 CRITICAL ISSUES REQUIRING IMMEDIATE ATTENTION:[/bold red]")
     console.print("1. [red]Deploy command constructor bug[/red] - ABI generation mismatch")
-    console.print("2. [red]Workflow pipeline fails at deployment[/red] - Constructor bug blocks E2E")
+    console.print("2. [red]Workflow pipeline fails silently[/red] - Shows fake success")
+    console.print("3. [red]Verify command completely broken[/red] - All TODO stubs")
+    console.print("4. [red]Monitor command completely broken[/red] - All TODO stubs")
+    console.print("5. [red]Config command completely broken[/red] - All TODO stubs")
     
     # Show what actually works
     console.print("\n[bold green]✅ WHAT ACTUALLY WORKS:[/bold green]")
-    console.print("• [green]Generate[/green] - AI-powered contract generation")
-    console.print("• [green]Audit[/green] - Multi-source security analysis")
-    console.print("• [green]Verify[/green] - Real Explorer API integration")
-    console.print("• [green]Monitor[/green] - System metrics with psutil")
-    console.print("• [green]Config[/green] - File-based configuration management")
-    console.print("• [green]Status[/green] - Production mode validation")
-    console.print("• [green]Version[/green] - Dynamic Git + package info")
+    console.print("• [green]Status command[/green] - Real health check")
+    console.print("• [green]Test-rag command[/green] - RAG testing")
+    console.print("• [green]Contract generation[/green] - AI-powered generation")
+    console.print("• [green]Security auditing[/green] - AI-powered analysis")
     
     # Show production readiness status
     console.print("\n[bold yellow]⚠️ PRODUCTION READINESS STATUS:[/bold yellow]")
-    console.print("[yellow]MOSTLY FUNCTIONAL[/yellow] - Most commands work correctly")
-    console.print("[red]DEPLOYMENT BLOCKED[/red] - Constructor argument bug prevents deployments")
-    console.print("[yellow]Need to fix deploy command to be fully production-ready[/yellow]")
+    console.print("[red]NOT PRODUCTION READY[/red] - This is a demo/prototype")
+    console.print("[yellow]Most commands are stubs or broken[/yellow]")
+    console.print("[yellow]Deployment pipeline is broken[/yellow]")
+    console.print("[yellow]No real verification system[/yellow]")
     
     # Show next steps
     console.print("\n[bold blue]🔧 IMMEDIATE FIXES NEEDED:[/bold blue]")
-    console.print("1. [red]Fix deploy command constructor argument parsing[/red]")
-    console.print("2. [yellow]Test and validate all implemented commands[/yellow]")
-    console.print("3. [yellow]Add comprehensive error handling[/yellow]")
-    console.print("4. [yellow]Document actual functionality[/yellow]")
+    console.print("1. Fix deploy command constructor argument parsing")
+    console.print("2. Implement real verify command with Hyperion Explorer")
+    console.print("3. Implement real monitor command with system metrics")
+    console.print("4. Implement real config command with file management")
+    console.print("5. Make version command dynamic")
+    console.print("6. Remove all fake success messages")
     
-    console.print("\n[bold green]✅ BOTTOM LINE:[/bold green]")
-    console.print("[green]Most commands are IMPLEMENTED and WORKING[/green]")
-    console.print("[yellow]Deploy command needs fix for constructor bug[/yellow]")
-    console.print("[yellow]Core AI features (generation, audit) work correctly[/yellow]")
-    console.print("[yellow]Verify, monitor, config are REAL implementations[/yellow]")
+    console.print("\n[bold red]🚨 BOTTOM LINE:[/bold red]")
+    console.print("[red]This is NOT a production system.[/red]")
+    console.print("[red]It's a demo/prototype with mostly broken infrastructure.[/red]")
+    console.print("[red]Only core AI features (generation, audit) actually work.[/red]")
