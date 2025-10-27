@@ -412,38 +412,35 @@ mkdir -p docs/troubleshooting/screenshots/
 
 ---
 
-## 📊 Implementation Roadmap
+## 📊 Implementation Priorities
 
-### Day 1 (Emergency - CI/CD)
-- [ ] Fix CI/CD dependency issue (Priority 0) ⛔ **MUST DO FIRST**
+### P0 (Critical - Blocks Everything)
+- [ ] Fix CI/CD dependency issue (ipfshttpclient) ⛔
 - [ ] Verify all GitHub Actions jobs pass
 - [ ] Pin all dependencies
-
-### Week 1 (Critical)
-- [ ] Fix deploy command (Priority 1)
+- [ ] Fix deploy command constructor/ABI mismatch
 - [ ] Update README with honest banner (Done ✅)
-- [ ] Add limitations command (if missing)
 
-### Week 1.5 (Directory Restructure)
-- [ ] Create new directory structure
-- [ ] Move docs to proper locations
-- [ ] Update all links and references
+### P1 (High Priority - Core Features)
+- [ ] Batch audit improvements with multi-format exports
+- [ ] CI/CD hard failures on mock mode
+- [ ] Directory restructure implementation
+- [ ] Update all doc links and references
 - [ ] Add README indexes in each subdirectory
 
-### Week 2 (High Priority)
-- [ ] Batch audit improvements (Priority 2)
-- [ ] CI/CD hard failures (Priority 4)
-- [ ] Test with real mainnet deployments
-
-### Week 3 (Medium Priority)
-- [ ] Template engine (Priority 3)
-- [ ] Documentation screenshots (Priority 5)
-- [ ] Additional test cases
-
-### Month 2 (Enhancement)
-- [ ] Video tutorials
+### P2 (Medium Priority - Scalability)
+- [ ] Template engine (dynamic generation)
 - [ ] Advanced template library
-- [ ] Production monitoring
+- [ ] Test with real mainnet deployments
+- [ ] Additional E2E test cases
+- [ ] Performance optimization
+
+### P3 (Enhancement - UX/Documentation)
+- [ ] Documentation screenshots
+- [ ] Video tutorials
+- [ ] Production monitoring dashboard
+- [ ] User onboarding improvements
+- [ ] Community feedback integration
 
 ---
 

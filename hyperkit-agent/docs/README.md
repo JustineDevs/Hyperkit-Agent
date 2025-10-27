@@ -1,83 +1,103 @@
-# Developer Documentation (Internal)
+# HyperKit Agent - Internal Documentation
 
-This directory is for contributors and maintainers of `hyperkit-agent`.
+This directory contains all internal documentation for the HyperKit Agent project, organized by category.
 
-## 📚 Key Files
+## Documentation Structure
 
-- **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)** → Engineering instructions, SDK & architecture
-- **[CLI_REFERENCE.md](./CLI_REFERENCE.md)** → Reference for CLI commands
-- **[API_REFERENCE.md](./API_REFERENCE.md)** → Python/Node SDK info
-- **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** → Unit & integration tests
-- **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** → Common issues and solutions
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** → System architecture and design
-- **[SECURITY.md](./SECURITY.md)** → Security guidelines and best practices
+### 📁 TEAM/
+Team processes, coding standards, and collaboration guides.
 
-## 🏗️ Architecture Overview
+**Key Documents:**
+- Developer onboarding guides
+- Coding standards
+- Team coordination
+- Architecture documentation
 
-### **Core Components**
-- **`core/`** - Core agent logic and configuration
-- **`services/`** - Service modules (generation, audit, deployment, etc.)
-- **`cli/`** - Command-line interface
-- **`utils/`** - Utility functions and helpers
+→ [Browse TEAM Documentation](./TEAM/)
 
-### **Service Modules**
-- **`generation/`** - Smart contract generation
-- **`audit/`** - Security auditing
-- **`deployment/`** - Contract deployment
-- **`verification/`** - Contract verification
-- **`testing/`** - Contract testing
-- **`monitoring/`** - Transaction monitoring
+### 📁 EXECUTION/
+Technical runbooks, deployment guides, and operational procedures.
 
-## 🚀 Quick Start for Developers
+**Key Documents:**
+- Deployment guides
+- Disaster recovery procedures
+- Testing evidence
+- Status reports
 
-### **Setup Development Environment**
-```bash
-# Clone repository
-git clone https://github.com/JustineDevs/HyperAgent.git
-cd HyperAgent
+→ [Browse EXECUTION Documentation](./EXECUTION/)
 
-# Install dependencies
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
+### 📁 INTEGRATION/
+External service integration guides and API specifications.
 
-# Setup development environment
-./scripts/setup-dev.sh
-```
+**Key Documents:**
+- Alith SDK integration
+- LAZAI platform integration
+- Wallet security extensions
+- Integration code samples
 
-### **Running Tests**
-```bash
-# Unit tests
-python -m pytest tests/unit/
+→ [Browse INTEGRATION Documentation](./INTEGRATION/)
 
-# Integration tests
-python -m pytest tests/integration/
+### 📁 REFERENCE/
+API references, CLI documentation, and technical specifications.
 
-# All tests
-python -m pytest
-```
+**Key Documents:**
+- API endpoint documentation
+- CLI command reference
+- Configuration options
+- Error codes
 
-### **Code Quality**
-```bash
-# Linting
-python -m flake8 hyperkit-agent/
-python -m pylint hyperkit-agent/
+→ [Browse REFERENCE Documentation](./REFERENCE/)
 
-# Type checking
-python -m mypy hyperkit-agent/
+## Quick Links
 
-# Formatting
-python -m black hyperkit-agent/
-```
+### For New Developers
+1. [Developer Guide](./TEAM/DEVELOPER_GUIDE.md)
+2. [Environment Setup](./TEAM/ENVIRONMENT_SETUP.md)
+3. [Team Coordination](./TEAM/TEAM_COORDINATION_GUIDE.md)
 
-## 📖 Documentation Navigation
+### For Operations
+1. [Disaster Recovery](./EXECUTION/DISASTER_RECOVERY.md)
+2. [Pre-Demo Checklist](./EXECUTION/PRE_DEMO_CHECKLIST.md)
+3. [Known Limitations](./EXECUTION/KNOWN_LIMITATIONS.md)
 
-- **Public Docs** ([../../docs/](../../docs/)) → User-facing documentation
-- **Developer Docs** (this directory) → Technical implementation
-- **Source Code** ([../](../)) → Main codebase
+### For Integrators
+1. [Alith SDK Integration](./INTEGRATION/ALITH_SDK_INTEGRATION_ROADMAP.md)
+2. [LAZAI Integration](./INTEGRATION/LAZAI_INTEGRATION_GUIDE.md)
+3. [API Reference](./REFERENCE/API_REFERENCE.md)
 
-## 🔗 External Resources
+## Other Documentation Locations
 
-- **GitHub Repository**: [HyperAgent](https://github.com/JustineDevs/HyperAgent)
-- **Issue Tracker**: [Issues](https://github.com/JustineDevs/HyperAgent/issues)
-- **Discussions**: [Discussions](https://github.com/JustineDevs/HyperAgent/discussions)
-- **Contributing Guide**: [../../docs/CONTRIBUTING.md](../../docs/CONTRIBUTING.md)
+### User-Facing Documentation
+- **Root `/docs/`** - High-level project documentation (README, OVERVIEW, ROADMAP)
+
+### Status Reports
+- **`/hyperkit-agent/REPORTS/`** - Current status reports and assessments
+
+### Historical Archive
+- **`/ACCOMPLISHED/`** - Timestamped milestone reports and audits
+
+## Contributing to Documentation
+
+When adding new documentation:
+
+1. Determine the correct category (TEAM, EXECUTION, INTEGRATION, REFERENCE)
+2. Use the appropriate naming convention:
+   - ALL_CAPS for milestones/assessments
+   - Title_Case for guides
+   - lowercase for scripts
+3. Add an entry to the relevant subdirectory README
+4. Update this index if adding a new major document
+
+## Documentation Standards
+
+- Use Markdown format
+- Include last updated date
+- Add cross-references where helpful
+- Keep guides concise and actionable
+- Include code examples where relevant
+
+---
+
+**Last Updated**: October 27, 2025  
+**Version**: 4.3.0  
+**Maintained By**: Documentation Team

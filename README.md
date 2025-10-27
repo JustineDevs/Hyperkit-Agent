@@ -520,50 +520,59 @@ LOG_LEVEL=INFO
 
 ## 📚 Complete Documentation Navigation
 
-### 🎯 Project Status & Reports
+### 📁 Documentation Structure
+
+HyperAgent documentation is organized into clear categories:
+
+| Category | Location | Purpose |
+|----------|----------|---------|
+| **Internal Docs** | [`hyperkit-agent/Docs/`](./hyperkit-agent/Docs/) | Team processes, execution guides, integrations |
+| **Current Reports** | [`hyperkit-agent/REPORTS/`](./hyperkit-agent/REPORTS/) | Current status reports and assessments |
+| **Historical Archive** | [`ACCOMPLISHED/`](./ACCOMPLISHED/) | Timestamped milestone reports |
+| **User Docs** | [`docs/`](./docs/) | High-level project documentation |
+
+### 🎯 Quick Links by Role
+
+**For Developers:**
+- [Developer Guide](./hyperkit-agent/Docs/TEAM/DEVELOPER_GUIDE.md)
+- [Environment Setup](./hyperkit-agent/Docs/TEAM/ENVIRONMENT_SETUP.md)
+- [API Reference](./hyperkit-agent/Docs/REFERENCE/API_REFERENCE.md)
+
+**For Operations:**
+- [Disaster Recovery](./hyperkit-agent/Docs/EXECUTION/DISASTER_RECOVERY.md)
+- [Pre-Demo Checklist](./hyperkit-agent/Docs/EXECUTION/PRE_DEMO_CHECKLIST.md)
+- [Known Limitations](./hyperkit-agent/Docs/EXECUTION/KNOWN_LIMITATIONS.md)
+
+**For Integrators:**
+- [Alith SDK Integration](./hyperkit-agent/Docs/INTEGRATION/ALITH_SDK_INTEGRATION_ROADMAP.md)
+- [LAZAI Integration](./hyperkit-agent/Docs/INTEGRATION/LAZAI_INTEGRATION_GUIDE.md)
+- [Wallet Security](./hyperkit-agent/Docs/INTEGRATION/WALLET_SECURITY_EXTENSIONS.md)
+
+### 📊 Current Status & Reports
 
 | Document | Description | Link |
 |----------|-------------|------|
-| **Production Readiness Report** | Comprehensive status assessment | [PRODUCTION_READINESS_COMPLETE.md](./REPORTS/PRODUCTION_READINESS_COMPLETE.md) |
-| **Progress Report** | Development progress tracking | [PROGRESS_REPORT.md](./REPORTS/PROGRESS_REPORT.md) |
-| **Audit Enhancement Report** | Security audit improvements | [AUDIT_RELIABILITY_ENHANCEMENT_REPORT.md](./REPORTS/AUDIT_RELIABILITY_ENHANCEMENT_REPORT.md) |
-| **Implementation Assessment** | Feature implementation status | [IMPLEMENTATION_ASSESSMENT_REPORT.md](./REPORTS/IMPLEMENTATION_ASSESSMENT_REPORT.md) |
-| **CI/CD Fixes** | Pipeline fixes and improvements | [CICD_COMPLETE_FIX.md](./REPORTS/CICD_COMPLETE_FIX.md) |
+| **Honest Status Assessment** | Transparent project status | [HONEST_STATUS_ASSESSMENT.md](./hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md) |
+| **Critical Fixes Action Plan** | Priority fixes and roadmap | [CRITICAL_FIXES_ACTION_PLAN.md](./hyperkit-agent/REPORTS/CRITICAL_FIXES_ACTION_PLAN.md) |
+| **IPFS RAG Index** | IPFS RAG documentation hub | [IPFS_RAG_INDEX.md](./hyperkit-agent/REPORTS/IPFS_RAG_INDEX.md) |
+| **Directory Restructure Plan** | Documentation reorganization | [DIRECTORY_RESTRUCTURE_PLAN.md](./hyperkit-agent/REPORTS/DIRECTORY_RESTRUCTURE_PLAN.md) |
 
-### 🛠️ Technical Documentation
+### 🗂️ Historical Reports (Dated)
+
+View timestamped milestone reports in [`ACCOMPLISHED/`](./ACCOMPLISHED/):
+- Production Readiness (2025-10-27)
+- Implementation Assessment (2025-10-27)
+- Mission Accomplished (2025-10-27)
+- And more...
+
+### 🛠️ Technical References
 
 | Document | Description | Link |
 |----------|-------------|------|
-| **Environment Setup** | Development environment configuration | [ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md) |
-| **Security Setup** | Security tools and configuration | [SECURITY_SETUP.md](./SECURITY_SETUP.md) |
+| **Security Setup** | Security tools and configuration | [SECURITY_SETUP.md](./hyperkit-agent/docs/SECURITY_SETUP.md) |
 | **Contributing Guide** | Contribution guidelines | [CONTRIBUTING.md](./CONTRIBUTING.md) |
-| **Security Policy** | Vulnerability reporting and bounty | [SECURITY.md](./SECURITY.md) |
+| **Security Policy** | Vulnerability reporting | [SECURITY.md](./SECURITY.md) |
 | **Code of Conduct** | Community standards | [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) |
-
-### 📋 Project Management
-
-| Document | Description | Link |
-|----------|-------------|------|
-| **TODO List** | Active development tasks | [TODO.md](./TODO.md) |
-| **Changelog** | Version history and changes | [CHANGELOG.md](./CHANGELOG.md) |
-| **README (Main)** | Project overview and quick start | [README.md](./README.md) |
-
-### 🗂️ Archived Documentation
-
-| Document | Description | Status |
-|----------|-------------|--------|
-| **API Reference** | API documentation | 🗃️ Archived |
-| **Developer Guide** | Advanced development guide | 🗃️ Archived |
-| **Architecture Diagrams** | System architecture visuals | 🗃️ Archived |
-| **Wallet Security Extensions** | Advanced security features | 🗃️ Archived |
-
-### 📊 Testing & Performance
-
-| Document | Description | Link |
-|----------|-------------|------|
-| **Testing Results** | Test execution reports | [REPORTS/model-tests/](./REPORTS/model-tests/) |
-| **Performance Reports** | Performance benchmarks | [REPORTS/performance/](./REPORTS/performance/) |
-| **Security Audits** | Security audit results | [REPORTS/security/](./REPORTS/security/) |
 
 ### 🔗 External Resources
 
