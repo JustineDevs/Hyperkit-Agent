@@ -296,6 +296,17 @@ echo "✅ GitHub repository configured for production"
 
 ---
 
-**Last Updated**: 2025-10-26  
-**Maintained By**: HyperKit DevOps Team
+## 📍 Documentation Locations
+
+- **Current Status**: `/hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md`
+- **Action Plan**: `/hyperkit-agent/REPORTS/CRITICAL_FIXES_ACTION_PLAN.md`
+- **Internal Docs**: `/hyperkit-agent/Docs/` - Team, execution, integration, reference
+- **Historical Archive**: `/ACCOMPLISHED/` - Timestamped milestones
+
+---
+
+**Last Updated**: October 27, 2025  
+**Version**: 4.3.0  
+**Maintained By**: HyperKit DevOps Team  
+**Location**: `/hyperkit-agent/docs/GITHUB_SETUP.md`
 

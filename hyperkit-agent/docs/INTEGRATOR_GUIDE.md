@@ -602,14 +602,28 @@ verify_result = await agent.verify_contract(address, network)
 
 ## 📞 Support
 
-- **Documentation**: [docs.hyperkit.dev](https://docs.hyperkit.dev)
+- **Documentation**: [GitHub Docs](https://github.com/JustineDevs/Hyperkit-Agent)
 - **GitHub Issues**: [github.com/JustineDevs/Hyperkit-Agent/issues](https://github.com/JustineDevs/Hyperkit-Agent/issues)
-- **Discord**: [discord.gg/hyperkit](https://discord.gg/hyperkit)
+- **Discord**: Coming Soon
 - **Email**: support@hyperkit.dev
+
+## 📍 Documentation Locations
+
+- **User Docs**: `/docs/` - High-level guides and governance
+- **Internal Docs**: `/hyperkit-agent/Docs/` - Team, execution, integration, reference
+- **Technical Docs**: `/hyperkit-agent/docs/` - API reference, security, technical specs
+- **Current Status**: `/hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md`
+- **Historical Archive**: `/ACCOMPLISHED/` - Timestamped milestones
 
 ---
 
 ## 📝 Changelog
+
+### v4.3.0 (2025-10-27)
+- **Directory restructure completed**: Organized all documentation
+- **IPFS RAG production-ready**: Real Pinata integration working
+- **Status transparency**: Honest assessment of capabilities
+- **Critical fixes identified**: P0-P3 priority system
 
 ### v4.1.11 (2025-10-26)
 - Added comprehensive integration documentation
@@ -619,6 +633,8 @@ verify_result = await agent.verify_contract(address, network)
 
 ---
 
-**Last Updated**: 2025-10-26  
-**Maintained By**: HyperKit Development Team
+**Last Updated**: October 27, 2025  
+**Version**: 4.3.0  
+**Maintained By**: HyperKit Development Team  
+**Location**: `/hyperkit-agent/docs/INTEGRATOR_GUIDE.md`
 

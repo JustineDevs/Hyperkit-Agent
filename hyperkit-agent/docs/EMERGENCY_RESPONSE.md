@@ -493,15 +493,27 @@ HyperKit Security Team
 
 ## 📚 Related Documentation
 
-- [SECURITY.md](../SECURITY.md) - Security policy and bug bounty
+- [SECURITY.md](../../SECURITY.md) - Security policy and bug bounty
 - [SECURITY_AUDIT_LOG.md](./SECURITY_AUDIT_LOG.md) - Vulnerability tracking
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Security requirements for contributors
+- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Security requirements for contributors
+- [HONEST_STATUS_ASSESSMENT.md](../REPORTS/HONEST_STATUS_ASSESSMENT.md) - Current project status
+- [CRITICAL_FIXES_ACTION_PLAN.md](../REPORTS/CRITICAL_FIXES_ACTION_PLAN.md) - Priority fixes
+
+## 📍 Documentation Locations
+
+- **Current Reports**: `/hyperkit-agent/REPORTS/`
+- **Historical Archive**: `/ACCOMPLISHED/`
+- **Internal Docs**: `/hyperkit-agent/Docs/`
+- **Technical Docs**: `/hyperkit-agent/docs/` (this file)
 
 ---
 
 **Maintained by**: HyperKit Security & Operations Team  
+**Last Updated**: October 27, 2025  
+**Version**: 4.3.0  
 **Next Review**: 2025-11-26  
-**Last Drill**: TBD
+**Last Drill**: TBD  
+**Location**: `/hyperkit-agent/docs/EMERGENCY_RESPONSE.md`
 
 ---
 
