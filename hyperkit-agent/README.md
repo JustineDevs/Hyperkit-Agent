@@ -147,32 +147,32 @@ Copy and paste these natural language prompts:
 
 ### Copy-Paste Ready Commands:
 
-```bash
+   ```bash
 # ERC20 Token
 hyperagent workflow run "Create a simple ERC20 token with 1M supply" --network hyperion
-```
+   ```
 
-```bash
+   ```bash
 # Gaming Token
 hyperagent workflow run "Create a gaming token with rewards and staking" --network hyperion
-```
+   ```
 
-```bash
+   ```bash
 # NFT Collection
 hyperagent workflow run "Create an ERC721 NFT collection with 10K supply" --network metis
-```
+   ```
 
-```bash
+   ```bash
 # DAO Governance
 hyperagent workflow run "Create a DAO with proposal and voting system" --network hyperion
-```
+   ```
 
-```bash
+   ```bash
 # DeFi Staking
 hyperagent workflow run "Create a staking contract with 10% APY" --network metis
-```
+   ```
 
-```bash
+   ```bash
 # Multisig Wallet
 hyperagent workflow run "Create a 2-of-3 multisig wallet" --network hyperion
 ```
@@ -419,7 +419,7 @@ hyperagent limitations
 
 ### Installation Steps
 
-```bash
+   ```bash
 # 1. Clone repository
 git clone https://github.com/JustineDevs/Hyperkit-Agent.git
 cd Hyperkit-Agent/hyperkit-agent
@@ -647,7 +647,7 @@ LOG_LEVEL=INFO
 
 ### Demo Commands:
 
-```bash
+   ```bash
 # Quick Demo: Deploy a token in 60 seconds
 hyperagent workflow run "Create ERC20 token" --network hyperion
 

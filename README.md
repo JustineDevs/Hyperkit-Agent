@@ -116,7 +116,7 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 
 Run this command to check your HyperAgent installation:
 
-```bash
+   ```bash
 hyperagent monitor system
 ```
 
@@ -147,30 +147,30 @@ Copy and paste these natural language prompts:
 
 ### Copy-Paste Ready Commands:
 
-```bash
+   ```bash
 # ERC20 Token
 hyperagent workflow run "Create a simple ERC20 token with 1M supply" --network hyperion
-```
+   ```
 
-```bash
+   ```bash
 # Gaming Token
 hyperagent workflow run "Create a gaming token with rewards and staking" --network hyperion
-```
+   ```
 
-```bash
+   ```bash
 # NFT Collection
 hyperagent workflow run "Create an ERC721 NFT collection with 10K supply" --network metis
-```
+   ```
 
-```bash
+   ```bash
 # DAO Governance
 hyperagent workflow run "Create a DAO with proposal and voting system" --network hyperion
-```
+   ```
 
-```bash
+   ```bash
 # DeFi Staking
 hyperagent workflow run "Create a staking contract with 10% APY" --network metis
-```
+   ```
 
 ```bash
 # Multisig Wallet
