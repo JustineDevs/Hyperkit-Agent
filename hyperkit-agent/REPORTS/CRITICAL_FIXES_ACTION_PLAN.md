@@ -6,6 +6,84 @@ This document translates the brutally honest CTO audit into **specific, actionab
 
 ---
 
+## 🔴 PRIORITY 0: Fix CI/CD Dependency (BLOCKS ALL PIPELINES)
+
+### Problem
+- **Issue**: `ipfshttpclient>=0.8.0,<1.0` cannot be installed in CI/CD
+- **Impact**: ⛔ ALL GitHub Actions jobs failing
+- **Severity**: 🔴 **CRITICAL - BLOCKS ALL AUTOMATION**
+- **Error**: `ERROR: No matching distribution found for ipfshttpclient<1.0,>=0.8.0`
+
+### Root Cause
+- Package version constraint incompatible with Python 3.10–3.12 in GitHub Actions
+- Blocks test, build, and deploy jobs
+- No further pipeline steps execute
+
+### What Needs Fixing
+1. **Replace or Remove `ipfshttpclient`**
+   - Current: Required but broken version constraint
+   - Needed: Compatible version OR remove if not critical
+   - Impact: Enables CI/CD to run
+
+2. **Pin Dependencies Properly**
+   - Current: Loose version constraints
+   - Needed: Exact versions in pyproject.toml
+   - Impact: Local and CI match
+
+3. **Add Dependency Health Check**
+   - Current: No validation
+   - Needed: Pre-flight dependency check in CI
+   - Impact: Catches issues early
+
+### Implementation Steps
+
+```bash
+# 1. Check current dependency
+grep -r "ipfshttpclient" hyperkit-agent/requirements.txt
+
+# 2. Fix version constraint
+# Option A: Remove if not critical
+# Option B: Use compatible version
+# Option C: Make it optional
+
+# 3. Test locally first
+pip install -r requirements.txt
+
+# 4. Test in CI
+# Push and verify GitHub Actions passes
+```
+
+### Technical Fixes
+
+**File**: `hyperkit-agent/requirements.txt`
+- Remove or fix `ipfshttpclient>=0.8.0,<1.0`
+- Use `ipfshttpclient>=0.9.0` OR make optional
+- Test with all Python versions (3.10-3.12)
+
+**File**: `hyperkit-agent/pyproject.toml`
+- Pin all dependency versions
+- Add dependency groups (core, optional)
+- Validate in CI
+
+**File**: `.github/workflows/ci-cd.yml`
+- Add dependency pre-check step
+- Fail fast on installation errors
+- Test with all Python versions
+
+### Success Criteria
+- [ ] All GitHub Actions jobs pass
+- [ ] Pip install succeeds in CI
+- [ ] Tests run without mock errors
+- [ ] Dependency versions pinned and locked
+- [ ] No more "No matching distribution found" errors
+
+### Timeline
+**Effort**: 1 hour (quick fix)  
+**Priority**: 🔴 **IMMEDIATE - BEFORE ANYTHING ELSE**  
+**Owner**: DevOps
+
+---
+
 ## 🔴 PRIORITY 1: Fix Deploy Command (BLOCKS ALL PRODUCTION)
 
 ### Problem
@@ -336,10 +414,21 @@ mkdir -p docs/troubleshooting/screenshots/
 
 ## 📊 Implementation Roadmap
 
+### Day 1 (Emergency - CI/CD)
+- [ ] Fix CI/CD dependency issue (Priority 0) ⛔ **MUST DO FIRST**
+- [ ] Verify all GitHub Actions jobs pass
+- [ ] Pin all dependencies
+
 ### Week 1 (Critical)
 - [ ] Fix deploy command (Priority 1)
 - [ ] Update README with honest banner (Done ✅)
 - [ ] Add limitations command (if missing)
+
+### Week 1.5 (Directory Restructure)
+- [ ] Create new directory structure
+- [ ] Move docs to proper locations
+- [ ] Update all links and references
+- [ ] Add README indexes in each subdirectory
 
 ### Week 2 (High Priority)
 - [ ] Batch audit improvements (Priority 2)
