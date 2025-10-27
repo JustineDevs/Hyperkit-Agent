@@ -234,3 +234,19 @@ $RECYCLE.BIN/
 config.local.json
 config.production.json
 config.staging.json
+
+# Never put these in git!
+foundry/*.exe
+node_modules/
+artifacts/
+logs/
+build/
+dist/
+.env
+*.pem
+*.key
+*.db
+*.sqlite3
+*.pkl
+.vscode/
+.DS_Store
