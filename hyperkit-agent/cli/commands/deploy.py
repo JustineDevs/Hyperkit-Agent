@@ -21,15 +21,51 @@ def deploy_group():
 @click.option('--private-key', '-k', help='Private key for deployment')
 @click.option('--gas-limit', '-g', type=int, help='Gas limit for deployment')
 @click.option('--gas-price', help='Gas price for deployment')
+@click.option(
+    '--constructor-args', 
+    help='Constructor arguments as JSON array (e.g., \'["0x1234...", 1000000]\')'
+)
+@click.option(
+    '--constructor-file',
+    help='Path to JSON file with constructor arguments'
+)
 @click.pass_context
-def contract(ctx, contract, network, private_key, gas_limit, gas_price):
-    """Deploy a smart contract"""
+def contract(ctx, contract, network, private_key, gas_limit, gas_price, constructor_args, constructor_file):
+    """
+    Deploy a smart contract
+    
+    Examples:
+    
+      # Auto-detect constructor arguments
+      hyperagent deploy contract MyToken.sol
+      
+      # Provide custom constructor arguments
+      hyperagent deploy contract MyToken.sol --constructor-args '["0x1234...", 1000000]'
+      
+      # Load constructor arguments from JSON file
+      hyperagent deploy contract MyToken.sol --constructor-file args.json
+    """
     import asyncio
+    import json
     from core.agent.main import HyperKitAgent
     from core.config.loader import get_config
     
     console.print(f"🚀 Deploying contract: {contract}")
     console.print(f"🌐 Network: {network}")
+    
+    # Parse constructor arguments if provided
+    parsed_args = None
+    if constructor_args:
+        try:
+            parsed_args = json.loads(constructor_args)
+            console.print(f"📝 Using provided constructor args: {parsed_args}")
+        except json.JSONDecodeError as e:
+            console.print(f"❌ Invalid JSON in --constructor-args: {e}", style="red")
+            console.print("💡 Format: '[\"0x1234...\", 1000000, \"MyToken\"]'")
+            return
+    
+    if constructor_file:
+        console.print(f"📄 Loading constructor args from: {constructor_file}")
     
     try:
         # Initialize agent

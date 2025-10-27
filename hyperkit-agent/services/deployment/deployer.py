@@ -2,10 +2,17 @@
 Production-ready smart contract deployer
 Uses Foundry (forge) for compilation and deployment
 Replaces solcx for better cross-platform support
+
+Enhanced with user override for constructor arguments:
+- Command-line arguments via --constructor-args
+- JSON file support via --constructor-file
+- Type coercion and validation
 """
 
+import json
 import logging
-from typing import Dict, Any, Optional
+from pathlib import Path
+from typing import Dict, Any, Optional, List, Union
 
 # Import Foundry components
 from .foundry_deployer import FoundryDeployer
@@ -44,19 +51,42 @@ class MultiChainDeployer:
         
         logger.info("✅ MultiChainDeployer initialized with Foundry")
     
-    def deploy(self, contract_source_code: str, rpc_url: str, chain_id: int = 133717, contract_name: str = "Contract", deployer_address: str = None) -> dict:
+    def deploy(
+        self, 
+        contract_source_code: str, 
+        rpc_url: str, 
+        chain_id: int = 133717, 
+        contract_name: str = "Contract", 
+        deployer_address: str = None,
+        constructor_args: Optional[List[Any]] = None,
+        constructor_file: Optional[str] = None
+    ) -> dict:
         """
-        Deploy contract using Foundry with proper constructor argument extraction
+        Deploy contract using Foundry with proper constructor argument extraction.
+        
+        Enhanced with user override capabilities for constructor arguments.
         
         Args:
-            contract_source_code: Solidity contract code (STRING)
-            rpc_url: RPC endpoint URL (STRING)
-            chain_id: Blockchain chain ID (INT)
+            contract_source_code: Solidity contract code
+            rpc_url: RPC endpoint URL
+            chain_id: Blockchain chain ID
             contract_name: Contract name for deployment
-            deployer_address: Address of the deployer (for constructor args)
+            deployer_address: Address of the deployer (for auto-generated args)
+            constructor_args: Optional list of constructor arguments (overrides auto-detection)
+            constructor_file: Optional path to JSON file with constructor arguments
         
         Returns:
             {"success": True/False, "transaction_hash": "...", "contract_address": "..."}
+            
+        Examples:
+            # Auto-detect constructor args
+            deploy(contract_code, rpc_url)
+            
+            # Provide custom args
+            deploy(contract_code, rpc_url, constructor_args=["0x1234...", 1000000])
+            
+            # Load from JSON file
+            deploy(contract_code, rpc_url, constructor_file="args.json")
         """
         if not self.foundry_available:
             error_msg = (
@@ -69,35 +99,150 @@ class MultiChainDeployer:
             logger.error(error_msg)
             raise RuntimeError(error_msg)
         
-        # Extract constructor arguments from contract code
         parser = ConstructorArgumentParser()
-        constructor_args = parser.generate_constructor_args(contract_source_code, deployer_address or "0x0000000000000000000000000000000000000000")
         
-        # Log what we're using
-        logger.info(f"Constructor args extracted: {constructor_args}")
+        # Determine constructor arguments source
+        if constructor_file:
+            # Load from JSON file
+            logger.info(f"Loading constructor args from file: {constructor_file}")
+            try:
+                final_args = self.load_constructor_args_from_file(
+                    constructor_file, 
+                    contract_source_code, 
+                    deployer_address
+                )
+                logger.info(f"✓ Loaded constructor args from file: {final_args}")
+            except Exception as e:
+                logger.error(f"Failed to load constructor args from file: {e}")
+                return {
+                    "success": False,
+                    "error": f"Failed to load constructor args from file: {e}",
+                    "suggestions": [
+                        "Check that the file exists and is valid JSON",
+                        "Verify the parameter names match the contract constructor",
+                        "See documentation for JSON file format"
+                    ]
+                }
         
-        # If ERC20, verify name/symbol match expectations
+        elif constructor_args is not None:
+            # Use provided arguments
+            logger.info(f"Using provided constructor args: {constructor_args}")
+            final_args = constructor_args
+        
+        else:
+            # Auto-detect from contract code
+            logger.info("Auto-detecting constructor args from contract code")
+            final_args = parser.generate_constructor_args(
+                contract_source_code, 
+                deployer_address or "0x0000000000000000000000000000000000000000"
+            )
+            logger.info(f"✓ Auto-detected constructor args: {final_args}")
+        
+        # Log contract info if ERC20/ERC721
         name, symbol = parser.extract_erc20_name_symbol(contract_source_code)
         if name and symbol:
-            logger.info(f"Deploying ERC20: {name} ({symbol})")
+            logger.info(f"📝 Deploying ERC20: {name} ({symbol})")
         
         # Validate constructor args
-        validation = parser.validate_constructor_args(contract_source_code, constructor_args)
+        logger.info("Validating constructor arguments...")
+        validation = parser.validate_constructor_args(contract_source_code, final_args)
+        
         if not validation["success"]:
-            logger.error(f"Constructor validation failed: {validation['error']}")
+            error_details = validation.get("details", [])
+            logger.error(f"❌ Constructor validation failed: {validation['error']}")
+            for detail in error_details:
+                logger.error(f"  - {detail}")
+            
             return {
                 "success": False,
                 "error": f"Constructor validation failed: {validation['error']}",
-                "validation_details": validation
+                "validation_details": validation,
+                "provided_args": final_args,
+                "expected_signature": validation.get("expected_signature", []),
+                "suggestions": [
+                    "Check that argument types match the constructor signature",
+                    "Verify array sizes for fixed-size arrays",
+                    "Ensure addresses are properly formatted (0x...)",
+                    "Use --constructor-file for complex arguments"
+                ]
             }
+        
+        logger.info(f"✓ Constructor validation passed")
+        logger.info(f"📋 Deploying with args: {final_args}")
         
         return self.foundry_deployer.deploy(
             contract_source_code=contract_source_code,
             rpc_url=rpc_url,
             chain_id=chain_id,
             contract_name=contract_name,
-            constructor_args=constructor_args
+            constructor_args=final_args
         )
+    
+    def load_constructor_args_from_file(
+        self, 
+        file_path: str, 
+        contract_source_code: str,
+        deployer_address: Optional[str] = None
+    ) -> List[Any]:
+        """
+        Load constructor arguments from a JSON file.
+        
+        Supports two formats:
+        1. Array format: ["0x1234...", 1000000, "MyToken"]
+        2. Named format: {"owner": "0x1234...", "supply": 1000000, "name": "MyToken"}
+        
+        Args:
+            file_path: Path to JSON file
+            contract_source_code: Contract code (for parameter matching)
+            deployer_address: Default address for address parameters
+            
+        Returns:
+            List of constructor arguments in correct order
+        """
+        path = Path(file_path)
+        
+        if not path.exists():
+            raise FileNotFoundError(f"Constructor args file not found: {file_path}")
+        
+        with open(path, 'r') as f:
+            data = json.load(f)
+        
+        # If already an array, return as-is
+        if isinstance(data, list):
+            logger.info(f"Using array format from {file_path}")
+            return data
+        
+        # If dictionary, match to constructor parameters
+        if isinstance(data, dict):
+            logger.info(f"Using named format from {file_path}")
+            
+            # Extract constructor parameter names
+            parser = ConstructorArgumentParser()
+            result = parser.extract_constructor_params(contract_source_code)
+            
+            if not result:
+                raise ValueError("Could not extract constructor parameters from contract")
+            
+            contract_name, param_types = result
+            
+            # Build argument list in correct order
+            args = []
+            for param_type, param_name in param_types:
+                if param_name in data:
+                    args.append(data[param_name])
+                    logger.debug(f"  {param_name}: {data[param_name]}")
+                else:
+                    # Generate default for missing parameters
+                    default_arg = parser.generate_constructor_arg(
+                        param_type, param_name, contract_source_code, 
+                        deployer_address or "0x0000000000000000000000000000000000000000"
+                    )
+                    args.append(default_arg)
+                    logger.warning(f"  {param_name}: {default_arg} (default, not in JSON)")
+            
+            return args
+        
+        raise ValueError(f"Invalid JSON format in {file_path}. Expected array or object.")
     
     def get_network_config(self, network_name: str) -> Dict[str, Any]:
         """
