@@ -415,18 +415,19 @@ mkdir -p docs/troubleshooting/screenshots/
 ## 📊 Implementation Priorities
 
 ### P0 (Critical - Blocks Everything)
-- [ ] Fix CI/CD dependency issue (ipfshttpclient) ⛔
-- [ ] Verify all GitHub Actions jobs pass
-- [ ] Pin all dependencies
-- [ ] Fix deploy command constructor/ABI mismatch
-- [ ] Update README with honest banner (Done ✅)
+- [x] Fix CI/CD dependency issue (ipfshttpclient) ⛔ **COMPLETED**
+- [ ] Verify all GitHub Actions jobs pass (waiting for CI)
+- [x] Pin all dependencies **COMPLETED**
+- [ ] Fix deploy command constructor/ABI mismatch (plan ready - see P1_DEPLOY_FIX_PLAN.md)
+- [x] Update README with honest banner **COMPLETED**
 
 ### P1 (High Priority - Core Features)
-- [ ] Batch audit improvements with multi-format exports
-- [ ] CI/CD hard failures on mock mode
-- [ ] Directory restructure implementation
-- [ ] Update all doc links and references
-- [ ] Add README indexes in each subdirectory
+- [ ] Batch audit improvements with multi-format exports (see P2_BATCH_AUDIT_PLAN.md when ready)
+- [ ] CI/CD hard failures on mock mode (see P4_CI_CD_HARDENING.md when ready)
+- [x] Directory restructure implementation **COMPLETED**
+- [x] Update all doc links and references **COMPLETED**
+- [x] Add README indexes in each subdirectory **COMPLETED**
+- [x] Create comprehensive deploy fix plan (see [P1_DEPLOY_FIX_PLAN.md](P1_DEPLOY_FIX_PLAN.md)) **COMPLETED**
 
 ### P2 (Medium Priority - Scalability)
 - [ ] Template engine (dynamic generation)
