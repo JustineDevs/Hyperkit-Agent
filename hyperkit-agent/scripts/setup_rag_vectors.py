@@ -40,12 +40,22 @@ import hashlib
 import shutil
 import time
 
-# Setup logging
+# Setup logging first
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Load environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    logger.info("✓ Loaded environment variables from .env file")
+except ImportError:
+    logger.warning("python-dotenv not installed - .env file not loaded")
+except Exception as e:
+    logger.warning(f"Failed to load .env file: {e}")
 
 
 def check_dependencies() -> bool:
@@ -241,17 +251,110 @@ def upload_to_ipfs(store_path: Path) -> Optional[str]:
 
 def upload_to_ipfs_gateway(store_path: Path) -> Optional[str]:
     """Upload to IPFS using gateway (requires Pinata or similar service)."""
-    logger.info("Gateway upload mode requires Pinata API key")
-    logger.info("Set environment variables:")
-    logger.info("  - PINATA_API_KEY=your_key")
-    logger.info("  - PINATA_API_SECRET=your_secret")
+    import os
     
-    # For now, return a mock CID
-    import time
+    # Try to use Pinata credentials from environment
+    pinata_api_key = os.getenv('PINATA_API_KEY') or os.getenv('PINATA_SECRET_KEY')
+    pinata_secret_key = os.getenv('PINATA_SECRET_KEY') or os.getenv('PINATA_API_SECRET')
+    
+    if pinata_api_key and pinata_secret_key:
+        logger.info(f"✓ Found Pinata credentials in environment")
+        return upload_to_pinata(store_path, pinata_api_key, pinata_secret_key)
+    
+    # Fallback: try local IPFS node
+    try:
+        import ipfshttpclient
+        logger.info("Attempting local IPFS node...")
+        client = ipfshttpclient.connect('/ip4/127.0.0.1/tcp/5001')
+        
+        # Create tarball
+        import tempfile
+        import tarfile
+        
+        with tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False) as tar_file:
+            tar_path = Path(tar_file.name)
+        
+        with tarfile.open(tar_path, 'w:gz') as tar:
+            tar.add(store_path, arcname='vector_store')
+        
+        logger.info(f"Uploading {tar_path.stat().st_size / 1024 / 1024:.2f}MB to local IPFS node...")
+        result = client.add(tar_path, recursive=False)
+        cid = result['Hash']
+        tar_path.unlink()
+        
+        logger.info(f"✓ Uploaded to local IPFS node with CID: {cid}")
+        return cid
+    except Exception as e:
+        logger.warning(f"Local IPFS node not available: {e}")
+    
+    # Last resort: mock CID
+    logger.warning("No IPFS node or Pinata credentials found")
+    logger.info("To use real IPFS uploads:")
+    logger.info("  1. Install IPFS: 'ipfs init && ipfs daemon'")
+    logger.info("  2. OR set Pinata credentials in .env file")
+    
     mock_cid = f"Qm{hashlib.sha256(str(time.time()).encode()).hexdigest()[:44]}"
-    logger.warning(f"Mock CID generated (gateway upload not implemented): {mock_cid}")
+    logger.warning(f"Using mock CID: {mock_cid}")
     
     return mock_cid
+
+
+def upload_to_pinata(store_path: Path, api_key: str, secret_key: str) -> Optional[str]:
+    """Upload to Pinata IPFS service."""
+    import requests
+    import os
+    
+    logger.info("Uploading to Pinata IPFS service...")
+    
+    # Create tarball
+    import tempfile
+    import tarfile
+    
+    with tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False) as tar_file:
+        tar_path = Path(tar_file.name)
+    
+    with tarfile.open(tar_path, 'w:gz') as tar:
+        tar.add(store_path, arcname='vector_store')
+    
+    file_size = tar_path.stat().st_size
+    logger.info(f"Uploading {file_size / 1024 / 1024:.2f}MB to Pinata...")
+    
+    try:
+        # Upload to Pinata
+        with open(tar_path, 'rb') as f:
+            files = {'file': (tar_path.name, f, 'application/gzip')}
+            headers = {
+                'pinata_api_key': api_key,
+                'pinata_secret_api_key': secret_key
+            }
+            
+            # Get group ID from env if available
+            group_id = os.getenv('PINATA_GROUP_ID')
+            if group_id:
+                headers['pinata_metadata'] = json.dumps({'group_id': group_id})
+            
+            response = requests.post(
+                'https://api.pinata.cloud/pinning/pinFileToIPFS',
+                files=files,
+                headers=headers,
+                timeout=300
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                cid = result['IpfsHash']
+                logger.info(f"✓ Uploaded to Pinata with CID: {cid}")
+                logger.info(f"  Access at: https://gateway.pinata.cloud/ipfs/{cid}")
+                return cid
+            else:
+                logger.error(f"Pinata upload failed: {response.status_code} - {response.text}")
+                return None
+                
+    except Exception as e:
+        logger.error(f"Pinata upload failed: {e}")
+        return None
+    finally:
+        tar_path.unlink()
 
 
 def fetch_from_ipfs(cid: str, output_path: Path) -> bool:
@@ -423,7 +526,6 @@ def main():
             
             if cid:
                 # Update registry
-                import time
                 registry = load_cid_registry()
                 registry['latest_cid'] = cid
                 registry['versions'].append({

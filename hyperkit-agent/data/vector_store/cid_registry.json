@@ -1,0 +1,20 @@
+{
+  "latest_cid": "QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx",
+  "versions": [
+    {
+      "cid": "Qm4d338a40e97a084a5c010e71baca81ff372202a42ad2",
+      "timestamp": 1761550445.7038105,
+      "uploaded": true
+    },
+    {
+      "cid": "Qm7b2f8e3086a866b9fcb2214d82d63f0a5504754e94ae",
+      "timestamp": 1761550676.1857533,
+      "uploaded": true
+    },
+    {
+      "cid": "QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx",
+      "timestamp": 1761550747.8024437,
+      "fetched": true
+    }
+  ]
+}
