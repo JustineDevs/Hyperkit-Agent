@@ -251,10 +251,15 @@ def git_commit_and_tag(new_version: str) -> None:
         subprocess.run(["git", "commit", "-m", commit_msg], check=True, cwd=ROOT)
         print(f"  ✅ Created commit: {commit_msg.split(chr(10))[0]}")
         
-        # Create tag
+        # Create tag (check if it exists first)
         tag_name = f"v{new_version}"
-        subprocess.run(["git", "tag", tag_name], check=True, cwd=ROOT)
-        print(f"  ✅ Created tag: {tag_name}")
+        result = subprocess.run(["git", "tag", "-l", tag_name], capture_output=True, text=True, cwd=ROOT)
+        
+        if result.stdout.strip():
+            print(f"  ⚠️  Tag {tag_name} already exists, skipping tag creation")
+        else:
+            subprocess.run(["git", "tag", tag_name], check=True, cwd=ROOT)
+            print(f"  ✅ Created tag: {tag_name}")
         
     except subprocess.CalledProcessError as e:
         print(f"  ❌ Git operation failed: {e}")
