@@ -250,3 +250,9 @@ dist/
 *.pkl
 .vscode/
 .DS_Store
+
+# Large binary files and data
+*.bin
+*.data
+*.vectors
+data/obsidian_vectors/
