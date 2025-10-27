@@ -2,6 +2,9 @@
 
 > **AI-Powered Smart Contract Development, Security Auditing, and Multi-Chain Deployment Platform**
 
+> ⚠️ **HONEST STATUS BANNER**  
+> This system is in **active development**. While IPFS RAG features are production-ready, core deployment features have known limitations. See `REPORTS/HONEST_STATUS_ASSESSMENT.md` for full details. **Use for development and partnerships, not unattended production deployments.**
+
 [![Coverage](https://codecov.io/gh/JustineDevs/Hyperkit-Agent/branch/main/graph/badge.svg)](https://codecov.io/gh/JustineDevs/Hyperkit-Agent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -9,6 +12,7 @@
 [![Contributors](https://img.shields.io/github/contributors/JustineDevs/Hyperkit-Agent)](https://github.com/JustineDevs/Hyperkit-Agent/graphs/contributors)
 [![Issues](https://img.shields.io/github/issues/JustineDevs/Hyperkit-Agent)](https://github.com/JustineDevs/Hyperkit-Agent/issues)
 [![Pull Requests](https://img.shields.io/github/issues-pr/JustineDevs/Hyperkit-Agent)](https://github.com/JustineDevs/Hyperkit-Agent/pulls)
+[![Status](https://img.shields.io/badge/status-active--development-yellow.svg)](REPORTS/HONEST_STATUS_ASSESSMENT.md)
 
 ---
 
@@ -28,16 +32,19 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 
 ## 🎯 PROJECT STATUS
 
+> ⚠️ **For detailed honest assessment, see [HONEST_STATUS_ASSESSMENT.md](hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md)**
+
 | Component | Status | Version | Notes |
 |-----------|--------|---------|-------|
-| **Core System** | ✅ Production Ready | v4.1.11+ | All critical systems operational |
-| **AI Generation** | ✅ Functional | v1.2.0 | Multi-provider support (Google, OpenAI, Anthropic) |
+| **IPFS RAG** | ✅ Production Ready | v4.3.0 | Fully functional with real Pinata integration |
+| **Core System** | 🟡 Development-Grade | v4.1.11+ | Known deployment limitations |
+| **AI Generation** | ✅ Functional | v1.2.0 | Multi-provider support (with fallbacks) |
 | **Security Auditing** | ✅ Functional | v1.2.0 | Multi-source consensus + batch auditing |
-| **Deployment Pipeline** | ✅ Functional | v1.2.0 | Foundry integration complete |
+| **Deployment Pipeline** | ⚠️ Limited | v1.2.0 | ⚠️ Constructor/ABI issues for complex contracts |
 | **Verification System** | ✅ Functional | v1.1.0 | Hyperion explorer integration |
-| **Testing Framework** | ✅ Functional | v1.0.0 | 10/10 E2E tests passing |
+| **Testing Framework** | ✅ Functional | v1.0.0 | 10/10 E2E tests passing (testnet only) |
 | **CI/CD Pipeline** | ✅ Active | v1.0.0 | Multi-Python version testing |
-| **Documentation** | ✅ Complete | v2.0.0 | Production-grade docs |
+| **Documentation** | ✅ Complete | v2.0.0 | Honest and transparent |
 | **Alith SDK** | 🚧 Partial | v0.12.0 | Mock implementation (upgrade pending) |
 | **LazAI Integration** | 🚧 Partial | v0.1.0 | SDK placeholder ready |
 
