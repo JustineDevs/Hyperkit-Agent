@@ -464,10 +464,18 @@ class HyperKitAgent:
                 account = Account.from_key(deployer_address)
                 deployer_address = account.address
             
+            # Extract contract name from code for better constructor arg generation
+            import re
+            contract_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]*)', contract_code)
+            contract_name = contract_match.group(1) if contract_match else "Contract"
+            
+            logger.info(f"Deploying contract: {contract_name}")
+            
             result = deployer.deploy(
                 contract_code,  # Contract code (STRING)
                 rpc_url,       # RPC URL (STRING) ← NOT dict!
                 chain_id,      # Chain ID (INT)
+                contract_name=contract_name,  # Pass contract name for better arg generation
                 deployer_address=deployer_address
             )
             
