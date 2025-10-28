@@ -18,6 +18,7 @@ from typing import Dict, Any, Optional, List, Union
 from .foundry_deployer import FoundryDeployer
 from .foundry_manager import FoundryManager
 from .constructor_parser import ConstructorArgumentParser
+from .error_messages import DeploymentErrorMessages
 
 logger = logging.getLogger(__name__)
 
@@ -89,15 +90,11 @@ class MultiChainDeployer:
             deploy(contract_code, rpc_url, constructor_file="args.json")
         """
         if not self.foundry_available:
-            error_msg = (
-                "Foundry is required for deployment but is not installed or not available.\n"
-                "Install Foundry:\n"
-                "  curl -L https://foundry.paradigm.xyz | bash\n"
-                "  foundryup\n"
-                "Or visit: https://book.getfoundry.sh/getting-started/installation"
-            )
-            logger.error(error_msg)
-            raise RuntimeError(error_msg)
+            error_result = DeploymentErrorMessages.foundry_not_available()
+            logger.error(error_result["error"])
+            for step in error_result["installation_steps"]:
+                logger.error(f"  {step}")
+            return error_result
         
         parser = ConstructorArgumentParser()
         
@@ -113,16 +110,17 @@ class MultiChainDeployer:
                 )
                 logger.info(f"✓ Loaded constructor args from file: {final_args}")
             except Exception as e:
-                logger.error(f"Failed to load constructor args from file: {e}")
-                return {
-                    "success": False,
-                    "error": f"Failed to load constructor args from file: {e}",
-                    "suggestions": [
-                        "Check that the file exists and is valid JSON",
-                        "Verify the parameter names match the contract constructor",
-                        "See documentation for JSON file format"
-                    ]
-                }
+                # Extract expected parameters for better error message
+                expected_params = parser.extract_constructor_params(contract_source_code)
+                error_result = DeploymentErrorMessages.file_load_failed(
+                    constructor_file,
+                    e,
+                    expected_params
+                )
+                logger.error(error_result["error"])
+                for suggestion in error_result["suggestions"]:
+                    logger.error(f"  {suggestion}")
+                return error_result
         
         elif constructor_args is not None:
             # Use provided arguments
@@ -149,23 +147,26 @@ class MultiChainDeployer:
         
         if not validation["success"]:
             error_details = validation.get("details", [])
-            logger.error(f"❌ Constructor validation failed: {validation['error']}")
-            for detail in error_details:
-                logger.error(f"  - {detail}")
+            expected_params = parser.extract_constructor_params(contract_source_code)
             
-            return {
-                "success": False,
-                "error": f"Constructor validation failed: {validation['error']}",
-                "validation_details": validation,
-                "provided_args": final_args,
-                "expected_signature": validation.get("expected_signature", []),
-                "suggestions": [
-                    "Check that argument types match the constructor signature",
-                    "Verify array sizes for fixed-size arrays",
-                    "Ensure addresses are properly formatted (0x...)",
-                    "Use --constructor-file for complex arguments"
-                ]
-            }
+            error_result = DeploymentErrorMessages.constructor_validation_failed(
+                validation['error'],
+                final_args,
+                expected_params,
+                contract_name
+            )
+            
+            logger.error(f"❌ {error_result['error']}")
+            for suggestion in error_result["suggestions"]:
+                logger.error(f"  {suggestion}")
+            
+            # Show examples in logs
+            if "examples" in error_result:
+                logger.info("\n📚 Usage Examples:")
+                logger.info(f"  CLI: {error_result['examples']['cli_inline']}")
+                logger.info(f"  File: {error_result['examples']['cli_file']}")
+            
+            return error_result
         
         logger.info(f"✓ Constructor validation passed")
         logger.info(f"📋 Deploying with args: {final_args}")
