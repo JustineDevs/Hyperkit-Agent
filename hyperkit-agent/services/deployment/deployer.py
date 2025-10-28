@@ -111,7 +111,14 @@ class MultiChainDeployer:
                 logger.info(f"✓ Loaded constructor args from file: {final_args}")
             except Exception as e:
                 # Extract expected parameters for better error message
-                expected_params = parser.extract_constructor_params(contract_source_code)
+                params_tuple = parser.extract_constructor_params(contract_source_code)
+                expected_params = None
+                if params_tuple and params_tuple[1]:
+                    # Convert from [(type, name), ...] to [{"type": ..., "name": ...}, ...]
+                    expected_params = [
+                        {"type": p[0], "name": p[1]} 
+                        for p in params_tuple[1]
+                    ]
                 error_result = DeploymentErrorMessages.file_load_failed(
                     constructor_file,
                     e,
@@ -147,7 +154,14 @@ class MultiChainDeployer:
         
         if not validation["success"]:
             error_details = validation.get("details", [])
-            expected_params = parser.extract_constructor_params(contract_source_code)
+            params_tuple = parser.extract_constructor_params(contract_source_code)
+            expected_params = []
+            if params_tuple and params_tuple[1]:
+                # Convert from [(type, name), ...] to [{"type": ..., "name": ...}, ...]
+                expected_params = [
+                    {"type": p[0], "name": p[1]} 
+                    for p in params_tuple[1]
+                ]
             
             error_result = DeploymentErrorMessages.constructor_validation_failed(
                 validation['error'],
