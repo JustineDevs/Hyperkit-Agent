@@ -1,4 +1,10 @@
 # HyperKit AI Agent - PRODUCTION READY 🚀
+> ⚠️ **NOT IMPLEMENTED BANNER**  
+> This process references scripts or procedures that are not CLI-integrated.  
+> These features are documented but not executable via `hyperagent` CLI.  
+> See implementation status in `REPORTS/IMPLEMENTATION_STATUS.md`.
+
+
 
 **Professional Web3 Development Platform with Real AI, IPFS Storage, and Blockchain Integration**
 

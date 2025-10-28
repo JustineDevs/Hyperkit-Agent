@@ -1,6 +1,14 @@
+<!-- AUDIT_BADGE_START -->
+**Implementation Status**: ✅ Verified  
+**Version**: 1.4.6  
+**Last Verified**: 2025-10-28  
+**Commit**: `6f63afe4`  
+**Branch**: `main`  
+<!-- AUDIT_BADGE_END -->
+
 # HyperKit AI Agent - Architecture Diagrams
 
-**Version**: 1.0.0  
+**Version**: 1.4.6  
 **Last Updated**: October 27, 2025
 
 ## Table of Contents
@@ -620,7 +628,7 @@ main();
 ./hyperagent deploy \
   --contract-file my_token.sol \
   --network hyperion \
-  --constructor-args "MyToken,MTK,1000000"
+  --args "MyToken,MTK,1000000"
 
 # Verify a contract
 ./hyperagent verify \

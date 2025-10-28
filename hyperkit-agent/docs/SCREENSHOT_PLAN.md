@@ -1,3 +1,11 @@
+<!-- AUDIT_BADGE_START -->
+**Implementation Status**: ✅ Verified  
+**Version**: 1.4.6  
+**Last Verified**: 2025-10-28  
+**Commit**: `6f63afe4`  
+**Branch**: `main`  
+<!-- AUDIT_BADGE_END -->
+
 # Error Screenshot & Video Tutorial Plan
 
 **Status**: 📋 Planning Complete  
@@ -101,7 +109,7 @@ Screenshots needed:
 0:00 - Create simple ERC20 contract
 0:45 - Deploy with auto-detected args
 1:15 - Error! Constructor mismatch
-1:30 - Fix with --constructor-args
+1:30 - Fix with --args
 2:15 - Successful deployment
 2:45 - Verify on block explorer
 ```

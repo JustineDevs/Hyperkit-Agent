@@ -1,0 +1,206 @@
+{
+  "timestamp": "2025-10-28T16:11:45.508758",
+  "commands": {
+    "generate": {
+      "command": "generate",
+      "tests": {
+        "help": {
+          "returncode": 0,
+          "stdout": "2025-10-28 16:11:47 | hyperkit.system | INFO | HyperKit Logger initialized successfully\nUsage: main.py generate [OPTIONS] COMMAND [ARGS]...\n\n  Generate smart contracts and templates\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  contract       Generate a smart contract with AI using RAG templates...\n  from-template  Generate contract from specific template\n  templates      List available contract templates\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\n",
+          "success": true
+        },
+        "basic": {
+          "returncode": 2,
+          "stdout": "2025-10-28 16:11:49 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nUsage: main.py generate [OPTIONS] COMMAND [ARGS]...\n\n  Generate smart contracts and templates\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  contract       Generate a smart contract with AI using RAG templates...\n  from-template  Generate contract from specific template\n  templates      List available contract templates\n",
+          "success": false
+        },
+        "generate_contract": {
+          "returncode": 1,
+          "stdout": "2025-10-28 16:11:51 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nTraceback (most recent call last):\n  File \"C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent\\cli\\main.py\", line 95, in <module>\n    cli()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1462, in __call__\n    return self.main(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1383, in main\n    rv = self.invoke(ctx)\n         ^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1850, in invoke\n    return _process_result(sub_ctx.command.invoke(sub_ctx))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1850, in invoke\n    return _process_result(sub_ctx.command.invoke(sub_ctx))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1246, in invoke\n    return ctx.invoke(self.callback, **ctx.params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 814, in invoke\n    return callback(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\decorators.py\", line 34, in new_func\n    return f(get_current_context(), *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent\\cli\\commands\\generate.py\", line 34, in contract\n    console.print(f\"\\U0001f680 Generating {type} contract: {name}\")\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 1678, in print\n    with self:\n         ^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 864, in __exit__\n    self._exit_buffer()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 822, in _exit_buffer\n    self._check_buffer()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 2019, in _check_buffer\n    self._write_buffer()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 2055, in _write_buffer\n    legacy_windows_render(buffer, LegacyWindowsTerm(self.file))\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\_windows_renderer.py\", line 19, in legacy_windows_render\n    term.write_text(text)\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\_win32_console.py\", line 402, in write_text\n    self.write(text)\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\encodings\\cp1252.py\", line 19, in encode\n    return codecs.charmap_encode(input,self.errors,encoding_table)[0]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nUnicodeEncodeError: 'charmap' codec can't encode character '\\U0001f680' in position 0: character maps to <undefined>\n",
+          "success": false
+        }
+      },
+      "overall_status": "partial",
+      "test_coverage": []
+    },
+    "deploy": {
+      "command": "deploy",
+      "tests": {
+        "help": {
+          "returncode": 0,
+          "stdout": "2025-10-28 16:11:53 | hyperkit.system | INFO | HyperKit Logger initialized successfully\nUsage: main.py deploy [OPTIONS] COMMAND [ARGS]...\n\n  Deploy smart contracts to blockchain networks\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  contract  Deploy a smart contract using RAG deployment templates...\n  info      Get deployment information\n  status    Check deployment status\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\n",
+          "success": true
+        },
+        "basic": {
+          "returncode": 2,
+          "stdout": "2025-10-28 16:11:54 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nUsage: main.py deploy [OPTIONS] COMMAND [ARGS]...\n\n  Deploy smart contracts to blockchain networks\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  contract  Deploy a smart contract using RAG deployment templates...\n  info      Get deployment information\n  status    Check deployment status\n",
+          "success": false
+        },
+        "deploy_contract": {
+          "returncode": 2,
+          "stdout": "2025-10-28 16:11:56 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nUsage: main.py deploy [OPTIONS] COMMAND [ARGS]...\nTry 'main.py deploy --help' for help.\n\nError: No such option: --network\n",
+          "success": false
+        }
+      },
+      "overall_status": "partial",
+      "test_coverage": []
+    },
+    "audit": {
+      "command": "audit",
+      "tests": {
+        "help": {
+          "returncode": 0,
+          "stdout": "2025-10-28 16:11:58 | hyperkit.system | INFO | HyperKit Logger initialized successfully\nUsage: main.py audit [OPTIONS] COMMAND [ARGS]...\n\n  Audit smart contracts for security vulnerabilities\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  batch     Audit multiple contracts in batch\n  contract  Audit a smart contract for security issues using RAG checklists\n  report    View audit report\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\n",
+          "success": true
+        },
+        "basic": {
+          "returncode": 2,
+          "stdout": "2025-10-28 16:12:00 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nUsage: main.py audit [OPTIONS] COMMAND [ARGS]...\n\n  Audit smart contracts for security vulnerabilities\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  batch     Audit multiple contracts in batch\n  contract  Audit a smart contract for security issues using RAG checklists\n  report    View audit report\n",
+          "success": false
+        },
+        "audit_contract": {
+          "returncode": 1,
+          "stdout": "2025-10-28 16:12:01 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nTraceback (most recent call last):\n  File \"C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent\\cli\\main.py\", line 95, in <module>\n    cli()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1462, in __call__\n    return self.main(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1383, in main\n    rv = self.invoke(ctx)\n         ^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1850, in invoke\n    return _process_result(sub_ctx.command.invoke(sub_ctx))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1850, in invoke\n    return _process_result(sub_ctx.command.invoke(sub_ctx))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1246, in invoke\n    return ctx.invoke(self.callback, **ctx.params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 814, in invoke\n    return callback(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\decorators.py\", line 34, in new_func\n    return f(get_current_context(), *args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent\\cli\\commands\\audit.py\", line 46, in contract\n    console.print(\"\\U0001f512 Fetching RAG security checklist for enhanced auditing...\", style=\"blue\")\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 1678, in print\n    with self:\n         ^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 864, in __exit__\n    self._exit_buffer()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 822, in _exit_buffer\n    self._check_buffer()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 2019, in _check_buffer\n    self._write_buffer()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 2055, in _write_buffer\n    legacy_windows_render(buffer, LegacyWindowsTerm(self.file))\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\_windows_renderer.py\", line 17, in legacy_windows_render\n    term.write_styled(text, style)\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\_win32_console.py\", line 441, in write_styled\n    self.write_text(text)\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\_win32_console.py\", line 402, in write_text\n    self.write(text)\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\encodings\\cp1252.py\", line 19, in encode\n    return codecs.charmap_encode(input,self.errors,encoding_table)[0]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nUnicodeEncodeError: 'charmap' codec can't encode character '\\U0001f512' in position 0: character maps to <undefined>\n",
+          "success": false
+        }
+      },
+      "overall_status": "partial",
+      "test_coverage": []
+    },
+    "batch-audit": {
+      "command": "batch-audit",
+      "tests": {
+        "help": {
+          "returncode": 0,
+          "stdout": "2025-10-28 16:12:03 | hyperkit.system | INFO | HyperKit Logger initialized successfully\nUsage: main.py batch-audit [OPTIONS] COMMAND [ARGS]...\n\n  Batch audit multiple contracts\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  contracts  Audit multiple contracts in batch.\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\n",
+          "success": true
+        },
+        "basic": {
+          "returncode": 2,
+          "stdout": "2025-10-28 16:12:05 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nUsage: main.py batch-audit [OPTIONS] COMMAND [ARGS]...\n\n  Batch audit multiple contracts\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  contracts  Audit multiple contracts in batch.\n",
+          "success": false
+        }
+      },
+      "overall_status": "partial",
+      "test_coverage": []
+    },
+    "verify": {
+      "command": "verify",
+      "tests": {
+        "help": {
+          "returncode": 0,
+          "stdout": "2025-10-28 16:12:07 | hyperkit.system | INFO | HyperKit Logger initialized successfully\nUsage: main.py verify [OPTIONS] COMMAND [ARGS]...\n\n  Verify smart contracts on block explorers\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  contract  Verify a smart contract on block explorer\n  list      List verified contracts\n  status    Check verification status\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\n",
+          "success": true
+        },
+        "basic": {
+          "returncode": 2,
+          "stdout": "2025-10-28 16:12:08 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nUsage: main.py verify [OPTIONS] COMMAND [ARGS]...\n\n  Verify smart contracts on block explorers\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  contract  Verify a smart contract on block explorer\n  list      List verified contracts\n  status    Check verification status\n",
+          "success": false
+        }
+      },
+      "overall_status": "partial",
+      "test_coverage": []
+    },
+    "monitor": {
+      "command": "monitor",
+      "tests": {
+        "help": {
+          "returncode": 0,
+          "stdout": "2025-10-28 16:12:10 | hyperkit.system | INFO | HyperKit Logger initialized successfully\nUsage: main.py monitor [OPTIONS] COMMAND [ARGS]...\n\n  Monitor system health and performance\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  health   Check system health status\n  logs     View system logs\n  metrics  Display system metrics\n  status   Show system status\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\n",
+          "success": true
+        },
+        "basic": {
+          "returncode": 2,
+          "stdout": "2025-10-28 16:12:12 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nUsage: main.py monitor [OPTIONS] COMMAND [ARGS]...\n\n  Monitor system health and performance\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  health   Check system health status\n  logs     View system logs\n  metrics  Display system metrics\n  status   Show system status\n",
+          "success": false
+        }
+      },
+      "overall_status": "partial",
+      "test_coverage": []
+    },
+    "config": {
+      "command": "config",
+      "tests": {
+        "help": {
+          "returncode": 0,
+          "stdout": "2025-10-28 16:12:14 | hyperkit.system | INFO | HyperKit Logger initialized successfully\nUsage: main.py config [OPTIONS] COMMAND [ARGS]...\n\n  Manage configuration settings\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  get    Get configuration value\n  load   Load configuration from file\n  reset  Reset configuration to defaults\n  save   Save configuration to file\n  set    Set configuration value\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\n",
+          "success": true
+        },
+        "basic": {
+          "returncode": 2,
+          "stdout": "2025-10-28 16:12:15 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nUsage: main.py config [OPTIONS] COMMAND [ARGS]...\n\n  Manage configuration settings\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  get    Get configuration value\n  load   Load configuration from file\n  reset  Reset configuration to defaults\n  save   Save configuration to file\n  set    Set configuration value\n",
+          "success": false
+        }
+      },
+      "overall_status": "partial",
+      "test_coverage": []
+    },
+    "workflow": {
+      "command": "workflow",
+      "tests": {
+        "help": {
+          "returncode": 0,
+          "stdout": "2025-10-28 16:12:17 | hyperkit.system | INFO | HyperKit Logger initialized successfully\nUsage: main.py workflow [OPTIONS] COMMAND [ARGS]...\n\n  Run end-to-end smart contract workflows\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  list    List available workflow templates\n  run     Run complete AI-powered smart contract workflow with RAG...\n  status  Check workflow system status\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\n",
+          "success": true
+        },
+        "basic": {
+          "returncode": 2,
+          "stdout": "2025-10-28 16:12:19 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nUsage: main.py workflow [OPTIONS] COMMAND [ARGS]...\n\n  Run end-to-end smart contract workflows\n\nOptions:\n  --help  Show this message and exit.\n\nCommands:\n  list    List available workflow templates\n  run     Run complete AI-powered smart contract workflow with RAG...\n  status  Check workflow system status\n",
+          "success": false
+        },
+        "workflow_run": {
+          "returncode": -1,
+          "stdout": "",
+          "stderr": "Command timed out",
+          "success": false
+        }
+      },
+      "overall_status": "partial",
+      "test_coverage": []
+    },
+    "status": {
+      "command": "status",
+      "tests": {
+        "help": {
+          "returncode": 0,
+          "stdout": "2025-10-28 16:12:51 | hyperkit.system | INFO | HyperKit Logger initialized successfully\nUsage: main.py status [OPTIONS]\n\n  Check system health and production mode status\n\nOptions:\n  --help  Show this message and exit.\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\n",
+          "success": true
+        },
+        "basic": {
+          "returncode": 1,
+          "stdout": "2025-10-28 16:12:52 | hyperkit.system | INFO | HyperKit Logger initialized successfully\n\n",
+          "stderr": "ERROR:root:CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0\nERROR:root:SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK\nWARNING:root:  WARNING: Real Alith implementation not available\nWARNING:root:  WARNING: PoA middleware not available - Web3 version may be outdated\nTraceback (most recent call last):\n  File \"C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent\\cli\\main.py\", line 95, in <module>\n    cli()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1462, in __call__\n    return self.main(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1383, in main\n    rv = self.invoke(ctx)\n         ^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1850, in invoke\n    return _process_result(sub_ctx.command.invoke(sub_ctx))\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 1246, in invoke\n    return ctx.invoke(self.callback, **ctx.params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\click\\core.py\", line 814, in invoke\n    return callback(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent\\cli\\main.py\", line 76, in status\n    health_check()\n  File \"C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent\\cli\\utils\\health.py\", line 22, in health_check\n    console.print(\"\\n[bold blue]\\U0001f50d HYPERAGENT BRUTAL HEALTH CHECK[/bold blue]\")\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 1678, in print\n    with self:\n         ^^^^\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 864, in __exit__\n    self._exit_buffer()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 822, in _exit_buffer\n    self._check_buffer()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 2019, in _check_buffer\n    self._write_buffer()\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\console.py\", line 2055, in _write_buffer\n    legacy_windows_render(buffer, LegacyWindowsTerm(self.file))\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\_windows_renderer.py\", line 17, in legacy_windows_render\n    term.write_styled(text, style)\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\_win32_console.py\", line 441, in write_styled\n    self.write_text(text)\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\rich\\_win32_console.py\", line 402, in write_text\n    self.write(text)\n  File \"C:\\Users\\JustineDevs\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\encodings\\cp1252.py\", line 19, in encode\n    return codecs.charmap_encode(input,self.errors,encoding_table)[0]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nUnicodeEncodeError: 'charmap' codec can't encode character '\\U0001f50d' in position 0: character maps to <undefined>\n",
+          "success": false
+        }
+      },
+      "overall_status": "partial",
+      "test_coverage": []
+    }
+  },
+  "summary": {
+    "total": 9,
+    "working": 0,
+    "broken": 9,
+    "not_implemented": 0
+  }
+}

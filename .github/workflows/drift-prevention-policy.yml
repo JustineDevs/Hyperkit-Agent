@@ -1,0 +1,154 @@
+name: Drift Prevention Policy Enforcement
+
+on:
+  pull_request:
+    paths:
+      - 'hyperkit-agent/cli/**'
+      - 'hyperkit-agent/services/**'
+      - 'hyperkit-agent/core/**'
+      - 'hyperkit-agent/scripts/**'
+      - 'docs/**'
+      - 'hyperkit-agent/docs/**'
+      - 'README.md'
+      - 'SECURITY.md'
+      - 'CONTRIBUTING.md'
+
+jobs:
+  drift-prevention-check:
+    runs-on: ubuntu-latest
+    name: Enforce Documentation Updates
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyyaml
+    
+    - name: Check for CLI changes
+      id: cli_changes
+      run: |
+        # Check if CLI files were modified
+        CLI_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "(cli/|services/|core/)" | wc -l)
+        echo "cli_changed=$CLI_CHANGED" >> $GITHUB_OUTPUT
+        
+        # Check if docs were updated
+        DOCS_CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "(docs/|README\.md|SECURITY\.md|CONTRIBUTING\.md)" | wc -l)
+        echo "docs_changed=$DOCS_CHANGED" >> $GITHUB_OUTPUT
+        
+        echo "CLI files changed: $CLI_CHANGED"
+        echo "Docs files changed: $DOCS_CHANGED"
+    
+    - name: Run documentation drift audit
+      id: audit
+      run: |
+        cd hyperkit-agent
+        python scripts/doc_drift_audit.py
+        AUDIT_EXIT_CODE=$?
+        echo "audit_exit_code=$AUDIT_EXIT_CODE" >> $GITHUB_OUTPUT
+    
+    - name: Check drift prevention policy
+      id: policy_check
+      run: |
+        CLI_CHANGED=${{ steps.cli_changes.outputs.cli_changed }}
+        DOCS_CHANGED=${{ steps.cli_changes.outputs.docs_changed }}
+        AUDIT_EXIT_CODE=${{ steps.audit.outputs.audit_exit_code }}
+        
+        echo "CLI files changed: $CLI_CHANGED"
+        echo "Docs files changed: $DOCS_CHANGED"
+        echo "Audit exit code: $AUDIT_EXIT_CODE"
+        
+        # Policy: If CLI/core code changed, docs must be updated
+        if [ "$CLI_CHANGED" -gt 0 ] && [ "$DOCS_CHANGED" -eq 0 ]; then
+          echo "❌ DRIFT PREVENTION POLICY VIOLATION"
+          echo "CLI/core code was modified but no documentation was updated."
+          echo "Please update relevant documentation files."
+          echo "policy_violation=true" >> $GITHUB_OUTPUT
+        else
+          echo "✅ Documentation policy satisfied"
+          echo "policy_violation=false" >> $GITHUB_OUTPUT
+        fi
+        
+        # Policy: If audit found issues, fail the check
+        if [ "$AUDIT_EXIT_CODE" -ne 0 ]; then
+          echo "❌ Documentation drift detected"
+          echo "drift_detected=true" >> $GITHUB_OUTPUT
+        else
+          echo "✅ No documentation drift detected"
+          echo "drift_detected=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Upload audit results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: doc-drift-audit-results
+        path: hyperkit-agent/REPORTS/doc_drift_audit_*.json
+        retention-days: 30
+    
+    - name: Comment on PR with policy results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const policyViolation = '${{ steps.policy_check.outputs.policy_violation }}' === 'true';
+          const driftDetected = '${{ steps.policy_check.outputs.drift_detected }}' === 'true';
+          const cliChanged = '${{ steps.cli_changes.outputs.cli_changed }}';
+          const docsChanged = '${{ steps.cli_changes.outputs.docs_changed }}';
+          
+          let comment = '## 📋 Drift Prevention Policy Check\n\n';
+          
+          if (policyViolation) {
+            comment += '❌ **POLICY VIOLATION**: CLI/core code was modified but no documentation was updated.\n\n';
+            comment += '**Required Action**: Please update relevant documentation files.\n\n';
+            comment += '**Files to consider updating**:\n';
+            comment += '- README.md\n';
+            comment += '- docs/CLI_COMMANDS_REFERENCE.md\n';
+            comment += '- docs/API_REFERENCE.md\n';
+            comment += '- Relevant feature documentation\n\n';
+            comment += '**Policy**: Every PR that changes CLI commands or workflows MUST include documentation updates.\n\n';
+          } else if (driftDetected) {
+            comment += '⚠️ **Documentation drift detected** in this PR.\n\n';
+            comment += 'Please review the audit results and fix any documentation issues.\n\n';
+          } else {
+            comment += '✅ **Policy satisfied**: Documentation is up to date.\n\n';
+          }
+          
+          comment += `**Summary**:\n`;
+          comment += `- CLI files changed: ${cliChanged}\n`;
+          comment += `- Docs files changed: ${docsChanged}\n`;
+          comment += `- Policy violation: ${policyViolation ? 'Yes' : 'No'}\n`;
+          comment += `- Drift detected: ${driftDetected ? 'Yes' : 'No'}\n\n`;
+          
+          comment += '---\n';
+          comment += '*This check is automatically enforced to prevent documentation drift.*';
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+    
+    - name: Fail if policy violated
+      if: steps.policy_check.outputs.policy_violation == 'true'
+      run: |
+        echo "❌ Pull request blocked due to drift prevention policy violation"
+        echo "Please update documentation and resubmit the PR"
+        exit 1
+    
+    - name: Fail if drift detected
+      if: steps.policy_check.outputs.drift_detected == 'true'
+      run: |
+        echo "❌ Pull request blocked due to documentation drift"
+        echo "Please fix documentation issues and resubmit the PR"
+        exit 1

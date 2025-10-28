@@ -1,3 +1,11 @@
+<!-- AUDIT_BADGE_START -->
+**Implementation Status**: ✅ Verified  
+**Version**: 1.4.6  
+**Last Verified**: 2025-10-28  
+**Commit**: `6f63afe4`  
+**Branch**: `main`  
+<!-- AUDIT_BADGE_END -->
+
 # 🌐 IPFS RAG Integration Guide
 
 ## Overview
@@ -24,7 +32,7 @@ pip install ipfshttpclient chromadb
 ### 2. Generate Initial Vector Store (Local)
 
 ```bash
-python scripts/setup_rag_vectors.py
+hyperagent setup_rag_vectors
 ```
 
 This creates a local ChromaDB vector store at `data/vector_store/`.
@@ -32,7 +40,7 @@ This creates a local ChromaDB vector store at `data/vector_store/`.
 ### 3. Upload to IPFS
 
 ```bash
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 ```
 
 **Output:**
@@ -47,7 +55,7 @@ python scripts/setup_rag_vectors.py --upload-ipfs
 ### 4. Fetch from IPFS (New Developer/CI/CD)
 
 ```bash
-python scripts/setup_rag_vectors.py --fetch-cid QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+hyperagent setup_rag_vectors --fetch-cid QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 This downloads the vector store from IPFS and extracts it locally.
@@ -55,7 +63,7 @@ This downloads the vector store from IPFS and extracts it locally.
 ### 5. List Registered CIDs
 
 ```bash
-python scripts/setup_rag_vectors.py --list-cids
+hyperagent setup_rag_vectors --list-cids
 ```
 
 Shows all CIDs you've uploaded or fetched, with timestamps.
@@ -73,7 +81,7 @@ git clone https://github.com/YourOrg/HyperKit-Agent
 cd HyperKit-Agent
 
 # 2. Run setup (takes 10-30 minutes to generate vectors)
-python scripts/setup_rag_vectors.py
+hyperagent setup_rag_vectors
 
 # 3. Hope it works on their machine
 ```
@@ -88,7 +96,7 @@ cd HyperKit-Agent
 pip install -r requirements.txt
 
 # 3. Fetch pre-built vectors from IPFS (< 1 minute)
-python scripts/setup_rag_vectors.py --fetch-cid QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+hyperagent setup_rag_vectors --fetch-cid QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # 4. Ready to go!
 ```
@@ -176,7 +184,7 @@ ipfs init
 ipfs daemon
 
 # Now upload/fetch uses local node (faster)
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 ```
 
 **Benefits:**
@@ -195,7 +203,7 @@ export PINATA_API_KEY="your_key"
 export PINATA_API_SECRET="your_secret"
 
 # Upload uses Pinata (reliable pinning)
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 ```
 
 **Benefits:**
@@ -210,8 +218,8 @@ python scripts/setup_rag_vectors.py --upload-ipfs
 
 ```bash
 # Just use public IPFS gateways
-python scripts/setup_rag_vectors.py --upload-ipfs  # Mock CID
-python scripts/setup_rag_vectors.py --fetch-cid Qm...  # Downloads from gateways
+hyperagent setup_rag_vectors --upload-ipfs  # Mock CID
+hyperagent setup_rag_vectors --fetch-cid Qm...  # Downloads from gateways
 ```
 
 **Benefits:**
@@ -235,7 +243,7 @@ python scripts/setup_rag_vectors.py --fetch-cid Qm...  # Downloads from gateways
 ```bash
 # After updating vectors
 git commit -am "Update vector store"
-CID=$(python scripts/setup_rag_vectors.py --upload-ipfs)
+CID=$(hyperagent setup_rag_vectors --upload-ipfs)
 echo "LATEST_VECTOR_STORE_CID=$CID" >> .env
 git commit -am "Update vector store CID"
 ```
@@ -247,7 +255,7 @@ git commit -am "Update vector store CID"
 ```yaml
 - name: Fetch Vector Store from IPFS
   run: |
-    python scripts/setup_rag_vectors.py --fetch-cid ${{ secrets.VECTOR_STORE_CID }}
+    hyperagent setup_rag_vectors --fetch-cid ${{ secrets.VECTOR_STORE_CID }}
 
 - name: Run Tests with RAG
   run: |
@@ -270,7 +278,7 @@ git commit -am "Update vector store CID"
 ```bash
 #!/bin/bash
 LATEST_CID=$(cat .env | grep VECTOR_STORE_CID | cut -d= -f2)
-python scripts/setup_rag_vectors.py --fetch-cid $LATEST_CID
+hyperagent setup_rag_vectors --fetch-cid $LATEST_CID
 ```
 
 ---
@@ -295,7 +303,7 @@ python scripts/setup_rag_vectors.py --fetch-cid $LATEST_CID
 
 **Solution:**
 ```bash
-python scripts/setup_rag_vectors.py  # Create local store first
+hyperagent setup_rag_vectors  # Create local store first
 ```
 
 ### Problem: Large upload times
@@ -343,10 +351,10 @@ cd HyperKit-Agent
 pip install -r requirements.txt
 
 # Fetch latest vector store
-python scripts/setup_rag_vectors.py --fetch-cid QmABC123...
+hyperagent setup_rag_vectors --fetch-cid QmABC123...
 
 # Verify
-python scripts/setup_rag_vectors.py --list-cids
+hyperagent setup_rag_vectors --list-cids
 
 # Ready to use!
 hyperagent workflow run "Create ERC20 token"
@@ -359,10 +367,10 @@ hyperagent workflow run "Create ERC20 token"
 echo "New documentation..." >> docs/new_feature.md
 
 # Regenerate vectors
-python scripts/setup_rag_vectors.py
+hyperagent setup_rag_vectors
 
 # Upload to IPFS
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 # Save the new CID!
 
 # Update CI/CD with new CID
@@ -374,14 +382,14 @@ python scripts/setup_rag_vectors.py --upload-ipfs
 ```bash
 # Production environment
 export VECTOR_STORE_CID="QmPROD..."
-python scripts/setup_rag_vectors.py --fetch-cid $VECTOR_STORE_CID
+hyperagent setup_rag_vectors --fetch-cid $VECTOR_STORE_CID
 
 # Staging environment
 export VECTOR_STORE_CID="QmSTAGE..."
-python scripts/setup_rag_vectors.py --fetch-cid $VECTOR_STORE_CID
+hyperagent setup_rag_vectors --fetch-cid $VECTOR_STORE_CID
 
 # Development environment
-python scripts/setup_rag_vectors.py  # Build locally
+hyperagent setup_rag_vectors  # Build locally
 ```
 
 ---
@@ -453,5 +461,5 @@ If you encounter issues:
 ---
 
 **Last Updated**: 2025-01-25  
-**Version**: 1.2.0  
+**Version**: 1.4.6  
 **Author**: HyperKit Development Team

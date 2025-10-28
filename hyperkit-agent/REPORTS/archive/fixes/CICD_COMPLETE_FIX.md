@@ -685,7 +685,7 @@ export LANG=C.UTF-8
 pytest tests/ -v --tb=short
 
 # 7. Test audit with encoding
-python main.py audit artifacts/contracts/vulnerable_test.sol
+hyperagent audit artifacts/contracts/vulnerable_test.sol
 
 # 8. Run linting
 black --check core/ services/

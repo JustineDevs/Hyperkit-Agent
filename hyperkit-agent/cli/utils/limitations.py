@@ -16,7 +16,7 @@ def show_limitations():
     """Show all known limitations and broken features"""
     
     console.print(Panel.fit(
-        "[bold red]🚨 HYPERAGENT LIMITATIONS & BROKEN FEATURES[/bold red]\n"
+        "[bold red]HYPERAGENT LIMITATIONS & BROKEN FEATURES[/bold red]\n"
         "[yellow]Brutal honesty about what doesn't work[/yellow]",
         style="red"
     ))
@@ -30,22 +30,22 @@ def show_limitations():
     
     limitations = [
         # Critical Broken Commands
-        ("deploy", "❌ BROKEN", "Constructor argument mismatch - ABI vs contract signature", "HIGH - No deployments work"),
-        ("verify", "❌ STUB", "All TODO comments - no real implementation", "HIGH - No verification"),
-        ("monitor", "❌ STUB", "All TODO comments - no real implementation", "MEDIUM - No monitoring"),
-        ("config", "❌ STUB", "All TODO comments - no real implementation", "MEDIUM - No config management"),
+        ("deploy", "FAIL BROKEN", "Constructor argument mismatch - ABI vs contract signature", "HIGH - No deployments work"),
+        ("verify", "FAIL STUB", "All TODO comments - no real implementation", "HIGH - No verification"),
+        ("monitor", "FAIL STUB", "All TODO comments - no real implementation", "MEDIUM - No monitoring"),
+        ("config", "FAIL STUB", "All TODO comments - no real implementation", "MEDIUM - No config management"),
         
         # Partially Working Commands
-        ("workflow", "⚠️ PARTIAL", "Deployment stage fails - constructor bug", "HIGH - End-to-end broken"),
-        ("generate", "⚠️ PARTIAL", "Templates are hardcoded stubs", "MEDIUM - Limited templates"),
-        ("audit", "⚠️ PARTIAL", "Batch audit and report viewing not implemented", "LOW - Core works"),
+        ("workflow", "WARN PARTIAL", "Deployment stage fails - constructor bug", "HIGH - End-to-end broken"),
+        ("generate", "WARN PARTIAL", "Templates are hardcoded stubs", "MEDIUM - Limited templates"),
+        ("audit", "WARN PARTIAL", "Batch audit and report viewing not implemented", "LOW - Core works"),
         
         # Fake Commands
-        ("version", "❌ FAKE", "Hardcoded static data, not dynamic", "LOW - Misleading info"),
+        ("version", "FAIL FAKE", "Hardcoded static data, not dynamic", "LOW - Misleading info"),
         
         # Working Commands
-        ("status", "✅ WORKING", "Real health check with production validator", "NONE - Actually works"),
-        ("test-rag", "✅ WORKING", "Real RAG testing implementation", "NONE - Actually works"),
+        ("status", "PASS WORKING", "Real health check with production validator", "NONE - Actually works"),
+        ("test-rag", "PASS WORKING", "Real RAG testing implementation", "NONE - Actually works"),
     ]
     
     for command, status, issue, impact in limitations:
@@ -54,7 +54,7 @@ def show_limitations():
     console.print(table)
     
     # Show critical issues
-    console.print("\n[bold red]🚨 CRITICAL ISSUES REQUIRING IMMEDIATE ATTENTION:[/bold red]")
+    console.print("\n[bold red]CRITICAL ISSUES REQUIRING IMMEDIATE ATTENTION:[/bold red]")
     console.print("1. [red]Deploy command constructor bug[/red] - ABI generation mismatch")
     console.print("2. [red]Workflow pipeline fails silently[/red] - Shows fake success")
     console.print("3. [red]Verify command completely broken[/red] - All TODO stubs")
@@ -62,21 +62,21 @@ def show_limitations():
     console.print("5. [red]Config command completely broken[/red] - All TODO stubs")
     
     # Show what actually works
-    console.print("\n[bold green]✅ WHAT ACTUALLY WORKS:[/bold green]")
+    console.print("\n[bold green]WHAT ACTUALLY WORKS:[/bold green]")
     console.print("• [green]Status command[/green] - Real health check")
     console.print("• [green]Test-rag command[/green] - RAG testing")
     console.print("• [green]Contract generation[/green] - AI-powered generation")
     console.print("• [green]Security auditing[/green] - AI-powered analysis")
     
     # Show production readiness status
-    console.print("\n[bold yellow]⚠️ PRODUCTION READINESS STATUS:[/bold yellow]")
+    console.print("\n[bold yellow]WARN PRODUCTION READINESS STATUS:[/bold yellow]")
     console.print("[red]NOT PRODUCTION READY[/red] - This is a demo/prototype")
     console.print("[yellow]Most commands are stubs or broken[/yellow]")
     console.print("[yellow]Deployment pipeline is broken[/yellow]")
     console.print("[yellow]No real verification system[/yellow]")
     
     # Show next steps
-    console.print("\n[bold blue]🔧 IMMEDIATE FIXES NEEDED:[/bold blue]")
+    console.print("\n[bold blue]IMMEDIATE FIXES NEEDED:[/bold blue]")
     console.print("1. Fix deploy command constructor argument parsing")
     console.print("2. Implement real verify command with Hyperion Explorer")
     console.print("3. Implement real monitor command with system metrics")
@@ -84,7 +84,7 @@ def show_limitations():
     console.print("5. Make version command dynamic")
     console.print("6. Remove all fake success messages")
     
-    console.print("\n[bold red]🚨 BOTTOM LINE:[/bold red]")
+    console.print("\n[bold red]BOTTOM LINE:[/bold red]")
     console.print("[red]This is NOT a production system.[/red]")
     console.print("[red]It's a demo/prototype with mostly broken infrastructure.[/red]")
     console.print("[red]Only core AI features (generation, audit) actually work.[/red]")

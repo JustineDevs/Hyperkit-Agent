@@ -1,4 +1,10 @@
 # EXECUTION Documentation
+> ⚠️ **NOT IMPLEMENTED BANNER**  
+> This process references scripts or procedures that are not CLI-integrated.  
+> These features are documented but not executable via `hyperagent` CLI.  
+> See implementation status in `REPORTS/IMPLEMENTATION_STATUS.md`.
+
+
 
 This directory contains technical runbooks, deployment guides, and operational procedures.
 

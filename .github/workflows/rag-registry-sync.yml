@@ -1,0 +1,292 @@
+name: RAG Registry Sync Check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/RAG_TEMPLATES/**'
+      - 'hyperkit-agent/services/core/rag_template_fetcher.py'
+      - 'hyperkit-agent/cli/commands/*.py'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/RAG_TEMPLATES/**'
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly check
+
+jobs:
+  rag-registry-sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyyaml httpx pytest
+    
+    - name: Run RAG registry validation
+      run: |
+        python -c "
+        import json
+        import sys
+        from pathlib import Path
+        
+        def validate_registry():
+            registry_path = Path('docs/RAG_TEMPLATES/cid-registry.json')
+            if not registry_path.exists():
+                print('❌ Registry file not found')
+                return False
+            
+            try:
+                with open(registry_path, 'r') as f:
+                    registry = json.load(f)
+            except json.JSONDecodeError as e:
+                print(f'❌ Invalid JSON in registry: {e}')
+                return False
+            
+            # Check required structure
+            if 'templates' not in registry:
+                print('❌ Missing templates section in registry')
+                return False
+            
+            if 'metadata' not in registry:
+                print('❌ Missing metadata section in registry')
+                return False
+            
+            # Validate each template
+            issues = []
+            for name, template in registry['templates'].items():
+                required_fields = ['description', 'filename', 'category', 'uploaded']
+                for field in required_fields:
+                    if field not in template:
+                        issues.append(f'Template {name} missing {field}')
+                
+                # Check uploaded templates have CID
+                if template.get('uploaded') and not template.get('cid'):
+                    issues.append(f'Template {name} marked as uploaded but missing CID')
+                
+                # Check filename exists
+                filename = template.get('filename')
+                if filename:
+                    file_path = Path('docs/RAG_TEMPLATES') / filename
+                    if not file_path.exists():
+                        issues.append(f'Template {name} references non-existent file: {filename}')
+            
+            if issues:
+                print('❌ Registry validation issues:')
+                for issue in issues:
+                    print(f'  - {issue}')
+                return False
+            
+            print('✅ Registry validation passed')
+            print(f'📊 Found {len(registry[\"templates\"])} templates')
+            return True
+        
+        if not validate_registry():
+            sys.exit(1)
+        "
+    
+    - name: Check template file consistency
+      run: |
+        python -c "
+        import json
+        from pathlib import Path
+        
+        def check_template_files():
+            registry_path = Path('docs/RAG_TEMPLATES/cid-registry.json')
+            templates_dir = Path('docs/RAG_TEMPLATES')
+            
+            with open(registry_path, 'r') as f:
+                registry = json.load(f)
+            
+            # Check for orphaned files
+            template_files = set()
+            for template in registry['templates'].values():
+                filename = template.get('filename')
+                if filename:
+                    template_files.add(filename)
+            
+            # Find all .md files in templates directory
+            all_md_files = set()
+            for md_file in templates_dir.glob('**/*.md'):
+                if md_file.name != 'README.md':  # Exclude README
+                    all_md_files.add(md_file.name)
+            
+            # Check for orphaned files
+            orphaned = all_md_files - template_files
+            if orphaned:
+                print('⚠️  Orphaned template files (not in registry):')
+                for file in orphaned:
+                    print(f'  - {file}')
+            
+            # Check for missing files
+            missing = template_files - all_md_files
+            if missing:
+                print('❌ Template files referenced in registry but missing:')
+                for file in missing:
+                    print(f'  - {file}')
+                return False
+            
+            print('✅ Template file consistency check passed')
+            return True
+        
+        check_template_files()
+        "
+    
+    - name: Test RAG fetcher functionality
+      run: |
+        cd hyperkit-agent
+        python -c "
+        import sys
+        sys.path.append('.')
+        
+        from services.core.rag_template_fetcher import RAGTemplateFetcher
+        
+        def test_fetcher():
+            try:
+                fetcher = RAGTemplateFetcher()
+                
+                # Test registry loading
+                templates = fetcher.list_templates()
+                print(f'✅ Loaded {len(templates)} templates from registry')
+                
+                # Test template availability
+                available_count = 0
+                for template in templates:
+                    if fetcher.is_template_available(template['name']):
+                        available_count += 1
+                
+                print(f'📊 {available_count}/{len(templates)} templates are uploaded and available')
+                
+                # Test categories
+                categories = set()
+                for template in templates:
+                    categories.add(template['category'])
+                
+                print(f'📂 Found categories: {sorted(categories)}')
+                
+                return True
+                
+            except Exception as e:
+                print(f'❌ RAG fetcher test failed: {e}')
+                return False
+        
+        if not test_fetcher():
+            sys.exit(1)
+        "
+    
+    - name: Run RAG integration tests
+      run: |
+        cd hyperkit-agent
+        python -m pytest tests/test_rag_template_integration.py -v
+    
+    - name: Check CLI command RAG integration
+      run: |
+        cd hyperkit-agent
+        python -c "
+        import sys
+        sys.path.append('.')
+        
+        def check_cli_integration():
+            cli_files = [
+                'cli/commands/generate.py',
+                'cli/commands/audit.py', 
+                'cli/commands/deploy.py',
+                'cli/commands/workflow.py'
+            ]
+            
+            rag_imports_found = 0
+            for cli_file in cli_files:
+                try:
+                    with open(cli_file, 'r') as f:
+                        content = f.read()
+                    
+                    if 'rag_template_fetcher' in content:
+                        print(f'✅ {cli_file} has RAG integration')
+                        rag_imports_found += 1
+                    else:
+                        print(f'⚠️  {cli_file} missing RAG integration')
+                        
+                except FileNotFoundError:
+                    print(f'❌ {cli_file} not found')
+            
+            print(f'📊 {rag_imports_found}/{len(cli_files)} CLI commands have RAG integration')
+            return rag_imports_found == len(cli_files)
+        
+        if not check_cli_integration():
+            print('⚠️  Some CLI commands missing RAG integration')
+        "
+    
+    - name: Create issue if registry issues found
+      if: failure() && github.event_name == 'push'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = 'RAG Registry Sync Issues Detected';
+          const body = `## RAG Registry Sync Check Failed
+          
+          The weekly RAG registry sync check has detected issues that need attention:
+          
+          ### Issues Found
+          - Registry validation failed
+          - Template file consistency issues
+          - RAG fetcher functionality problems
+          - Missing CLI integration
+          
+          ### Action Required
+          Please review the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) and fix the identified issues.
+          
+          ### Next Steps
+          1. Check registry file structure and content
+          2. Ensure all template files exist and are properly referenced
+          3. Verify RAG fetcher functionality
+          4. Complete CLI command RAG integration
+          
+          This issue was automatically created by the RAG Registry Sync Check workflow.`;
+          
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['rag', 'registry', 'maintenance', 'priority:medium', 'automated']
+          });
+    
+    - name: Comment on PR if issues found
+      if: failure() && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const body = `## RAG Registry Sync Check Failed
+          
+          This PR has introduced issues with the RAG registry sync:
+          
+          ### Issues Detected
+          - Registry validation problems
+          - Template file inconsistencies
+          - RAG fetcher functionality issues
+          
+          Please review the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) and address the identified issues before merging.
+          
+          ### Required Actions
+          1. Fix registry structure/content issues
+          2. Ensure template file consistency
+          3. Verify RAG integration works correctly
+          
+          This check ensures the RAG template system remains functional and consistent.`;
+          
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.payload.pull_request.number,
+            body: body
+          });

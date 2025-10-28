@@ -1,6 +1,18 @@
 # HyperAgent 🤖
+> ⚠️ **NOT IMPLEMENTED BANNER**  
+> This process references scripts or procedures that are not CLI-integrated.  
+> These features are documented but not executable via `hyperagent` CLI.  
+> See implementation status in `REPORTS/IMPLEMENTATION_STATUS.md`.
+
+
 
 > **AI-Powered Smart Contract Development, Security Auditing, and Multi-Chain Deployment Platform**
+
+<!-- VERSION_PLACEHOLDER -->
+**Version**: 1.4.6
+**Last Updated**: ->- (HEAD -> main, tag: v1.4.6)
+**Commit**: d744f94
+<!-- /VERSION_PLACEHOLDER -->
 
 > ⚠️ **HONEST STATUS BANNER**  
 > This system is in **active development**. While IPFS RAG features are production-ready, core deployment features have known limitations. See `REPORTS/HONEST_STATUS_ASSESSMENT.md` for full details. **Use for development and partnerships, not unattended production deployments.**
@@ -30,6 +42,35 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 
 ---
 
+## 🔗 QUICK LINKS
+
+Navigate quickly to any section of the documentation:
+
+| Quick Access | Description |
+|--------------|-------------|
+| [![Quick Start](https://img.shields.io/badge/Quick_Start-Rocket-blue?style=flat&logo=rocket)](#-quick-start) | Get started with installation and setup |
+| [![NPM Scripts](https://img.shields.io/badge/NPM_Scripts-Tools-green?style=flat&logo=npm)](#-npm-scripts--commands) | Version, CLI, docs, and reports commands |
+| [![Project Status](https://img.shields.io/badge/Project_Status-Chart-orange?style=flat&logo=chart-line)](#-project-status) | Current implementation status and versions |
+| [![Network Support](https://img.shields.io/badge/Networks-Chains-purple?style=flat&logo=network-wired)](#-network-support) | Supported blockchain networks |
+| [![RAG Templates](https://img.shields.io/badge/RAG_Templates-IPFS-red?style=flat&logo=firefox)](#-rag-template-integration) | RAG template integration and features |
+| [![CLI Commands](https://img.shields.io/badge/CLI_Commands-Terminal-teal?style=flat&logo=terminal)](#-cli-command-system) | All available CLI commands |
+| [![Security](https://img.shields.io/badge/Security-Shield-yellow?style=flat&logo=shield)](#-security--compliance) | Security features and compliance |
+| [![Documentation](https://img.shields.io/badge/Docs-Book-indigo?style=flat&logo=book)](#-complete-documentation-navigation) | Complete documentation structure |
+| [![Contributing](https://img.shields.io/badge/Contributing-Handshake-pink?style=flat&logo=handshake)](#contributing) | How to contribute to the project |
+| [![License](https://img.shields.io/badge/License-MIT-lightgrey?style=flat&logo=balance-scale)](#license) | MIT License information |
+
+**Quick Actions:**
+- 📦 [Setup & Installation](#-quick-start) → Get started in minutes
+- 🔧 [NPM Scripts](#-npm-scripts--commands) → Access all commands via npm
+- 📊 [System Health](#-system-health-check) → Check your installation
+- 🚀 [Workflow Templates](#-available-workflow-templates) → Copy-paste ready prompts
+- 📚 [Documentation Hub](#-complete-documentation-navigation) → Full docs structure
+- 🤝 [Contributing Guide](#contributing) → Join the community
+- 🐛 [Report Issues](https://github.com/JustineDevs/Hyperkit-Agent/issues) → Bug reports & feature requests
+- 💬 [Discord Community](https://discord.com/invite/MDh7jY8vWe) → Get help & connect
+
+---
+
 ## 🎯 PROJECT STATUS
 
 > ⚠️ **For detailed honest assessment, see [HONEST_STATUS_ASSESSMENT.md](hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md)**
@@ -56,7 +97,7 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 |---------|----------|--------|--------------|----------|----------|
 | **Hyperion Testnet** | 1001 | 🚧 Testnet (Mainnet Soon) | https://hyperion-testnet.metisdevops.link | [Explorer](https://hyperion-testnet-explorer.metisdevops.link) | Deploy, Verify, Monitor |
 | **LazAI Testnet** | 8888 | 🚧 Testnet (Mainnet Soon) | https://lazai-testnet-rpc.example.com | [Explorer](https://lazai-explorer.example.com) | Deploy (Coming Soon) |
-| **Metis Mainnet** | 1088 | ✅ Production | https://andromeda.metis.io/?owner=1088 | [Explorer](https://andromeda-explorer.metis.io) | Full Support |
+| **Metis Mainnet** | 1088 | ✅ Mainnet | https://andromeda.metis.io/?owner=1088 | [Explorer](https://andromeda-explorer.metis.io) | Full Support |
 
 > **Note**: All networks optimized for AI-powered smart contract deployment and verification.
 
@@ -72,8 +113,8 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 | **Git** | Latest | Version control | ✅ Required |
 | **OpenZeppelin** | v5.0+ | Smart contract libraries | ✅ Installed |
 | **Docker** | Latest | MCP server containerization | ⚙️ Optional |
-| **Slither** | Latest | Static analysis | ⚙️ Optional |
-| **Mythril** | Latest | Security analysis | ⚙️ Optional |
+| **Slither** | Latest | Static analysis | ✅ Required |
+| **Mythril** | Latest | Security analysis | ✅ Required |
 
 ---
 
@@ -89,15 +130,78 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 
 ---
 
-## 🎯 Core Features
+## 📚 RAG Template Integration
 
-| Feature | Description | Commands | Status |
-|---------|-------------|----------|--------|
-| **AI Contract Generation** | Natural language → Solidity | `hyperagent generate`, `workflow run` | ✅ |
-| **Multi-Source Auditing** | Slither + Mythril + AI consensus | `hyperagent audit contract/batch` | ✅ |
-| **Batch Auditing** | Audit entire directories recursively | `hyperagent audit batch --directory` | ✅ |
-| **Smart Deployment** | Foundry-based multi-chain deploy | `hyperagent deploy` | ✅ |
-| **Auto-Verification** | Explorer integration with retry | `hyperagent verify` | ✅ |
+HyperAgent uses Retrieval-Augmented Generation (RAG) to enhance all CLI commands with real-world templates and best practices stored on IPFS.
+
+### **How RAG Works**
+
+1. **Template Registry**: All templates are stored in `docs/RAG_TEMPLATES/cid-registry.json`
+2. **IPFS Storage**: Templates are uploaded to IPFS via Pinata with unique CIDs
+3. **CLI Integration**: Every command automatically fetches relevant templates for enhanced context
+4. **Caching**: Templates are cached locally for offline use and performance
+
+### **RAG-Enhanced Commands**
+
+| Command | RAG Templates Used | Purpose |
+|---------|-------------------|---------|
+| `hyperagent generate contract` | `contract-generation-prompt` + `{type}-template` | Enhanced contract generation with best practices |
+| `hyperagent audit contract` | `security-checklist` | Comprehensive security auditing with checklists |
+| `hyperagent deploy contract` | `hardhat-deploy` | Deployment best practices and scripts |
+| `hyperagent workflow run` | All templates combined | Complete workflow with full context |
+
+### **Available Templates**
+
+| Template | Category | Description | CID |
+|----------|----------|-------------|-----|
+| `erc20-template` | contracts | Standard ERC20 token template | `QmYWkBLnCwUHtA4vgsFM4ePrCG9xpo2taHRsvEbbyz2JYs` |
+| `erc721-template` | contracts | NFT contract template | `QmQSsEKKG6JyMhM523ZPeMPDYCyiFxTVKTFqZerjABdTA4` |
+| `security-checklist` | audits | Comprehensive security audit checklist | `QmSecurityChecklist123` |
+| `contract-generation-prompt` | prompts | AI prompt engineering for contract generation | `QmPrompt123` |
+| `hardhat-deploy` | templates | Deployment script best practices | `QmXwNxjvkw9aLZARfvM1bPThKMuP9eqmzD4cevtswKsvvh` |
+
+### **RAG Features**
+
+- ✅ **Automatic Template Fetching**: Commands automatically load relevant templates
+- ✅ **Offline Mode**: Cached templates work without internet
+- ✅ **Version Support**: Template versioning with deprecation handling
+- ✅ **Rich Metadata**: Author, tags, code standards, and review dates
+- ✅ **Search & Filter**: Find templates by category, author, tags, or query
+- ✅ **CI Validation**: Automated registry sync and template validation
+
+### **Using RAG Templates**
+
+```bash
+# Generate with RAG context (default)
+hyperagent generate contract --type ERC20 --name MyToken
+
+# Disable RAG if needed
+hyperagent generate contract --type ERC20 --name MyToken --no-use-rag
+
+# Audit with security checklist
+hyperagent audit contract MyToken.sol
+
+# Deploy with best practices
+hyperagent deploy contract MyToken.sol
+
+# Complete workflow with full RAG context
+hyperagent workflow run "create pausable ERC20 token"
+```
+
+### **Template Management**
+
+```bash
+# List all available templates
+python -c "from services.core.rag_template_fetcher import list_templates; print(list_templates())"
+
+# Search templates
+python -c "from services.core.rag_template_fetcher import get_template_fetcher; fetcher = get_template_fetcher(); print(fetcher.search_templates('ERC20'))"
+
+# Get template statistics
+python -c "from services.core.rag_template_fetcher import get_template_fetcher; fetcher = get_template_fetcher(); print(fetcher.get_template_statistics())"
+```
+
+---
 | **System Monitoring** | Health checks, resource tracking | `hyperagent monitor` | ✅ |
 | **Report Generation** | JSON/Markdown audit reports | `hyperagent audit report` | ✅ |
 | **5-Stage Workflows** | End-to-end automation | `hyperagent workflow run` | ✅ |
@@ -121,10 +225,16 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 
 ## 🏥 System Health Check
 
-Run this command to check your HyperAgent installation:
+Run these commands to check your HyperAgent installation:
 
    ```bash
+# Core system check
 hyperagent monitor system
+
+# NPM scripts verification
+npm run version:check
+npm run hyperagent:status
+npm run hyperagent:test
 ```
 
 | Component | Check | Expected Output |
@@ -136,6 +246,9 @@ hyperagent monitor system
 | **OpenZeppelin** | `ls lib/` | openzeppelin-contracts |
 | **Environment** | `.env file exists` | ✅ Configured |
 | **Network Connectivity** | RPC connection test | ✅ Online |
+| **Version Consistency** | `npm run version:check` | Consistent |
+| **NPM Scripts** | `npm run hyperagent:status` | All systems operational |
+| **E2E Tests** | `npm run hyperagent:test` | 36/37 tests passing |
 
 ---
 
@@ -188,13 +301,13 @@ hyperagent workflow run "Create a 2-of-3 multisig wallet" --network hyperion
 
 ## 🚀 Workflow Commands CLI
 
-Complete 5-stage workflow automation:
+Complete AI-powered workflow automation:
 
 | Command | Description | Example |
 |---------|-------------|---------|
 | `workflow run` | Execute full Generate→Audit→Deploy→Verify→Test | `hyperagent workflow run "Create ERC20" --network hyperion` |
 | `workflow list` | Show available workflow templates | `hyperagent workflow list` |
-| `workflow status` | Check workflow execution status | `hyperagent workflow status <id>` |
+| `workflow status` | Check workflow run status | `hyperagent workflow status <id>` |
 
 ### Copy-Paste Commands:
 
@@ -413,6 +526,114 @@ hyperagent limitations
 
 ---
 
+## 📦 NPM Scripts & Commands
+
+HyperAgent provides comprehensive npm scripts for version management, CLI access, documentation, and reports.
+
+### **Version Management**
+
+| Script | Purpose | Example |
+|--------|---------|---------|
+| `version:current` | Display current version from VERSION file | `npm run version:current` |
+| `version:show` | Show current version with label | `npm run version:show` |
+| `version:check` | Check version consistency between package.json and VERSION file | `npm run version:check` |
+| `version:patch` | Bump patch version (1.4.6 → 1.4.7) | `npm run version:patch` |
+| `version:minor` | Bump minor version (1.4.6 → 1.5.0) | `npm run version:minor` |
+| `version:major` | Bump major version (1.4.6 → 2.0.0) | `npm run version:major` |
+| `version:sync` | Sync version across all documentation files | `npm run version:sync` |
+| `version:fix` | Fix version inconsistencies | `npm run version:fix` |
+
+### **HyperAgent CLI Access**
+
+| Script | Purpose | Example |
+|--------|---------|---------|
+| `hyperagent` | Run hyperagent CLI | `npm run hyperagent` |
+| `hyperagent:help` | Show CLI help | `npm run hyperagent:help` |
+| `hyperagent:status` | Check system status | `npm run hyperagent:status` |
+| `hyperagent:version` | Show version information | `npm run hyperagent:version` |
+| `hyperagent:test` | Run E2E CLI tests | `npm run hyperagent:test` |
+| `hyperagent:test:all` | Run all tests | `npm run hyperagent:test:all` |
+| `hyperagent:audit` | Show audit command help | `npm run hyperagent:audit` |
+| `hyperagent:deploy` | Show deploy command help | `npm run hyperagent:deploy` |
+| `hyperagent:generate` | Show generate command help | `npm run hyperagent:generate` |
+| `hyperagent:workflow` | Show workflow command help | `npm run hyperagent:workflow` |
+| `hyperagent:monitor` | Show monitor command help | `npm run hyperagent:monitor` |
+| `hyperagent:config` | Show config command help | `npm run hyperagent:config` |
+| `hyperagent:verify` | Show verify command help | `npm run hyperagent:verify` |
+| `hyperagent:batch-audit` | Show batch-audit command help | `npm run hyperagent:batch-audit` |
+| `hyperagent:test-rag` | Show test-rag command help | `npm run hyperagent:test-rag` |
+| `hyperagent:limitations` | Show system limitations | `npm run hyperagent:limitations` |
+
+### **Documentation Management**
+
+| Script | Purpose | Example |
+|--------|---------|---------|
+| `docs:update` | Update version in all documentation | `npm run docs:update` |
+| `docs:audit` | Run documentation drift audit | `npm run docs:audit` |
+| `docs:cleanup` | Clean up documentation drift | `npm run docs:cleanup` |
+
+### **Reports & Analysis**
+
+| Script | Purpose | Example |
+|--------|---------|---------|
+| `reports:organize` | Confirm REPORTS directory organization | `npm run reports:organize` |
+| `reports:status` | Generate CLI command inventory | `npm run reports:status` |
+| `reports:audit` | Run legacy file inventory | `npm run reports:audit` |
+| `reports:todo` | Convert TODOs to GitHub issues | `npm run reports:todo` |
+| `reports:compliance` | Show compliance reports location | `npm run reports:compliance` |
+| `reports:quality` | Show quality reports location | `npm run reports:quality` |
+
+### **Quick Command Examples**
+
+```bash
+# Version management
+npm run version:check          # Check consistency
+npm run version:patch          # Bump patch version
+npm run version:sync           # Sync across docs
+
+# CLI access
+npm run hyperagent:status      # Check system status
+npm run hyperagent:test        # Run E2E tests
+npm run hyperagent:audit       # Show audit help
+
+# Documentation
+npm run docs:update            # Update version in docs
+npm run docs:audit             # Check for drift
+
+# Reports
+npm run reports:status         # Generate status report
+npm run reports:todo           # Convert TODOs to issues
+```
+
+### **Development Workflow**
+
+```bash
+# Daily development workflow
+npm run hyperagent:status      # Check system health
+npm run version:check          # Verify version consistency
+npm run hyperagent:test        # Run tests before changes
+npm run docs:audit             # Check for documentation drift
+
+# Release workflow
+npm run version:patch          # Bump version
+npm run version:sync           # Update all docs
+npm run hyperagent:test:all    # Run full test suite
+npm run reports:status         # Generate status report
+```
+
+### **NPM Scripts Benefits**
+
+- ✅ **Centralized Access**: All functionality accessible via npm scripts
+- ✅ **Version Management**: Automated version bumping and syncing
+- ✅ **CLI Integration**: Easy access to all hyperagent commands
+- ✅ **Documentation**: Automated doc updates and drift prevention
+- ✅ **Reports**: Organized report generation and management
+- ✅ **Developer Experience**: Simple, consistent command interface
+- ✅ **Cross-Platform**: Works on Windows, macOS, and Linux
+- ✅ **CI/CD Ready**: Perfect for automated workflows
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -450,10 +671,15 @@ hyperagent --help
 hyperagent version
 hyperagent monitor system
 
-# 7. Run tests
+# 7. Verify npm scripts
+npm run version:check          # Check version consistency
+npm run hyperagent:status      # Check system status
+npm run hyperagent:test        # Run E2E tests
+
+# 8. Run tests
 pytest tests/ -v
 
-# 8. Build contracts
+# 9. Build contracts
 forge build
 ```
 
@@ -757,4 +983,4 @@ Special thanks to all contributors, security researchers, and community members 
 
 ---
 
-**Last Updated**: 2025-10-26 | **Version**: 4.1.11+ | **Status**: Production Ready 🚀
+**Last Updated**: 2025-10-26 | **Version**: 1.4.6+ | **Status**: Production Ready 🚀

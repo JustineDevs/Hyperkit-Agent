@@ -1,3 +1,11 @@
+<!-- AUDIT_BADGE_START -->
+**Implementation Status**: ✅ Verified  
+**Version**: 1.4.6  
+**Last Verified**: 2025-10-28  
+**Commit**: `6f63afe4`  
+**Branch**: `main`  
+<!-- AUDIT_BADGE_END -->
+
 # HyperAgent CLI Commands Reference
 
 **Generated**: October 28, 2025  
@@ -83,14 +91,14 @@ hyperagent deploy contract --contract <FILE> [OPTIONS]
 - `--private-key, -k` - Private key for deployment
 - `--gas-limit, -g` - Gas limit for deployment
 - `--gas-price` - Gas price for deployment
-- `--constructor-args` - Constructor arguments as JSON array
-- `--constructor-file` - Path to JSON file with constructor arguments
+- `--args` - Constructor arguments as JSON array
+- `--file` - Path to JSON file with constructor arguments
 
 **Examples:**
 ```bash
 hyperagent deploy contract --contract MyToken.sol
-hyperagent deploy contract --contract MyToken.sol --constructor-args '["0x1234...", 1000000]'
-hyperagent deploy contract --contract MyToken.sol --constructor-file args.json
+hyperagent deploy contract --contract MyToken.sol --args '["0x1234...", 1000000]'
+hyperagent deploy contract --contract MyToken.sol --file args.json
 ```
 
 #### `hyperagent deploy status`
@@ -172,7 +180,7 @@ hyperagent verify contract --address <ADDRESS> [OPTIONS]
 - `--address, -a` - Contract address (required)
 - `--network, -n` - Network (default: hyperion)
 - `--source, -s` - Source code file
-- `--constructor-args` - Constructor arguments
+- `--args` - Constructor arguments
 
 **Examples:**
 ```bash

@@ -12,7 +12,7 @@ try:
     POA_MIDDLEWARE_AVAILABLE = True
 except ImportError:
     POA_MIDDLEWARE_AVAILABLE = False
-    import logging; logging.warning("  WARNING: PoA middleware not available - Web3 version may be outdated")
+    import logging; logging.warning("WARNING: PoA middleware not available - Web3 version may be outdated")
 from core.config.manager import config
 
 class HyperKitBlockchainService:

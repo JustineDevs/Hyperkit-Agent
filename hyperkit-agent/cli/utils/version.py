@@ -33,9 +33,22 @@ def get_git_info():
         return None, None
 
 def get_package_version():
-    """Get package version from pyproject.toml or setup.py"""
+    """Get package version from VERSION file or pyproject.toml"""
     try:
-        # Try pyproject.toml first
+        # Try VERSION file in current directory
+        version_file = Path("VERSION")
+        if version_file.exists():
+            return version_file.read_text().strip()
+        
+        # Try VERSION file in parent directory
+        version_file = Path("../VERSION")
+        if version_file.exists():
+            return version_file.read_text().strip()
+    except Exception:
+        pass
+    
+    try:
+        # Try pyproject.toml
         pyproject_path = Path("pyproject.toml")
         if pyproject_path.exists():
             import toml
@@ -46,7 +59,7 @@ def get_package_version():
         pass
     
     # Fallback to hardcoded version
-    return "1.2.0"
+    return "1.4.5"
 
 def get_runtime_features():
     """Get runtime feature status"""
@@ -55,9 +68,9 @@ def get_runtime_features():
     # Check Alith SDK
     try:
         import alith
-        features["Alith SDK"] = f"✅ {getattr(alith, '__version__', 'unknown')}"
+        features["Alith SDK"] = f"AVAILABLE {getattr(alith, '__version__', 'unknown')}"
     except ImportError:
-        features["Alith SDK"] = "❌ Not installed"
+        features["Alith SDK"] = "NOT INSTALLED"
     
     # Check Foundry
     try:
@@ -65,18 +78,18 @@ def get_runtime_features():
                               capture_output=True, text=True, timeout=5)
         if result.returncode == 0:
             version = result.stdout.split()[1] if len(result.stdout.split()) > 1 else "unknown"
-            features["Foundry"] = f"✅ {version}"
+            features["Foundry"] = f"AVAILABLE {version}"
         else:
-            features["Foundry"] = "❌ Not available"
+            features["Foundry"] = "NOT AVAILABLE"
     except (subprocess.TimeoutExpired, FileNotFoundError):
-        features["Foundry"] = "❌ Not installed"
+        features["Foundry"] = "NOT INSTALLED"
     
     # Check Web3
     try:
         import web3
-        features["Web3.py"] = f"✅ {web3.__version__}"
+        features["Web3.py"] = f"AVAILABLE {web3.__version__}"
     except ImportError:
-        features["Web3.py"] = "❌ Not installed"
+        features["Web3.py"] = "NOT INSTALLED"
     
     # Check AI providers
     ai_providers = []
@@ -93,9 +106,9 @@ def get_runtime_features():
         pass
     
     if ai_providers:
-        features["AI Providers"] = f"✅ {', '.join(ai_providers)}"
+        features["AI Providers"] = f"AVAILABLE {', '.join(ai_providers)}"
     else:
-        features["AI Providers"] = "❌ None available"
+        features["AI Providers"] = "NONE AVAILABLE"
     
     # Check production mode
     try:
@@ -105,17 +118,17 @@ def get_runtime_features():
         critical_failures = health_status.get('critical_failures', [])
         
         if critical_failures:
-            features["Production Mode"] = f"❌ {len(critical_failures)} critical failures"
+            features["Production Mode"] = f"FAILED {len(critical_failures)} critical failures"
         else:
-            features["Production Mode"] = "✅ Ready"
+            features["Production Mode"] = "READY"
     except Exception:
-        features["Production Mode"] = "❓ Unknown"
+        features["Production Mode"] = "UNKNOWN"
     
     return features
 
 def show_version():
     """Display dynamic version information"""
-    console.print("🚀 HyperAgent Version Information")
+    console.print("HyperAgent Version Information")
     console.print("=" * 50)
     
     # Get version info
@@ -138,14 +151,14 @@ def show_version():
         console.print(f"{key}: {value}")
     
     # Runtime features
-    console.print("\n🔧 Runtime Features:")
+    console.print("\nRuntime Features:")
     features = get_runtime_features()
     
     for feature, status in features.items():
         console.print(f"  {feature}: {status}")
     
     # System status
-    console.print("\n📊 System Status:")
+    console.print("\nSystem Status:")
     try:
         from core.validation.production_validator import ProductionModeValidator
         validator = ProductionModeValidator()
@@ -153,20 +166,20 @@ def show_version():
         critical_failures = health_status.get('critical_failures', [])
         
         if critical_failures:
-            console.print(f"  🚨 CRITICAL FAILURES: {len(critical_failures)}")
-            console.print(f"  ⚠️ SYSTEM NOT READY FOR PRODUCTION")
+            console.print(f"  CRITICAL FAILURES: {len(critical_failures)}")
+            console.print(f"  SYSTEM NOT READY FOR PRODUCTION")
         else:
-            console.print(f"  ✅ ALL SYSTEMS OPERATIONAL")
+            console.print(f"  ALL SYSTEMS OPERATIONAL")
     except Exception as e:
-        console.print(f"  ❓ Status check failed: {e}")
+        console.print(f"  Status check failed: {e}")
     
     # Build info
-    console.print(f"\n📅 Build Information:")
+    console.print(f"\nBuild Information:")
     console.print(f"  Build Date: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     console.print(f"  Working Directory: {Path.cwd()}")
     
     # Show if this is a development build
     if commit_hash and branch != 'main':
-        console.print(f"\n⚠️ DEVELOPMENT BUILD")
+        console.print(f"\nDEVELOPMENT BUILD")
         console.print(f"  Branch: {branch}")
         console.print(f"  Commit: {commit_hash}")

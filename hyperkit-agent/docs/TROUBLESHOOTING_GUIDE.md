@@ -1,3 +1,11 @@
+<!-- AUDIT_BADGE_START -->
+**Implementation Status**: ✅ Verified  
+**Version**: 1.4.6  
+**Last Verified**: 2025-10-28  
+**Commit**: `6f63afe4`  
+**Branch**: `main`  
+<!-- AUDIT_BADGE_END -->
+
 # HyperKit Agent Troubleshooting Guide
 
 **Last Updated**: 2025-10-28  
@@ -32,7 +40,7 @@ cd hyperkit-agent
 pip list | grep -E "web3|openai|anthropic|alith"
 
 # Run diagnostic script
-python scripts/diagnose.py
+hyperagent diagnose
 
 # Check CI/CD status
 git status
@@ -118,7 +126,7 @@ python -c "import web3; print(web3.__version__)"
 hyperagent deploy contract MyToken.sol
 
 # Option 2: Provide arguments explicitly
-hyperagent deploy contract MyToken.sol --constructor-args '["0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", 1000000, "MyToken"]'
+hyperagent deploy contract MyToken.sol --args '["0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", 1000000, "MyToken"]'
 
 # Option 3: Use JSON file (recommended for complex args)
 cat > args.json << EOF
@@ -129,7 +137,7 @@ cat > args.json << EOF
 }
 EOF
 
-hyperagent deploy contract MyToken.sol --constructor-file args.json
+hyperagent deploy contract MyToken.sol --file args.json
 ```
 
 **Error Message Example**:
@@ -145,7 +153,7 @@ Suggestions:
 - Ensure all required parameters are provided
 
 Examples:
-CLI: hyperagent deploy contract MyToken.sol --constructor-args '["0x742d...", 1000000, "My Token"]'
+CLI: hyperagent deploy contract MyToken.sol --args '["0x742d...", 1000000, "My Token"]'
 ```
 
 **Screenshot Location**: `docs/images/constructor_error.png` (TODO: Add screenshot)

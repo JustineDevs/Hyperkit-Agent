@@ -1,4 +1,18 @@
+<!-- AUDIT_BADGE_START -->
+**Implementation Status**: ✅ Verified  
+**Version**: 1.4.6  
+**Last Verified**: 2025-10-28  
+**Commit**: `6f63afe4`  
+**Branch**: `main`  
+<!-- AUDIT_BADGE_END -->
+
 # 🚨 Emergency Response & Patch Deployment Procedure
+
+> **NOT IMPLEMENTED BANNER**  
+> This process references scripts or procedures that are not CLI-integrated.  
+> These features are documented but not executable via `hyperagent` CLI.  
+> See implementation status in `REPORTS/IMPLEMENTATION_STATUS.md`.
+
 
 **Purpose**: Provide clear, actionable procedures for handling critical security incidents and deploying emergency patches.
 
@@ -329,7 +343,7 @@ echo "🚨 Document this incident in SECURITY_AUDIT_LOG.md"
 **Usage**:
 ```bash
 chmod +x scripts/emergency_patch.sh
-./scripts/emergency_patch.sh
+hyperagent emergency_patch
 ```
 
 ---
@@ -510,7 +524,7 @@ HyperKit Security Team
 
 **Maintained by**: HyperKit Security & Operations Team  
 **Last Updated**: October 27, 2025  
-**Version**: 4.3.0  
+**Version**: 1.4.6  
 **Next Review**: 2025-11-26  
 **Last Drill**: TBD  
 **Location**: `/hyperkit-agent/docs/EMERGENCY_RESPONSE.md`

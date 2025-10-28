@@ -1,0 +1,239 @@
+{
+  "generated_at": "2025-10-28T17:52:04.102794",
+  "commands": {
+    "help": {
+      "name": "help",
+      "category": "core",
+      "type": "main",
+      "status": "working",
+      "tests": {
+        "e2e_tests": true
+      }
+    },
+    "version": {
+      "name": "version",
+      "category": "core",
+      "type": "main",
+      "status": "working",
+      "tests": {
+        "e2e_tests": true
+      }
+    },
+    "status": {
+      "name": "status",
+      "category": "core",
+      "type": "main",
+      "status": "working",
+      "tests": {
+        "e2e_tests": true
+      }
+    },
+    "test-rag": {
+      "name": "test-rag",
+      "category": "core",
+      "type": "main",
+      "status": "working",
+      "tests": {
+        "e2e_tests": true
+      }
+    },
+    "limitations": {
+      "name": "limitations",
+      "category": "core",
+      "type": "main",
+      "status": "working",
+      "tests": {
+        "e2e_tests": true
+      }
+    },
+    "generate": {
+      "name": "generate",
+      "category": "functional",
+      "type": "group",
+      "subcommands": [
+        "contract",
+        "templates",
+        "from-template"
+      ],
+      "file": "cli\\commands\\generate.py",
+      "status": "stub",
+      "implementation": {
+        "implemented": false,
+        "todo_count": 0
+      },
+      "tests": {
+        "unit_tests": false,
+        "integration_tests": false,
+        "e2e_tests": false
+      },
+      "has_tests": false
+    },
+    "deploy": {
+      "name": "deploy",
+      "category": "functional",
+      "type": "group",
+      "subcommands": [
+        "contract",
+        "status",
+        "info"
+      ],
+      "file": "cli\\commands\\deploy.py",
+      "status": "stub",
+      "implementation": {
+        "implemented": false,
+        "todo_count": 0
+      },
+      "tests": {
+        "unit_tests": false,
+        "integration_tests": false,
+        "e2e_tests": false
+      },
+      "has_tests": false
+    },
+    "audit": {
+      "name": "audit",
+      "category": "functional",
+      "type": "group",
+      "subcommands": [
+        "contract",
+        "batch",
+        "report"
+      ],
+      "file": "cli\\commands\\audit.py",
+      "status": "stub",
+      "implementation": {
+        "implemented": false,
+        "todo_count": 0
+      },
+      "tests": {
+        "unit_tests": false,
+        "integration_tests": false,
+        "e2e_tests": false
+      },
+      "has_tests": false
+    },
+    "batch-audit": {
+      "name": "batch-audit",
+      "category": "functional",
+      "type": "group",
+      "subcommands": [
+        "contracts"
+      ],
+      "file": "cli\\commands\\batch-audit.py",
+      "status": "stub",
+      "implementation": {
+        "implemented": false,
+        "todo_count": 0
+      },
+      "tests": {
+        "unit_tests": false,
+        "integration_tests": false,
+        "e2e_tests": false
+      },
+      "has_tests": false
+    },
+    "verify": {
+      "name": "verify",
+      "category": "functional",
+      "type": "group",
+      "subcommands": [
+        "contract",
+        "list",
+        "status",
+        "deployment"
+      ],
+      "file": "cli\\commands\\verify.py",
+      "status": "stub",
+      "implementation": {
+        "implemented": false,
+        "todo_count": 0
+      },
+      "tests": {
+        "unit_tests": false,
+        "integration_tests": false,
+        "e2e_tests": false
+      },
+      "has_tests": false
+    },
+    "monitor": {
+      "name": "monitor",
+      "category": "functional",
+      "type": "group",
+      "subcommands": [
+        "health",
+        "metrics",
+        "logs",
+        "status"
+      ],
+      "file": "cli\\commands\\monitor.py",
+      "status": "stub",
+      "implementation": {
+        "implemented": false,
+        "todo_count": 0
+      },
+      "tests": {
+        "unit_tests": false,
+        "integration_tests": false,
+        "e2e_tests": false
+      },
+      "has_tests": false
+    },
+    "config": {
+      "name": "config",
+      "category": "functional",
+      "type": "group",
+      "subcommands": [
+        "get",
+        "set",
+        "save",
+        "load",
+        "reset",
+        "list"
+      ],
+      "file": "cli\\commands\\config.py",
+      "status": "stub",
+      "implementation": {
+        "implemented": false,
+        "todo_count": 0
+      },
+      "tests": {
+        "unit_tests": false,
+        "integration_tests": false,
+        "e2e_tests": false
+      },
+      "has_tests": false
+    },
+    "workflow": {
+      "name": "workflow",
+      "category": "functional",
+      "type": "group",
+      "subcommands": [
+        "run",
+        "list",
+        "status"
+      ],
+      "file": "cli\\commands\\workflow.py",
+      "status": "stub",
+      "implementation": {
+        "implemented": false,
+        "todo_count": 0
+      },
+      "tests": {
+        "unit_tests": false,
+        "integration_tests": false,
+        "e2e_tests": false
+      },
+      "has_tests": false
+    }
+  },
+  "summary": {
+    "total_commands": 13,
+    "implemented": 5,
+    "stubs": 8,
+    "with_tests": 5,
+    "categories": {
+      "core": 5,
+      "functional": 8
+    }
+  }
+}

@@ -16,8 +16,8 @@ except ImportError:
     ALITH_AVAILABLE = False
     Web3Tools = None
     import logging
-    logging.error("CRITICAL: Alith SDK not available - Install with: pip install alith>=0.12.0")
-    logging.error("SYSTEM WILL NOT FUNCTION IN PRODUCTION MODE WITHOUT ALITH SDK")
+    logging.warning("WARNING: Alith SDK not available - Install with: pip install alith>=0.12.0")
+    logging.warning("SYSTEM WILL OPERATE IN LIMITED MODE WITHOUT ALITH SDK")
 
 # Import real Alith implementation
 try:
@@ -25,7 +25,7 @@ try:
     REAL_ALITH_AVAILABLE = True
 except ImportError:
     REAL_ALITH_AVAILABLE = False
-    import logging; logging.warning("  WARNING: Real Alith implementation not available")
+    import logging; logging.warning("WARNING: Real Alith implementation not available")
 
 # LazAI integration removed - not available in production
 

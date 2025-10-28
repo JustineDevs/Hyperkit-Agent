@@ -181,13 +181,13 @@ hyperagent workflow run "Create a 2-of-3 multisig wallet" --network hyperion
 
 ## 🚀 Workflow Commands CLI
 
-Complete 5-stage workflow automation:
+Complete AI-powered workflow automation:
 
 | Command | Description | Example |
 |---------|-------------|---------|
 | `workflow run` | Execute full Generate→Audit→Deploy→Verify→Test | `hyperagent workflow run "Create ERC20" --network hyperion` |
 | `workflow list` | Show available workflow templates | `hyperagent workflow list` |
-| `workflow status` | Check workflow execution status | `hyperagent workflow status <id>` |
+| `workflow status` | Check workflow run status | `hyperagent workflow status <id>` |
 
 ### Copy-Paste Commands:
 
@@ -741,4 +741,4 @@ Special thanks to all contributors, security researchers, and community members 
 
 ---
 
-**Last Updated**: 2025-10-26 | **Version**: 4.1.11+ | **Status**: Production Ready 🚀
+**Last Updated**: 2025-10-26 | **Version**: 1.4.6+ | **Status**: Production Ready 🚀

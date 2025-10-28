@@ -16,21 +16,22 @@ def batch_audit_group():
 
 
 @batch_audit_group.command(name='contracts')
-@click.option('--files', '-f', multiple=True, required=True, help='Contract files to audit')
+@click.option('--files', '-f', multiple=True, help='Contract files to audit')
+@click.option('--directory', '-d', help='Directory containing contract files to audit')
 @click.option('--output', '-o', default='artifacts/batch-audits', help='Output directory')
 @click.option('--format', '-fmt', 
               type=click.Choice(['json', 'markdown', 'html', 'csv', 'pdf', 'excel', 'all']),
               default='json', 
               help='Output format')
 @click.option('--batch-name', '-n', help='Name for this batch audit')
-def audit_contracts(files: tuple, output: str, format: str, batch_name: str):
+def audit_contracts(files: tuple, directory: str, output: str, format: str, batch_name: str):
     """
     Audit multiple contracts in batch.
     
     Examples:
         hyperagent batch-audit contracts -f Contract1.sol -f Contract2.sol
-        hyperagent batch-audit contracts -f *.sol --format all
-        hyperagent batch-audit contracts -f contracts/ --format excel -n "Q4 Audit"
+        hyperagent batch-audit contracts -d contracts/ --format all
+        hyperagent batch-audit contracts -f *.sol --format excel -n "Q4 Audit"
     """
     try:
         from services.audit.batch_auditor import BatchAuditor
@@ -40,16 +41,22 @@ def audit_contracts(files: tuple, output: str, format: str, batch_name: str):
             CSVExporter, PDFExporter, ExcelExporter
         )
         
-        click.echo("🔍 Starting batch audit...")
+        click.echo("Starting batch audit...")
         
         # Resolve files
-        contract_files = _resolve_contract_files(files)
-        
-        if not contract_files:
-            click.echo("❌ No contract files found", err=True)
+        if directory:
+            contract_files = _resolve_contract_files((directory,))
+        elif files:
+            contract_files = _resolve_contract_files(files)
+        else:
+            click.echo("Error: Must specify either --files or --directory", err=True)
             return
         
-        click.echo(f"📝 Found {len(contract_files)} contracts to audit")
+        if not contract_files:
+            click.echo("No contract files found", err=True)
+            return
+        
+        click.echo(f"Found {len(contract_files)} contracts to audit")
         
         # Initialize batch auditor
         auditor = BatchAuditor()
@@ -84,26 +91,26 @@ def audit_contracts(files: tuple, output: str, format: str, batch_name: str):
         }
         
         if format == 'all':
-            click.echo("📊 Exporting in all formats...")
+            click.echo("Exporting in all formats...")
             for fmt_name, exporter in exporters.items():
                 output_path = f"{output_base}.{fmt_name}"
                 if exporter.export(report, output_path):
-                    click.echo(f"  ✅ {fmt_name.upper()}: {output_path}")
+                    click.echo(f"  {fmt_name.upper()}: {output_path}")
                 else:
-                    click.echo(f"  ⚠️  {fmt_name.upper()}: Export failed", err=True)
+                    click.echo(f"  {fmt_name.upper()}: Export failed", err=True)
         else:
             exporter = exporters.get(format)
             if exporter:
                 output_path = f"{output_base}.{format}"
                 if exporter.export(report, output_path):
-                    click.echo(f"✅ Report exported: {output_path}")
+                    click.echo(f"Report exported: {output_path}")
                 else:
-                    click.echo("❌ Export failed", err=True)
+                    click.echo("Export failed", err=True)
             else:
-                click.echo(f"❌ Unknown format: {format}", err=True)
+                click.echo(f"Unknown format: {format}", err=True)
         
         # Print summary
-        click.echo("\n📊 Batch Audit Summary:")
+        click.echo("\nBatch Audit Summary:")
         click.echo(f"  Total Contracts: {report.get('total_contracts', 0)}")
         click.echo(f"  Successful: {report.get('successful_audits', 0)}")
         click.echo(f"  Failed: {report.get('failed_audits', 0)}")
@@ -111,17 +118,16 @@ def audit_contracts(files: tuple, output: str, format: str, batch_name: str):
         
         findings_by_severity = report.get('findings_by_severity', {})
         if findings_by_severity:
-            click.echo("\n🚨 Findings by Severity:")
+            click.echo("\nFindings by Severity:")
             for severity, count in findings_by_severity.items():
                 if count > 0:
-                    icon = _get_severity_icon(severity)
-                    click.echo(f"  {icon} {severity.capitalize()}: {count}")
+                    click.echo(f"  {severity.capitalize()}: {count}")
         
-        click.echo("\n✅ Batch audit complete!")
+        click.echo("\nBatch audit complete!")
         
     except Exception as e:
         logger.error(f"Batch audit failed: {str(e)}", exc_info=True)
-        click.echo(f"❌ Batch audit failed: {str(e)}", err=True)
+        click.echo(f"Batch audit failed: {str(e)}", err=True)
 
 
 def _resolve_contract_files(file_patterns: tuple) -> List[Path]:

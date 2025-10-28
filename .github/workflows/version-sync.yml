@@ -1,0 +1,40 @@
+name: Version Sync
+
+on:
+  push:
+    paths:
+      - 'VERSION'
+  release:
+    types: [published]
+
+jobs:
+  version-sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Update docs with version
+      run: |
+        python hyperkit-agent/scripts/update_version_in_docs.py
+    
+    - name: Commit and push if changed
+      run: |
+        git config --global user.email "ci@hyperagent.dev"
+        git config --global user.name "CI Bot"
+        git add .
+        if ! git diff --quiet && ! git diff --staged --quiet; then
+          git commit -m "docs: sync version to $(cat VERSION)"
+          git push
+        else
+          echo "No changes to commit"
+        fi

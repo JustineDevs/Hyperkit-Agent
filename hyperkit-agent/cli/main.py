@@ -36,14 +36,14 @@ console = Console()
 @click.pass_context
 def cli(ctx, verbose, debug):
     """
-    🚀 HyperAgent - AI-Powered Smart Contract Development Platform
+    HyperAgent - AI-Powered Smart Contract Development Platform
     
     HyperAgent combines AI-powered contract generation, comprehensive auditing,
     and seamless deployment for the Hyperion ecosystem.
     
-    🔄 PRODUCTION MODE vs SAFE MODE:
-    - 🟢 PRODUCTION MODE: All dependencies available, full functionality
-    - 🔴 SAFE MODE: Missing dependencies, operations blocked with clear errors
+    PRODUCTION MODE vs SAFE MODE:
+    - PRODUCTION MODE: All dependencies available, full functionality
+    - SAFE MODE: Missing dependencies, operations blocked with clear errors
     
     Check your mode: hyperagent status
     
@@ -54,9 +54,9 @@ def cli(ctx, verbose, debug):
     ctx.obj['debug'] = debug
     
     if verbose:
-        console.print("🔍 Verbose mode enabled", style="blue")
+        console.print("Verbose mode enabled", style="blue")
     if debug:
-        console.print("🐛 Debug mode enabled", style="yellow")
+        console.print("Debug mode enabled", style="yellow")
 
 # Add command groups
 cli.add_command(generate_group, name='generate')

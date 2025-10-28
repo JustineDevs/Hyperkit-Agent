@@ -19,7 +19,7 @@ def monitor_group():
 @monitor_group.command()
 def health():
     """Check system health status"""
-    console.print("🏥 System Health Check")
+    console.print("System Health Check")
     
     try:
         from core.validation.production_validator import ProductionModeValidator
@@ -28,7 +28,7 @@ def health():
         health_status = validator.validate_production_mode()
         
         # Display health status
-        console.print(f"\n📊 Health Status:")
+        console.print(f"\nHealth Status:")
         
         # Check each component
         components = [
@@ -42,9 +42,9 @@ def health():
         
         for component_name, status in components:
             if status.get('status') == 'success':
-                console.print(f"  ✅ {component_name}: {status.get('message', 'OK')}")
+                console.print(f"  PASS {component_name}: {status.get('message', 'OK')}")
             else:
-                console.print(f"  ❌ {component_name}: {status.get('message', 'FAILED')}")
+                console.print(f"  FAIL {component_name}: {status.get('message', 'FAILED')}")
         
         # Overall status
         critical_failures = health_status.get('critical_failures', [])
@@ -52,18 +52,18 @@ def health():
             console.print(f"\n🚨 CRITICAL FAILURES:")
             for failure in critical_failures:
                 console.print(f"  • {failure}")
-            console.print(f"\n⚠️ SYSTEM NOT READY FOR PRODUCTION")
+            console.print(f"\nWARN SYSTEM NOT READY FOR PRODUCTION")
         else:
-            console.print(f"\n✅ ALL SYSTEMS OPERATIONAL")
+            console.print(f"\nPASS ALL SYSTEMS OPERATIONAL")
             
     except Exception as e:
-        console.print(f"❌ Health check error: {e}", style="red")
+        console.print(f"Health check error: {e}", style="red")
         console.print(f"💡 This command requires production validator")
 
 @monitor_group.command()
 def metrics():
     """Display system metrics"""
-    console.print("📊 System Metrics")
+    console.print("System Metrics")
     
     try:
         import psutil
@@ -98,20 +98,20 @@ def metrics():
             log_size = sum(f.stat().st_size for f in log_dir.rglob('*.log') if f.is_file())
             console.print(f"  Log Files: {log_size // (1024**2)}MB")
         
-        console.print(f"\n✅ Metrics retrieved successfully")
+        console.print(f"\nMetrics retrieved successfully")
         
     except ImportError:
-        console.print(f"❌ psutil not available - install with: pip install psutil")
+        console.print(f"psutil not available - install with: pip install psutil")
         console.print(f"💡 This command requires psutil for system metrics")
     except Exception as e:
-        console.print(f"❌ Metrics error: {e}", style="red")
+        console.print(f"Metrics error: {e}", style="red")
         console.print(f"💡 This command requires system access")
 
 @monitor_group.command()
 @click.option('--watch', '-w', is_flag=True, help='Watch mode (continuous monitoring)')
 def status(watch):
     """Show system status"""
-    console.print("📈 System Status")
+    console.print("System Status")
     
     try:
         from core.validation.production_validator import ProductionModeValidator
@@ -128,14 +128,14 @@ def status(watch):
                     
                     # Clear screen and show status
                     console.clear()
-                    console.print(f"📈 System Status - {time.strftime('%H:%M:%S')}")
+                    console.print(f"System Status - {time.strftime('%H:%M:%S')}")
                     
                     if critical_failures:
                         console.print(f"🚨 CRITICAL FAILURES: {len(critical_failures)}")
                         for failure in critical_failures:
                             console.print(f"  • {failure}")
                     else:
-                        console.print(f"✅ ALL SYSTEMS OPERATIONAL")
+                        console.print(f"ALL SYSTEMS OPERATIONAL")
                     
                     time.sleep(5)  # Update every 5 seconds
             except KeyboardInterrupt:
@@ -150,12 +150,12 @@ def status(watch):
                 for failure in critical_failures:
                     console.print(f"  • {failure}")
             else:
-                console.print(f"✅ ALL SYSTEMS OPERATIONAL")
+                console.print(f"ALL SYSTEMS OPERATIONAL")
             
-            console.print(f"✅ Status updated")
+            console.print(f"Status updated")
             
     except Exception as e:
-        console.print(f"❌ Status error: {e}", style="red")
+        console.print(f"Status error: {e}", style="red")
         console.print(f"💡 This command requires production validator")
 
 @monitor_group.command()
@@ -169,18 +169,18 @@ def logs():
         
         log_dir = Path("logs")
         if not log_dir.exists():
-            console.print(f"❌ No logs directory found")
+            console.print(f"No logs directory found")
             console.print(f"💡 Logs are created when the system runs")
             return
         
         # Find log files
         log_files = list(log_dir.glob("*.log"))
         if not log_files:
-            console.print(f"❌ No log files found in {log_dir}")
+            console.print(f"No log files found in {log_dir}")
             return
         
         # Show recent log files
-        console.print(f"\n📁 Log Files:")
+        console.print(f"\nLog Files:")
         for log_file in sorted(log_files, key=lambda x: x.stat().st_mtime, reverse=True)[:5]:
             size = log_file.stat().st_size
             mtime = log_file.stat().st_mtime
@@ -198,10 +198,10 @@ def logs():
                     for line in lines[-10:]:
                         console.print(line.rstrip())
             except Exception as e:
-                console.print(f"❌ Error reading log file: {e}")
+                console.print(f"Error reading log file: {e}")
         
-        console.print(f"\n✅ Logs displayed")
+        console.print(f"\nLogs displayed")
         
     except Exception as e:
-        console.print(f"❌ Logs error: {e}", style="red")
+        console.print(f"Logs error: {e}", style="red")
         console.print(f"💡 This command requires file system access")

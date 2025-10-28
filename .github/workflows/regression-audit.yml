@@ -1,0 +1,163 @@
+name: Regression Audit Automation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run weekly on Mondays at 6 AM UTC
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  coarse-granularity-audit:
+    runs-on: ubuntu-latest
+    name: Coarse Granularity Regression Audit
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "hyperkit-agent[dev]"
+      
+      - name: Run quick smoke tests
+        id: smoke_tests
+        run: |
+          cd hyperkit-agent
+          python -m pytest tests/e2e/test_cli_commands_e2e.py::TestCLICommandsE2E::test_cli_help -v
+          python -m pytest tests/e2e/test_cli_commands_e2e.py::TestCLICommandsE2E::test_cli_version -v
+          python -m pytest tests/e2e/test_cli_commands_e2e.py::TestCLICommandsE2E::test_cli_status -v
+      
+      - name: Generate coarse audit report
+        if: always()
+        run: |
+          echo "## Coarse Regression Audit Report" > regression_audit_coarse.md
+          echo "" >> regression_audit_coarse.md
+          echo "**Status**: ${{ steps.smoke_tests.outcome }}" >> regression_audit_coarse.md
+          echo "**Timestamp**: $(date)" >> regression_audit_coarse.md
+          echo "**Tests Run**: 3 core smoke tests" >> regression_audit_coarse.md
+      
+      - name: Upload coarse audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coarse-audit-report
+          path: regression_audit_coarse.md
+      
+      - name: Fail on regression
+        if: steps.smoke_tests.outcome != 'success'
+        run: |
+          echo "❌ Regression detected in coarse granularity audit"
+          exit 1
+  
+  fine-granularity-audit:
+    runs-on: ubuntu-latest
+    name: Fine Granularity Regression Audit
+    needs: coarse-granularity-audit
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "hyperkit-agent[dev]"
+      
+      - name: Run full E2E test suite
+        id: full_tests
+        run: |
+          cd hyperkit-agent
+          python -m pytest tests/e2e/test_cli_commands_e2e.py -v --tb=short --junit-xml=junit-full.xml
+      
+      - name: Parse test results
+        id: parse_results
+        if: always()
+        run: |
+          if [ -f "hyperkit-agent/junit-full.xml" ]; then
+            tests=$(grep -o 'tests="[0-9]*"' hyperkit-agent/junit-full.xml | head -1 | grep -o '[0-9]*')
+            failures=$(grep -o 'failures="[0-9]*"' hyperkit-agent/junit-full.xml | head -1 | grep -o '[0-9]*' || echo "0")
+            echo "tests=$tests" >> $GITHUB_OUTPUT
+            echo "failures=$failures" >> $GITHUB_OUTPUT
+          else
+            echo "tests=0" >> $GITHUB_OUTPUT
+            echo "failures=999" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate detailed audit report
+        if: always()
+        run: |
+          echo "# Fine Granularity Regression Audit Report" > regression_audit_fine.md
+          echo "" >> regression_audit_fine.md
+          echo "**Status**: ${{ steps.full_tests.outcome }}" >> regression_audit_fine.md
+          echo "**Tests**: ${{ steps.parse_results.outputs.tests }}" >> regression_audit_fine.md
+          echo "**Failures**: ${{ steps.parse_results.outputs.failures }}" >> regression_audit_fine.md
+          echo "**Timestamp**: $(date)" >> regression_audit_fine.md
+          echo "" >> regression_audit_fine.md
+          echo "## Hotfix Required" >> regression_audit_fine.md
+          echo "Any regression detected in the fine granularity audit requires an immediate hotfix before proceeding with delivery." >> regression_audit_fine.md
+      
+      - name: Upload detailed audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: fine-audit-report
+          path: regression_audit_fine.md
+      
+      - name: Create issue for regression
+        if: steps.full_tests.outcome != 'success'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('regression_audit_fine.md', 'utf8');
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Regression Detected in E2E Tests - Hotfix Required`,
+              body: `${report}\n\n**Action Required**: Immediate hotfix deployment is required. Delivery has been halted.`,
+              labels: ['regression', 'hotfix-required', 'priority:critical', 'automated']
+            });
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.full_tests.outcome != 'success'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚨 **Regression detected in fine granularity audit**\n\nDelivery halted until hotfix is deployed.'
+            });
+      
+      - name: Fail on regression
+        if: steps.full_tests.outcome != 'success'
+        run: |
+          echo "❌ Regression detected in fine granularity audit - delivery halted"
+          exit 1

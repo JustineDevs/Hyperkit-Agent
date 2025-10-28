@@ -25,7 +25,7 @@ Your implementation of **IPFS-based RAG vector storage** demonstrates **best-in-
 **Your Implementation:**
 ```bash
 # New team member onboarding
-python scripts/setup_rag_vectors.py --fetch-cid <CID>
+hyperagent setup_rag_vectors --fetch-cid <CID>
 # Ready in < 1 minute vs 30+ minutes of rebuilding
 ```
 
@@ -128,10 +128,10 @@ python scripts/setup_rag_vectors.py --fetch-cid <CID>
 ### **Upload Process**
 ```bash
 # 1. Generate locally
-python scripts/setup_rag_vectors.py
+hyperagent setup_rag_vectors
 
 # 2. Upload to IPFS (Pinata)
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 # Returns: CID
 
 # 3. Track CID
@@ -151,7 +151,7 @@ git push origin main --tags
 git clone https://github.com/YourOrg/HyperKit-Agent
 
 # 2. Fetch vectors by CID
-python scripts/setup_rag_vectors.py --fetch-cid <CID>
+hyperagent setup_rag_vectors --fetch-cid <CID>
 
 # 3. Ready to work!
 ```
@@ -309,6 +309,6 @@ The IPFS RAG implementation:
 ---
 
 **Last Updated**: October 27, 2025  
-**Version**: 4.3.0  
+**Version**: 1.4.6  
 **Assessment**: ✅ **IPFS RAG - PRODUCTION READY**  
 **System-Wide**: See `HONEST_STATUS_ASSESSMENT.md`

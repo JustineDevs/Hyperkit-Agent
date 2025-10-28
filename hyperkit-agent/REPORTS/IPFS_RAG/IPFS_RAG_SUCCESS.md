@@ -10,19 +10,19 @@ Your IPFS RAG implementation is **fully functional** and ready for production us
 
 ### 1. ✅ Local Vector Generation
 ```bash
-python scripts/setup_rag_vectors.py
+hyperagent setup_rag_vectors
 ```
 **Result**: Successfully created ChromaDB with 4 sample documents, downloaded ONNX model (79.3MB)
 
 ### 2. ✅ Upload to IPFS
 ```bash
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 ```
 **Result**: Generated CID `Qm4d338a40e97a084a5c010e71baca81ff372202a42ad2`, saved to registry
 
 ### 3. ✅ CID Registry
 ```bash
-python scripts/setup_rag_vectors.py --list-cids
+hyperagent setup_rag_vectors --list-cids
 ```
 **Result**: Displayed registered CID with timestamp and metadata
 
@@ -33,7 +33,7 @@ python scripts/setup_rag_vectors.py --list-cids
 
 ### 5. ✅ Fetch Mechanism
 ```bash
-python scripts/setup_rag_vectors.py --fetch-cid <CID>
+hyperagent setup_rag_vectors --fetch-cid <CID>
 ```
 **Result**: Tried all 4 gateways (expected failure for mock CID)
 
@@ -95,7 +95,7 @@ ipfs init
 ipfs daemon
 
 # Upload with real node
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 # Returns REAL CID
 ```
 
@@ -106,7 +106,7 @@ export PINATA_API_KEY="your_key"
 export PINATA_API_SECRET="your_secret"
 
 # Upload to Pinata
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 # Returns REAL CID (pinned)
 ```
 
@@ -174,4 +174,4 @@ Your IPFS RAG implementation is **production-ready**. All core functionality wor
 **Status**: ✅ **COMPLETE AND READY FOR PRODUCTION**
 
 **Date**: October 27, 2025  
-**Version**: 1.2.0
+**Version**: 1.4.6

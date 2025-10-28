@@ -11,7 +11,7 @@ Your IPFS RAG system is now **fully operational** with **REAL** IPFS integration
 ### ✅ Upload to Real IPFS (Pinata)
 
 ```bash
-$ python scripts/setup_rag_vectors.py --upload-ipfs
+$ hyperagent setup_rag_vectors --upload-ipfs
 ```
 
 **Output:**
@@ -26,7 +26,7 @@ Uploading 0.02MB to Pinata...
 ### ✅ Fetch from Real IPFS
 
 ```bash
-$ python scripts/setup_rag_vectors.py --fetch-cid QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx
+$ hyperagent setup_rag_vectors --fetch-cid QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx
 ```
 
 **Output:**
@@ -106,7 +106,7 @@ cd HyperKit-Agent
 pip install -r requirements.txt
 
 # Fetch the latest vector store (this CID!)
-python scripts/setup_rag_vectors.py --fetch-cid QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx
+hyperagent setup_rag_vectors --fetch-cid QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx
 
 # Ready to go!
 ```
@@ -118,7 +118,7 @@ Update your GitHub Actions:
 ```yaml
 - name: Fetch Vector Store from IPFS
   run: |
-    python scripts/setup_rag_vectors.py --fetch-cid ${{ secrets.VECTOR_STORE_CID }}
+    hyperagent setup_rag_vectors --fetch-cid ${{ secrets.VECTOR_STORE_CID }}
 ```
 
 Set secret: `VECTOR_STORE_CID=QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx`
@@ -128,8 +128,8 @@ Set secret: `VECTOR_STORE_CID=QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx`
 **To update the vector store:**
 
 1. Make changes to knowledge base
-2. Regenerate vectors: `python scripts/setup_rag_vectors.py`
-3. Upload new version: `python scripts/setup_rag_vectors.py --upload-ipfs`
+2. Regenerate vectors: `hyperagent setup_rag_vectors`
+3. Upload new version: `hyperagent setup_rag_vectors --upload-ipfs`
 4. Update CID in secrets/documentation
 
 ---
@@ -161,5 +161,5 @@ Your IPFS RAG system is **FULLY OPERATIONAL** with **REAL** decentralized storag
 ---
 
 **Date**: October 27, 2025  
-**Version**: 1.2.0  
+**Version**: 1.4.6  
 **Status**: ✅ REAL IPFS INTEGRATION WORKING

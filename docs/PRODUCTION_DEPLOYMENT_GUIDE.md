@@ -1,7 +1,7 @@
 # 🚀 HyperAgent - Production Deployment Guide
 
 **Status**: ✅ **PRODUCTION READY - MISSION ACCOMPLISHED**  
-**Version**: 1.0.0 (Production Ready)  
+**Version**: 1.4.6 (Production Ready)  
 **Project Timeline**: October 21-27, 2025 (6 days)  
 **Achievement**: 🏆 **100% TODO COMPLETION - ALL DELIVERABLES READY**
 
@@ -133,10 +133,10 @@ The system now uses strict configuration validation:
 
 ```bash
 # Basic health check
-python main.py health
+hyperagent status
 
 # Detailed health check with metrics
-python main.py health --detailed
+hyperagent monitor health --detailed
 ```
 
 **Health Check Components:**
@@ -199,7 +199,7 @@ logger.info("Contract deployed",
 
 ```bash
 # Direct deployment
-python main.py deploy --network hyperion --contract "contract.sol"
+hyperagent deploy --network hyperion --contract "contract.sol"
 ```
 
 ### 2. Docker Deployment
@@ -219,7 +219,7 @@ WORKDIR /app
 RUN pip install -r requirements.txt
 
 # Run application
-CMD ["python", "main.py"]
+CMD ["hyperagent", "start"]
 ```
 
 ### 3. Kubernetes Deployment
@@ -360,13 +360,13 @@ forge --version
 python -c "from core.config.loader import get_config; print(get_config())"
 
 # Check environment variables
-python main.py status
+hyperagent status
 ```
 
 #### 3. Health Check Failures
 ```bash
 # Detailed health check
-python main.py health --detailed
+hyperagent monitor health --detailed
 
 # Check specific components
 python -c "from services.common.health import check_rpc_health; print(check_rpc_health())"
@@ -377,7 +377,7 @@ python -c "from services.common.health import check_rpc_health; print(check_rpc_
 ```bash
 # Enable debug logging
 export LOG_LEVEL=DEBUG
-python main.py status
+hyperagent status
 ```
 
 ### Log Analysis

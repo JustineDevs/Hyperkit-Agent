@@ -19,7 +19,7 @@ def health_check():
     Perform comprehensive health check with brutal honesty.
     Shows actual runtime status, not static badges.
     """
-    console.print("\n[bold blue]🔍 HYPERAGENT BRUTAL HEALTH CHECK[/bold blue]")
+    console.print("\n[bold blue]HYPERAGENT BRUTAL HEALTH CHECK[/bold blue]")
     console.print("=" * 60)
     
     # Validate production mode
@@ -35,18 +35,15 @@ def health_check():
     # Add validation results to table
     for dep_name, result in validation_results['validation_results'].items():
         if result['status'] == 'success':
-            status_icon = "✅"
             status_text = Text("PASS", style="green")
         elif result['status'] == 'warning':
-            status_icon = "⚠️"
             status_text = Text("WARN", style="yellow")
         else:
-            status_icon = "❌"
             status_text = Text("FAIL", style="red")
         
         table.add_row(
             dep_name.replace('_', ' ').title(),
-            f"{status_icon} {status_text}",
+            status_text,
             result.get('message', 'No details')
         )
     
@@ -54,22 +51,22 @@ def health_check():
     
     # Show overall status
     if validation_results['production_mode']:
-        console.print("\n[bold green]🟢 PRODUCTION MODE ENABLED[/bold green]")
+        console.print("\n[bold green]PRODUCTION MODE ENABLED[/bold green]")
         console.print("All critical dependencies are available and functional.")
         console.print("System is ready for production operations.")
     else:
-        console.print("\n[bold red]🔴 SAFE MODE ONLY[/bold red]")
+        console.print("\n[bold red]SAFE MODE ONLY[/bold red]")
         console.print("Critical dependencies are missing. System will run in safe mode.")
         
         if validation_results['critical_failures']:
             console.print("\n[bold red]CRITICAL FAILURES:[/bold red]")
             for failure in validation_results['critical_failures']:
-                console.print(f"  ❌ {failure}")
+                console.print(f"  FAIL: {failure}")
         
         if validation_results['warnings']:
             console.print("\n[bold yellow]WARNINGS:[/bold yellow]")
             for warning in validation_results['warnings']:
-                console.print(f"  ⚠️ {warning}")
+                console.print(f"  WARN: {warning}")
     
     # Show next steps
     if not validation_results['production_mode']:

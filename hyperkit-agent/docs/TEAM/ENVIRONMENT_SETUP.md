@@ -1,3 +1,11 @@
+<!-- AUDIT_BADGE_START -->
+**Implementation Status**: ✅ Verified  
+**Version**: 1.4.6  
+**Last Verified**: 2025-10-28  
+**Commit**: `6f63afe4`  
+**Branch**: `main`  
+<!-- AUDIT_BADGE_END -->
+
 # HyperKit AI Agent - Environment Setup Guide v1.2.0
 
 ## 🚀 **QUICK START (5 Minutes)**
@@ -217,7 +225,7 @@ The system uses Docker-based MCP (Model Context Protocol) for advanced Obsidian 
 ### **4. Start MCP Docker Container**
 ```bash
 # Build and start MCP Docker container
-python scripts/setup_mcp_docker.py
+hyperagent setup_mcp_docker
 
 # Or manually
 docker build -f Dockerfile.mcp -t mcp/obsidian .

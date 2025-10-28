@@ -351,7 +351,7 @@ hyperagent audit contracts/GeneratedTokenSwap.sol
 ```bash
 hyperagent deploy contracts/GeneratedTokenSwap.sol \
   --network hyperion \
-  --constructor-args "0xUSDC_Address" "0xLINK_Address"
+  --args "0xUSDC_Address" "0xLINK_Address"
 ```
 
 ### **6. Verify on Explorer**

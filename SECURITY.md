@@ -191,5 +191,5 @@ If you have questions about security or need clarification on any security-relat
 ---
 
 **Last Updated**: October 17, 2025
-**Version**: 1.0.0
+**Version**: 1.4.6
 **Project**: HyperKit Web3 Development Platform

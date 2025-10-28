@@ -28,37 +28,37 @@ This directory contains automation scripts for development, deployment, and main
 chmod +x scripts/script_name.sh
 
 # Run script
-./scripts/script_name.sh
+hyperagent script_name
 
 # Run with specific options
-./scripts/script_name.sh --option value
+hyperagent script_name --option value
 ```
 
 ### **Development Workflow**
 ```bash
 # Setup development environment
-./scripts/setup-dev.sh
+hyperagent setup-dev
 
 # Run tests
-./scripts/test.sh
+hyperagent test
 
 # Check code quality
-./scripts/lint.sh
+hyperagent lint
 
 # Clean up
-./scripts/clean.sh
+hyperagent clean
 ```
 
 ### **Deployment Workflow**
 ```bash
 # Build for production
-./scripts/build.sh
+hyperagent build
 
 # Deploy to staging
-./scripts/deploy.sh --env staging
+hyperagent deploy --env staging
 
 # Deploy to production
-./scripts/deploy.sh --env production
+hyperagent deploy --env production
 ```
 
 ## 📋 Script Guidelines
@@ -168,7 +168,7 @@ check_service() {
 ### **Script Testing**
 ```bash
 # Test script functionality
-./scripts/test-scripts.sh
+hyperagent test-scripts
 
 # Validate script syntax
 bash -n scripts/*.sh

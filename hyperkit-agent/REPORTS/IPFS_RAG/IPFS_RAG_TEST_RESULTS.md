@@ -23,7 +23,7 @@
 ### ✅ Test 1: Generate Vectors Locally
 
 ```bash
-$ python scripts/setup_rag_vectors.py
+$ hyperagent setup_rag_vectors
 ```
 
 **Results:**
@@ -46,7 +46,7 @@ $ python scripts/setup_rag_vectors.py
 ### ✅ Test 2: List CIDs
 
 ```bash
-$ python scripts/setup_rag_vectors.py --list-cids
+$ hyperagent setup_rag_vectors --list-cids
 ```
 
 **Results:**
@@ -73,7 +73,7 @@ $ python scripts/setup_rag_vectors.py --list-cids
 ### ✅ Test 3: Upload to IPFS
 
 ```bash
-$ python scripts/setup_rag_vectors.py --upload-ipfs
+$ hyperagent setup_rag_vectors --upload-ipfs
 ```
 
 **Results:**
@@ -87,7 +87,7 @@ $ python scripts/setup_rag_vectors.py --upload-ipfs
 ```
 ✓ Uploaded to IPFS with CID: Qm4d338a40e97a084a5c010e71baca81ff372202a42ad2
   Save this CID to fetch later
-  To fetch: python scripts/setup_rag_vectors.py --fetch-cid <CID>
+  To fetch: hyperagent setup_rag_vectors --fetch-cid <CID>
 ```
 
 **Note**: Mock CID generated because:
@@ -100,7 +100,7 @@ $ python scripts/setup_rag_vectors.py --upload-ipfs
 ### ⚠️ Test 4: Fetch from IPFS
 
 ```bash
-$ python scripts/setup_rag_vectors.py --fetch-cid Qm4d338a40e97a084a5c010e71baca81ff372202a42ad2
+$ hyperagent setup_rag_vectors --fetch-cid Qm4d338a40e97a084a5c010e71baca81ff372202a42ad2
 ```
 
 **Results:**
@@ -140,14 +140,14 @@ To make this production-ready with **real** IPFS integration:
    ipfs init
    ipfs daemon
    ```
-   Then: `python scripts/setup_rag_vectors.py --upload-ipfs`
+   Then: `hyperagent setup_rag_vectors --upload-ipfs`
 
 2. **Pinata API** (Best for prod)
    ```bash
    export PINATA_API_KEY="your_key"
    export PINATA_API_SECRET="your_secret"
    ```
-   Then: `python scripts/setup_rag_vectors.py --upload-ipfs`
+   Then: `hyperagent setup_rag_vectors --upload-ipfs`
 
 3. **Existing CID**
    - Upload real data to IPFS first

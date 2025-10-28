@@ -87,7 +87,7 @@ Change status table:
 
 **Run validation script:**
 ```bash
-python scripts/validate_rag_templates.py
+hyperagent validate_rag_templates
 
 # Expected output:
 # ✅ All templates uploaded

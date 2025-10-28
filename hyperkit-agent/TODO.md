@@ -1,4 +1,10 @@
 # HyperKit AI Agent - Executive TODO List
+> ⚠️ **NOT IMPLEMENTED BANNER**  
+> This process references scripts or procedures that are not CLI-integrated.  
+> These features are documented but not executable via `hyperagent` CLI.  
+> See implementation status in `REPORTS/IMPLEMENTATION_STATUS.md`.
+
+
 
 **Company**: HyperKit Technologies  
 **Date**: October 27, 2025  

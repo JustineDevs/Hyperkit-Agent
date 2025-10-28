@@ -37,7 +37,7 @@ git clone https://github.com/YourOrg/HyperKit-Agent
 pip install -r requirements.txt
 
 # 3. Fetch pre-built vectors from IPFS
-python scripts/setup_rag_vectors.py --fetch-cid <LATEST_CID>
+hyperagent setup_rag_vectors --fetch-cid <LATEST_CID>
 
 # 4. Ready to go!
 ```
@@ -47,17 +47,17 @@ python scripts/setup_rag_vectors.py --fetch-cid <LATEST_CID>
 ```yaml
 - name: Fetch Vector Store
   run: |
-    python scripts/setup_rag_vectors.py --fetch-cid ${{ secrets.VECTOR_STORE_CID }}
+    hyperagent setup_rag_vectors --fetch-cid ${{ secrets.VECTOR_STORE_CID }}
 ```
 
 ### For Updating Vector Stores
 
 ```bash
 # 1. Regenerate vectors
-python scripts/setup_rag_vectors.py
+hyperagent setup_rag_vectors
 
 # 2. Upload to IPFS
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 
 # 3. Save the returned CID
 ```
@@ -113,7 +113,7 @@ python scripts/setup_rag_vectors.py --upload-ipfs
 
 ```bash
 # Every developer:
-python scripts/setup_rag_vectors.py --fetch-cid <CID>
+hyperagent setup_rag_vectors --fetch-cid <CID>
 ```
 
 **Benefits:**
@@ -171,8 +171,8 @@ python scripts/setup_rag_vectors.py --fetch-cid <CID>
 1. **Try the system:**
    ```bash
    cd hyperkit-agent
-   python scripts/setup_rag_vectors.py
-   python scripts/setup_rag_vectors.py --upload-ipfs
+   hyperagent setup_rag_vectors
+   hyperagent setup_rag_vectors --upload-ipfs
    ```
 
 2. **Share CID with team:**
@@ -199,7 +199,7 @@ python scripts/setup_rag_vectors.py --fetch-cid <CID>
 
 - **User Guide**: `docs/IPFS_RAG_GUIDE.md`
 - **This Summary**: `docs/IPFS_RAG_SUMMARY.md`
-- **Script Help**: `python scripts/setup_rag_vectors.py --help`
+- **Script Help**: `hyperagent setup_rag_vectors --help`
 - **CID Registry**: `data/vector_store/cid_registry.json`
 
 ---
@@ -236,7 +236,7 @@ Your vision of **decentralized IPFS-based RAG vector storage** is now fully impl
 **Ready to deploy? Start with:**
 
 ```bash
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 ```
 
 Then share the CID with your team! 🚀

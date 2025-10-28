@@ -138,7 +138,7 @@ $ python -m pytest tests/security/test_pipeline.py -v
 
 **Command Executed**:
 ```bash
-$ python main.py check-address-security 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb --network hyperion
+$ hyperagent check-address-security 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb --network hyperion
 ```
 
 **Output**:
@@ -352,10 +352,10 @@ Confidence: 75%
 python -m pytest tests/security/ -v
 
 # Test CLI command
-python main.py check-address-security 0x742d35... --network hyperion
+hyperagent check-address-security 0x742d35... --network hyperion
 
 # Run full workflow (includes security analysis)
-python main.py workflow "Create ERC20 token" --network hyperion
+hyperagent workflow "Create ERC20 token" --network hyperion
 ```
 
 ---

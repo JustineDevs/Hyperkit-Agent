@@ -36,7 +36,7 @@ Your IPFS RAG implementation follows industry best practices for decentralized, 
 ### **Step 1: Build Locally**
 ```bash
 # Generate your vectors/knowledge base
-python scripts/setup_rag_vectors.py
+hyperagent setup_rag_vectors
 
 # Verify it works
 python -m pytest tests/test_rag.py
@@ -45,7 +45,7 @@ python -m pytest tests/test_rag.py
 ### **Step 2: Upload to IPFS**
 ```bash
 # Upload to Pinata (gets real CID)
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 
 # Copy the CID that's returned
 # CID: QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx
@@ -56,9 +56,9 @@ Update your documentation:
 ```markdown
 ## Latest Vector Store
 - **CID**: QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx
-- **Version**: 4.3.0
+- **Version**: 1.4.6
 - **Size**: ~2MB compressed
-- **Download**: `python scripts/setup_rag_vectors.py --fetch-cid QmS8i...`
+- **Download**: `hyperagent setup_rag_vectors --fetch-cid QmS8i...`
 ```
 
 ### **Step 4: Team/CI Fetch**
@@ -66,14 +66,14 @@ Update your documentation:
 # New developer onboarding
 git clone https://github.com/YourOrg/HyperKit-Agent
 pip install -r requirements.txt
-python scripts/setup_rag_vectors.py --fetch-cid <LATEST_CID>
+hyperagent setup_rag_vectors --fetch-cid <LATEST_CID>
 # Ready in < 1 minute!
 ```
 
 ### **Step 5: Version & Update**
 ```bash
 # When data changes, upload new version
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 # Get new CID
 
 # Update version numbers
@@ -149,11 +149,11 @@ Each release gets a new CID. Track in `cid_registry.json`:
 
 ```bash
 # Fetch specific version by CID
-python scripts/setup_rag_vectors.py --fetch-cid <OLD_CID>
+hyperagent setup_rag_vectors --fetch-cid <OLD_CID>
 
 # Or by version
 git checkout v4.2.0
-python scripts/setup_rag_vectors.py --fetch-cid <v4.2.0_CID>
+hyperagent setup_rag_vectors --fetch-cid <v4.2.0_CID>
 ```
 
 ---
@@ -224,7 +224,7 @@ python train_embeddings.py  # CPU-intensive
 ```bash
 git clone repo  # Lightweight
 pip install -r requirements.txt
-python scripts/setup_rag_vectors.py --fetch-cid <LATEST_CID>
+hyperagent setup_rag_vectors --fetch-cid <LATEST_CID>
 # Ready to work!
 ```
 
@@ -233,7 +233,7 @@ python scripts/setup_rag_vectors.py --fetch-cid <LATEST_CID>
 **Old Way:**
 ```yaml
 # Slow, resource-intensive
-- run: python scripts/setup_rag_vectors.py
+- run: hyperagent setup_rag_vectors
 - run: python train_embeddings.py
 - run: python generate_vectors.py
 # Each CI run takes 15-30 minutes
@@ -242,7 +242,7 @@ python scripts/setup_rag_vectors.py --fetch-cid <LATEST_CID>
 **New Way:**
 ```yaml
 # Fast, deterministic
-- run: python scripts/setup_rag_vectors.py --fetch-cid ${{ secrets.VECTOR_CID }}
+- run: hyperagent setup_rag_vectors --fetch-cid ${{ secrets.VECTOR_CID }}
 # Each CI run takes < 1 minute
 ```
 
@@ -260,7 +260,7 @@ git push
 **New Way:**
 ```bash
 # Developer updates docs
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 # Get new CID
 echo "VECTOR_CID=<NEW_CID>" >> .env
 git commit -m "Update vector store CID"
@@ -288,11 +288,11 @@ curl -I https://ipfs.io/ipfs/<CID>
 ### **Test Fetch in Different Environments**
 ```bash
 # Local development
-python scripts/setup_rag_vectors.py --fetch-cid <CID>
+hyperagent setup_rag_vectors --fetch-cid <CID>
 
 # CI/CD environment
 export VECTOR_CID="<CID>"
-python scripts/setup_rag_vectors.py --fetch-cid $VECTOR_CID
+hyperagent setup_rag_vectors --fetch-cid $VECTOR_CID
 
 # Staging/Production
 # Same command works everywhere
@@ -330,7 +330,7 @@ tar -czf vectors.tar.gz \
 **Solution:**
 ```bash
 # Automatically save CID to registry
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 # CID is saved to cid_registry.json
 
 # Update .env for CI/CD
@@ -347,9 +347,9 @@ echo "VECTOR_CID=$(cat data/vector_store/cid_registry.json | jq -r .latest_cid)"
 **Solution:**
 ```bash
 # Always test fetch after upload
-python scripts/setup_rag_vectors.py --upload-ipfs
+hyperagent setup_rag_vectors --upload-ipfs
 # Copy CID
-python scripts/setup_rag_vectors.py --fetch-cid <CID>
+hyperagent setup_rag_vectors --fetch-cid <CID>
 # Verify it works before pushing
 ```
 
@@ -388,7 +388,7 @@ This implementation has been **verified and tested** with:
 ---
 
 **Last Updated**: October 27, 2025  
-**Version**: 4.3.0  
+**Version**: 1.4.6  
 **Status**: ✅ Production Ready
 
 **Your IPFS RAG system is modern, scalable, and fully operational!** 🚀

@@ -1,4 +1,10 @@
 # HyperKit Agent - Internal Documentation
+> ⚠️ **NOT IMPLEMENTED BANNER**  
+> This process references scripts or procedures that are not CLI-integrated.  
+> These features are documented but not executable via `hyperagent` CLI.  
+> See implementation status in `REPORTS/IMPLEMENTATION_STATUS.md`.
+
+
 
 This directory contains all internal documentation for the HyperKit Agent project, organized by category.
 
@@ -99,5 +105,5 @@ When adding new documentation:
 ---
 
 **Last Updated**: October 27, 2025  
-**Version**: 4.3.0  
+**Version**: 1.4.6  
 **Maintained By**: Documentation Team

@@ -154,13 +154,13 @@ This directory contains complete documentation for the **IPFS-based RAG (Retriev
 ### **For Developers**
 ```bash
 # Fetch the latest vector store
-python scripts/setup_rag_vectors.py --fetch-cid QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx
+hyperagent setup_rag_vectors --fetch-cid QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx
 ```
 
 ### **For DevOps**
 ```yaml
 # GitHub Actions example
-- run: python scripts/setup_rag_vectors.py --fetch-cid ${{ secrets.VECTOR_CID }}
+- run: hyperagent setup_rag_vectors --fetch-cid ${{ secrets.VECTOR_CID }}
 ```
 
 ### **For Management**
@@ -169,5 +169,5 @@ See [IPFS_RAG_FINAL_ASSESSMENT.md](IPFS_RAG_FINAL_ASSESSMENT.md) for comprehensi
 ---
 
 **Last Updated**: October 27, 2025  
-**Version**: 4.3.0  
+**Version**: 1.4.6  
 **Status**: ✅ Production Ready

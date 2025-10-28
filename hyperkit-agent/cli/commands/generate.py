@@ -1,12 +1,14 @@
 """
 Generate Command Module
-Smart contract generation functionality
+Smart contract generation functionality with RAG template integration
 """
 
+import asyncio
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from pathlib import Path
 
 console = Console()
 
@@ -21,25 +23,68 @@ def generate_group():
 @click.option('--output', '-o', help='Output directory')
 @click.option('--network', default='hyperion', help='Target network')
 @click.option('--template', help='Use specific template')
+@click.option('--use-rag/--no-use-rag', default=True, help='Use RAG templates for enhanced context')
 @click.pass_context
-def contract(ctx, type, name, output, network, template):
-    """Generate a smart contract with AI"""
-    import asyncio
+def contract(ctx, type, name, output, network, template, use_rag):
+    """Generate a smart contract with AI using RAG templates for context"""
     from core.agent.main import HyperKitAgent
     from core.config.loader import get_config
+    from services.core.rag_template_fetcher import get_template
     
-    console.print(f"🚀 Generating {type} contract: {name}")
-    console.print(f"🌐 Network: {network}")
+    console.print(f"Generating {type} contract: {name}")
+    console.print(f"Network: {network}")
     
     try:
         # Initialize agent
         config = get_config().to_dict()
         agent = HyperKitAgent(config)
         
-        # Create prompt
-        prompt = f"Create a {type} smart contract named {name}"
-        if template:
-            prompt += f" using {template} template"
+        # Build enhanced prompt with RAG templates if enabled
+        base_prompt = f"Create a {type} smart contract named {name}"
+        enhanced_prompt = base_prompt
+        
+        if use_rag:
+            console.print("Fetching RAG templates for enhanced context...", style="blue")
+            try:
+                # Get contract generation prompt template
+                generation_prompt = asyncio.run(get_template('contract-generation-prompt'))
+                
+                # Get appropriate contract template
+                template_name = template or f"{type.lower()}-template"
+                contract_template = asyncio.run(get_template(template_name))
+                
+                # Compose enhanced prompt
+                if generation_prompt and contract_template:
+                    enhanced_prompt = f"""{generation_prompt}
+
+Contract Type: {type}
+Contract Name: {name}
+Network: {network}
+
+Requirements:
+{base_prompt}
+
+Reference Template:
+{contract_template}
+"""
+                    console.print("RAG context loaded successfully", style="green")
+                elif generation_prompt:
+                    enhanced_prompt = f"""{generation_prompt}
+
+Contract Type: {type}
+Contract Name: {name}
+Network: {network}
+
+Requirements:
+{base_prompt}
+"""
+                    console.print("RAG generation prompt loaded", style="green")
+                else:
+                    console.print("RAG templates unavailable, using base prompt", style="yellow")
+                    enhanced_prompt = base_prompt
+            except Exception as rag_error:
+                console.print(f"RAG fetch failed: {rag_error}", style="yellow")
+                enhanced_prompt = base_prompt
         
         with Progress(
             SpinnerColumn(),
@@ -49,26 +94,26 @@ def contract(ctx, type, name, output, network, template):
             task = progress.add_task("Generating contract with AI...", total=None)
             
             # Run generation
-            result = asyncio.run(agent.generate_contract(prompt))
+            result = asyncio.run(agent.generate_contract(enhanced_prompt))
             
             if result['status'] == 'success':
                 contract_code = result['contract_code']
                 file_path = result['path']
                 
-                console.print(f"✅ Generated {type} contract: {name}")
-                console.print(f"📁 Saved to: {file_path}")
-                console.print(f"📊 Provider: {result.get('provider_used', 'AI')}")
-                console.print(f"🤖 Method: {result.get('method', 'AI')}")
+                console.print(f"Generated {type} contract: {name}")
+                console.print(f"Saved to: {file_path}")
+                console.print(f"Provider: {result.get('provider_used', 'AI')}")
+                console.print(f"Method: {result.get('method', 'AI')}")
                 
                 if output:
                     import shutil
                     shutil.copy(file_path, output)
-                    console.print(f"📁 Copied to: {output}")
+                    console.print(f"Copied to: {output}")
             else:
-                console.print(f"❌ Generation failed: {result.get('error', 'Unknown error')}", style="red")
+                console.print(f"Generation failed: {result.get('error', 'Unknown error')}", style="red")
                 
     except Exception as e:
-        console.print(f"❌ Error: {e}", style="red")
+        console.print(f"Error: {e}", style="red")
         if ctx.obj.get('debug'):
             import traceback
             console.print(traceback.format_exc())
@@ -77,7 +122,7 @@ def contract(ctx, type, name, output, network, template):
 @click.option('--category', '-c', help='Template category')
 def templates(category):
     """List available contract templates"""
-    console.print("📋 Available Contract Templates:")
+    console.print("Available Contract Templates:")
     
     templates = {
         'tokens': ['ERC20', 'ERC721', 'ERC1155'],
@@ -93,7 +138,7 @@ def templates(category):
             for template in templates[category]:
                 console.print(f"  • {template}")
         else:
-            console.print(f"❌ Unknown category: {category}")
+            console.print(f"Unknown category: {category}")
     else:
         for cat, items in templates.items():
             console.print(f"\n{cat.upper()}:")

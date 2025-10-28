@@ -3,7 +3,7 @@ Configuration Schema Validation for HyperKit AI Agent
 Production-ready configuration validation with Pydantic v2
 """
 
-from pydantic import BaseModel, Field, validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, Dict, Any, List
 import re
 from urllib.parse import urlparse
@@ -20,7 +20,8 @@ class NetworkConfig(BaseModel):
     gas_limit: int = Field(default=8000000, description="Gas limit", gt=0)
     enabled: bool = Field(default=True, description="Whether network is enabled")
     
-    @validator('rpc_url')
+    @field_validator('rpc_url')
+    @classmethod
     def validate_rpc_url(cls, v):
         """Validate RPC URL format"""
         if not v.startswith(('http://', 'https://')):
@@ -36,7 +37,8 @@ class NetworkConfig(BaseModel):
         
         return v
     
-    @validator('explorer_url', 'explorer_api')
+    @field_validator('explorer_url', 'explorer_api')
+    @classmethod
     def validate_explorer_urls(cls, v):
         """Validate explorer URLs if provided"""
         if v is not None:
@@ -44,7 +46,8 @@ class NetworkConfig(BaseModel):
                 raise ValueError('Explorer URL must start with http:// or https://')
         return v
     
-    @validator('gas_price')
+    @field_validator('gas_price')
+    @classmethod
     def validate_gas_price(cls, v):
         """Validate gas price is numeric string"""
         try:
@@ -65,7 +68,8 @@ class AIProviderConfig(BaseModel):
     temperature: Optional[float] = Field(None, description="Temperature", ge=0.0, le=2.0)
     timeout: Optional[int] = Field(None, description="Request timeout in seconds", gt=0)
     
-    @validator('api_key')
+    @field_validator('api_key')
+    @classmethod
     def validate_api_key(cls, v):
         """Validate API key format if provided"""
         if v is not None and len(v.strip()) == 0:
@@ -81,7 +85,8 @@ class RAGConfig(BaseModel):
     api_key: Optional[str] = Field(None, description="Obsidian API key")
     api_url: Optional[str] = Field(None, description="Obsidian API URL")
     
-    @validator('vault_path')
+    @field_validator('vault_path')
+    @classmethod
     def validate_vault_path(cls, v):
         """Validate vault path if provided"""
         if v is not None and not v.strip():
@@ -98,7 +103,8 @@ class LoggingConfig(BaseModel):
     max_size: Optional[int] = Field(None, description="Max log file size in MB", gt=0)
     backup_count: Optional[int] = Field(None, description="Number of backup files", ge=0)
     
-    @validator('level')
+    @field_validator('level')
+    @classmethod
     def validate_log_level(cls, v):
         """Validate log level"""
         valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
@@ -106,7 +112,8 @@ class LoggingConfig(BaseModel):
             raise ValueError(f'Log level must be one of: {", ".join(valid_levels)}')
         return v.upper()
     
-    @validator('format')
+    @field_validator('format')
+    @classmethod
     def validate_log_format(cls, v):
         """Validate log format"""
         valid_formats = ['json', 'text']
@@ -124,7 +131,8 @@ class SecurityConfig(BaseModel):
     enable_cors: bool = Field(default=True, description="Enable CORS")
     allowed_origins: List[str] = Field(default_factory=list, description="Allowed CORS origins")
     
-    @validator('allowed_origins')
+    @field_validator('allowed_origins')
+    @classmethod
     def validate_origins(cls, v):
         """Validate CORS origins"""
         for origin in v:
@@ -174,23 +182,26 @@ class HyperKitConfig(BaseModel):
     debug: bool = Field(default=False, description="Debug mode")
     test_mode: bool = Field(default=False, description="Test mode")
     
-    @validator('default_network')
-    def validate_default_network(cls, v, values):
+    @field_validator('default_network')
+    @classmethod
+    def validate_default_network(cls, v, info):
         """Validate default network exists in networks"""
-        if 'networks' in values and v not in values['networks']:
-            available = list(values['networks'].keys())
+        if hasattr(info, 'data') and 'networks' in info.data and v not in info.data['networks']:
+            available = list(info.data['networks'].keys())
             raise ValueError(f'Default network "{v}" not found. Available: {", ".join(available)}')
         return v
     
-    @validator('default_ai_provider')
-    def validate_default_ai_provider(cls, v, values):
+    @field_validator('default_ai_provider')
+    @classmethod
+    def validate_default_ai_provider(cls, v, info):
         """Validate default AI provider exists in providers"""
-        if 'ai_providers' in values and v not in values['ai_providers']:
-            available = list(values['ai_providers'].keys())
+        if hasattr(info, 'data') and 'ai_providers' in info.data and v not in info.data['ai_providers']:
+            available = list(info.data['ai_providers'].keys())
             raise ValueError(f'Default AI provider "{v}" not found. Available: {", ".join(available)}')
         return v
     
-    @validator('default_private_key')
+    @field_validator('default_private_key')
+    @classmethod
     def validate_private_key(cls, v):
         """Validate private key format if provided"""
         if v is not None:

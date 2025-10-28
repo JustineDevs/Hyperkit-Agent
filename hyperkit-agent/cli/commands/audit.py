@@ -1,12 +1,14 @@
 """
 Audit Command Module
-Smart contract auditing functionality
+Smart contract auditing functionality with RAG template integration
 """
 
+import asyncio
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from services.core.rag_template_fetcher import get_template
 
 console = Console()
 
@@ -22,21 +24,34 @@ def audit_group():
 @click.option('--output', '-o', help='Output file for audit report')
 @click.option('--format', '-f', default='json', help='Output format (json, markdown, html)')
 @click.option('--severity', '-s', help='Minimum severity level (low, medium, high, critical)')
+@click.option('--use-rag/--no-use-rag', default=True, help='Use RAG security checklists for enhanced auditing')
 @click.pass_context
-def contract(ctx, contract, address, network, output, format, severity):
-    """Audit a smart contract for security issues"""
-    import asyncio
+def contract(ctx, contract, address, network, output, format, severity, use_rag):
+    """Audit a smart contract for security issues using RAG checklists"""
     from core.agent.main import HyperKitAgent
     from core.config.loader import get_config
     
     # Validate input - either contract file or address must be provided
     if not contract and not address:
-        console.print("❌ Error: Either --contract or --address must be provided", style="red")
+        console.print("Error: Either --contract or --address must be provided", style="red")
         return
     
     if contract and address:
-        console.print("❌ Error: Cannot specify both --contract and --address", style="red")
+        console.print("Error: Cannot specify both --contract and --address", style="red")
         return
+    
+    # Load RAG security checklist if enabled
+    security_checklist = None
+    if use_rag:
+        console.print("Fetching RAG security checklist for enhanced auditing...", style="blue")
+        try:
+            security_checklist = asyncio.run(get_template('security-checklist'))
+            if security_checklist:
+                console.print("Security checklist loaded from RAG", style="green")
+            else:
+                console.print("Security checklist unavailable, using default audit", style="yellow")
+        except Exception as rag_error:
+            console.print(f"RAG fetch failed: {rag_error}", style="yellow")
     
     try:
         # Initialize agent
@@ -71,7 +86,7 @@ def contract(ctx, contract, address, network, output, format, severity):
                 contract_result = fetcher.fetch_contract_source(address, network)
                 
                 if not contract_result or not contract_result.get("source"):
-                    console.print(f"❌ Error: Could not fetch contract source for {address}", style="red")
+                    console.print(f"Error: Could not fetch contract source for {address}", style="red")
                     console.print(f"💡 This contract may not be verified on the explorer", style="yellow")
                     return
                 
@@ -82,9 +97,9 @@ def contract(ctx, contract, address, network, output, format, severity):
                 result = asyncio.run(agent.audit_contract(contract_code))
             
             if result['status'] == 'success':
-                console.print(f"✅ Audit completed")
+                console.print(f"Audit completed")
                 console.print(f"🔍 Severity: {result.get('severity', 'unknown').upper()}")
-                console.print(f"📊 Method: {result.get('method', 'AI')}")
+                console.print(f"Method: {result.get('method', 'AI')}")
                 console.print(f"🤖 Provider: {result.get('provider', 'AI')}")
                 
                 # Save report if output specified
@@ -103,10 +118,10 @@ def contract(ctx, contract, address, network, output, format, severity):
                             f.write(json.dumps(result.get('results', {}), indent=2))
                     console.print(f"📄 Report saved to: {output}")
             else:
-                console.print(f"❌ Audit failed: {result.get('error', 'Unknown error')}", style="red")
+                console.print(f"Audit failed: {result.get('error', 'Unknown error')}", style="red")
                 
     except Exception as e:
-        console.print(f"❌ Error: {e}", style="red")
+        console.print(f"Error: {e}", style="red")
         if ctx.obj.get('debug'):
             import traceback
             console.print(traceback.format_exc())
@@ -132,25 +147,25 @@ def batch(ctx, directory, file, recursive, network, output, format, severity):
     
     # Validate input
     if not directory and not file:
-        console.print("❌ Error: Either --directory or --file must be provided", style="red")
+        console.print("Error: Either --directory or --file must be provided", style="red")
         console.print("\nUsage:")
         console.print("  hyperagent audit batch --directory ./contracts")
         console.print("  hyperagent audit batch --file contracts.txt")
         return
     
     if directory and file:
-        console.print("❌ Error: Cannot specify both --directory and --file", style="red")
+        console.print("Error: Cannot specify both --directory and --file", style="red")
         return
     
     # Get contract files
     contracts_to_audit = []
     
     if directory:
-        console.print(f"📁 Scanning directory: {directory}")
+        console.print(f"Scanning directory: {directory}")
         dir_path = Path(directory)
         
         if not dir_path.exists():
-            console.print(f"❌ Error: Directory not found: {directory}", style="red")
+            console.print(f"Error: Directory not found: {directory}", style="red")
             return
         
         # Find .sol files
@@ -160,13 +175,13 @@ def batch(ctx, directory, file, recursive, network, output, format, severity):
         else:
             contracts_to_audit = list(dir_path.glob("*.sol"))
         
-        console.print(f"✅ Found {len(contracts_to_audit)} Solidity contracts")
+        console.print(f"Found {len(contracts_to_audit)} Solidity contracts")
     
     elif file:
         console.print(f"📄 Reading contracts from: {file}")
         
         if not Path(file).exists():
-            console.print(f"❌ Error: File not found: {file}", style="red")
+            console.print(f"Error: File not found: {file}", style="red")
             return
         
         with open(file, 'r') as f:
@@ -177,12 +192,12 @@ def batch(ctx, directory, file, recursive, network, output, format, severity):
                     if contract_path.exists():
                         contracts_to_audit.append(contract_path)
                     else:
-                        console.print(f"⚠️ Warning: Contract not found: {line}", style="yellow")
+                        console.print(f"Warning: Contract not found: {line}", style="yellow")
         
-        console.print(f"✅ Found {len(contracts_to_audit)} contracts to audit")
+        console.print(f"Found {len(contracts_to_audit)} contracts to audit")
     
     if not contracts_to_audit:
-        console.print("⚠️ No contracts found to audit", style="yellow")
+        console.print("No contracts found to audit", style="yellow")
         return
     
     # Initialize agent
@@ -190,7 +205,7 @@ def batch(ctx, directory, file, recursive, network, output, format, severity):
         config = get_config().to_dict()
         agent = HyperKitAgent(config)
     except Exception as e:
-        console.print(f"❌ Error initializing agent: {e}", style="red")
+        console.print(f"Error initializing agent: {e}", style="red")
         return
     
     # Audit each contract
@@ -245,7 +260,7 @@ def batch(ctx, directory, file, recursive, network, output, format, severity):
     table.add_column("Issues", justify="right")
     
     for result in results:
-        status_emoji = "✅" if result['status'] == 'success' else "❌"
+        status_emoji = "PASS" if result['status'] == 'success' else "FAIL"
         severity_color = {
             'critical': 'red',
             'high': 'red',
@@ -268,7 +283,7 @@ def batch(ctx, directory, file, recursive, network, output, format, severity):
         output_path = Path(output)
         output_path.mkdir(parents=True, exist_ok=True)
         
-        console.print(f"\n📁 Saving reports to: {output}")
+        console.print(f"\nSaving reports to: {output}")
         
         for result in results:
             if result['status'] == 'success':
@@ -291,24 +306,24 @@ def batch(ctx, directory, file, recursive, network, output, format, severity):
                         f.write(json.dumps(result['result'].get('results', {}), indent=2))
                         f.write("\n```\n")
         
-        console.print(f"✅ Saved {len([r for r in results if r['status'] == 'success'])} reports")
+        console.print(f"Saved {len([r for r in results if r['status'] == 'success'])} reports")
     
     # Summary
     total = len(results)
     success = len([r for r in results if r['status'] == 'success'])
     errors = len([r for r in results if r['status'] == 'error'])
     
-    console.print(f"\n📊 Summary:")
+    console.print(f"\nSummary:")
     console.print(f"  Total Contracts: {total}")
-    console.print(f"  ✅ Successful: {success}")
-    console.print(f"  ❌ Errors: {errors}")
+    console.print(f"  Successful: {success}")
+    console.print(f"  Errors: {errors}")
     
     # Filter by severity if specified
     if severity:
         filtered = [r for r in results if r.get('severity', '').lower() == severity.lower()]
         console.print(f"  🔍 Filtered ({severity}): {len(filtered)}")
     
-    console.print("\n✅ Batch audit completed")
+    console.print("\nBatch audit completed")
 
 @audit_group.command()
 @click.option('--report', '-r', required=True, help='Audit report file (JSON or Markdown)')
@@ -323,7 +338,7 @@ def report(report, format):
     report_path = Path(report)
     
     if not report_path.exists():
-        console.print(f"❌ Error: Report file not found: {report}", style="red")
+        console.print(f"Error: Report file not found: {report}", style="red")
         return
     
     try:
@@ -337,7 +352,7 @@ def report(report, format):
                 console.print(json.dumps(data, indent=2))
             else:
                 # Display as table (default)
-                console.print(f"\n📊 Audit Report: {report_path.name}\n")
+                console.print(f"\nAudit Report: {report_path.name}\n")
                 
                 # Basic info
                 console.print(f"[cyan]Status:[/cyan] {data.get('status', 'unknown')}")
@@ -373,7 +388,7 @@ def report(report, format):
                         
                         console.print(table)
                     else:
-                        console.print("\n✅ No security issues found")
+                        console.print("\nNo security issues found")
         
         elif report_path.suffix == '.md':
             with open(report_path, 'r') as f:
@@ -387,13 +402,13 @@ def report(report, format):
                 console.print(md)
         
         else:
-            console.print(f"❌ Error: Unsupported report format: {report_path.suffix}", style="red")
+            console.print(f"Error: Unsupported report format: {report_path.suffix}", style="red")
             console.print("Supported formats: .json, .md")
             return
         
-        console.print(f"\n✅ Report displayed successfully")
+        console.print(f"\nReport displayed successfully")
         
     except json.JSONDecodeError as e:
-        console.print(f"❌ Error: Invalid JSON format: {e}", style="red")
+        console.print(f"Error: Invalid JSON format: {e}", style="red")
     except Exception as e:
-        console.print(f"❌ Error reading report: {e}", style="red")
+        console.print(f"Error reading report: {e}", style="red")

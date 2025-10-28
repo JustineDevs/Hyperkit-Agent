@@ -21,16 +21,16 @@ console = Console()
 async def test_rag_connections():
     """Test all RAG connections and display results."""
     
-    console.print(Panel.fit("🔍 Testing RAG Connections", style="bold blue"))
+    console.print(Panel.fit("Testing RAG Connections", style="bold blue"))
     
     # Test 1: Obsidian RAG
     console.print("\n1. Testing Obsidian RAG Connection...")
     try:
         obsidian_success = await test_obsidian_rag()
-        status_icon = "✅" if obsidian_success else "❌"
+        status_icon = "PASS" if obsidian_success else "FAIL"
         console.print(f"   Obsidian RAG: {status_icon} {'PASSED' if obsidian_success else 'FAILED'}")
     except Exception as e:
-        console.print(f"   Obsidian RAG: ❌ ERROR - {e}")
+        console.print(f"   Obsidian RAG: FAIL ERROR - {e}")
     
     # Test 2: Enhanced RAG Retriever
     console.print("\n2. Testing Enhanced RAG Retriever...")
@@ -60,7 +60,7 @@ async def test_rag_connections():
         console.print(table)
         
     except Exception as e:
-        console.print(f"   Enhanced Retriever: ❌ ERROR - {e}")
+        console.print(f"   Enhanced Retriever: FAIL ERROR - {e}")
     
     # Test 3: Content Retrieval
     console.print("\n3. Testing Content Retrieval...")
@@ -69,7 +69,7 @@ async def test_rag_connections():
         test_content = await retriever.retrieve("smart contract security", max_results=3)
         
         console.print(f"   Content Length: {len(test_content)} characters")
-        console.print(f"   Has Content: {'✅' if len(test_content) > 100 else '❌'}")
+        console.print(f"   Has Content: {'PASS' if len(test_content) > 100 else 'FAIL'}")
         
         if len(test_content) > 200:
             preview = test_content[:200] + "..."
@@ -79,7 +79,7 @@ async def test_rag_connections():
         console.print(Panel(preview, title="Content Preview", style="dim"))
         
     except Exception as e:
-        console.print(f"   Content Retrieval: ❌ ERROR - {e}")
+        console.print(f"   Content Retrieval: FAIL ERROR - {e}")
 
 
 def test_rag_command():
@@ -87,7 +87,7 @@ def test_rag_command():
     try:
         asyncio.run(test_rag_connections())
     except KeyboardInterrupt:
-        console.print("\n❌ Test interrupted by user")
+        console.print("\nFAIL Test interrupted by user")
     except Exception as e:
         console.print(f"\n💥 Test failed: {e}")
 

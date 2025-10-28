@@ -1,3 +1,11 @@
+<!-- AUDIT_BADGE_START -->
+**Implementation Status**: ✅ Verified  
+**Version**: 1.4.6  
+**Last Verified**: 2025-10-28  
+**Commit**: `6f63afe4`  
+**Branch**: `main`  
+<!-- AUDIT_BADGE_END -->
+
 # HyperKit Agent Quick Reference
 
 One-page command reference for common operations.
@@ -27,10 +35,10 @@ pip install -r requirements-optional.txt
 hyperagent deploy contract MyToken.sol
 
 # Provide args explicitly
-hyperagent deploy contract MyToken.sol --constructor-args '["0x742d35Cc...", 1000000]'
+hyperagent deploy contract MyToken.sol --args '["0x742d35Cc...", 1000000]'
 
 # Use JSON file
-hyperagent deploy contract MyToken.sol --constructor-file args.json
+hyperagent deploy contract MyToken.sol --file args.json
 
 # Deploy to specific network
 hyperagent deploy contract MyToken.sol --network hyperion-testnet
@@ -128,7 +136,7 @@ pip install -r requirements.txt
 curl -L https://foundry.paradigm.xyz | bash; foundryup
 
 # Constructor validation failed
-# Use --constructor-args or --constructor-file
+# Use --args or --file
 
 # CI/CD fails
 # Check .github/workflows/ci-cd.yml
@@ -183,7 +191,7 @@ git push origin feature/my-feature
 |-------|-----------|
 | Can't import module | `pip install -r requirements.txt` |
 | Foundry not found | `curl -L https://foundry.paradigm.xyz \| bash` |
-| Constructor error | Use `--constructor-file args.json` |
+| Constructor error | Use `--file args.json` |
 | CI/CD fails | Run `pytest tests/ -v` locally |
 | Mock mode detected | Remove `MOCK_MODE = True` |
 
