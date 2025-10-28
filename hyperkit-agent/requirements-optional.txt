@@ -25,6 +25,11 @@
 # Try to install, but don't fail if incompatible
 ipfshttpclient>=0.8.0a0  # Using alpha constraint for better compatibility
 
+# Alith SDK - AI Agent Framework for Web3
+# Note: Has dependency conflict with dstack-sdk (not on PyPI)
+# System works without it - only affects advanced AI agent features
+alith>=0.12.0,<1.0
+
 # Alternative: Use local IPFS node
 # Install IPFS: https://docs.ipfs.io/install/
 # Then use: ipfs daemon
@@ -33,4 +38,11 @@ ipfshttpclient>=0.8.0a0  # Using alpha constraint for better compatibility
 # Set environment variables:
 #   PINATA_API_KEY=your_key
 #   PINATA_SECRET_KEY=your_secret
+
+# Optional export formats for batch audit reporting
+# PDF export
+reportlab>=4.0.0,<5.0
+
+# Excel export
+openpyxl>=3.1.0,<4.0
 
