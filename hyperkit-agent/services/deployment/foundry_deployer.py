@@ -52,22 +52,18 @@ class FoundryDeployer:
         }
         return networks.get(network)
     
-    def deploy_contract(self, contract_source_code: str, network: str, constructor_args: list = None) -> dict:
-        """Deploy a contract using Foundry"""
+    def deploy(
+        self, 
+        contract_source_code: str, 
+        rpc_url: str,
+        chain_id: int,
+        contract_name: str = "Contract",
+        constructor_args: list = None
+    ) -> dict:
+        """Deploy a contract using Foundry (matches Deployer interface)"""
         try:
-            logger.info(f"Deploying contract on {network}")
-            
-            # ✅ Get network configuration
-            network_config = self.get_network_config(network)
-            if not network_config:
-                return {
-                    "success": False,
-                    "error": f"Network {network} not supported",
-                    "suggestions": ["Check network configuration", "Use supported networks"]
-                }
-            
-            rpc_url = network_config["rpc_url"]
-            chain_id = network_config["chain_id"]
+            logger.info(f"Deploying {contract_name} to chain {chain_id}")
+            logger.info(f"RPC URL: {rpc_url}")
             
             # ✅ Connect to RPC
             w3 = Web3(Web3.HTTPProvider(rpc_url))
@@ -107,9 +103,9 @@ class FoundryDeployer:
             # Find the specific contract artifact
             artifact_file = None
             potential_paths = [
-                out_dir / "GamingToken.sol" / "GameToken.json",  # Our specific case
                 out_dir / f"{contract_name}.sol" / f"{contract_name}.json",
-                out_dir / f"{contract_name}.json"
+                out_dir / f"{contract_name}.json",
+                out_dir / "GamingToken.sol" / "GameToken.json",  # Fallback for legacy
             ]
             
             for path in potential_paths:
@@ -170,11 +166,6 @@ class FoundryDeployer:
             logger.info("Deploying contract...")
             
             contract_factory = w3.eth.contract(abi=abi, bytecode=bytecode)
-            
-            # Extract contract name from the contract source
-            import re
-            contract_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]*)', contract_source_code)
-            contract_name = contract_match.group(1) if contract_match else "TestToken"
             
             # Use provided constructor arguments or extract from code
             if constructor_args:
