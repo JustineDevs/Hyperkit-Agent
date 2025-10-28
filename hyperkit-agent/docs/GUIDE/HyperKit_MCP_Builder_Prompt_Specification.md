@@ -10,7 +10,7 @@ tags: [mcp, builder, specification, ai-agent]
 
 **Project Status**: ✅ **PRODUCTION READY**  
 **Current Version**: v1.2.0  
-**Last Updated**: January 25, 2025
+**Last Updated**: October 27, 2025
 
 ***
 
