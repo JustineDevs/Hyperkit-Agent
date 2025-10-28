@@ -80,25 +80,25 @@ artifacts/
 ### **Generate Command**
 ```bash
 # Auto-save to contracts/generated/
-hyperagent generate "Create ERC20 token"
+hyperagent generate contract --type ERC20 --name MyToken
 
 # Custom location
-hyperagent generate "Create ERC20 token" --output contracts/deployed/MyToken.sol
+hyperagent generate contract --type ERC20 --name MyToken --output contracts/deployed/MyToken.sol
 ```
 
 ### **Audit Command**
 ```bash
 # Auto-save audit to artifacts/audits/
-hyperagent audit contracts/generated/MyToken.sol
+hyperagent audit contract --contract contracts/generated/MyToken.sol
 
 # Custom audit report location
-hyperagent audit MyToken.sol --output artifacts/audits/my_audit.json --format json
+hyperagent audit contract --contract MyToken.sol --output artifacts/audits/my_audit.json --format json
 ```
 
 ### **Workflow Command**
 ```bash
 # Organized workflow output
-hyperagent workflow "Create ERC20 token" --output-dir artifacts/workflows/my_project
+hyperagent workflow run "Create ERC20 token" --output-dir artifacts/workflows/my_project
 
 # Results in:
 # artifacts/workflows/my_project/

@@ -1,0 +1,44 @@
+{
+  "timestamp": "2025-10-28T14:33:09.700159",
+  "overall_health_score": 64.27787934186472,
+  "metrics": {
+    "python_files": {
+      "total": 177,
+      "real": 117,
+      "partial": 1,
+      "stub": 21,
+      "completion_rate": 66.10169491525424
+    },
+    "documentation": {
+      "total": 471,
+      "complete": 32,
+      "incomplete": 439,
+      "completion_rate": 6.794055201698514
+    },
+    "tests": {
+      "total": 38,
+      "estimated_coverage": 100,
+      "quality_score": 100
+    },
+    "config_files": {
+      "total": 368,
+      "types": {
+        ".yaml": 2,
+        ".yml": 42,
+        ".json": 316,
+        ".toml": 6,
+        ".ini": 1,
+        "": 1
+      }
+    },
+    "scripts": {
+      "total": 40,
+      "executable": 34
+    }
+  },
+  "recommendations": [
+    "Partial implementations found - complete unfinished features",
+    "Good progress - focus on documentation and edge cases"
+  ],
+  "trends": {}
+}

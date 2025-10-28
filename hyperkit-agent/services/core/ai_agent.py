@@ -27,8 +27,7 @@ except ImportError:
     REAL_ALITH_AVAILABLE = False
     import logging; logging.warning("  WARNING: Real Alith implementation not available")
 
-# Import LazAI integration
-from .lazai_integration import HyperKitLazAIIntegration
+# LazAI integration removed - not available in production
 
 class HyperKitAIAgent:
     """
@@ -46,21 +45,7 @@ class HyperKitAIAgent:
         self.models = {}  # Support for multiple AI models
         self.api_endpoints = {}  # API endpoint management
         
-        # Initialize LazAI integration
-        self.lazai_integration = HyperKitLazAIIntegration()
-        
-        # Initialize real Alith implementation
-        if REAL_ALITH_AVAILABLE:
-            try:
-                self.real_alith_agent = HyperKitAlithAgent({
-                    "model": "gpt-4o-mini",
-                    "settlement": False
-                })
-                log_info(LogCategory.AI_AGENT, "Real Alith agent initialized successfully")
-                import logging; logging.info(" Real Alith agent initialized successfully")
-            except Exception as e:
-                log_error(LogCategory.AI_AGENT, "Failed to initialize real Alith agent", e)
-                print(f"❌ Failed to initialize real Alith agent: {e}")
+        # LazAI integration removed - not available in production
         
         if self.alith_configured and ALITH_AVAILABLE:
             self._initialize_alith()
@@ -152,19 +137,8 @@ class HyperKitAIAgent:
             print(f"❌ Failed to setup API endpoints: {e}")
     
     async def generate_contract(self, requirements: Dict[str, Any]) -> str:
-        """Generate smart contract using real Alith AI or LazAI"""
-        # Try LazAI integration first
-        if self.lazai_integration.lazai_configured:
-            try:
-                log_info(LogCategory.AI_AGENT, "Using LazAI integration for contract generation")
-                result = await self.lazai_integration.generate_contract_with_lazai(requirements)
-                if result["status"] == "success":
-                    log_info(LogCategory.AI_AGENT, "Contract generated successfully with LazAI")
-                    return result["contract_code"]
-            except Exception as e:
-                log_warning(LogCategory.AI_AGENT, f"LazAI generation failed, falling back to Alith: {e}")
-        
-        # Fallback to Alith SDK
+        """Generate smart contract using real AI services"""
+        # Generate contract using available AI services
         if not self.alith_configured:
             log_warning(LogCategory.AI_AGENT, "Using mock generation - Alith not configured")
             return self._mock_generation(requirements)
@@ -216,48 +190,28 @@ contract {requirements.get('name', 'MockContract')} {{
 """
     
     async def audit_contract(self, contract_code: str) -> Dict[str, Any]:
-        """Audit contract using real Alith AI analysis or LazAI"""
-        # Try LazAI integration first
-        if self.lazai_integration.lazai_configured:
-            try:
-                log_info(LogCategory.AI_AGENT, "Using LazAI integration for contract audit")
-                result = await self.lazai_integration.audit_contract_with_lazai(contract_code)
-                if result["status"] == "success":
-                    log_info(LogCategory.AI_AGENT, "Contract audit completed successfully with LazAI")
-                    return {
-                        "status": "real_ai",
-                        "audit_report": result["audit_report"],
-                        "method": "lazai_inference",
-                        "vulnerabilities": [],
-                        "warnings": [],
-                        "recommendations": [],
-                        "security_score": 85
-                    }
-            except Exception as e:
-                log_warning(LogCategory.AI_AGENT, f"LazAI audit failed, falling back to real Alith: {e}")
+        """Audit contract using real AI services"""
+        # Use available AI services for auditing
+        if not self.alith_configured:
+            log_warning(LogCategory.AI_AGENT, "Using mock audit - Alith not configured")
+            return self._mock_audit(contract_code)
         
-        # Try real Alith implementation
-        if self.real_alith_agent:
-            try:
-                log_info(LogCategory.AI_AGENT, "Using real Alith implementation for contract audit")
-                result = await self.real_alith_agent.audit_contract(contract_code)
-                if result.get("success", False):
-                    log_info(LogCategory.AI_AGENT, "Contract audit completed successfully with real Alith")
-                    return {
-                        "status": "real_ai",
-                        "vulnerabilities": result.get("vulnerabilities", []),
-                        "warnings": [],
-                        "recommendations": result.get("recommendations", []),
-                        "security_score": result.get("risk_score", 0),
-                        "method": "real_alith",
-                        "confidence": result.get("confidence", 0.85)
-                    }
-            except Exception as e:
-                log_warning(LogCategory.AI_AGENT, f"Real Alith audit failed, falling back to mock: {e}")
-        
-        # Fallback to mock implementation
-        log_warning(LogCategory.AI_AGENT, "Using mock audit - No real AI configured")
-        return self._mock_audit(contract_code)
+        try:
+            prompt = f"Audit this smart contract for security vulnerabilities: {contract_code}"
+            response = await self.alith_agent.audit_contract(prompt)
+            
+            log_info(LogCategory.AI_AGENT, "Contract audit completed successfully")
+            return {
+                "status": "real_ai",
+                "vulnerabilities": response.get("vulnerabilities", []),
+                "warnings": response.get("warnings", []),
+                "recommendations": response.get("recommendations", []),
+                "security_score": response.get("security_score", 0)
+            }
+        except Exception as e:
+            log_error(LogCategory.AI_AGENT, "AI audit failed", e)
+            print(f"❌ AI audit failed: {e}")
+            return self._mock_audit(contract_code)
     
     def _parse_audit_response(self, response: Dict[str, Any]) -> Dict[str, Any]:
         """Parse Alith audit response"""
@@ -360,27 +314,27 @@ contract {requirements.get('name', 'MockContract')} {{
                 "message": f"Model {model_name} not available"
             }
     
-    # LazAI Integration Methods
+    # LazAI Integration Methods - Removed (not available in production)
     async def register_lazai_user(self, amount: int = 10000000) -> Dict[str, Any]:
-        """Register user on LazAI network"""
-        return await self.lazai_integration.register_user(amount)
+        """Register user on LazAI network - NOT AVAILABLE"""
+        return {"status": "error", "message": "LazAI integration not available"}
     
     async def get_lazai_user_info(self) -> Dict[str, Any]:
-        """Get LazAI user information"""
-        return await self.lazai_integration.get_user_info()
+        """Get LazAI user information - NOT AVAILABLE"""
+        return {"status": "error", "message": "LazAI integration not available"}
     
     async def deposit_lazai_funds(self, amount: int = 1000000) -> Dict[str, Any]:
-        """Deposit funds for LazAI inference operations"""
-        return await self.lazai_integration.deposit_inference_funds(amount)
+        """Deposit funds for LazAI inference operations - NOT AVAILABLE"""
+        return {"status": "error", "message": "LazAI integration not available"}
     
     async def mint_lazai_data_token(self, file_path: str, metadata: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Mint a data token on LazAI network"""
-        return await self.lazai_integration.mint_data_token(file_path, metadata)
+        """Mint a data token on LazAI network - NOT AVAILABLE"""
+        return {"status": "error", "message": "LazAI integration not available"}
     
     async def run_lazai_inference(self, file_id: str, prompt: str, model: str = "gpt-4o-mini") -> Dict[str, Any]:
-        """Run private inference on LazAI network"""
-        return await self.lazai_integration.run_inference(file_id, prompt, model)
+        """Run private inference on LazAI network - NOT AVAILABLE"""
+        return {"status": "error", "message": "LazAI integration not available"}
     
     def get_lazai_status(self) -> Dict[str, Any]:
-        """Get LazAI integration status"""
-        return self.lazai_integration.get_integration_status()
+        """Get LazAI integration status - NOT AVAILABLE"""
+        return {"status": "error", "message": "LazAI integration not available"}

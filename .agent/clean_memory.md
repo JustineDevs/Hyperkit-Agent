@@ -1,6 +1,9 @@
-# Agent's Memory Cleanup
+# ⚠️ .agent Directory - Internal Meta Documentation
 
-HyperAgent provides comprehensive memory management for AI agent interactions, allowing granular control over memory state and context.
+**Status**: Archived meta-docs for AI agent configuration  
+**Purpose**: Internal development reference only  
+**Last Updated**: 2025-10-28  
+**Note**: These files are meta-configuration for AI agent development, not user-facing documentation.
 
 ## Memory Management Features
 

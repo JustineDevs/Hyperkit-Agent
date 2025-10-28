@@ -24,7 +24,7 @@ nano .env
 ### **3. Test Installation**
 ```bash
 # Test the agent
-python main.py
+hyperagent status
 
 # Test workflow
 hyperagent workflow "Create a simple ERC20 token"
@@ -384,13 +384,13 @@ After setting up your `.env` file, test the configuration:
 
 ```bash
 # Test the agent
-python main.py
+hyperagent status
 
 # Test workflow with interactive confirmation
 hyperagent workflow "Create a simple ERC20 token"
 
 # Test workflow with automation flag
-hyperagent workflow "Create a complex DeFi protocol" --allow-insecure
+hyperagent workflow run "Create a complex DeFi protocol" --allow-insecure
 
 # Test Alith SDK integration
 hyperagent audit contract --contract MyToken.sol --use-alith

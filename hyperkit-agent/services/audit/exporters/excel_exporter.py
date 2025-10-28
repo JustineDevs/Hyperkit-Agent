@@ -1,236 +1,216 @@
-"""
-Excel Exporter for Audit Reports
+"""Excel Report Exporter for Batch Audit Reports"""
 
-Note: Uses openpyxl if available, falls back to CSV with .xlsx extension
-"""
-
+import logging
 from pathlib import Path
 from typing import Dict, Any
+from .base_exporter import BaseExporter
 
-from .base_exporter import BaseExporter, logger
+logger = logging.getLogger(__name__)
 
 
 class ExcelExporter(BaseExporter):
-    """Export audit reports as Excel"""
+    """
+    Export audit reports to Excel format.
+    
+    Note: Requires 'openpyxl' package from requirements-optional.txt
+    Falls back to CSV export if openpyxl is not available.
+    """
     
     def __init__(self):
-        self.openpyxl_available = False
+        self.openpyxl_available = self._check_openpyxl()
+    
+    def _check_openpyxl(self) -> bool:
+        """Check if openpyxl is installed"""
         try:
             import openpyxl
-            self.openpyxl_available = True
-            self.openpyxl = openpyxl
+            return True
         except ImportError:
-            logger.warning("openpyxl not available, using fallback Excel generation")
+            logger.warning("⚠️  openpyxl not installed. Excel export will fallback to CSV.")
+            logger.warning("   Install with: pip install openpyxl")
+            return False
     
-    async def export(self, audit_result: Dict[str, Any], output_file: Path):
-        """Export single audit result as Excel"""
-        self._ensure_output_dir(output_file)
+    def export(self, report: Dict[str, Any], output_path: str) -> bool:
+        """
+        Export audit report to Excel format with multiple sheets.
         
-        if self.openpyxl_available:
-            await self._export_openpyxl(audit_result, output_file)
-        else:
-            await self._export_fallback(audit_result, output_file)
+        Creates an Excel workbook with sheets:
+        - Summary: High-level overview
+        - Contracts: Per-contract summary
+        - Findings: Detailed findings
+        - Statistics: Charts and graphs
         
-        logger.debug(f"Exported Excel to {output_file}")
+        Args:
+            report: Audit report dictionary
+            output_path: Path for output Excel file
+            
+        Returns:
+            bool: True if export successful
+        """
+        if not self.openpyxl_available:
+            return self._fallback_to_csv(report, output_path)
+        
+        try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, PatternFill, Alignment
+            from openpyxl.utils import get_column_letter
+            
+            output_dir = Path(output_path).parent
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Ensure .xlsx extension
+            if not output_path.endswith('.xlsx'):
+                output_path = f"{output_path}.xlsx"
+            
+            wb = Workbook()
+            
+            # Remove default sheet
+            if 'Sheet' in wb.sheetnames:
+                wb.remove(wb['Sheet'])
+            
+            # Create sheets
+            self._create_summary_sheet(wb, report)
+            self._create_contracts_sheet(wb, report)
+            self._create_findings_sheet(wb, report)
+            
+            # Save workbook
+            wb.save(output_path)
+            
+            logger.info(f"✅ Excel export successful: {output_path}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Excel export failed: {str(e)}")
+            return False
     
-    async def export_batch_summary(self, batch_results: Dict[str, Any], output_file: Path):
-        """Export batch summary as Excel"""
-        self._ensure_output_dir(output_file)
+    def _create_summary_sheet(self, wb, report: Dict[str, Any]):
+        """Create summary sheet"""
+        from openpyxl.styles import Font, PatternFill, Alignment
         
-        if self.openpyxl_available:
-            await self._export_batch_openpyxl(batch_results, output_file)
-        else:
-            await self._export_batch_fallback(batch_results, output_file)
+        ws = wb.create_sheet("Summary", 0)
         
-        logger.debug(f"Exported batch Excel to {output_file}")
+        # Title
+        ws['A1'] = f"Batch Audit Report - {report.get('batch_name', 'Unknown')}"
+        ws['A1'].font = Font(size=16, bold=True)
+        ws.merge_cells('A1:D1')
+        
+        # Overall Statistics
+        row = 3
+        ws[f'A{row}'] = "Total Contracts"
+        ws[f'B{row}'] = report.get('total_contracts', 0)
+        row += 1
+        
+        ws[f'A{row}'] = "Successful Audits"
+        ws[f'B{row}'] = report.get('successful_audits', 0)
+        row += 1
+        
+        ws[f'A{row}'] = "Failed Audits"
+        ws[f'B{row}'] = report.get('failed_audits', 0)
+        row += 1
+        
+        ws[f'A{row}'] = "Total Findings"
+        ws[f'B{row}'] = report.get('total_findings', 0)
+        row += 2
+        
+        # Findings by Severity
+        ws[f'A{row}'] = "Findings by Severity"
+        ws[f'A{row}'].font = Font(bold=True)
+        row += 1
+        
+        findings_by_severity = report.get('findings_by_severity', {})
+        for severity, count in findings_by_severity.items():
+            ws[f'A{row}'] = severity.capitalize()
+            ws[f'B{row}'] = count
+            
+            # Color code by severity
+            if severity == 'critical':
+                ws[f'A{row}'].fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+            elif severity == 'high':
+                ws[f'A{row}'].fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+            elif severity == 'medium':
+                ws[f'A{row}'].fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+            
+            row += 1
+        
+        # Auto-size columns
+        ws.column_dimensions['A'].width = 20
+        ws.column_dimensions['B'].width = 15
     
-    async def _export_openpyxl(self, audit_result: Dict[str, Any], output_file: Path):
-        """Export using openpyxl library"""
-        wb = self.openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Audit Report"
+    def _create_contracts_sheet(self, wb, report: Dict[str, Any]):
+        """Create contracts summary sheet"""
+        from openpyxl.styles import Font
+        
+        ws = wb.create_sheet("Contracts")
         
         # Header
-        contract_name = audit_result.get('contract_name', 'Unknown')
-        severity = audit_result.get('severity', 'unknown')
+        headers = ['Contract', 'Status', 'Critical', 'High', 'Medium', 'Low', 
+                  'Informational', 'Gas', 'Total', 'Risk Level', 'Confidence']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(1, col)
+            cell.value = header
+            cell.font = Font(bold=True)
         
-        ws['A1'] = 'Contract Name'
-        ws['B1'] = contract_name
-        ws['A2'] = 'Severity'
-        ws['B2'] = severity.upper()
-        ws['A3'] = 'Total Findings'
-        ws['B3'] = len(audit_result.get('findings', []))
+        # Data
+        row = 2
+        for contract_name, contract_data in report.get('contracts', {}).items():
+            findings_by_severity = contract_data.get('findings_by_severity', {})
+            
+            ws.cell(row, 1).value = contract_name
+            ws.cell(row, 2).value = contract_data.get('status', 'unknown')
+            ws.cell(row, 3).value = findings_by_severity.get('critical', 0)
+            ws.cell(row, 4).value = findings_by_severity.get('high', 0)
+            ws.cell(row, 5).value = findings_by_severity.get('medium', 0)
+            ws.cell(row, 6).value = findings_by_severity.get('low', 0)
+            ws.cell(row, 7).value = findings_by_severity.get('informational', 0)
+            ws.cell(row, 8).value = findings_by_severity.get('gas-optimization', 0)
+            ws.cell(row, 9).value = contract_data.get('total_findings', 0)
+            ws.cell(row, 10).value = contract_data.get('risk_level', 'unknown')
+            ws.cell(row, 11).value = f"{contract_data.get('confidence_score', 0):.0f}%"
+            
+            row += 1
         
-        # Findings table
-        ws['A5'] = '#'
-        ws['B5'] = 'Title'
-        ws['C5'] = 'Severity'
-        ws['D5'] = 'Type'
-        ws['E5'] = 'Description'
-        ws['F5'] = 'Location'
-        ws['G5'] = 'Recommendation'
-        
-        # Bold headers
-        for cell in ws[5]:
-            cell.font = self.openpyxl.styles.Font(bold=True)
-        
-        # Findings data
-        findings = audit_result.get('findings', [])
-        for idx, finding in enumerate(findings, 1):
-            row = 5 + idx
-            ws[f'A{row}'] = idx
-            ws[f'B{row}'] = finding.get('title', '')
-            ws[f'C{row}'] = finding.get('severity', '')
-            ws[f'D{row}'] = finding.get('type', '')
-            ws[f'E{row}'] = finding.get('description', '')
-            ws[f'F{row}'] = finding.get('location', '')
-            ws[f'G{row}'] = finding.get('recommendation', '')
-        
-        # Adjust column widths
-        ws.column_dimensions['A'].width = 5
-        ws.column_dimensions['B'].width = 30
-        ws.column_dimensions['C'].width = 12
-        ws.column_dimensions['D'].width = 20
-        ws.column_dimensions['E'].width = 50
-        ws.column_dimensions['F'].width = 20
-        ws.column_dimensions['G'].width = 50
-        
-        wb.save(output_file)
+        # Auto-size columns
+        for col in range(1, 12):
+            ws.column_dimensions[get_column_letter(col)].width = 15
     
-    async def _export_batch_openpyxl(self, batch_results: Dict[str, Any], output_file: Path):
-        """Export batch summary using openpyxl"""
-        wb = self.openpyxl.Workbook()
+    def _create_findings_sheet(self, wb, report: Dict[str, Any]):
+        """Create detailed findings sheet"""
+        from openpyxl.styles import Font
         
-        # Summary sheet
-        ws_summary = wb.active
-        ws_summary.title = "Summary"
+        ws = wb.create_sheet("Findings")
         
-        summary = batch_results.get('summary', {})
+        # Header
+        headers = ['Contract', 'Severity', 'Title', 'Description', 'Location', 'Recommendation', 'Source']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(1, col)
+            cell.value = header
+            cell.font = Font(bold=True)
         
-        ws_summary['A1'] = 'Metric'
-        ws_summary['B1'] = 'Value'
-        ws_summary['A1'].font = self.openpyxl.styles.Font(bold=True)
-        ws_summary['B1'].font = self.openpyxl.styles.Font(bold=True)
+        # Data
+        row = 2
+        for contract_name, contract_data in report.get('contracts', {}).items():
+            for finding in contract_data.get('findings', []):
+                ws.cell(row, 1).value = contract_name
+                ws.cell(row, 2).value = finding.get('severity', 'unknown')
+                ws.cell(row, 3).value = finding.get('title', 'No title')
+                ws.cell(row, 4).value = finding.get('description', 'No description')[:500]  # Truncate
+                ws.cell(row, 5).value = finding.get('location', 'unknown')
+                ws.cell(row, 6).value = finding.get('recommendation', 'No recommendation')[:500]
+                ws.cell(row, 7).value = finding.get('source', 'unknown')
+                
+                row += 1
         
-        metrics = [
-            ('Total Contracts', batch_results.get('total_contracts', 0)),
-            ('Successful', batch_results.get('successful', 0)),
-            ('Failed', batch_results.get('failed', 0)),
-            ('Risk Score', f"{summary.get('risk_score', 0)}/100"),
-            ('Total Findings', summary.get('total_findings', 0)),
-            ('Avg Findings/Contract', summary.get('avg_findings_per_contract', 0))
-        ]
-        
-        for idx, (metric, value) in enumerate(metrics, 2):
-            ws_summary[f'A{idx}'] = metric
-            ws_summary[f'B{idx}'] = value
-        
-        # Risk distribution
-        risk_dist = summary.get('risk_distribution', {})
-        row = len(metrics) + 3
-        ws_summary[f'A{row}'] = 'Severity'
-        ws_summary[f'B{row}'] = 'Count'
-        ws_summary[f'A{row}'].font = self.openpyxl.styles.Font(bold=True)
-        ws_summary[f'B{row}'].font = self.openpyxl.styles.Font(bold=True)
-        
-        for idx, (severity, count) in enumerate(risk_dist.items(), 1):
-            ws_summary[f'A{row + idx}'] = severity.title()
-            ws_summary[f'B{row + idx}'] = count
-        
-        # Contracts sheet
-        ws_contracts = wb.create_sheet("Contracts")
-        ws_contracts['A1'] = 'Contract Name'
-        ws_contracts['B1'] = 'Severity'
-        ws_contracts['C1'] = 'Findings'
-        ws_contracts['D1'] = 'Status'
-        
-        for cell in ws_contracts[1]:
-            cell.font = self.openpyxl.styles.Font(bold=True)
-        
-        contracts = batch_results.get('contracts', [])
-        for idx, contract in enumerate(contracts, 2):
-            name = contract.get('contract_name', 'Unknown')
-            ws_contracts[f'A{idx}'] = name
-            
-            if contract.get('success'):
-                severity = contract.get('severity', 'unknown')
-                findings_count = len(contract.get('findings', []))
-                ws_contracts[f'B{idx}'] = severity.upper()
-                ws_contracts[f'C{idx}'] = findings_count
-                ws_contracts[f'D{idx}'] = 'Success'
-            else:
-                ws_contracts[f'B{idx}'] = 'N/A'
-                ws_contracts[f'C{idx}'] = 'N/A'
-                ws_contracts[f'D{idx}'] = 'Failed'
-        
-        # Adjust column widths
-        ws_summary.column_dimensions['A'].width = 25
-        ws_summary.column_dimensions['B'].width = 15
-        ws_contracts.column_dimensions['A'].width = 30
-        ws_contracts.column_dimensions['B'].width = 15
-        ws_contracts.column_dimensions['C'].width = 12
-        ws_contracts.column_dimensions['D'].width = 12
-        
-        wb.save(output_file)
+        # Auto-size columns
+        for col in [1, 2, 5, 7]:
+            ws.column_dimensions[get_column_letter(col)].width = 15
+        for col in [3, 4, 6]:
+            ws.column_dimensions[get_column_letter(col)].width = 50
     
-    async def _export_fallback(self, audit_result: Dict[str, Any], output_file: Path):
-        """Fallback: Export as CSV with .xlsx extension"""
-        import csv
+    def _fallback_to_csv(self, report: Dict[str, Any], output_path: str) -> bool:
+        """Fallback to CSV export if openpyxl not available"""
+        from .csv_exporter import CSVExporter
         
-        with open(output_file, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            
-            contract_name = audit_result.get('contract_name', 'Unknown')
-            severity = audit_result.get('severity', 'unknown')
-            
-            writer.writerow(['Contract Name', contract_name])
-            writer.writerow(['Severity', severity.upper()])
-            writer.writerow([])
-            
-            writer.writerow(['#', 'Title', 'Severity', 'Type', 'Description'])
-            
-            findings = audit_result.get('findings', [])
-            for idx, finding in enumerate(findings, 1):
-                writer.writerow([
-                    idx,
-                    finding.get('title', ''),
-                    finding.get('severity', ''),
-                    finding.get('type', ''),
-                    finding.get('description', '')
-                ])
-            
-            writer.writerow([])
-            writer.writerow(['Note: Install openpyxl for full Excel support'])
-    
-    async def _export_batch_fallback(self, batch_results: Dict[str, Any], output_file: Path):
-        """Fallback: Export batch as CSV"""
-        import csv
+        csv_exporter = CSVExporter()
+        csv_path = output_path.replace('.xlsx', '')
         
-        summary = batch_results.get('summary', {})
-        
-        with open(output_file, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            
-            writer.writerow(['Batch Audit Summary'])
-            writer.writerow([])
-            writer.writerow(['Total Contracts', batch_results.get('total_contracts', 0)])
-            writer.writerow(['Successful', batch_results.get('successful', 0)])
-            writer.writerow(['Failed', batch_results.get('failed', 0)])
-            writer.writerow(['Risk Score', f"{summary.get('risk_score', 0)}/100"])
-            writer.writerow([])
-            
-            writer.writerow(['Contract Name', 'Severity', 'Findings', 'Status'])
-            
-            contracts = batch_results.get('contracts', [])
-            for contract in contracts:
-                name = contract.get('contract_name', 'Unknown')
-                if contract.get('success'):
-                    severity = contract.get('severity', 'unknown')
-                    findings_count = len(contract.get('findings', []))
-                    writer.writerow([name, severity.upper(), findings_count, 'Success'])
-                else:
-                    writer.writerow([name, 'N/A', 'N/A', 'Failed'])
-            
-            writer.writerow([])
-            writer.writerow(['Note: Install openpyxl for full Excel support'])
-
+        logger.info("🔄 Falling back to CSV export...")
+        return csv_exporter.export(report, csv_path)

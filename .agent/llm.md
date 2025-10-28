@@ -1,8 +1,9 @@
-# LLMs
+# ⚠️ LLM Configuration - Internal Reference
 
-## Supported Models
-
-HyperAgent supports a focused set of LLM providers optimized for smart contract development and Web3 applications.
+**Status**: Internal meta-docs for LLM provider configuration  
+**Last Updated**: 2025-10-28  
+**Purpose**: AI agent development reference  
+**Note**: For production LLM usage, see `hyperkit-agent/core/llm/` and `requirements.txt`
 
 ### Supported Providers
 

@@ -311,7 +311,7 @@ NETWORK_CONFIGS = {
 ```python
 # Graceful fallback when Foundry is not available
 if not self.foundry_available:
-    logger.warning("Foundry not available - deployment will be simulated")
+    logger.warning("Foundry not available - deployment is simulated")
     return {
         "success": True,
         "transaction_hash": "0x" + "0" * 64,

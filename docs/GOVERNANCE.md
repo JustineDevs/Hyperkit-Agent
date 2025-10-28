@@ -149,7 +149,7 @@ For security issues or critical bugs:
 4. **Final Decision**: Lead maintainer decision
 
 ### **Code of Conduct**
-All participants must follow the [Code of Conduct](./CODE_OF_CONDUCT.md). Violations will be addressed through the established process.
+All participants must follow the [Code of Conduct](./CODE_OF_CONDUCT.md). Violations are addressed through the established process.
 
 ---
 

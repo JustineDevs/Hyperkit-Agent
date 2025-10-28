@@ -2,6 +2,7 @@ import os
 import json
 import subprocess
 import logging
+import re
 from pathlib import Path
 from web3 import Web3
 from eth_account import Account
@@ -17,6 +18,37 @@ class FoundryDeployer:
         if not self.forge_bin.exists():
             # Try system forge
             self.forge_bin = "forge"
+    
+    def _generate_arg_for_type(self, param_type: str, param_name: str, deployer_address: str):
+        """Helper method to generate argument for a type."""
+        if param_type == 'address':
+            return deployer_address
+        elif param_type == 'uint256':
+            if 'initialSupply' in param_name.lower():
+                return 1000000
+            elif 'maxSupply' in param_name.lower():
+                return 10000000
+            else:
+                return 1000000
+        elif param_type == 'string':
+            if 'name' in param_name.lower():
+                return "GAMEX Token"
+            elif 'symbol' in param_name.lower():
+                return "GAMEX"
+            else:
+                return "Default"
+        elif param_type == 'bool':
+            return False
+        elif param_type.startswith('uint') or param_type.startswith('int'):
+            return 0
+        elif param_type.startswith('bytes'):
+            if param_type == 'bytes':
+                return '0x'
+            else:
+                bytes_size = int(param_type[5:]) if len(param_type) > 5 else 32
+                return '0x' + ('00' * bytes_size)
+        else:
+            return 0
     
     def get_network_config(self, network: str) -> dict:
         """
@@ -194,7 +226,31 @@ class FoundryDeployer:
                         
                         logger.info(f"Generating arg for {param_name}: {param_type}")
                         
-                        if param_type == 'address':
+                        # Handle tuple types (structs)
+                        if param_type.startswith('tuple'):
+                            # Convert struct to tuple
+                            struct_values = []
+                            for component in input_param.get('components', []):
+                                comp_type = component.get('type', '')
+                                comp_name = component.get('name', '')
+                                struct_values.append(self._generate_arg_for_type(comp_type, comp_name, account.address))
+                            abi_args.append(tuple(struct_values))
+                        # Handle arrays
+                        elif param_type.endswith('[]'):
+                            # Dynamic array - return empty array
+                            abi_args.append([])
+                        elif '[' in param_type and ']' in param_type:
+                            # Fixed-size array - parse size and generate array
+                            match = re.match(r'(\w+)\[(\d+)\]', param_type)
+                            if match:
+                                base_type = match.group(1)
+                                size = int(match.group(2))
+                                array_value = [self._generate_arg_for_type(base_type, f"{param_name}[{i}]", account.address) for i in range(size)]
+                                abi_args.append(array_value)
+                            else:
+                                abi_args.append([])
+                        # Handle basic types
+                        elif param_type == 'address':
                             abi_args.append(account.address)
                         elif param_type == 'uint256':
                             if 'initialSupply' in param_name.lower():

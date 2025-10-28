@@ -1,0 +1,92 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "last_updated": "2025-10-28",
+    "purpose": "CID registry mapping for AI agent RAG template lookups",
+    "note": "Each template has unique CID, descriptive name for AI agent consumption",
+    "templates_prepared": 8,
+    "ready_for_upload": true
+  },
+  "templates": {
+    "erc20-template": {
+      "description": "Standard ERC20 fungible token contract template",
+      "filename": "ERC20-Template.md",
+      "category": "contracts",
+      "cid": "QmYWkBLnCwUHtA4vgsFM4ePrCG9xpo2taHRsvEbbyz2JYs",
+      "uploaded": true,
+      "prepared": true,
+      "upload_date": "2025-10-28T14:01:34.675228",
+      "gateway_url": "https://gateway.pinata.cloud/ipfs/QmYWkBLnCwUHtA4vgsFM4ePrCG9xpo2taHRsvEbbyz2JYs"
+    },
+    "erc721-template": {
+      "description": "Standard ERC721 non-fungible token (NFT) contract template",
+      "filename": "ERC721-Template.md",
+      "category": "contracts",
+      "cid": "QmQSsEKKG6JyMhM523ZPeMPDYCyiFxTVKTFqZerjABdTA4",
+      "uploaded": true,
+      "prepared": true,
+      "upload_date": "2025-10-28T14:01:35.926414",
+      "gateway_url": "https://gateway.pinata.cloud/ipfs/QmQSsEKKG6JyMhM523ZPeMPDYCyiFxTVKTFqZerjABdTA4"
+    },
+    "hardhat-deploy": {
+      "description": "All-in-one template for Hardhat deployment scripts, env config, and best-practice flows",
+      "filename": "Hardhat-Deploy.md",
+      "category": "templates",
+      "cid": "QmXwNxjvkw9aLZARfvM1bPThKMuP9eqmzD4cevtswKsvvh",
+      "uploaded": true,
+      "prepared": true,
+      "upload_date": "2025-10-28T14:01:39.893831",
+      "gateway_url": "https://gateway.pinata.cloud/ipfs/QmXwNxjvkw9aLZARfvM1bPThKMuP9eqmzD4cevtswKsvvh"
+    },
+    "gas-optimization-audit": {
+      "description": "Smart contract gas optimization audit template and checklist",
+      "filename": "Gas-Optimization.md",
+      "category": "audits",
+      "cid": "QmZ3QGB43iF9ntopnbpnPG5pnWxL3DcD2nnQBWU4ECiTY4",
+      "uploaded": true,
+      "prepared": true,
+      "upload_date": "2025-10-28T14:01:37.322515",
+      "gateway_url": "https://gateway.pinata.cloud/ipfs/QmZ3QGB43iF9ntopnbpnPG5pnWxL3DcD2nnQBWU4ECiTY4"
+    },
+    "security-checklist": {
+      "description": "Comprehensive security audit best-practices checklist template",
+      "filename": "Security-Checklist.md",
+      "category": "audits",
+      "cid": "QmRv9N296TqgyJJUSdov5d9jk9jWQHQf8eMKJXfpPmkjAS",
+      "uploaded": true,
+      "prepared": true,
+      "upload_date": "2025-10-28T14:01:41.203132",
+      "gateway_url": "https://gateway.pinata.cloud/ipfs/QmRv9N296TqgyJJUSdov5d9jk9jWQHQf8eMKJXfpPmkjAS"
+    },
+    "contract-generation-prompt": {
+      "description": "Prompt engineering template for general smart contract creation",
+      "filename": "Contract-Generation.md",
+      "category": "prompts",
+      "cid": "QmSC6QjuDrhNfpX9vA7P37wC4qXrMf8wYSscf2fLXugU5F",
+      "uploaded": true,
+      "prepared": true,
+      "upload_date": "2025-10-28T14:01:33.454860",
+      "gateway_url": "https://gateway.pinata.cloud/ipfs/QmSC6QjuDrhNfpX9vA7P37wC4qXrMf8wYSscf2fLXugU5F"
+    },
+    "generation-style-prompt": {
+      "description": "Prompt template for controlling style or features of generated contracts",
+      "filename": "Generation-Prompt.md",
+      "category": "prompts",
+      "cid": "QmeyKuYQoYUToTetEV5ti2t3nBJD5v8TrezXUdP1hbmoUs",
+      "uploaded": true,
+      "prepared": true,
+      "upload_date": "2025-10-28T14:01:38.618061",
+      "gateway_url": "https://gateway.pinata.cloud/ipfs/QmeyKuYQoYUToTetEV5ti2t3nBJD5v8TrezXUdP1hbmoUs"
+    },
+    "security-prompts": {
+      "description": "Prompt set for security-focused generation and audit scenarios",
+      "filename": "Security-Prompts.md",
+      "category": "prompts",
+      "cid": "QmYS2tXdBNFj3Pie6RUi5WKFPzGgL173M1wrhQhwsmbmAV",
+      "uploaded": true,
+      "prepared": true,
+      "upload_date": "2025-10-28T14:01:42.447747",
+      "gateway_url": "https://gateway.pinata.cloud/ipfs/QmYS2tXdBNFj3Pie6RUi5WKFPzGgL173M1wrhQhwsmbmAV"
+    }
+  }
+}

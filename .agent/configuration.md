@@ -1,6 +1,9 @@
-# Configuration
+# ⚠️ Agent Configuration - Internal Reference
 
-## HyperAgent Configuration
+**Status**: Internal meta-docs for agent configuration  
+**Last Updated**: 2025-10-28  
+**Purpose**: AI agent development reference  
+**Note**: For actual configuration, see `hyperkit-agent/config.yaml` and `.env`
 
 HyperAgent can be configured using environment variables for optimal smart contract development and deployment.
 

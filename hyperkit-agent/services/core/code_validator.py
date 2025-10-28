@@ -78,8 +78,6 @@ class CodeValidator:
             ],
             "documentation": [
                 r"\/\*\*.*\*\/",
-                r"\/\/.*TODO",
-                r"\/\/.*FIXME",
                 r"\/\/.*NOTE"
             ],
             "error_handling": [

@@ -67,13 +67,13 @@ OBSIDIAN_VAULT_PATH=/path/to/vault
 
 ```bash
 # Check system status
-python main.py status
+hyperagent status
 
 # Check health
-python main.py health --detailed
+hyperagent monitor health --detailed
 
 # Test deployment
-python main.py deploy --test
+hyperagent deploy contract --contract contracts/GamingToken.sol --network hyperion
 ```
 
 ---

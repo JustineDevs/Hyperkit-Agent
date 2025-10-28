@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from cli.commands.generate import generate_group
 from cli.commands.deploy import deploy_group
 from cli.commands.audit import audit_group
+from cli.commands.batch_audit import batch_audit_group
 from cli.commands.verify import verify_group
 from cli.commands.monitor import monitor_group
 from cli.commands.config import config_group
@@ -61,6 +62,7 @@ def cli(ctx, verbose, debug):
 cli.add_command(generate_group, name='generate')
 cli.add_command(deploy_group, name='deploy')
 cli.add_command(audit_group, name='audit')
+cli.add_command(batch_audit_group, name='batch-audit')
 cli.add_command(verify_group, name='verify')
 cli.add_command(monitor_group, name='monitor')
 cli.add_command(config_group, name='config')

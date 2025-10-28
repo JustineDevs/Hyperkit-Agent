@@ -202,7 +202,7 @@ Created comprehensive `docs/KNOWN_ISSUES.md` documenting:
 ### **Testing After Fixes:**
 ```bash
 # Test 1: Deployment without Foundry
-python main.py deploy test.sol --network hyperion
+hyperagent deploy contract --contract test.sol --network hyperion
 # ✅ EXPECTED: RuntimeError with clear instructions
 # ✅ ACTUAL: RuntimeError raised correctly
 

@@ -201,6 +201,37 @@ class ConstructorArgumentParser:
         return (False, None)
     
     @staticmethod
+    def is_struct_type(param_type: str, contract_code: str) -> Tuple[bool, Optional[str]]:
+        """
+        Check if parameter is a struct type and extract struct name.
+        
+        Args:
+            param_type: Solidity type string
+            contract_code: Contract source code for struct definitions
+            
+        Returns:
+            (is_struct, struct_name)
+            - is_struct: True if struct type
+            - struct_name: Name of the struct
+        """
+        # Check for custom struct types (basically any uppercase type that's not a built-in)
+        builtin_types = {
+            'address', 'bool', 'string', 'bytes', 'uint', 'int',
+            'bytes1', 'bytes2', 'bytes3', 'bytes4', 'bytes5', 'bytes6', 'bytes7', 'bytes8',
+            'bytes9', 'bytes10', 'bytes11', 'bytes12', 'bytes13', 'bytes14', 'bytes15', 'bytes16',
+            'bytes17', 'bytes18', 'bytes19', 'bytes20', 'bytes21', 'bytes22', 'bytes23', 'bytes24',
+            'bytes25', 'bytes26', 'bytes27', 'bytes28', 'bytes29', 'bytes30', 'bytes31', 'bytes32',
+            'uint8', 'uint16', 'uint32', 'uint64', 'uint128', 'uint256',
+            'int8', 'int16', 'int32', 'int64', 'int128', 'int256'
+        }
+        
+        # Simple heuristic: if it starts with uppercase and is not a built-in, it's likely a struct
+        if param_type and param_type[0].isupper() and param_type not in builtin_types:
+            return (True, param_type)
+        
+        return (False, None)
+    
+    @staticmethod
     def extract_erc20_name_symbol(contract_code: str) -> Tuple[Optional[str], Optional[str]]:
         """
         Extract ERC20 token name and symbol from constructor ERC20() call.
@@ -344,6 +375,12 @@ class ConstructorArgumentParser:
         elif param_type == 'bool':
             logger.info(f"Using false for {param_name}")
             return False
+        
+        # Check for struct types
+        is_struct, struct_name = ConstructorArgumentParser.is_struct_type(param_type, contract_code)
+        if is_struct:
+            logger.info(f"Using empty struct for {param_name}: {param_type}")
+            return {}  # Return empty dict for struct (will need to be filled by user)
         
         else:
             # Unknown type - log warning and return safe default

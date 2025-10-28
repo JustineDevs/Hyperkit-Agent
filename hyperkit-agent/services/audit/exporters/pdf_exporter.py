@@ -1,159 +1,132 @@
-"""
-PDF Exporter for Audit Reports
+"""PDF Report Exporter for Batch Audit Reports"""
 
-Note: Uses reportlab if available, falls back to HTML-to-PDF or text-based PDF
-"""
-
+import logging
 from pathlib import Path
 from typing import Dict, Any
+from .base_exporter import BaseExporter
 
-from .base_exporter import BaseExporter, logger
+logger = logging.getLogger(__name__)
 
 
 class PDFExporter(BaseExporter):
-    """Export audit reports as PDF"""
+    """
+    Export audit reports to PDF format.
+    
+    Note: Requires 'reportlab' package from requirements-optional.txt
+    Falls back to HTML export if reportlab is not available.
+    """
     
     def __init__(self):
-        self.reportlab_available = False
+        self.reportlab_available = self._check_reportlab()
+    
+    def _check_reportlab(self) -> bool:
+        """Check if reportlab is installed"""
         try:
-            from reportlab.lib.pagesizes import letter
-            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
-            from reportlab.lib.styles import getSampleStyleSheet
-            self.reportlab_available = True
-            self.reportlab_modules = {
-                'letter': letter,
-                'SimpleDocTemplate': SimpleDocTemplate,
-                'Paragraph': Paragraph,
-                'Spacer': Spacer,
-                'Table': Table,
-                'getSampleStyleSheet': getSampleStyleSheet
-            }
+            import reportlab
+            return True
         except ImportError:
-            logger.warning("reportlab not available, using fallback PDF generation")
+            logger.warning("⚠️  reportlab not installed. PDF export will fallback to HTML.")
+            logger.warning("   Install with: pip install reportlab")
+            return False
     
-    async def export(self, audit_result: Dict[str, Any], output_file: Path):
-        """Export single audit result as PDF"""
-        self._ensure_output_dir(output_file)
+    def export(self, report: Dict[str, Any], output_path: str) -> bool:
+        """
+        Export audit report to PDF format.
         
-        if self.reportlab_available:
-            await self._export_reportlab(audit_result, output_file)
-        else:
-            await self._export_fallback(audit_result, output_file)
+        Args:
+            report: Audit report dictionary
+            output_path: Path for output PDF file
+            
+        Returns:
+            bool: True if export successful
+        """
+        if not self.reportlab_available:
+            return self._fallback_to_html(report, output_path)
         
-        logger.debug(f"Exported PDF to {output_file}")
+        try:
+            from reportlab.lib.pagesizes import letter, A4
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import inch
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+            from reportlab.lib import colors
+            
+            output_dir = Path(output_path).parent
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Ensure .pdf extension
+            if not output_path.endswith('.pdf'):
+                output_path = f"{output_path}.pdf"
+            
+            # Create PDF
+            doc = SimpleDocTemplate(output_path, pagesize=letter)
+            story = []
+            styles = getSampleStyleSheet()
+            
+            # Title
+            title = Paragraph(f"<b>Batch Audit Report - {report.get('batch_name', 'Unknown')}</b>", 
+                            styles['Title'])
+            story.append(title)
+            story.append(Spacer(1, 0.2*inch))
+            
+            # Summary
+            summary_text = f"""
+            <b>Summary</b><br/>
+            Total Contracts: {report.get('total_contracts', 0)}<br/>
+            Successful: {report.get('successful_audits', 0)}<br/>
+            Failed: {report.get('failed_audits', 0)}<br/>
+            Total Findings: {report.get('total_findings', 0)}<br/>
+            Critical: {report.get('findings_by_severity', {}).get('critical', 0)}<br/>
+            High: {report.get('findings_by_severity', {}).get('high', 0)}<br/>
+            Medium: {report.get('findings_by_severity', {}).get('medium', 0)}<br/>
+            Low: {report.get('findings_by_severity', {}).get('low', 0)}
+            """
+            story.append(Paragraph(summary_text, styles['Normal']))
+            story.append(Spacer(1, 0.3*inch))
+            
+            # Contract Details
+            for contract_name, contract_data in report.get('contracts', {}).items():
+                contract_title = Paragraph(f"<b>{contract_name}</b>", styles['Heading2'])
+                story.append(contract_title)
+                
+                findings_count = contract_data.get('total_findings', 0)
+                contract_summary = Paragraph(
+                    f"Status: {contract_data.get('status', 'unknown')} | "
+                    f"Findings: {findings_count} | "
+                    f"Risk: {contract_data.get('risk_level', 'unknown')}",
+                    styles['Normal']
+                )
+                story.append(contract_summary)
+                story.append(Spacer(1, 0.1*inch))
+                
+                # Top findings
+                if findings_count > 0:
+                    findings = contract_data.get('findings', [])[:5]  # Top 5
+                    for finding in findings:
+                        finding_text = f"""
+                        <b>[{finding.get('severity', 'unknown').upper()}]</b> {finding.get('title', 'No title')}<br/>
+                        {finding.get('description', 'No description')[:200]}...
+                        """
+                        story.append(Paragraph(finding_text, styles['Normal']))
+                        story.append(Spacer(1, 0.05*inch))
+                
+                story.append(Spacer(1, 0.2*inch))
+            
+            # Build PDF
+            doc.build(story)
+            
+            logger.info(f"✅ PDF export successful: {output_path}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ PDF export failed: {str(e)}")
+            return False
     
-    async def export_batch_summary(self, batch_results: Dict[str, Any], output_file: Path):
-        """Export batch summary as PDF"""
-        self._ensure_output_dir(output_file)
+    def _fallback_to_html(self, report: Dict[str, Any], output_path: str) -> bool:
+        """Fallback to HTML export if reportlab not available"""
+        from .html_exporter import HTMLExporter
         
-        if self.reportlab_available:
-            await self._export_batch_reportlab(batch_results, output_file)
-        else:
-            await self._export_batch_fallback(batch_results, output_file)
+        html_exporter = HTMLExporter()
+        html_path = output_path.replace('.pdf', '.html')
         
-        logger.debug(f"Exported batch PDF to {output_file}")
-    
-    async def _export_reportlab(self, audit_result: Dict[str, Any], output_file: Path):
-        """Export using reportlab library"""
-        from reportlab.lib.pagesizes import letter
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-        from reportlab.lib.styles import getSampleStyleSheet
-        
-        doc = SimpleDocTemplate(str(output_file), pagesize=letter)
-        styles = getSampleStyleSheet()
-        story = []
-        
-        # Title
-        contract_name = audit_result.get('contract_name', 'Unknown')
-        story.append(Paragraph(f"Audit Report: {contract_name}", styles['Title']))
-        story.append(Spacer(1, 12))
-        
-        # Summary
-        severity = audit_result.get('severity', 'unknown').upper()
-        story.append(Paragraph(f"Severity: {severity}", styles['Heading2']))
-        story.append(Spacer(1, 6))
-        
-        findings = audit_result.get('findings', [])
-        story.append(Paragraph(f"Total Findings: {len(findings)}", styles['Normal']))
-        story.append(Spacer(1, 12))
-        
-        # Findings
-        for idx, finding in enumerate(findings, 1):
-            story.append(Paragraph(f"{idx}. {finding.get('title', 'Issue')}", styles['Heading3']))
-            story.append(Paragraph(f"Severity: {finding.get('severity', 'unknown')}", styles['Normal']))
-            story.append(Paragraph(finding.get('description', 'No description'), styles['Normal']))
-            story.append(Spacer(1, 6))
-        
-        doc.build(story)
-    
-    async def _export_batch_reportlab(self, batch_results: Dict[str, Any], output_file: Path):
-        """Export batch summary using reportlab"""
-        from reportlab.lib.pagesizes import letter
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-        from reportlab.lib.styles import getSampleStyleSheet
-        
-        doc = SimpleDocTemplate(str(output_file), pagesize=letter)
-        styles = getSampleStyleSheet()
-        story = []
-        
-        story.append(Paragraph("Batch Audit Summary", styles['Title']))
-        story.append(Spacer(1, 12))
-        
-        summary = batch_results.get('summary', {})
-        story.append(Paragraph(f"Total Contracts: {batch_results.get('total_contracts', 0)}", styles['Normal']))
-        story.append(Paragraph(f"Risk Score: {summary.get('risk_score', 0)}/100", styles['Heading2']))
-        story.append(Spacer(1, 12))
-        
-        # Recommendations
-        recommendations = summary.get('recommendations', [])
-        if recommendations:
-            story.append(Paragraph("Recommendations:", styles['Heading2']))
-            for rec in recommendations:
-                story.append(Paragraph(f"• {rec}", styles['Normal']))
-            story.append(Spacer(1, 12))
-        
-        doc.build(story)
-    
-    async def _export_fallback(self, audit_result: Dict[str, Any], output_file: Path):
-        """Fallback: Export as text file with .pdf extension"""
-        contract_name = audit_result.get('contract_name', 'Unknown')
-        severity = audit_result.get('severity', 'unknown')
-        findings = audit_result.get('findings', [])
-        
-        content = f"AUDIT REPORT: {contract_name}\n"
-        content += "=" * 80 + "\n\n"
-        content += f"Severity: {severity.upper()}\n"
-        content += f"Total Findings: {len(findings)}\n\n"
-        
-        for idx, finding in enumerate(findings, 1):
-            content += f"{idx}. {finding.get('title', 'Issue')}\n"
-            content += f"   Severity: {finding.get('severity', 'unknown')}\n"
-            content += f"   {finding.get('description', 'No description')}\n\n"
-        
-        content += "\nNote: Install 'reportlab' for full PDF support\n"
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(content)
-    
-    async def _export_batch_fallback(self, batch_results: Dict[str, Any], output_file: Path):
-        """Fallback: Export batch summary as text"""
-        summary = batch_results.get('summary', {})
-        
-        content = "BATCH AUDIT SUMMARY\n"
-        content += "=" * 80 + "\n\n"
-        content += f"Total Contracts: {batch_results.get('total_contracts', 0)}\n"
-        content += f"Successful: {batch_results.get('successful', 0)}\n"
-        content += f"Failed: {batch_results.get('failed', 0)}\n"
-        content += f"Risk Score: {summary.get('risk_score', 0)}/100\n\n"
-        
-        recommendations = summary.get('recommendations', [])
-        if recommendations:
-            content += "Recommendations:\n"
-            for rec in recommendations:
-                content += f"  - {rec}\n"
-        
-        content += "\nNote: Install 'reportlab' for full PDF support\n"
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(content)
-
+        logger.info("🔄 Falling back to HTML export...")
+        return html_exporter.export(report, html_path)

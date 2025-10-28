@@ -1,74 +1,104 @@
-"""
-CSV Exporter for Audit Reports
-"""
+"""CSV Report Exporter for Batch Audit Reports"""
 
 import csv
+import logging
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List
+from .base_exporter import BaseExporter
 
-from .base_exporter import BaseExporter, logger
+logger = logging.getLogger(__name__)
 
 
 class CSVExporter(BaseExporter):
-    """Export audit reports as CSV"""
+    """Export audit reports to CSV format"""
     
-    async def export(self, audit_result: Dict[str, Any], output_file: Path):
-        """Export single audit result as CSV"""
-        self._ensure_output_dir(output_file)
+    def export(self, report: Dict[str, Any], output_path: str) -> bool:
+        """
+        Export audit report to CSV format.
         
-        findings = audit_result.get('findings', [])
+        Creates two CSV files:
+        - {output_path}_summary.csv: High-level summary of all contracts
+        - {output_path}_findings.csv: Detailed findings for all contracts
         
-        with open(output_file, 'w', newline='', encoding='utf-8') as f:
+        Args:
+            report: Audit report dictionary
+            output_path: Path for output file (without extension)
+            
+        Returns:
+            bool: True if export successful
+        """
+        try:
+            output_dir = Path(output_path).parent
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Export summary CSV
+            summary_path = f"{output_path}_summary.csv"
+            self._export_summary(report, summary_path)
+            
+            # Export detailed findings CSV
+            findings_path = f"{output_path}_findings.csv"
+            self._export_findings(report, findings_path)
+            
+            logger.info(f"✅ CSV export successful:")
+            logger.info(f"  - Summary: {summary_path}")
+            logger.info(f"  - Findings: {findings_path}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ CSV export failed: {str(e)}")
+            return False
+    
+    def _export_summary(self, report: Dict[str, Any], output_path: str):
+        """Export high-level summary"""
+        with open(output_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             
             # Header
-            writer.writerow(['#', 'Title', 'Severity', 'Type', 'Description', 'Location', 'Recommendation'])
+            writer.writerow([
+                'Contract', 'Status', 'Critical', 'High', 'Medium', 
+                'Low', 'Informational', 'Gas', 'Total Findings', 
+                'Risk Level', 'Confidence'
+            ])
             
-            # Findings
-            for idx, finding in enumerate(findings, 1):
+            # Data rows
+            for contract_name, contract_data in report.get('contracts', {}).items():
+                findings_by_severity = contract_data.get('findings_by_severity', {})
+                
                 writer.writerow([
-                    idx,
-                    finding.get('title', ''),
-                    finding.get('severity', ''),
-                    finding.get('type', ''),
-                    finding.get('description', ''),
-                    finding.get('location', ''),
-                    finding.get('recommendation', '')
+                    contract_name,
+                    contract_data.get('status', 'unknown'),
+                    findings_by_severity.get('critical', 0),
+                    findings_by_severity.get('high', 0),
+                    findings_by_severity.get('medium', 0),
+                    findings_by_severity.get('low', 0),
+                    findings_by_severity.get('informational', 0),
+                    findings_by_severity.get('gas-optimization', 0),
+                    contract_data.get('total_findings', 0),
+                    contract_data.get('risk_level', 'unknown'),
+                    f"{contract_data.get('confidence_score', 0):.0f}%"
                 ])
-        
-        logger.debug(f"Exported CSV to {output_file}")
     
-    async def export_batch_summary(self, batch_results: Dict[str, Any], output_file: Path):
-        """Export batch summary as CSV"""
-        self._ensure_output_dir(output_file)
-        
-        contracts = batch_results.get('contracts', [])
-        summary = batch_results.get('summary', {})
-        
-        with open(output_file, 'w', newline='', encoding='utf-8') as f:
+    def _export_findings(self, report: Dict[str, Any], output_path: str):
+        """Export detailed findings"""
+        with open(output_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             
-            # Summary header
-            writer.writerow(['Batch Audit Summary'])
-            writer.writerow(['Total Contracts', batch_results.get('total_contracts', 0)])
-            writer.writerow(['Successful', batch_results.get('successful', 0)])
-            writer.writerow(['Failed', batch_results.get('failed', 0)])
-            writer.writerow(['Risk Score', summary.get('risk_score', 0)])
-            writer.writerow([])
+            # Header
+            writer.writerow([
+                'Contract', 'Severity', 'Title', 'Description', 
+                'Location', 'Recommendation', 'Source'
+            ])
             
-            # Contract results header
-            writer.writerow(['Contract Name', 'Severity', 'Findings Count', 'Status'])
-            
-            # Contract results
-            for contract in contracts:
-                name = contract.get('contract_name', 'Unknown')
-                if contract.get('success'):
-                    severity = contract.get('severity', 'unknown')
-                    findings_count = len(contract.get('findings', []))
-                    writer.writerow([name, severity.upper(), findings_count, 'Success'])
-                else:
-                    error = contract.get('error', 'Unknown error')
-                    writer.writerow([name, 'N/A', 'N/A', f'Failed: {error}'])
-        
-        logger.debug(f"Exported batch CSV to {output_file}")
-
+            # Data rows
+            for contract_name, contract_data in report.get('contracts', {}).items():
+                for finding in contract_data.get('findings', []):
+                    writer.writerow([
+                        contract_name,
+                        finding.get('severity', 'unknown'),
+                        finding.get('title', 'No title'),
+                        finding.get('description', 'No description')[:200] + '...',  # Truncate for CSV
+                        finding.get('location', 'unknown'),
+                        finding.get('recommendation', 'No recommendation')[:200] + '...',
+                        finding.get('source', 'unknown')
+                    ])

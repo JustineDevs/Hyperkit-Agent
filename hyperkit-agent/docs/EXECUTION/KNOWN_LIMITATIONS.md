@@ -430,6 +430,6 @@ python -m cli.main audit contract --contract test.sol
 
 ---
 
-**This document will be updated as limitations are resolved and new capabilities are proven.**
+**This document is updated as limitations are resolved and new capabilities are proven.**
 
 **Last Verified**: October 25, 2025, 8:15 PM +08

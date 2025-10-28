@@ -393,7 +393,7 @@ Timeline:
 - Fixed: [Date/Time]
 - Deployed: [Date/Time]
 
-We appreciate your responsible disclosure. You will be credited in our security changelog.
+We appreciate your responsible disclosure. You are credited in our security changelog.
 
 Best regards,
 HyperKit Security Team

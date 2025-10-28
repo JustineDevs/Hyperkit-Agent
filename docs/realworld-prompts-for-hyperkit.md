@@ -11,7 +11,7 @@
 ## 📋 PROMPT #1: DeFi Staking Protocol (Realistic)
 
 ```
-hyperagent generate "
+hyperagent generate contract --type ERC20 --name StakingToken "
 Create a production-ready ERC20 staking contract with:
 - 1 billion token supply
 - 12% APY staking rewards distributed over 365 days
@@ -43,7 +43,7 @@ Create a production-ready ERC20 staking contract with:
 ## 📋 PROMPT #2: Cross-Chain Token Bridge (Real World)
 
 ```
-hyperagent generate "
+hyperagent workflow run "
 Build a cross-chain ERC20 token bridge for Metis ↔ Hyperion with:
 - Source token: LINK (0x... on Metis mainnet)
 - Bridge fee: 0.5% (deducted from amount)
@@ -76,7 +76,7 @@ Build a cross-chain ERC20 token bridge for Metis ↔ Hyperion with:
 ## 📋 PROMPT #3: Gaming Token with Mechanics (Like Your Use Case)
 
 ```
-hyperagent generate "
+hyperagent workflow run "
 Create a play-to-earn gaming token 'GAMEX' with:
 - Total supply: 500M tokens
 - Release schedule: 10% at launch, rest over 3 years (vesting)
@@ -112,7 +112,7 @@ Create a play-to-earn gaming token 'GAMEX' with:
 ## 📋 PROMPT #4: Liquidity Pool / DEX (Advanced)
 
 ```
-hyperagent generate "
+hyperagent workflow run "
 Build a Uniswap-style AMM liquidity pool contract 'HyperSwap' with:
 - Supported token pairs: USDC/LINK on Metis
 - Liquidity provider (LP) tokens minted on deposit
@@ -148,7 +148,7 @@ Build a Uniswap-style AMM liquidity pool contract 'HyperSwap' with:
 ## 📋 PROMPT #5: NFT Marketplace (Real Contract)
 
 ```
-hyperagent generate "
+hyperagent workflow run "
 Build an NFT marketplace contract 'HyperMarket' with:
 - Base contract: ERC721 for NFTs
 - Listing functions:
@@ -187,7 +187,7 @@ Build an NFT marketplace contract 'HyperMarket' with:
 ## 📋 PROMPT #6: Token Presale / IDO (Startup Use Case)
 
 ```
-hyperagent generate "
+hyperagent workflow run "
 Create a token presale contract 'HyperIDO' for launching a new token:
 - IDO token: 'FUTURE' (not yet deployed, contract deploys it)
 - Presale details:
@@ -228,7 +228,7 @@ Create a token presale contract 'HyperIDO' for launching a new token:
 ## 📋 PROMPT #7: DAO Governance (Advanced)
 
 ```
-hyperagent generate "
+hyperagent workflow run "
 Build a DAO governance contract 'HyperDAO' with:
 - Governance token: 'GDAO' (ERC20 with voting power)
 - Proposal system:
@@ -269,7 +269,7 @@ Build a DAO governance contract 'HyperDAO' with:
 
 ### **Command Format**
 ```bash
-hyperagent generate "
+hyperagent workflow run "
 Your detailed prompt here...
 "
 ```

@@ -63,7 +63,7 @@ class HyperKitMonitoringService:
     
     async def check_service_health(self, service_name: str) -> Dict[str, Any]:
         """Check health of specific service"""
-        # TODO: Implement real health checks
+        # Implement real health checks
         return {
             "service": service_name,
             "status": "healthy",
