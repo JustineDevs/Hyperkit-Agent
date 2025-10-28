@@ -1,7 +1,7 @@
 """
 RAG Testing CLI Command
 
-Test Obsidian RAG connections and functionality.
+Test IPFS RAG connections and functionality.
 """
 
 import asyncio
@@ -13,7 +13,6 @@ from rich.panel import Panel
 from rich.text import Text
 
 from services.rag.enhanced_retriever import get_rag_retriever
-from services.rag.obsidian_rag_enhanced import test_obsidian_rag
 
 console = Console()
 
@@ -21,19 +20,10 @@ console = Console()
 async def test_rag_connections():
     """Test all RAG connections and display results."""
     
-    console.print(Panel.fit("Testing RAG Connections", style="bold blue"))
+    console.print(Panel.fit("Testing RAG Connections (IPFS Pinata Only)", style="bold blue"))
     
-    # Test 1: Obsidian RAG
-    console.print("\n1. Testing Obsidian RAG Connection...")
-    try:
-        obsidian_success = await test_obsidian_rag()
-        status_icon = "PASS" if obsidian_success else "FAIL"
-        console.print(f"   Obsidian RAG: {status_icon} {'PASSED' if obsidian_success else 'FAILED'}")
-    except Exception as e:
-        console.print(f"   Obsidian RAG: FAIL ERROR - {e}")
-    
-    # Test 2: Enhanced RAG Retriever
-    console.print("\n2. Testing Enhanced RAG Retriever...")
+    # Test 1: Enhanced RAG Retriever
+    console.print("\n1. Testing Enhanced RAG Retriever...")
     try:
         retriever = get_rag_retriever()
         connection_results = await retriever.test_connections()
@@ -62,8 +52,8 @@ async def test_rag_connections():
     except Exception as e:
         console.print(f"   Enhanced Retriever: FAIL ERROR - {e}")
     
-    # Test 3: Content Retrieval
-    console.print("\n3. Testing Content Retrieval...")
+    # Test 2: Content Retrieval
+    console.print("\n2. Testing Content Retrieval...")
     try:
         retriever = get_rag_retriever()
         test_content = await retriever.retrieve("smart contract security", max_results=3)
@@ -89,7 +79,7 @@ def test_rag_command():
     except KeyboardInterrupt:
         console.print("\nFAIL Test interrupted by user")
     except Exception as e:
-        console.print(f"\n💥 Test failed: {e}")
+        console.print(f"\nTest failed: {e}")
 
 
 if __name__ == "__main__":

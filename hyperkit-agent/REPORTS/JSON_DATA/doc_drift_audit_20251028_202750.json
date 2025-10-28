@@ -1,0 +1,2073 @@
+{
+  "timestamp": "2025-10-28T20:27:50.018162",
+  "drift_detected": [
+    {
+      "file": "docs\\GOVERNANCE.md",
+      "line": 114,
+      "pattern": "roadmap",
+      "context": "view and planning\n\n## \ud83c\udfaf Strategic Planning\n\n### **Roadmap Process**\n1. **Community Input**: Feature request",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\PRODUCTION_DEPLOYMENT_GUIDE.md",
+      "line": 14,
+      "pattern": "TODO",
+      "context": " 21-27, 2025 (6 days)  \n**Achievement**: \ud83c\udfc6 **100% TODO COMPLETION - ALL DELIVERABLES READY**\n\n## \u2705 **PRO",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\README.md",
+      "line": 15,
+      "pattern": "roadmap",
+      "context": "RSION_MANAGEMENT.md) - How we manage versions\n6. [Roadmap](./ROADMAP.md) - Future plans\n\n---\n\n## \ud83d\udccb Document",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\README.md",
+      "line": 15,
+      "pattern": "roadmap",
+      "context": "EMENT.md) - How we manage versions\n6. [Roadmap](./ROADMAP.md) - Future plans\n\n---\n\n## \ud83d\udccb Documentation Categ",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\README.md",
+      "line": 30,
+      "pattern": "roadmap",
+      "context": ")** - Project governance and decision-making\n- **[ROADMAP.md](ROADMAP.md)** - Product roadmap and future pl",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\README.md",
+      "line": 30,
+      "pattern": "roadmap",
+      "context": "t governance and decision-making\n- **[ROADMAP.md](ROADMAP.md)** - Product roadmap and future plans\n- **[VER",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\README.md",
+      "line": 30,
+      "pattern": "roadmap",
+      "context": "n-making\n- **[ROADMAP.md](ROADMAP.md)** - Product roadmap and future plans\n- **[VERSION_MANAGEMENT.md](VERS",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\README.md",
+      "line": 83,
+      "pattern": "roadmap",
+      "context": "](realworld-prompts-for-hyperkit.md)\n\n**Check the roadmap**\n\u2192 [ROADMAP.md](ROADMAP.md)\n\n**Understand govern",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\README.md",
+      "line": 84,
+      "pattern": "roadmap",
+      "context": "rompts-for-hyperkit.md)\n\n**Check the roadmap**\n\u2192 [ROADMAP.md](ROADMAP.md)\n\n**Understand governance**\n\u2192 [GOV",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\README.md",
+      "line": 84,
+      "pattern": "roadmap",
+      "context": "yperkit.md)\n\n**Check the roadmap**\n\u2192 [ROADMAP.md](ROADMAP.md)\n\n**Understand governance**\n\u2192 [GOVERNANCE.md](",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\realworld-prompts-for-hyperkit.md",
+      "line": 15,
+      "pattern": "TODO",
+      "context": " 21-27, 2025 (6 days)  \n**Achievement**: \ud83c\udfc6 **100% TODO COMPLETION - ALL DELIVERABLES READY**\n\n---\n\n## \ud83d\udccb ",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\ROADMAP.md",
+      "line": 9,
+      "pattern": "roadmap",
+      "context": "!-- AUDIT_BADGE_END -->\n\n# HyperAgent Development Roadmap - COMPLETED\n\n## \ud83c\udfaf Project Vision - ACHIEVED\n\nHype",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\ROADMAP.md",
+      "line": 93,
+      "pattern": "roadmap",
+      "context": " Major version releases\n- **Annually**: Strategic roadmap updates\n\n## \ud83d\udcde Feedback & Contributions\n\nWe welcom",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\RAG_TEMPLATES\\UPLOAD_PROCESS.md",
+      "line": 22,
+      "pattern": "TODO",
+      "context": ", ensure:\n\n- [ ] Template is production-ready (no TODOs, no placeholders)\n- [ ] Template has clear, desc",
+      "severity": "medium"
+    },
+    {
+      "file": "docs\\RAG_TEMPLATES\\UPLOAD_PROCESS.md",
+      "line": 140,
+      "pattern": "TODO",
+      "context": "e file = one CID)\n- \u274c Upload duplicates\n- \u274c Leave TODOs or placeholders\n- \u274c Forget to update README\n\n**D",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 529,
+      "pattern": "TBD",
+      "context": "6  \n**Next Review**: 2025-11-26  \n**Last Drill**: TBD  \n**Location**: `/hyperkit-agent/docs/EMERGENCY_R",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXTERNAL_MONITORING.md",
+      "line": 271,
+      "pattern": "planned for",
+      "context": "\n\n---\n\n**Status**: \u23f3 **ROADMAP** - Implementation planned for Q1 2025  \n**Next Review**: 2025-11-26\n\n",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXTERNAL_MONITORING.md",
+      "line": 13,
+      "pattern": "roadmap",
+      "context": "tors  \n**Last Updated**: 2025-10-26  \n**Status**: Roadmap\n\n---\n\n## \ud83c\udfaf Overview\n\nThis document outlines the s",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXTERNAL_MONITORING.md",
+      "line": 35,
+      "pattern": "roadmap",
+      "context": "ght progression\n- Error rate\n\n**Implementation** (Roadmap Q1 2025):\n```python\n# services/monitoring/network",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXTERNAL_MONITORING.md",
+      "line": 135,
+      "pattern": "roadmap",
+      "context": "rint | Add to backlog |\n\n---\n\n## \ud83d\udcc8 Implementation Roadmap\n\n### Q1 2025\n\n- [ ] Implement RPC health monitori",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXTERNAL_MONITORING.md",
+      "line": 271,
+      "pattern": "roadmap",
+      "context": " - Automation configuration\n\n---\n\n**Status**: \u23f3 **ROADMAP** - Implementation planned for Q1 2025  \n**Next R",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 615,
+      "pattern": "coming soon",
+      "context": "JustineDevs/Hyperkit-Agent/issues)\n- **Discord**: Coming Soon\n- **Email**: support@hyperkit.dev\n\n## \ud83d\udccd Documenta",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\QUICK_REFERENCE.md",
+      "line": 201,
+      "pattern": "coming soon",
+      "context": "TROUBLESHOOTING_GUIDE.md)  \n**Video Tutorials**: (Coming soon)  \n**Support**: support@hyperkit.ai\n\n",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\README.md",
+      "line": 70,
+      "pattern": "roadmap",
+      "context": " Integration](./INTEGRATION/ALITH_SDK_INTEGRATION_ROADMAP.md)\n2. [LAZAI Integration](./INTEGRATION/LAZAI_IN",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\README.md",
+      "line": 77,
+      "pattern": "roadmap",
+      "context": "gh-level project documentation (README, OVERVIEW, ROADMAP)\n\n### Status Reports\n- **`/hyperkit-agent/REPORTS",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 234,
+      "pattern": "roadmap",
+      "context": "Mythril execution | Low | Q1 2025 |\n\n### Security Roadmap\n\n- [ ] **Q1 2025**: External security audit by re",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 270,
+      "pattern": "TBD",
+      "context": "| [ACCOMPLISHED archive](../../ACCOMPLISHED/) |\n| TBD | External | TBD | Pending | Q1 2025 |\n\n---\n\n## \ud83d\udd04",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 270,
+      "pattern": "TBD",
+      "context": "rchive](../../ACCOMPLISHED/) |\n| TBD | External | TBD | Pending | Q1 2025 |\n\n---\n\n## \ud83d\udd04 Change Log\n\n### ",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 116,
+      "pattern": "TODO",
+      "context": " config) printed \"Success\" messages despite being TODO stubs with no actual functionality. |\n| **Impact*",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 118,
+      "pattern": "TODO",
+      "context": "deployments. |\n| **Mitigation** | Implemented all TODO stubs with real functionality or honest \"NOT IMPL",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 87,
+      "pattern": "TODO",
+      "context": "Location**: `docs/images/installation_error.png` (TODO: Add screenshot showing typical pip error)\n\n---\n\n",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 159,
+      "pattern": "TODO",
+      "context": " Location**: `docs/images/constructor_error.png` (TODO: Add screenshot)\n\n---\n\n### 4. Foundry Not Found\n\n",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 183,
+      "pattern": "TODO",
+      "context": "eo Tutorial**: \"Installing Foundry for HyperKit\" (TODO: Create 3-minute video)\n\n---\n\n### 5. Batch Audit ",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 206,
+      "pattern": "TODO",
+      "context": "ocation**: `docs/images/batch_audit_success.png` (TODO: Add screenshot)\n\n---\n\n### 6. Template Generation",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 268,
+      "pattern": "TODO",
+      "context": "nshot Location**: `docs/images/cicd_failure.png` (TODO: Add screenshots for each type)\n\n---\n\n### 8. Perf",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 404,
+      "pattern": "TODO",
+      "context": "ry\nfoundryup\n```\n\n---\n\n## Video Tutorial Index\n\n**TODO**: Create and link video tutorials for:\n\n1. **Ins",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\CRITICAL_FIXES_APPLIED.md",
+      "line": 111,
+      "pattern": "roadmap",
+      "context": "ns\n- \u2705 Workarounds for each issue\n- \u2705 Improvement roadmap\n\n**Result**: \u2705 Users now have clear expectations ",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\CRITICAL_FIXES_APPLIED.md",
+      "line": 200,
+      "pattern": "roadmap",
+      "context": "icate READMEs\n- [ ] Surface ALITH_SDK_INTEGRATION_ROADMAP.md\n- [ ] Full integration testing\n\n**Timeline**: ",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\KNOWN_ISSUES.md",
+      "line": 217,
+      "pattern": "roadmap",
+      "context": "cement`, `documentation`\n\n---\n\n## \ud83c\udfaf **Improvement Roadmap**\n\n### **Next Major Version**\n- Fix all critical ",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_INTEGRATION_PROGRESS.md",
+      "line": 39,
+      "pattern": "roadmap",
+      "context": " Setup\n\n### \u2705 Completed Tasks\n\n1. \u2705 **Integration Roadmap Created**\n   - Document: `docs/ALITH_SDK_INTEGRAT",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_INTEGRATION_PROGRESS.md",
+      "line": 40,
+      "pattern": "roadmap",
+      "context": "ated**\n   - Document: `docs/ALITH_SDK_INTEGRATION_ROADMAP.md` (805 lines)\n   - Content: 10-week phased plan",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_INTEGRATION_PROGRESS.md",
+      "line": 92,
+      "pattern": "roadmap",
+      "context": " |\n|-----------|-------------|--------|-------|\n| Roadmap Complete | Oct 25 | \u2705 DONE | 805-line comprehensi",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_INTEGRATION_PROGRESS.md",
+      "line": 368,
+      "pattern": "roadmap",
+      "context": "## Phase 1 Completion Criteria\n\n- [x] Integration roadmap created \u2705\n- [x] Current state analyzed \u2705\n- [ ] Al",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_INTEGRATION_PROGRESS.md",
+      "line": 383,
+      "pattern": "roadmap",
+      "context": "asks)\n\n---\n\n## \ud83d\udd17 Related Documents\n\n- Integration Roadmap: `docs/ALITH_SDK_INTEGRATION_ROADMAP.md`\n- Offici",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_INTEGRATION_PROGRESS.md",
+      "line": 383,
+      "pattern": "roadmap",
+      "context": " Integration Roadmap: `docs/ALITH_SDK_INTEGRATION_ROADMAP.md`\n- Official Docs: https://alith.lazai.network/",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_SDK_INTEGRATION_ROADMAP.md",
+      "line": 9,
+      "pattern": "roadmap",
+      "context": "<!-- AUDIT_BADGE_END -->\n\n# Alith SDK Integration Roadmap for HyperKit Agent\n\n**Date**: October 25, 2024  \n",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_SDK_INTEGRATION_ROADMAP.md",
+      "line": 129,
+      "pattern": "roadmap",
+      "context": "ential audit reports\n\n---\n\n## 10-Week Integration Roadmap\n\n### Phase 1: Foundation Setup (Weeks 1-2)\n\n#### ",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_SDK_INTEGRATION_ROADMAP.md",
+      "line": 777,
+      "pattern": "roadmap",
+      "context": "Steps\n\n### This Week\n1. \u2705 Review this integration roadmap\n2. \ud83d\udd04 Install Alith SDK: `pip install alith`\n3. \ud83d\udd04 ",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_SDK_INTEGRATION_ROADMAP.md",
+      "line": 804,
+      "pattern": "roadmap",
+      "context": "chnical Support**: support@lazai.network  \n\n---\n\n*Roadmap Created*: October 25, 2024  \n*Timeline*: 10 weeks",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_SDK_INTEGRATION_ROADMAP.md",
+      "line": 527,
+      "pattern": "TBD",
+      "context": "--|---------|--------|\n| AI Inference | < 3 sec | TBD | \ud83c\udfaf |\n| Web3 Query | < 500ms | TBD | \ud83c\udfaf |\n| Full A",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_SDK_INTEGRATION_ROADMAP.md",
+      "line": 528,
+      "pattern": "TBD",
+      "context": "ce | < 3 sec | TBD | \ud83c\udfaf |\n| Web3 Query | < 500ms | TBD | \ud83c\udfaf |\n| Full Audit | < 10 sec | TBD | \ud83c\udfaf |\n| Cache",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_SDK_INTEGRATION_ROADMAP.md",
+      "line": 529,
+      "pattern": "TBD",
+      "context": "y | < 500ms | TBD | \ud83c\udfaf |\n| Full Audit | < 10 sec | TBD | \ud83c\udfaf |\n| Cache Hit Rate | > 80% | TBD | \ud83c\udfaf |\n\n**Del",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_SDK_INTEGRATION_ROADMAP.md",
+      "line": 530,
+      "pattern": "TBD",
+      "context": "| < 10 sec | TBD | \ud83c\udfaf |\n| Cache Hit Rate | > 80% | TBD | \ud83c\udfaf |\n\n**Deliverables**:\n- [x] Performance target",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_SDK_INTEGRATION_ROADMAP.md",
+      "line": 601,
+      "pattern": "TBD",
+      "context": "5%+ on verified contracts\n   - User satisfaction: TBD (post-launch metric)\n\n**Deliverables**:\n- [x] Pro",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\README.md",
+      "line": 9,
+      "pattern": "roadmap",
+      "context": "ation progress tracking\n- **ALITH_SDK_INTEGRATION_ROADMAP.md**: Alith SDK integration roadmap\n- **LAZAI_INT",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\README.md",
+      "line": 9,
+      "pattern": "roadmap",
+      "context": "K_INTEGRATION_ROADMAP.md**: Alith SDK integration roadmap\n- **LAZAI_INTEGRATION_GUIDE.md**: LAZAI platform ",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\WALLET_SECURITY_EXTENSIONS.md",
+      "line": 452,
+      "pattern": "roadmap",
+      "context": "NT_SETUP.md for Foundry installation\n```\n\n---\n\n## Roadmap\n\n### Phase 1: Core Foundation \u2705 (Completed)\n- Tra",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\POLICIES\\DRIFT_PREVENTION_POLICY.md",
+      "line": 165,
+      "pattern": "planned for",
+      "context": "al\n- Limited to internal use only\n- Documentation planned for next release\n\n## Training and Onboarding\n\n### **N",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\POLICIES\\DRIFT_PREVENTION_POLICY.md",
+      "line": 78,
+      "pattern": "TODO",
+      "context": "\n- Future-tense language in documentation\n- Stale TODO/FIXME comments\n- Outdated script references\n- Mis",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\POLICIES\\DRIFT_PREVENTION_POLICY.md",
+      "line": 78,
+      "pattern": "FIXME",
+      "context": "ture-tense language in documentation\n- Stale TODO/FIXME comments\n- Outdated script references\n- Missing i",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\REFERENCE\\README.md",
+      "line": 8,
+      "pattern": "coming soon",
+      "context": "ion\n- **CLI_COMMANDS.md**: CLI command reference (coming soon)\n\n## Purpose\n\nThis directory serves as the techni",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\LAZAI_REGISTRATION_REQUEST.md",
+      "line": 228,
+      "pattern": "will create",
+      "context": "we believe our integration with the LazAI network will create mutual value for both our platforms and the broad",
+      "severity": "medium"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\KNOWN_ISSUES.md",
+      "line": 152,
+      "pattern": "main\\.py",
+      "context": "**Status**: \ud83d\udd34 **HIGH PRIORITY**\n- **Issue**: Two `main.py` files (root and `core/agent/`)\n- **Impact**: Mai",
+      "severity": "high",
+      "recommendation": "Replace with 'hyperagent' command"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\workflow-command.md",
+      "line": 288,
+      "pattern": "main\\.py",
+      "context": "is File**\n\n1. **Add to main CLI:**\n   - Edit `cli/main.py`\n   - Add import: `from cli.commands.workflow imp",
+      "severity": "high",
+      "recommendation": "Replace with 'hyperagent' command"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\workflow-command.md",
+      "line": 288,
+      "pattern": "cli/main\\.py",
+      "context": "g This File**\n\n1. **Add to main CLI:**\n   - Edit `cli/main.py`\n   - Add import: `from cli.commands.workflow imp",
+      "severity": "high",
+      "recommendation": "Replace with 'hyperagent' command"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GUIDE\\HyperKit_MCP_Builder_Prompt_Specification.md",
+      "line": 226,
+      "pattern": "main\\.py",
+      "context": "  \u2514\u2500\u2500 batch_audit.py   # Batch operations\n\u2502   \u2514\u2500\u2500 main.py             # CLI entry point\n\u251c\u2500\u2500 services/      ",
+      "severity": "high",
+      "recommendation": "Replace with 'hyperagent' command"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\DEVELOPER_GUIDE.md",
+      "line": 30,
+      "pattern": "main\\.py",
+      "context": "e Components**\n\n#### **1. Core Agent (`core/agent/main.py`)**\n- **HyperKitAgent**: Main orchestrator class\n",
+      "severity": "high",
+      "recommendation": "Replace with 'hyperagent' command"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\INTEGRATION_REPORT.md",
+      "line": 73,
+      "pattern": "main\\.py",
+      "context": "stem\n\n#### Implementation\n- **File**: `core/agent/main.py` (run_workflow method)\n- **Purpose**: User confir",
+      "severity": "high",
+      "recommendation": "Replace with 'hyperagent' command"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ISSUE_ASSESSMENT_AND_FIXES.md",
+      "line": 17,
+      "pattern": "main\\.py",
+      "context": "FIXED** | High | Corrected Python indentation in `main.py` |\n| **Explorer API Integration** | \u2705 **IMPROVED*",
+      "severity": "high",
+      "recommendation": "Replace with 'hyperagent' command"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ISSUE_ASSESSMENT_AND_FIXES.md",
+      "line": 28,
+      "pattern": "main\\.py",
+      "context": "ultiple `IndentationError: unexpected indent` in `main.py`\n- Line 349: `while True:` loop incorrectly inden",
+      "severity": "high",
+      "recommendation": "Replace with 'hyperagent' command"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ISSUE_ASSESSMENT_AND_FIXES.md",
+      "line": 183,
+      "pattern": "main\\.py",
+      "context": "ture Fixes**\n- \u2705 Fixed all indentation errors in `main.py`\n- \u2705 Corrected exception handling blocks\n- \u2705 Stan",
+      "severity": "high",
+      "recommendation": "Replace with 'hyperagent' command"
+    },
+    {
+      "file": "docs\\DIRECTORY_STRUCTURE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\GOVERNANCE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\PRODUCTION_DEPLOYMENT_GUIDE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\PRODUCTION_DEPLOYMENT_GUIDE.md",
+      "line": 12,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "\u2705 **PRODUCTION READY - MISSION ACCOMPLISHED**  \n**Version**: 1.4.6 (Production Ready)  \n**Project Timeline**: Octobe",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\README.md",
+      "line": 122,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "sure\n\n---\n\n**Last Updated**: October 27, 2025  \n**Version**: 1.4.6  \n**Status**: Active Development\n\n---\n\n*Built wit",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\README.md",
+      "line": 123,
+      "pattern": "status.*development",
+      "context": "ated**: October 27, 2025  \n**Version**: 1.4.6  \n**Status**: Active Development\n\n---\n\n*Built with transparency and honesty. No BS",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\realworld-prompts-for-hyperkit.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\ROADMAP.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\VERSION_MANAGEMENT.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\VERSION_MANAGEMENT.md",
+      "line": 17,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": " \ud83c\udfc6 **100% COMPLETE - PRODUCTION READY**  \n**Final Version**: 1.0.0 (Production Ready)  \n**Achievement**: All planned",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\legal\\PRIVACY.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\legal\\TERMS.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\RAG_TEMPLATES\\UPLOAD_PROCESS.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\RAG_TEMPLATES\\Audits\\Gas-Optimization.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\RAG_TEMPLATES\\Audits\\Security-Checklist.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\RAG_TEMPLATES\\Contracts\\ERC20-Template.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\RAG_TEMPLATES\\Contracts\\ERC721-Template.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\RAG_TEMPLATES\\Prompts\\Contract-Generation.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\RAG_TEMPLATES\\Prompts\\Generation-Prompt.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\RAG_TEMPLATES\\Prompts\\Security-Prompts.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\RAG_TEMPLATES\\Templates\\Hardhat-Deploy.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 11,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "E_END -->\n\n# HyperKit AI Agent - API Reference\n\n**Version**: 1.4.6  \n**Base URL**: `https://api.hyperkit.ai`  \n**Las",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 256,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ode\": \"pragma solidity ^0.8.0;\\n...\",\n  \"compiler_version\": \"0.8.19\",\n  \"license_type\": \"MIT\",\n  \"network\": \"hyperion",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 697,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ode\": \"pragma solidity ^0.8.0;\\n...\",\n  \"compiler_version\": \"0.8.19\",\n  \"license_type\": \"MIT\",\n  \"network\": \"hyperion",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\CLI_COMMANDS_REFERENCE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 527,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ons Team  \n**Last Updated**: October 27, 2025  \n**Version**: 1.4.6  \n**Next Review**: 2025-11-26  \n**Last Drill**: T",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXTERNAL_MONITORING.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GITHUB_SETUP.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GITHUB_SETUP.md",
+      "line": 317,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ones\n\n---\n\n**Last Updated**: October 27, 2025  \n**Version**: 1.4.6  \n**Maintained By**: HyperKit DevOps Team  \n**Loc",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 645,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ions\n\n---\n\n**Last Updated**: October 27, 2025  \n**Version**: 1.4.6  \n**Maintained By**: HyperKit Development Team  \n",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\PRODUCTION_MODE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\QUICK_REFERENCE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\README.md",
+      "line": 108,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "vant\n\n---\n\n**Last Updated**: October 27, 2025  \n**Version**: 1.4.6  \n**Maintained By**: Documentation Team\n",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SCREENSHOT_PLAN.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 50,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ent Failure |\n| **Status** | Fixed |\n| **Affected Versions** | v4.1.7 and earlier |\n| **Fixed Version** | v4.1.11 |\n| *",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 51,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ected Versions** | v4.1.7 and earlier |\n| **Fixed Version** | v4.1.11 |\n| **Reporter** | Internal Testing |\n| **Descrip",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 71,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ts Exposure |\n| **Status** | Fixed |\n| **Affected Versions** | v4.1.7 (specific commits) |\n| **Fixed Version** | v4.1.8",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 72,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ersions** | v4.1.7 (specific commits) |\n| **Fixed Version** | v4.1.8 |\n| **Reporter** | GitHub Push Protection |\n| **D",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 92,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ion Failure |\n| **Status** | Fixed |\n| **Affected Versions** | v4.1.7 |\n| **Fixed Version** | v4.1.8 |\n| **Reporter** |",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 93,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ed |\n| **Affected Versions** | v4.1.7 |\n| **Fixed Version** | v4.1.8 |\n| **Reporter** | GitHub Actions CI |\n| **Descri",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 113,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ding Output |\n| **Status** | Fixed |\n| **Affected Versions** | v4.1.7 and earlier |\n| **Fixed Version** | v4.1.11 |\n| *",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 114,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ected Versions** | v4.1.7 and earlier |\n| **Fixed Version** | v4.1.11 |\n| **Reporter** | User Feedback |\n| **Descriptio",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 294,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ity Team  \n**Last Updated**: October 27, 2025  \n**Version**: 1.4.6  \n**Next Review**: 2025-11-26  \n**Audit Cadence**",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_SETUP.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\CRITICAL_FIXES_APPLIED.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\DEMO_SCRIPT.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\DISASTER_RECOVERY.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\GENERATED_FILES.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\KNOWN_ISSUES.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\KNOWN_ISSUES.md",
+      "line": 11,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "IT_BADGE_END -->\n\n# Known Issues & Limitations\n\n**Version**: 1.4.6 - Production Ready  \n\n---\n\n## \ud83d\udd34 **Critical Issues",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\KNOWN_LIMITATIONS.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\KNOWN_LIMITATIONS.md",
+      "line": 13,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "on Architecture, Integration Testing Required  \n**Version**: 1.4.6\n\n---\n\n## \ud83c\udfaf **EXECUTIVE SUMMARY**\n\nThis document p",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\MYTHRIL_WINDOWS_INSTALLATION.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\PRE_DEMO_CHECKLIST.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\workflow-command.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GUIDE\\HyperKit_MCP_Builder_Prompt_Specification.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GUIDE\\HyperKit_MCP_Builder_Prompt_Specification.md",
+      "line": 20,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ject Status**: \u2705 **PRODUCTION READY**  \n**Current Version**: v1.2.0  \n**Last Updated**: October 27, 2025\n\n***\n\n## Ove",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GUIDE\\IPFS_RAG_GUIDE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GUIDE\\IPFS_RAG_GUIDE.md",
+      "line": 464,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": " on GitHub\n\n---\n\n**Last Updated**: 2025-01-25  \n**Version**: 1.4.6  \n**Author**: HyperKit Development Team\n",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GUIDE\\PINATA_SETUP_GUIDE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_INTEGRATION_PROGRESS.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_INTEGRATION_PROGRESS.md",
+      "line": 12,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "n Progress Report\n\n**Date**: October 25, 2024  \n**Version**: 1.4.6  \n**Partnership**: LazAI Network / Metis Ecosyste",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\ALITH_SDK_INTEGRATION_ROADMAP.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\LAZAI_INTEGRATION_GUIDE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\SAMPLE_INTEGRATION_SCRIPTS.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\SAMPLE_INTEGRATION_SCRIPTS.md",
+      "line": 13,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": ": Justine (CPOO)  \n**Date**: October 23, 2025  \n**Version**: 1.4.6  \n\n---\n\n## \ud83d\udccb **OVERVIEW**\n\nThis document provides",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\WALLET_SECURITY_EXTENSIONS.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATION\\WALLET_SECURITY_EXTENSIONS.md",
+      "line": 11,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "\n# Wallet Security Extensions - Complete Guide\n\n**Version**: 1.4.6  \n**Date**: October 25, 2024  \n**Status**: Produc",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\POLICIES\\DRIFT_PREVENTION_POLICY.md",
+      "line": 5,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\POLICIES\\DRIFT_PREVENTION_POLICY.md",
+      "line": 97,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\API_REFERENCE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\API_REFERENCE.md",
+      "line": 11,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "-->\n\n# \ud83d\udd0c **HyperKit AI Agent - API Reference**\n\n**Version**: 1.4.6  \n**Base URL**: `https://api.hyperionkit.xyz`  \n*",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\API_REFERENCE.md",
+      "line": 105,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "de\": \"pragma solidity ^0.8.19;\\n...\",\n  \"compiler_version\": \"0.8.19\",\n  \"optimization\": true\n}\n```\n\n**Response:**\n```",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\API_REFERENCE.md",
+      "line": 360,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "y\": \"healthy\",\n    \"ai_models\": \"healthy\"\n  },\n  \"version\": \"1.0.0\"\n}\n```\n\n### **System Metrics**\n```http\nGET /api/v",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ARCHITECTURE_DIAGRAMS.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ARCHITECTURE_DIAGRAMS.md",
+      "line": 11,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": ">\n\n# HyperKit AI Agent - Architecture Diagrams\n\n**Version**: 1.4.6  \n**Last Updated**: October 27, 2025\n\n## Table of",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ARCHITECTURE_DIAGRAMS.md",
+      "line": 637,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "890 \\\n  --source-file my_token.sol \\\n  --compiler-version 0.8.19\n\n# Monitor system health\n./hyperagent monitor --h",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\CPOO_DELIVERY_SUMMARY.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\CPOO_INTEGRATION_GUIDE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\DEVELOPER_GUIDE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ENVIRONMENT_SETUP.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\FOUNDRY_INTEGRATION_REPORT.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\FOUNDRY_INTEGRATION_REPORT.md",
+      "line": 12,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ntegration Report\n\n**Date**: October 24, 2024  \n**Version**: 1.4.6  \n**Foundry Version**: 1.4.3-nightly  \n**Platform",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\FOUNDRY_INTEGRATION_REPORT.md",
+      "line": 13,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "October 24, 2024  \n**Version**: 1.4.6  \n**Foundry Version**: 1.4.3-nightly  \n**Platform**: Windows 10, Linux, macOS ",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\INTEGRATION_REPORT.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\INTEGRATION_REPORT.md",
+      "line": 12,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ntegration Report\n\n**Date**: October 24, 2024  \n**Version**: 1.4.6  \n**Status**: Production Ready  \n**Integration Sc",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ISSUE_ASSESSMENT_AND_FIXES.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\LAZAI_REGISTRATION_REQUEST.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TEAM_COORDINATION_GUIDE.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 11,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "\n# HyperKit AI Agent - Technical Documentation\n\n**Version**: 1.4.6  \n**Last Updated**: October 27, 2025  \n**Status**",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 288,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "./hyperagent verify --address 0x123... --compiler-version 0.8.19\n```\n\n#### System Monitoring\n```bash\n# Check syste",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\WORKFLOW_BEHAVIOR_REPORT.md",
+      "line": 3,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "ART -->\n**Implementation Status**: \u2705 Verified  \n**Version**: 1.4.6  \n**Last Verified**: 2025-10-28  \n**Commit**: `d5",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\WORKFLOW_BEHAVIOR_REPORT.md",
+      "line": 12,
+      "pattern": "version.*[0-9]+\\.[0-9]+\\.[0-9]+",
+      "context": "w Behavior Report\n\n**Date**: October 24, 2024  \n**Version**: 1.4.6  \n**Status**: Production Ready  \n\n## Executive Su",
+      "severity": "medium",
+      "recommendation": "Update status and version information"
+    },
+    {
+      "file": "docs\\GOVERNANCE.md",
+      "line": 160,
+      "pattern": "broken_link",
+      "link_text": "Code of Conduct",
+      "link_path": "./CODE_OF_CONDUCT.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ./CODE_OF_CONDUCT.md"
+    },
+    {
+      "file": "docs\\ROADMAP.md",
+      "line": 98,
+      "pattern": "broken_link",
+      "link_text": "CONTRIBUTING.md",
+      "link_path": "./CONTRIBUTING.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ./CONTRIBUTING.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 17,
+      "pattern": "broken_link",
+      "link_text": "Authentication",
+      "link_path": "#authentication",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #authentication"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 18,
+      "pattern": "broken_link",
+      "link_text": "AI Agent API",
+      "link_path": "#ai-agent-api",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #ai-agent-api"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 19,
+      "pattern": "broken_link",
+      "link_text": "Blockchain API",
+      "link_path": "#blockchain-api",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #blockchain-api"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 20,
+      "pattern": "broken_link",
+      "link_text": "Storage API",
+      "link_path": "#storage-api",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #storage-api"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 21,
+      "pattern": "broken_link",
+      "link_text": "Security API",
+      "link_path": "#security-api",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #security-api"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 22,
+      "pattern": "broken_link",
+      "link_text": "Monitoring API",
+      "link_path": "#monitoring-api",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #monitoring-api"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 23,
+      "pattern": "broken_link",
+      "link_text": "RAG API",
+      "link_path": "#rag-api",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #rag-api"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 24,
+      "pattern": "broken_link",
+      "link_text": "Verification API",
+      "link_path": "#verification-api",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #verification-api"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 25,
+      "pattern": "broken_link",
+      "link_text": "Error Handling",
+      "link_path": "#error-handling",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #error-handling"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 26,
+      "pattern": "broken_link",
+      "link_text": "Rate Limits",
+      "link_path": "#rate-limits",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #rate-limits"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\API_REFERENCE.md",
+      "line": 927,
+      "pattern": "broken_link",
+      "link_text": "Technical Documentation",
+      "link_path": "TECHNICAL_DOCUMENTATION.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: TECHNICAL_DOCUMENTATION.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 26,
+      "pattern": "broken_link",
+      "link_text": "Severity Classification",
+      "link_path": "#-severity-classification",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #-severity-classification"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 27,
+      "pattern": "broken_link",
+      "link_text": "Emergency Contact List",
+      "link_path": "#-emergency-contact-list",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #-emergency-contact-list"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 28,
+      "pattern": "broken_link",
+      "link_text": "Incident Response Workflow",
+      "link_path": "#-incident-response-workflow",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #-incident-response-workflow"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 29,
+      "pattern": "broken_link",
+      "link_text": "Emergency Patch Deployment",
+      "link_path": "#-emergency-patch-deployment",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #-emergency-patch-deployment"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 30,
+      "pattern": "broken_link",
+      "link_text": "Communication Protocols",
+      "link_path": "#-communication-protocols",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #-communication-protocols"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 31,
+      "pattern": "broken_link",
+      "link_text": "Post-Incident Review",
+      "link_path": "#-post-incident-review",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #-post-incident-review"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 32,
+      "pattern": "broken_link",
+      "link_text": "Fire Drill Schedule",
+      "link_path": "#-fire-drill-schedule",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #-fire-drill-schedule"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 513,
+      "pattern": "broken_link",
+      "link_text": "HONEST_STATUS_ASSESSMENT.md",
+      "link_path": "../REPORTS/HONEST_STATUS_ASSESSMENT.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../REPORTS/HONEST_STATUS_ASSESSMENT.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "line": 514,
+      "pattern": "broken_link",
+      "link_text": "CRITICAL_FIXES_ACTION_PLAN.md",
+      "link_path": "../REPORTS/CRITICAL_FIXES_ACTION_PLAN.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../REPORTS/CRITICAL_FIXES_ACTION_PLAN.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 19,
+      "pattern": "broken_link",
+      "link_text": "Overview",
+      "link_path": "#overview",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #overview"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 20,
+      "pattern": "broken_link",
+      "link_text": "Integration Methods",
+      "link_path": "#integration-methods",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #integration-methods"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 21,
+      "pattern": "broken_link",
+      "link_text": "Python Library Integration",
+      "link_path": "#python-library-integration",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #python-library-integration"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 22,
+      "pattern": "broken_link",
+      "link_text": "CLI Integration",
+      "link_path": "#cli-integration",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #cli-integration"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 23,
+      "pattern": "broken_link",
+      "link_text": "MCP Server Integration",
+      "link_path": "#mcp-server-integration",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #mcp-server-integration"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 24,
+      "pattern": "broken_link",
+      "link_text": "API Reference",
+      "link_path": "#api-reference",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #api-reference"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 25,
+      "pattern": "broken_link",
+      "link_text": "Best Practices",
+      "link_path": "#best-practices",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #best-practices"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 26,
+      "pattern": "broken_link",
+      "link_text": "Examples",
+      "link_path": "#examples",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #examples"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+      "line": 27,
+      "pattern": "broken_link",
+      "link_text": "Troubleshooting",
+      "link_path": "#troubleshooting",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #troubleshooting"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\PRODUCTION_MODE.md",
+      "line": 260,
+      "pattern": "broken_link",
+      "link_text": "Technical Documentation",
+      "link_path": "TECHNICAL_DOCUMENTATION.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: TECHNICAL_DOCUMENTATION.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\README.md",
+      "line": 72,
+      "pattern": "broken_link",
+      "link_text": "API Reference",
+      "link_path": "./REFERENCE/API_REFERENCE.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ./REFERENCE/API_REFERENCE.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 248,
+      "pattern": "broken_link",
+      "link_text": "CI/CD Pipeline",
+      "link_path": "../../.github/workflows/test.yml",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../../.github/workflows/test.yml"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 250,
+      "pattern": "broken_link",
+      "link_text": "HONEST_STATUS_ASSESSMENT.md",
+      "link_path": "../REPORTS/HONEST_STATUS_ASSESSMENT.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../REPORTS/HONEST_STATUS_ASSESSMENT.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 251,
+      "pattern": "broken_link",
+      "link_text": "CRITICAL_FIXES_ACTION_PLAN.md",
+      "link_path": "../REPORTS/CRITICAL_FIXES_ACTION_PLAN.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../REPORTS/CRITICAL_FIXES_ACTION_PLAN.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 267,
+      "pattern": "broken_link",
+      "link_text": "HONEST_STATUS_ASSESSMENT.md",
+      "link_path": "../REPORTS/HONEST_STATUS_ASSESSMENT.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../REPORTS/HONEST_STATUS_ASSESSMENT.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 268,
+      "pattern": "broken_link",
+      "link_text": "CRITICAL_FIXES_ACTION_PLAN.md",
+      "link_path": "../REPORTS/CRITICAL_FIXES_ACTION_PLAN.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../REPORTS/CRITICAL_FIXES_ACTION_PLAN.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\SECURITY_AUDIT_LOG.md",
+      "line": 269,
+      "pattern": "broken_link",
+      "link_text": "ACCOMPLISHED archive",
+      "link_path": "../../ACCOMPLISHED/",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../../ACCOMPLISHED/"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 18,
+      "pattern": "broken_link",
+      "link_text": "Quick Diagnostics",
+      "link_path": "#quick-diagnostics",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #quick-diagnostics"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 19,
+      "pattern": "broken_link",
+      "link_text": "Common Issues & Solutions",
+      "link_path": "#common-issues--solutions",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #common-issues--solutions"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 20,
+      "pattern": "broken_link",
+      "link_text": "Error Code Reference",
+      "link_path": "#error-code-reference",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #error-code-reference"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 21,
+      "pattern": "broken_link",
+      "link_text": "Dependency Issues",
+      "link_path": "#dependency-issues",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #dependency-issues"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 22,
+      "pattern": "broken_link",
+      "link_text": "Deployment Errors",
+      "link_path": "#deployment-errors",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #deployment-errors"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 23,
+      "pattern": "broken_link",
+      "link_text": "Audit Failures",
+      "link_path": "#audit-failures",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #audit-failures"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 24,
+      "pattern": "broken_link",
+      "link_text": "Template Generation Issues",
+      "link_path": "#template-generation-issues",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #template-generation-issues"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 25,
+      "pattern": "broken_link",
+      "link_text": "Performance Problems",
+      "link_path": "#performance-problems",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #performance-problems"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+      "line": 26,
+      "pattern": "broken_link",
+      "link_text": "Getting Help",
+      "link_path": "#getting-help",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #getting-help"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\CRITICAL_FIXES_APPLIED.md",
+      "line": 142,
+      "pattern": "broken_link",
+      "link_text": "Known Issues",
+      "link_path": "docs/KNOWN_ISSUES.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: docs/KNOWN_ISSUES.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\CRITICAL_FIXES_APPLIED.md",
+      "line": 252,
+      "pattern": "broken_link",
+      "link_text": "Emergency Cleanup Plan",
+      "link_path": "EMERGENCY_CLEANUP_PLAN.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: EMERGENCY_CLEANUP_PLAN.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\CRITICAL_FIXES_APPLIED.md",
+      "line": 253,
+      "pattern": "broken_link",
+      "link_text": "Known Issues",
+      "link_path": "../docs/KNOWN_ISSUES.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../docs/KNOWN_ISSUES.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\CRITICAL_FIXES_APPLIED.md",
+      "line": 254,
+      "pattern": "broken_link",
+      "link_text": "Pinata IPFS Integration",
+      "link_path": "PINATA_IPFS_INTEGRATION_COMPLETE.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: PINATA_IPFS_INTEGRATION_COMPLETE.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\EXECUTION\\CRITICAL_FIXES_APPLIED.md",
+      "line": 255,
+      "pattern": "broken_link",
+      "link_text": "Next Steps Implementation",
+      "link_path": "NEXT_STEPS_IMPLEMENTATION_COMPLETE.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: NEXT_STEPS_IMPLEMENTATION_COMPLETE.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GUIDE\\IPFS_RAG_GUIDE.md",
+      "line": 447,
+      "pattern": "broken_link",
+      "link_text": "Pinata Setup Guide",
+      "link_path": "../docs/EXECUTION/PINATA_SETUP_GUIDE.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../docs/EXECUTION/PINATA_SETUP_GUIDE.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GUIDE\\IPFS_RAG_GUIDE.md",
+      "line": 448,
+      "pattern": "broken_link",
+      "link_text": "HyperKit Agent RAG System",
+      "link_path": "../docs/OBSIDIAN_RAG_SETUP_GUIDE.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../docs/OBSIDIAN_RAG_SETUP_GUIDE.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GUIDE\\IPFS_RAG_GUIDE.md",
+      "line": 456,
+      "pattern": "broken_link",
+      "link_text": "Troubleshooting",
+      "link_path": "#-troubleshooting",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #-troubleshooting"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GUIDE\\IPFS_RAG_GUIDE.md",
+      "line": 457,
+      "pattern": "broken_link",
+      "link_text": "ChromaDB logs",
+      "link_path": "data/vector_store/",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: data/vector_store/"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\GUIDE\\IPFS_RAG_GUIDE.md",
+      "line": 458,
+      "pattern": "broken_link",
+      "link_text": "IPFS CID registry",
+      "link_path": "data/vector_store/cid_registry.json",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: data/vector_store/cid_registry.json"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ARCHITECTURE_DIAGRAMS.md",
+      "line": 16,
+      "pattern": "broken_link",
+      "link_text": "System Overview",
+      "link_path": "#system-overview",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #system-overview"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ARCHITECTURE_DIAGRAMS.md",
+      "line": 17,
+      "pattern": "broken_link",
+      "link_text": "Service Architecture",
+      "link_path": "#service-architecture",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #service-architecture"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ARCHITECTURE_DIAGRAMS.md",
+      "line": 18,
+      "pattern": "broken_link",
+      "link_text": "Data Flow Diagrams",
+      "link_path": "#data-flow-diagrams",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #data-flow-diagrams"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ARCHITECTURE_DIAGRAMS.md",
+      "line": 19,
+      "pattern": "broken_link",
+      "link_text": "Security Architecture",
+      "link_path": "#security-architecture",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #security-architecture"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ARCHITECTURE_DIAGRAMS.md",
+      "line": 20,
+      "pattern": "broken_link",
+      "link_text": "Deployment Architecture",
+      "link_path": "#deployment-architecture",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #deployment-architecture"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\ARCHITECTURE_DIAGRAMS.md",
+      "line": 21,
+      "pattern": "broken_link",
+      "link_text": "API Architecture",
+      "link_path": "#api-architecture",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #api-architecture"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\DEVELOPER_GUIDE.md",
+      "line": 293,
+      "pattern": "broken_link",
+      "link_text": "CLI Reference",
+      "link_path": "./CLI_REFERENCE.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ./CLI_REFERENCE.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\DEVELOPER_GUIDE.md",
+      "line": 294,
+      "pattern": "broken_link",
+      "link_text": "Testing Guide",
+      "link_path": "./TESTING_GUIDE.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ./TESTING_GUIDE.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\DEVELOPER_GUIDE.md",
+      "line": 295,
+      "pattern": "broken_link",
+      "link_text": "Troubleshooting Guide",
+      "link_path": "./TROUBLESHOOTING.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ./TROUBLESHOOTING.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 17,
+      "pattern": "broken_link",
+      "link_text": "Overview",
+      "link_path": "#overview",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #overview"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 18,
+      "pattern": "broken_link",
+      "link_text": "Architecture",
+      "link_path": "#architecture",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #architecture"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 19,
+      "pattern": "broken_link",
+      "link_text": "Core Services",
+      "link_path": "#core-services",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #core-services"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 20,
+      "pattern": "broken_link",
+      "link_text": "API Reference",
+      "link_path": "#api-reference",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #api-reference"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 21,
+      "pattern": "broken_link",
+      "link_text": "Configuration",
+      "link_path": "#configuration",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #configuration"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 22,
+      "pattern": "broken_link",
+      "link_text": "Security",
+      "link_path": "#security",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #security"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 23,
+      "pattern": "broken_link",
+      "link_text": "Deployment",
+      "link_path": "#deployment",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #deployment"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 24,
+      "pattern": "broken_link",
+      "link_text": "Monitoring",
+      "link_path": "#monitoring",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #monitoring"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 25,
+      "pattern": "broken_link",
+      "link_text": "Troubleshooting",
+      "link_path": "#troubleshooting",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #troubleshooting"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 26,
+      "pattern": "broken_link",
+      "link_text": "Development Guide",
+      "link_path": "#development-guide",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: #development-guide"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 671,
+      "pattern": "broken_link",
+      "link_text": "Integration Guide",
+      "link_path": "INTEGRATOR_GUIDE.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: INTEGRATOR_GUIDE.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 672,
+      "pattern": "broken_link",
+      "link_text": "Security Setup",
+      "link_path": "SECURITY_SETUP.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: SECURITY_SETUP.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 673,
+      "pattern": "broken_link",
+      "link_text": "Emergency Response",
+      "link_path": "EMERGENCY_RESPONSE.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: EMERGENCY_RESPONSE.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 674,
+      "pattern": "broken_link",
+      "link_text": "Production Mode",
+      "link_path": "PRODUCTION_MODE.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: PRODUCTION_MODE.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 675,
+      "pattern": "broken_link",
+      "link_text": "Security Audit Log",
+      "link_path": "SECURITY_AUDIT_LOG.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: SECURITY_AUDIT_LOG.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 676,
+      "pattern": "broken_link",
+      "link_text": "GitHub Setup",
+      "link_path": "GITHUB_SETUP.md",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: GITHUB_SETUP.md"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 683,
+      "pattern": "broken_link",
+      "link_text": "hyperkit-agent/REPORTS/",
+      "link_path": "../REPORTS/",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../REPORTS/"
+    },
+    {
+      "file": "hyperkit-agent\\docs\\TEAM\\TECHNICAL_DOCUMENTATION.md",
+      "line": 684,
+      "pattern": "broken_link",
+      "link_text": "ACCOMPLISHED/",
+      "link_path": "../../ACCOMPLISHED/",
+      "severity": "high",
+      "recommendation": "Fix or remove broken link: ../../ACCOMPLISHED/"
+    }
+  ],
+  "outdated_patterns": [],
+  "recommendations": [
+    "High priority: Fix outdated CLI commands and broken links",
+    "Medium priority: Update future-tense language and stale content"
+  ]
+}

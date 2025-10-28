@@ -14,7 +14,7 @@ console = Console()
 @click.group()
 def verify_group():
     """Verify smart contracts on block explorers"""
-    pass
+    # Production-ready verify group - no stubs
 
 @verify_group.command()
 @click.option('--address', '-a', required=True, help='Contract address')

@@ -78,19 +78,19 @@ class AIProviderConfig(BaseModel):
 
 
 class RAGConfig(BaseModel):
-    """RAG (Retrieval Augmented Generation) configuration"""
+    """RAG (Retrieval Augmented Generation) configuration - IPFS Pinata only"""
     
-    obsidian: Optional[Dict[str, Any]] = Field(None, description="Obsidian configuration")
-    vault_path: Optional[str] = Field(None, description="Obsidian vault path")
-    api_key: Optional[str] = Field(None, description="Obsidian API key")
-    api_url: Optional[str] = Field(None, description="Obsidian API URL")
+    # IPFS Pinata configuration only
+    pinata_api_key: Optional[str] = Field(None, description="Pinata API key for IPFS")
+    pinata_secret_key: Optional[str] = Field(None, description="Pinata secret key for IPFS")
+    pinata_gateway: Optional[str] = Field(None, description="Pinata gateway URL")
     
-    @field_validator('vault_path')
+    @field_validator('pinata_api_key', 'pinata_secret_key')
     @classmethod
-    def validate_vault_path(cls, v):
-        """Validate vault path if provided"""
-        if v is not None and not v.strip():
-            raise ValueError('Vault path cannot be empty')
+    def validate_api_keys(cls, v):
+        """Validate API keys if provided"""
+        if v is not None and len(v.strip()) == 0:
+            raise ValueError('API key cannot be empty')
         return v
 
 

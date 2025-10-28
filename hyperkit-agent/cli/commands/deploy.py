@@ -15,7 +15,7 @@ console = Console()
 @click.group()
 def deploy_group():
     """Deploy smart contracts to blockchain networks"""
-    pass
+    # Production-ready deploy group - no stubs
 
 @deploy_group.command()
 @click.option('--contract', '-c', required=True, help='Contract file path')

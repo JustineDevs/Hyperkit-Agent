@@ -2,7 +2,7 @@
 **Implementation Status**: ✅ Verified  
 **Version**: 1.4.6  
 **Last Verified**: 2025-10-28  
-**Commit**: `6f63afe4`  
+**Commit**: `d5465090`  
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
@@ -145,17 +145,6 @@ LAZAI_EXPLORER_URL=https://testnet-explorer.lazai.network
 PRIVATE_KEY=your_wallet_private_key_here
 ```
 
-### **6. Obsidian RAG System (MCP Docker)**
-
-```bash
-# MCP Docker configuration for advanced Obsidian integration
-MCP_ENABLED=true
-DOCKER_ENABLED=true
-OBSIDIAN_HOST=host.docker.internal
-OBSIDIAN_MCP_API_KEY=your_obsidian_mcp_api_key_here
-OBSIDIAN_VAULT_PATH=C:/Users/JustineDevs/Downloads/Hyperkit
-```
-
 ## 🔑 **GETTING API KEYS**
 
 ### **Google Gemini API Key (Primary - Required)**
@@ -198,40 +187,6 @@ OBSIDIAN_VAULT_PATH=C:/Users/JustineDevs/Downloads/Hyperkit
 5. Copy and paste into `.env` file
 6. **Pay-per-use pricing**
 
-## 🧠 **OBSIDIAN RAG INTEGRATION (MCP Docker)**
-
-### **1. Install Obsidian**
-1. Download [Obsidian](https://obsidian.md/) for your platform
-2. Install and create a new vault
-3. Set vault path in `.env`: `OBSIDIAN_VAULT_PATH=C:/Users/JustineDevs/Downloads/Hyperkit`
-
-### **2. Create Knowledge Base**
-1. Create markdown files with smart contract patterns in:
-   - `Contracts/` - Smart contract templates
-   - `Audits/` - Security checklists and patterns
-   - `Templates/` - Deployment templates
-   - `Prompts/` - Generation prompts
-2. The MCP Docker system will automatically index these files
-
-### **3. MCP Docker Configuration**
-The system uses Docker-based MCP (Model Context Protocol) for advanced Obsidian integration:
-- **MCP_ENABLED=true** - Enables Docker-based Obsidian access
-- **DOCKER_ENABLED=true** - Enables Docker containerization
-- **OBSIDIAN_MCP_API_KEY** - Your Obsidian API key (for MCP Docker)
-- **OBSIDIAN_HOST=host.docker.internal** - Docker host configuration
-
-**Note**: No Local REST API plugin needed - MCP Docker handles all Obsidian access.
-
-### **4. Start MCP Docker Container**
-```bash
-# Build and start MCP Docker container
-hyperagent setup_mcp_docker
-
-# Or manually
-docker build -f Dockerfile.mcp -t mcp/obsidian .
-docker run -d --name obsidian-mcp -p 27125:27125 mcp/obsidian
-```
-
 ## 📝 **CONFIGURATION EXAMPLES**
 
 ### **Complete .env File Example (v1.2.0)**
@@ -270,15 +225,6 @@ LAZAI_EXPLORER_URL=https://testnet-explorer.lazai.network
 # WALLET CONFIGURATION
 # ============================================================================
 PRIVATE_KEY=your_wallet_private_key_here
-
-# ============================================================================
-# OBSIDIAN RAG CONFIGURATION (MCP Docker)
-# ============================================================================
-MCP_ENABLED=true
-DOCKER_ENABLED=true
-OBSIDIAN_HOST=host.docker.internal
-OBSIDIAN_MCP_API_KEY=your_obsidian_mcp_api_key_here
-OBSIDIAN_VAULT_PATH=C:/Users/JustineDevs/Downloads/Hyperkit
 
 # ============================================================================
 # SECURITY EXTENSIONS (v1.2.0)
@@ -361,7 +307,6 @@ TEST_MODE=true
 - **Global Distribution**: Fast global content delivery
 
 ### **MCP Docker Integration**
-- **Advanced Obsidian**: Docker-based Obsidian integration
 - **Model Context Protocol**: Standardized AI tool integration
 - **Knowledge Base**: Automatic indexing of smart contract patterns
 - **RAG System**: Retrieval-augmented generation for better AI responses
@@ -448,7 +393,6 @@ hyperagent --help
 6. **MCP Docker Issues**
    - Ensure Docker is installed and running
    - Check if MCP container is running
-   - Verify Obsidian vault path is correct
 
 ### **Getting Help**
 
@@ -474,7 +418,6 @@ hyperagent --help
 
 ### **Development Tools**
 - **Foundry**: [Foundry Book](https://book.getfoundry.sh/)
-- **Obsidian**: [Obsidian Help](https://help.obsidian.md/)
 - **Docker**: [Docker Documentation](https://docs.docker.com/)
 
 ---

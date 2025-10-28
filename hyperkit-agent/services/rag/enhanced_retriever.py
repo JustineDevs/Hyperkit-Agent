@@ -1,11 +1,10 @@
 """
-Enhanced RAG Retriever with Obsidian MCP Support
+Enhanced RAG Retriever - IPFS Pinata Only
 
 This module provides intelligent content retrieval using:
-1. Obsidian vaults via MCP
-2. IPFS decentralized storage
-3. Local knowledge bases
-4. Hybrid retrieval strategies
+1. IPFS decentralized storage via Pinata
+2. Local knowledge bases
+3. Hybrid retrieval strategies
 """
 
 import asyncio
@@ -13,7 +12,6 @@ import logging
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 
-from services.rag.obsidian_rag_enhanced import ObsidianRAGEnhanced
 from services.storage.ipfs_client import IPFSClient
 from core.config.loader import get_config
 
@@ -22,11 +20,10 @@ logger = logging.getLogger(__name__)
 
 class EnhancedRAGRetriever:
     """
-    Enhanced RAG retriever with multiple data sources.
+    Enhanced RAG retriever with IPFS Pinata integration.
     
     Features:
-    - Obsidian vault integration via MCP
-    - IPFS decentralized storage
+    - IPFS decentralized storage via Pinata
     - Local knowledge base fallback
     - Intelligent content ranking
     - Context-aware retrieval
@@ -35,33 +32,12 @@ class EnhancedRAGRetriever:
     def __init__(self):
         """Initialize the enhanced RAG retriever."""
         self.config = get_config().to_dict()
-        self.obsidian_rag = None
         self.ipfs_storage = None
         
-        # Initialize components
-        self._initialize_obsidian()
+        # Initialize IPFS
         self._initialize_ipfs()
         
-        logger.info("Enhanced RAG Retriever initialized")
-    
-    def _initialize_obsidian(self):
-        """Initialize Obsidian RAG service."""
-        try:
-            rag_config = self.config.get("rag", {}).get("obsidian", {})
-            mcp_config = self.config.get("mcp", {})
-            
-            if rag_config.get("api_key"):
-                self.obsidian_rag = ObsidianRAGEnhanced(
-                    vault_path=rag_config.get("vault_path", ""),
-                    use_mcp=mcp_config.get("enabled", True),
-                    mcp_config=mcp_config
-                )
-                logger.info("Obsidian RAG service initialized")
-            else:
-                logger.warning("Obsidian API key not configured")
-                
-        except Exception as e:
-            logger.error(f"Failed to initialize Obsidian RAG: {e}")
+        logger.info("Enhanced RAG Retriever initialized (IPFS Pinata only)")
     
     def _initialize_ipfs(self):
         """Initialize IPFS storage service."""
@@ -92,20 +68,7 @@ class EnhancedRAGRetriever:
         try:
             content_sources = []
             
-            # 1. Retrieve from Obsidian vault
-            if self.obsidian_rag:
-                try:
-                    obsidian_content = await self.obsidian_rag.retrieve(query, max_results)
-                    if obsidian_content and "Error retrieving content" not in obsidian_content:
-                        content_sources.append({
-                            "source": "obsidian",
-                            "content": obsidian_content,
-                            "relevance": self._calculate_relevance(query, obsidian_content)
-                        })
-                except Exception as e:
-                    logger.warning(f"Obsidian retrieval failed: {e}")
-            
-            # 2. Retrieve from IPFS storage
+            # 1. Retrieve from IPFS storage
             if self.ipfs_storage:
                 try:
                     ipfs_content = await self._retrieve_from_ipfs(query, max_results)
@@ -118,7 +81,7 @@ class EnhancedRAGRetriever:
                 except Exception as e:
                     logger.warning(f"IPFS retrieval failed: {e}")
             
-            # 3. Retrieve from local knowledge base
+            # 2. Retrieve from local knowledge base
             local_content = await self._retrieve_from_local(query, max_results)
             if local_content:
                 content_sources.append({
@@ -243,24 +206,15 @@ Query: {query}
 - Avoid delegatecall with untrusted contracts
 - Implement proper upgrade patterns if needed
 
-Note: This is fallback content. Configure Obsidian RAG or IPFS storage for enhanced knowledge retrieval.
+Note: This is fallback content. Configure IPFS Pinata storage for enhanced knowledge retrieval.
 """
     
     async def test_connections(self) -> Dict[str, Any]:
         """Test all available connections."""
         results = {
-            "obsidian": {"status": "not_configured"},
             "ipfs": {"status": "not_configured"},
             "local": {"status": "not_configured"}
         }
-        
-        # Test Obsidian
-        if self.obsidian_rag:
-            try:
-                obsidian_status = self.obsidian_rag.test_connection()
-                results["obsidian"] = obsidian_status
-            except Exception as e:
-                results["obsidian"] = {"status": "error", "error": str(e)}
         
         # Test IPFS
         if self.ipfs_storage:

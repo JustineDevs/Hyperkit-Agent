@@ -1,0 +1,996 @@
+{
+  "scan_date": "2025-10-28T21:38:08.638007",
+  "scanned_files": 4,
+  "files_with_deadweight": 4,
+  "total_findings": 95,
+  "pattern_counts": {
+    "TODO": 9,
+    "FIXME": 5,
+    "XXX": 5,
+    "HACK": 4,
+    "NotImplementedError": 4,
+    "pass": 0,
+    "stub": 14,
+    "mock": 26,
+    "fake": 4,
+    "placeholder": 4,
+    "limited.*mode": 4,
+    "fallback": 0,
+    "demo": 4,
+    "example": 4,
+    "test.*only": 4,
+    "debug.*only": 4
+  },
+  "critical_files_count": 3,
+  "critical_files": [
+    {
+      "file": "hyperkit-agent\\REPORTS\\DEADWEIGHT_SCAN_REPORT.md",
+      "total_issues": 34,
+      "patterns": [
+        "TODO",
+        "FIXME",
+        "XXX",
+        "HACK",
+        "NotImplementedError",
+        "stub",
+        "mock",
+        "fake",
+        "placeholder",
+        "limited.*mode",
+        "demo",
+        "example",
+        "test.*only",
+        "debug.*only"
+      ],
+      "findings": {
+        "TODO": [
+          {
+            "line": 9,
+            "content": "- **TODO**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          },
+          {
+            "line": 36,
+            "content": "| hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json | 14 | TODO, FIXME, XXX (+11 more) |"
+          }
+        ],
+        "FIXME": [
+          {
+            "line": 10,
+            "content": "- **FIXME**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          },
+          {
+            "line": 36,
+            "content": "| hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json | 14 | TODO, FIXME, XXX (+11 more) |"
+          }
+        ],
+        "XXX": [
+          {
+            "line": 11,
+            "content": "- **XXX**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          },
+          {
+            "line": 36,
+            "content": "| hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json | 14 | TODO, FIXME, XXX (+11 more) |"
+          }
+        ],
+        "HACK": [
+          {
+            "line": 12,
+            "content": "- **HACK**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "NotImplementedError": [
+          {
+            "line": 13,
+            "content": "- **NotImplementedError**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "stub": [
+          {
+            "line": 14,
+            "content": "- **stub**: 11"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          },
+          {
+            "line": 34,
+            "content": "| hyperkit-agent\\REPORTS\\cli_command_inventory.json | 8 | stub |"
+          },
+          {
+            "line": 35,
+            "content": "| hyperkit-agent\\REPORTS\\DEADWEIGHT_SCAN_REPORT.md | 2 | stub |"
+          }
+        ],
+        "mock": [
+          {
+            "line": 15,
+            "content": "- **mock**: 9"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          },
+          {
+            "line": 37,
+            "content": "| hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh | 8 | mock |"
+          }
+        ],
+        "fake": [
+          {
+            "line": 16,
+            "content": "- **fake**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "placeholder": [
+          {
+            "line": 17,
+            "content": "- **placeholder**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "limited.*mode": [
+          {
+            "line": 18,
+            "content": "- **limited.*mode**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "demo": [
+          {
+            "line": 19,
+            "content": "- **demo**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "example": [
+          {
+            "line": 20,
+            "content": "- **example**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "test.*only": [
+          {
+            "line": 21,
+            "content": "- **test.*only**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "debug.*only": [
+          {
+            "line": 22,
+            "content": "- **debug.*only**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ]
+      }
+    },
+    {
+      "file": "hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json",
+      "total_issues": 28,
+      "patterns": [
+        "TODO",
+        "FIXME",
+        "XXX",
+        "HACK",
+        "NotImplementedError",
+        "stub",
+        "mock",
+        "fake",
+        "placeholder",
+        "limited.*mode",
+        "demo",
+        "example",
+        "test.*only",
+        "debug.*only"
+      ],
+      "findings": {
+        "TODO": [
+          {
+            "line": 7,
+            "content": "\"TODO\": 1,"
+          },
+          {
+            "line": 30,
+            "content": "\"TODO\","
+          }
+        ],
+        "FIXME": [
+          {
+            "line": 8,
+            "content": "\"FIXME\": 1,"
+          },
+          {
+            "line": 31,
+            "content": "\"FIXME\","
+          }
+        ],
+        "XXX": [
+          {
+            "line": 9,
+            "content": "\"XXX\": 1,"
+          },
+          {
+            "line": 32,
+            "content": "\"XXX\","
+          }
+        ],
+        "HACK": [
+          {
+            "line": 10,
+            "content": "\"HACK\": 1,"
+          },
+          {
+            "line": 33,
+            "content": "\"HACK\","
+          }
+        ],
+        "NotImplementedError": [
+          {
+            "line": 11,
+            "content": "\"NotImplementedError\": 1,"
+          },
+          {
+            "line": 34,
+            "content": "\"NotImplementedError\","
+          }
+        ],
+        "stub": [
+          {
+            "line": 13,
+            "content": "\"stub\": 11,"
+          },
+          {
+            "line": 35,
+            "content": "\"stub\","
+          }
+        ],
+        "mock": [
+          {
+            "line": 14,
+            "content": "\"mock\": 9,"
+          },
+          {
+            "line": 36,
+            "content": "\"mock\","
+          }
+        ],
+        "fake": [
+          {
+            "line": 15,
+            "content": "\"fake\": 1,"
+          },
+          {
+            "line": 37,
+            "content": "\"fake\","
+          }
+        ],
+        "placeholder": [
+          {
+            "line": 16,
+            "content": "\"placeholder\": 1,"
+          },
+          {
+            "line": 38,
+            "content": "\"placeholder\","
+          }
+        ],
+        "limited.*mode": [
+          {
+            "line": 17,
+            "content": "\"limited.*mode\": 1,"
+          },
+          {
+            "line": 39,
+            "content": "\"limited.*mode\","
+          }
+        ],
+        "demo": [
+          {
+            "line": 19,
+            "content": "\"demo\": 1,"
+          },
+          {
+            "line": 40,
+            "content": "\"demo\","
+          }
+        ],
+        "example": [
+          {
+            "line": 20,
+            "content": "\"example\": 1,"
+          },
+          {
+            "line": 41,
+            "content": "\"example\","
+          }
+        ],
+        "test.*only": [
+          {
+            "line": 21,
+            "content": "\"test.*only\": 1,"
+          },
+          {
+            "line": 42,
+            "content": "\"test.*only\","
+          }
+        ],
+        "debug.*only": [
+          {
+            "line": 22,
+            "content": "\"debug.*only\": 1"
+          },
+          {
+            "line": 43,
+            "content": "\"debug.*only\""
+          }
+        ]
+      }
+    },
+    {
+      "file": "hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh",
+      "total_issues": 25,
+      "patterns": [
+        "TODO",
+        "mock"
+      ],
+      "findings": {
+        "TODO": [
+          {
+            "line": 22,
+            "content": "sed -i '7s/^/# TODO REMOVE: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 23,
+            "content": "sed -i '8s/^/# TODO REMOVE: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 24,
+            "content": "sed -i '9s/^/# TODO REMOVE: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 25,
+            "content": "sed -i '10s/^/# TODO REMOVE: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          }
+        ],
+        "mock": [
+          {
+            "line": 8,
+            "content": "sed -i '59s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 9,
+            "content": "sed -i '81s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 10,
+            "content": "sed -i '103s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 11,
+            "content": "sed -i '123s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 12,
+            "content": "sed -i '146s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 13,
+            "content": "sed -i '169s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 14,
+            "content": "sed -i '194s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 15,
+            "content": "sed -i '216s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 18,
+            "content": "sed -i '9s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\DEADWEIGHT_SCAN_REPORT.md'"
+          },
+          {
+            "line": 19,
+            "content": "sed -i '15s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\DEADWEIGHT_SCAN_REPORT.md'"
+          },
+          {
+            "line": 26,
+            "content": "sed -i '13s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 27,
+            "content": "sed -i '14s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 28,
+            "content": "sed -i '15s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 31,
+            "content": "sed -i '8s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 32,
+            "content": "sed -i '9s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 33,
+            "content": "sed -i '10s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 34,
+            "content": "sed -i '11s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 35,
+            "content": "sed -i '12s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 36,
+            "content": "sed -i '13s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 37,
+            "content": "sed -i '14s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 38,
+            "content": "sed -i '15s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          }
+        ]
+      }
+    }
+  ],
+  "all_files_with_deadweight": [
+    {
+      "file": "hyperkit-agent\\REPORTS\\cli_command_inventory.json",
+      "findings": {
+        "stub": [
+          {
+            "line": 59,
+            "content": "\"status\": \"stub\","
+          },
+          {
+            "line": 81,
+            "content": "\"status\": \"stub\","
+          },
+          {
+            "line": 103,
+            "content": "\"status\": \"stub\","
+          },
+          {
+            "line": 123,
+            "content": "\"status\": \"stub\","
+          },
+          {
+            "line": 146,
+            "content": "\"status\": \"stub\","
+          },
+          {
+            "line": 169,
+            "content": "\"status\": \"stub\","
+          },
+          {
+            "line": 194,
+            "content": "\"status\": \"stub\","
+          },
+          {
+            "line": 216,
+            "content": "\"status\": \"stub\","
+          }
+        ]
+      },
+      "total_issues": 8,
+      "patterns": [
+        "stub"
+      ]
+    },
+    {
+      "file": "hyperkit-agent\\REPORTS\\DEADWEIGHT_SCAN_REPORT.md",
+      "findings": {
+        "TODO": [
+          {
+            "line": 9,
+            "content": "- **TODO**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          },
+          {
+            "line": 36,
+            "content": "| hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json | 14 | TODO, FIXME, XXX (+11 more) |"
+          }
+        ],
+        "FIXME": [
+          {
+            "line": 10,
+            "content": "- **FIXME**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          },
+          {
+            "line": 36,
+            "content": "| hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json | 14 | TODO, FIXME, XXX (+11 more) |"
+          }
+        ],
+        "XXX": [
+          {
+            "line": 11,
+            "content": "- **XXX**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          },
+          {
+            "line": 36,
+            "content": "| hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json | 14 | TODO, FIXME, XXX (+11 more) |"
+          }
+        ],
+        "HACK": [
+          {
+            "line": 12,
+            "content": "- **HACK**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "NotImplementedError": [
+          {
+            "line": 13,
+            "content": "- **NotImplementedError**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "stub": [
+          {
+            "line": 14,
+            "content": "- **stub**: 11"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          },
+          {
+            "line": 34,
+            "content": "| hyperkit-agent\\REPORTS\\cli_command_inventory.json | 8 | stub |"
+          },
+          {
+            "line": 35,
+            "content": "| hyperkit-agent\\REPORTS\\DEADWEIGHT_SCAN_REPORT.md | 2 | stub |"
+          }
+        ],
+        "mock": [
+          {
+            "line": 15,
+            "content": "- **mock**: 9"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          },
+          {
+            "line": 37,
+            "content": "| hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh | 8 | mock |"
+          }
+        ],
+        "fake": [
+          {
+            "line": 16,
+            "content": "- **fake**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "placeholder": [
+          {
+            "line": 17,
+            "content": "- **placeholder**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "limited.*mode": [
+          {
+            "line": 18,
+            "content": "- **limited.*mode**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "demo": [
+          {
+            "line": 19,
+            "content": "- **demo**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "example": [
+          {
+            "line": 20,
+            "content": "- **example**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "test.*only": [
+          {
+            "line": 21,
+            "content": "- **test.*only**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ],
+        "debug.*only": [
+          {
+            "line": 22,
+            "content": "- **debug.*only**: 1"
+          },
+          {
+            "line": 28,
+            "content": "**Patterns**: TODO, FIXME, XXX, HACK, NotImplementedError, stub, mock, fake, placeholder, limited.*m"
+          }
+        ]
+      },
+      "total_issues": 34,
+      "patterns": [
+        "TODO",
+        "FIXME",
+        "XXX",
+        "HACK",
+        "NotImplementedError",
+        "stub",
+        "mock",
+        "fake",
+        "placeholder",
+        "limited.*mode",
+        "demo",
+        "example",
+        "test.*only",
+        "debug.*only"
+      ]
+    },
+    {
+      "file": "hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json",
+      "findings": {
+        "TODO": [
+          {
+            "line": 7,
+            "content": "\"TODO\": 1,"
+          },
+          {
+            "line": 30,
+            "content": "\"TODO\","
+          }
+        ],
+        "FIXME": [
+          {
+            "line": 8,
+            "content": "\"FIXME\": 1,"
+          },
+          {
+            "line": 31,
+            "content": "\"FIXME\","
+          }
+        ],
+        "XXX": [
+          {
+            "line": 9,
+            "content": "\"XXX\": 1,"
+          },
+          {
+            "line": 32,
+            "content": "\"XXX\","
+          }
+        ],
+        "HACK": [
+          {
+            "line": 10,
+            "content": "\"HACK\": 1,"
+          },
+          {
+            "line": 33,
+            "content": "\"HACK\","
+          }
+        ],
+        "NotImplementedError": [
+          {
+            "line": 11,
+            "content": "\"NotImplementedError\": 1,"
+          },
+          {
+            "line": 34,
+            "content": "\"NotImplementedError\","
+          }
+        ],
+        "stub": [
+          {
+            "line": 13,
+            "content": "\"stub\": 11,"
+          },
+          {
+            "line": 35,
+            "content": "\"stub\","
+          }
+        ],
+        "mock": [
+          {
+            "line": 14,
+            "content": "\"mock\": 9,"
+          },
+          {
+            "line": 36,
+            "content": "\"mock\","
+          }
+        ],
+        "fake": [
+          {
+            "line": 15,
+            "content": "\"fake\": 1,"
+          },
+          {
+            "line": 37,
+            "content": "\"fake\","
+          }
+        ],
+        "placeholder": [
+          {
+            "line": 16,
+            "content": "\"placeholder\": 1,"
+          },
+          {
+            "line": 38,
+            "content": "\"placeholder\","
+          }
+        ],
+        "limited.*mode": [
+          {
+            "line": 17,
+            "content": "\"limited.*mode\": 1,"
+          },
+          {
+            "line": 39,
+            "content": "\"limited.*mode\","
+          }
+        ],
+        "demo": [
+          {
+            "line": 19,
+            "content": "\"demo\": 1,"
+          },
+          {
+            "line": 40,
+            "content": "\"demo\","
+          }
+        ],
+        "example": [
+          {
+            "line": 20,
+            "content": "\"example\": 1,"
+          },
+          {
+            "line": 41,
+            "content": "\"example\","
+          }
+        ],
+        "test.*only": [
+          {
+            "line": 21,
+            "content": "\"test.*only\": 1,"
+          },
+          {
+            "line": 42,
+            "content": "\"test.*only\","
+          }
+        ],
+        "debug.*only": [
+          {
+            "line": 22,
+            "content": "\"debug.*only\": 1"
+          },
+          {
+            "line": 43,
+            "content": "\"debug.*only\""
+          }
+        ]
+      },
+      "total_issues": 28,
+      "patterns": [
+        "TODO",
+        "FIXME",
+        "XXX",
+        "HACK",
+        "NotImplementedError",
+        "stub",
+        "mock",
+        "fake",
+        "placeholder",
+        "limited.*mode",
+        "demo",
+        "example",
+        "test.*only",
+        "debug.*only"
+      ]
+    },
+    {
+      "file": "hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh",
+      "findings": {
+        "TODO": [
+          {
+            "line": 22,
+            "content": "sed -i '7s/^/# TODO REMOVE: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 23,
+            "content": "sed -i '8s/^/# TODO REMOVE: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 24,
+            "content": "sed -i '9s/^/# TODO REMOVE: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 25,
+            "content": "sed -i '10s/^/# TODO REMOVE: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          }
+        ],
+        "mock": [
+          {
+            "line": 8,
+            "content": "sed -i '59s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 9,
+            "content": "sed -i '81s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 10,
+            "content": "sed -i '103s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 11,
+            "content": "sed -i '123s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 12,
+            "content": "sed -i '146s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 13,
+            "content": "sed -i '169s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 14,
+            "content": "sed -i '194s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 15,
+            "content": "sed -i '216s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\cli_command_inventory.json'"
+          },
+          {
+            "line": 18,
+            "content": "sed -i '9s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\DEADWEIGHT_SCAN_REPORT.md'"
+          },
+          {
+            "line": 19,
+            "content": "sed -i '15s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\DEADWEIGHT_SCAN_REPORT.md'"
+          },
+          {
+            "line": 26,
+            "content": "sed -i '13s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 27,
+            "content": "sed -i '14s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 28,
+            "content": "sed -i '15s/^/# MOCK REMOVED: /' 'hyperkit-agent\\REPORTS\\JSON_DATA\\deadweight_scan_summary.json'"
+          },
+          {
+            "line": 31,
+            "content": "sed -i '8s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 32,
+            "content": "sed -i '9s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 33,
+            "content": "sed -i '10s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 34,
+            "content": "sed -i '11s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 35,
+            "content": "sed -i '12s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 36,
+            "content": "sed -i '13s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 37,
+            "content": "sed -i '14s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          },
+          {
+            "line": 38,
+            "content": "sed -i '15s/^/# MOCK REMOVED: /' 'hyperkit-agent\\scripts\\maintenance\\cleanup_deadweight.sh'"
+          }
+        ]
+      },
+      "total_issues": 25,
+      "patterns": [
+        "TODO",
+        "mock"
+      ]
+    }
+  ]
+}

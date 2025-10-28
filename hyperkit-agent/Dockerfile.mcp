@@ -1,4 +1,4 @@
-# MCP Obsidian Server Dockerfile
+# MCP Server Dockerfile - IPFS Pinata Only
 FROM python:3.11-slim
 
 # Set working directory
@@ -18,16 +18,11 @@ RUN pip install --no-cache-dir -r requirements-mcp.txt
 COPY mcp_server.py /app/
 COPY services/ /app/services/
 
-# Create volume mount point
-RUN mkdir -p /vault
-
-# Expose port (using different port to avoid conflict with Obsidian Local REST API)
+# Expose port
 EXPOSE 27125
 
 # Set environment variables (non-sensitive only)
 ENV PYTHONPATH=/app
-ENV OBSIDIAN_HOST=host.docker.internal
-ENV VAULT_PATH=/vault
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
