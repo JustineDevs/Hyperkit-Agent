@@ -1,0 +1,212 @@
+name: Production Release Workflow
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'package.json'
+      - 'pyproject.toml'
+      - 'CHANGELOG.md'
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      skip_tests:
+        description: 'Skip tests (use with caution)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  validate-release-candidate:
+    name: Validate Release Candidate
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.new }}
+      should_release: ${{ steps.validate.outputs.should_release }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          npm install
+          pip install -r requirements.txt
+      
+      - name: Get current version
+        id: current
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "current=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Calculate new version
+        id: version
+        run: |
+          TYPE="${{ github.event.inputs.version_type || 'patch' }}"
+          CURRENT="${{ steps.current.outputs.current }}"
+          node -e "
+            const [major, minor, patch] = '$CURRENT'.split('.').map(Number);
+            let newVersion;
+            switch ('$TYPE') {
+              case 'major': newVersion = \`\${major + 1}.0.0\`; break;
+              case 'minor': newVersion = \`\${major}.\${minor + 1}.0\`; break;
+              default: newVersion = \`\${major}.\${minor}.\${patch + 1}\`;
+            }
+            console.log('new=' + newVersion);
+          " >> $GITHUB_OUTPUT
+      
+      - name: Run tests
+        if: github.event.inputs.skip_tests != 'true'
+        run: |
+          npm run test
+          npm run lint
+          npm run format:check
+          npm run type-check
+          npm run security
+      
+      - name: Validate consolidated reports exist
+        run: |
+          node scripts/release/consolidate-reports.js
+          test -f REPORTS/ACCOMPLISHED/ACCOMPLISHED.md || exit 1
+          test -f REPORTS/AUDIT/AUDIT.md || exit 1
+          test -f REPORTS/QUALITY/QUALITY.md || exit 1
+          echo "✅ All consolidated reports present"
+      
+      - name: Check for development-only files
+        id: validate
+        run: |
+          # Dry run prune to detect dev-only files
+          node scripts/release/prune-markdown-for-prod.js --dry-run > /tmp/prune_output.txt 2>&1 || true
+          
+          FILES_TO_REMOVE=$(grep -c "Would remove" /tmp/prune_output.txt || echo "0")
+          
+          if [ "$FILES_TO_REMOVE" -gt "0" ]; then
+            echo "⚠️  Found $FILES_TO_REMOVE development-only file(s) that should be removed"
+            echo "   Run: npm run docs:prune-for-prod before merging to master"
+            cat /tmp/prune_output.txt
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "::warning::Repository contains development-only files. Run 'npm run docs:prune-for-prod' before production release."
+          else
+            echo "✅ Repository is clean for production"
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Prepare release candidate
+        if: steps.validate.outputs.should_release == 'true'
+        run: |
+          TYPE="${{ github.event.inputs.version_type || 'patch' }}"
+          npm run version:${TYPE}
+          npm run changelog:update
+          npm run docs:update
+          npm run reports:organize
+      
+      - name: Create release notes
+        if: steps.validate.outputs.should_release == 'true'
+        id: release_notes
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.new }}"
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "# Release v${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "See [CHANGELOG.md](../CHANGELOG.md) for full details." >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~20")..HEAD | head -20 >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+  
+  create-release-branch:
+    name: Create Release Branch
+    needs: validate-release-candidate
+    if: needs.validate-release-candidate.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+      
+      - name: Create release branch
+        run: |
+          NEW_VERSION="${{ needs.validate-release-candidate.outputs.version }}"
+          BRANCH="release/v${NEW_VERSION}"
+          git checkout -b ${BRANCH}
+          git push origin ${BRANCH}
+          echo "✅ Created release branch: ${BRANCH}"
+      
+      - name: Create Pull Request to master
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: master
+          head: ${{ needs.validate-release-candidate.outputs.version != '' && format('release/v{0}', needs.validate-release-candidate.outputs.version) || 'main' }}
+          title: "🚀 Production Release v${{ needs.validate-release-candidate.outputs.version }}"
+          body: |
+            ## Production Release Candidate
+            
+            **Version**: ${{ needs.validate-release-candidate.outputs.version }}
+            
+            ### Pre-Merge Checklist
+            - [ ] All tests passing
+            - [ ] Documentation updated
+            - [ ] Reports consolidated
+            - [ ] No development-only files present
+            - [ ] CHANGELOG.md updated
+            
+            ### Changes
+            See [CHANGELOG.md](../CHANGELOG.md) for details.
+            
+            ### Merge Policy
+            - ⚠️ **DO NOT MERGE** if any development-only markdown files are present
+            - ✅ Only merge after `docs:prune-for-prod` has been run
+            - ✅ Review all consolidated reports are up-to-date
+            
+            ---
+            *This PR was automatically created by the Production Release Workflow*
+          labels: production,release
+          draft: false
+
+  tag-release:
+    name: Tag Release
+    needs: [validate-release-candidate, create-release-branch]
+    if: needs.validate-release-candidate.outputs.should_release == 'true' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Create Git Tag
+        run: |
+          NEW_VERSION="${{ needs.validate-release-candidate.outputs.version }}"
+          git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
+          git push origin "v${NEW_VERSION}"
+          echo "✅ Created and pushed tag: v${NEW_VERSION}"
+
