@@ -1,14 +1,14 @@
 <!-- AUDIT_BADGE_START -->
 **Implementation Status**: ✅ Verified  
-**Version**: 1.5.0  
-**Last Verified**: 2025-10-28  
-**Commit**: `d5465090`  
+**Version**: 1.5.1  
+**Last Verified**: 2025-10-29  
+**Commit**: `aac4687`  
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
 # HyperKit AI Agent - Architecture Diagrams
 
-**Version**: 1.5.0  
+**Version**: 1.5.1  
 **Last Updated**: October 27, 2025
 
 ## Table of Contents
@@ -634,7 +634,7 @@ main();
 ./hyperagent verify \
   --address 0x1234567890123456789012345678901234567890 \
   --source-file my_token.sol \
-  --compiler-version 0.8.19
+  --compiler-version 1.4.8
 
 # Monitor system health
 ./hyperagent monitor --health --metrics --transactions
