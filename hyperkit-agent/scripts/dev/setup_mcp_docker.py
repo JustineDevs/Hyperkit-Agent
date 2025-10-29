@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
-MCP Docker Setup Script for HyperKit AI Agent
-Sets up and starts the MCP Docker container for Obsidian integration
+DEPRECATED: MCP Docker Setup Script for HyperKit AI Agent
+
+⚠️  WARNING: This script is DEPRECATED and no longer used.
+   Obsidian RAG integration has been completely removed.
+   IPFS Pinata is now the exclusive RAG backend.
+   
+   This script is kept for reference only and should not be used.
+   See docs/RAG_TEMPLATES/UPLOAD_PROCESS.md for current RAG setup.
 """
 
 import os

@@ -445,7 +445,7 @@ hyperagent setup_rag_vectors  # Build locally
 - [ChromaDB Documentation](https://docs.trychroma.com/)
 - [IPFS Documentation](https://docs.ipfs.io/)
 - [Pinata Setup Guide](../docs/EXECUTION/PINATA_SETUP_GUIDE.md)
-- [HyperKit Agent RAG System](../docs/OBSIDIAN_RAG_SETUP_GUIDE.md)
+- [IPFS Pinata RAG Setup](./docs/RAG_TEMPLATES/UPLOAD_PROCESS.md) - IPFS Pinata is now the exclusive RAG backend
 
 ---
 

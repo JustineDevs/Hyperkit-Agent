@@ -297,7 +297,7 @@ hyperagent workflow list
 ### 10. Testing & Utilities
 
 #### `hyperagent test_rag`
-Test RAG connections (Obsidian, IPFS, Local)
+Test IPFS Pinata RAG connections (Obsidian removed - IPFS Pinata exclusive)
 
 ```bash
 hyperagent test_rag

@@ -82,7 +82,7 @@ def version():
 
 @cli.command()
 def test_rag():
-    """Test RAG connections (Obsidian, IPFS, Local)"""
+    """Test IPFS Pinata RAG connections (Obsidian removed - IPFS Pinata exclusive)"""
     test_rag_command()
 
 @cli.command()

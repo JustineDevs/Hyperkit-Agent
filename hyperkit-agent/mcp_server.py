@@ -1,6 +1,14 @@
 """
-MCP Server for Obsidian Integration
-Provides HTTP API for Obsidian vault operations
+DEPRECATED: MCP Server for Obsidian Integration
+
+⚠️  WARNING: This module is DEPRECATED and no longer used.
+   Obsidian RAG integration has been completely removed.
+   IPFS Pinata is now the exclusive RAG backend.
+   
+   This server is kept for reference only and should not be used.
+   See docs/RAG_TEMPLATES/UPLOAD_PROCESS.md for current RAG setup.
+   
+   Original purpose: Provides HTTP API for Obsidian vault operations
 """
 
 import json
