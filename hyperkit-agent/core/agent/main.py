@@ -270,9 +270,17 @@ class HyperKitAgent:
                     f"prompt validation failed: {'; '.join(prompt_result.errors)}"
                 )
 
-            # Sanitize input
-            prompt = validator.sanitize_input(prompt)
-            context = validator.sanitize_input(context)
+            # Sanitize input (fails hard on truncation)
+            try:
+                prompt = validator.sanitize_input(prompt)
+                context = validator.sanitize_input(context)
+            except ValueError as ve:
+                # Input truncation error - fail hard with clear message
+                logger.error(f"Input validation failed: {ve}")
+                return error_handler.handle_error(
+                    ve,
+                    f"Input too long: {str(ve)}. Please reduce prompt size or split into smaller requests."
+                )
 
             # Retrieve context from Obsidian vault
             rag_context = ""

@@ -369,10 +369,16 @@ class Validator:
         # Remove null bytes and control characters
         sanitized = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", input_str)
 
-        # Limit length
-        if len(sanitized) > max_length:
+        # Limit length with user alert
+        original_length = len(sanitized)
+        if original_length > max_length:
             sanitized = sanitized[:max_length]
-            logger.warning(f"Input truncated to {max_length} characters")
+            truncated_amount = original_length - max_length
+            logger.error(f"CRITICAL: Input truncated from {original_length} to {max_length} characters ({truncated_amount} chars lost)")
+            logger.error(f"This truncation may cause contract generation to fail or miss critical features")
+            logger.error(f"Please split your prompt or increase the max_length parameter")
+            # Raise warning that will be caught by error handler
+            raise ValueError(f"Input truncated: {original_length} chars → {max_length} chars ({truncated_amount} chars lost). This may cause failures.")
 
         return sanitized.strip()
 
