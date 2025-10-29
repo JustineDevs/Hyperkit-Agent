@@ -37,6 +37,9 @@ def contract(ctx, contract, network, private_key, gas_limit, gas_price, construc
     """
     Deploy a smart contract using RAG deployment templates
     
+    ✅ FIXED: Constructor argument parsing now uses source code parsing with ABI validation.
+    Deployments should work reliably. See docs/HONEST_STATUS.md for details.
+    
     Examples:
     
       # Auto-detect constructor arguments
@@ -48,6 +51,9 @@ def contract(ctx, contract, network, private_key, gas_limit, gas_price, construc
       # Load constructor arguments from JSON file
       hyperagent deploy contract MyToken.sol --constructor-file args.json
     """
+    from cli.utils.warnings import show_command_warning
+    show_command_warning('deploy')
+    
     import json
     from core.agent.main import HyperKitAgent
     from core.config.loader import get_config
