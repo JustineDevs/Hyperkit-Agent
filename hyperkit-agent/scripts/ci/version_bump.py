@@ -371,7 +371,7 @@ def create_git_commit(new_version, bump_type):
             print(f"⚠️  Tag {tag_name} already exists, skipping tag creation")
         else:
             subprocess.run(["git", "tag", tag_name], cwd=str(repo_root), check=True)
-            print(f"✅ Created git tag: {tag_name}")
+        print(f"✅ Created git tag: {tag_name}")
         
     except subprocess.CalledProcessError as e:
         print(f"⚠️  Git operations failed: {e}")
