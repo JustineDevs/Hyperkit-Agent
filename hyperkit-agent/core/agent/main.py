@@ -690,16 +690,21 @@ class HyperKitAgent:
                     logger.info("Stage 3/5: Skipped (unknown audit severity)")
                     deployment_result = {"status": "skipped", "reason": "unknown_audit_severity"}
                 
-                # Continue workflow even if deployment fails (simulation mode)
+                # ABORT workflow if deployment fails - NO SIMULATION MODE
                 if deployment_result.get("status") not in ["success", "deployed"]:
-                    logger.warning(f"Deployment failed: {deployment_result.get('error', 'Unknown error')}")
-                    logger.info("Continuing workflow with simulated deployment...")
-                    deployment_result = {
-                        "status": "simulated",
-                        "transaction_hash": "0x" + "0" * 64,
-                        "contract_address": "0x" + "0" * 40,
-                        "simulated": True,
-                        "message": "Deployment simulated due to Foundry unavailability"
+                    error_msg = deployment_result.get('error', 'Unknown deployment error')
+                    logger.error(f"CRITICAL: Deployment failed: {error_msg}")
+                    logger.error("Workflow aborted - cannot continue without successful deployment")
+                    
+                    # Return error result and stop workflow
+                    return {
+                        "status": "error",
+                        "error": f"Deployment failed: {error_msg}",
+                        "workflow": "aborted",
+                        "generation": generation_result,
+                        "audit": audit_result,
+                        "deployment": deployment_result,
+                        "message": "Workflow terminated due to deployment failure"
                     }
             else:
                 logger.info("Stage 3/5: Skipped (test-only mode or audit failed)")
@@ -707,24 +712,18 @@ class HyperKitAgent:
 
             # Stage 4: Verify contract (if deployed)
             verification_result = None
-            if deployment_result and deployment_result.get("status") in ["success", "deployed", "simulated"] and auto_verification:
+            if deployment_result and deployment_result.get("status") in ["success", "deployed"] and auto_verification:
                 logger.info("Stage 4/5: Verifying Contract")
                 from services.verification.verifier import ContractVerifier
                 
                 verifier = ContractVerifier(network, self.config)
                 contract_address = deployment_result.get("contract_address")
                 
-                if contract_address and not deployment_result.get("simulated", False):
+                if contract_address:
                     verification_result = await verifier.verify_contract(
                         source_code=contract_code,
                         contract_address=contract_address
                     )
-                elif deployment_result.get("simulated", False):
-                    verification_result = {
-                        "status": "simulated",
-                        "message": "Verification simulated - contract not actually deployed",
-                        "simulated": True
-                    }
                 else:
                     verification_result = {"status": "skipped", "reason": "no_contract_address"}
             elif not deployment_result:
@@ -736,23 +735,16 @@ class HyperKitAgent:
 
             # Stage 5: Test contract (if deployed)
             testing_result = None
-            if deployment_result and deployment_result.get("status") in ["success", "deployed", "simulated"]:
+            if deployment_result and deployment_result.get("status") in ["success", "deployed"]:
                 logger.info("Stage 5/5: Testing Contract Functionality")
                 from services.testing.contract_tester import ContractTester
                 
                 contract_address = deployment_result.get("contract_address")
                 rpc_url = self.config.get('networks', {}).get(network, {}).get('rpc_url')
                 
-                if contract_address and rpc_url and not deployment_result.get("simulated", False):
+                if contract_address and rpc_url:
                     tester = ContractTester(rpc_url, contract_address)
                     testing_result = await tester.run_tests(contract_code)
-                elif deployment_result.get("simulated", False):
-                    testing_result = {
-                        "status": "simulated",
-                        "message": "Testing simulated - contract not actually deployed",
-                        "simulated": True,
-                        "tests_passed": True
-                    }
                 else:
                     testing_result = {"status": "skipped", "reason": "missing_rpc_or_address"}
             elif not deployment_result:
