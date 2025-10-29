@@ -59,10 +59,32 @@ class ContractNamer:
         Returns:
             Tuple[contract_name, category]
         """
+        # FIRST: Look for explicitly quoted names (e.g., 'HyperMarket', "NFTMarket")
+        quoted_names = re.findall(r"['\"]([A-Z][a-zA-Z0-9_]+)['\"]", prompt)
+        if quoted_names:
+            contract_name = quoted_names[0]  # Use first quoted name
+            category = self._infer_category(prompt)
+            return contract_name, category
+        
+        # SECOND: Look for contract name patterns like "contract 'Name'" or "contract Name"
+        explicit_patterns = [
+            r"contract\s+['\"]?([A-Z][a-zA-Z0-9_]+)['\"]?",
+            r"build.*['\"]?([A-Z][a-zA-Z0-9_]+)['\"]?",
+            r"create.*['\"]?([A-Z][a-zA-Z0-9_]+)['\"]?",
+            r"name\s*[:=]\s*['\"]?([A-Z][a-zA-Z0-9_]+)['\"]?",
+        ]
+        
+        for pattern in explicit_patterns:
+            match = re.search(pattern, prompt, re.IGNORECASE)
+            if match:
+                contract_name = match.group(1)
+                category = self._infer_category(prompt)
+                return contract_name, category
+        
         # Lowercase for matching
         prompt_lower = prompt.lower()
         
-        # Priority keywords (checked first)
+        # Priority keywords (checked third)
         priority_keywords = [
             'gaming token', 'play-to-earn', 'p2e token',
             'nft marketplace', 'nft contract',
@@ -73,7 +95,7 @@ class ContractNamer:
             'token bridge', 'cross-chain',
         ]
         
-        # Check priority keywords first
+        # Check priority keywords
         for keyword in priority_keywords:
             if keyword in prompt_lower:
                 # Extract tokens from the keyword
@@ -101,7 +123,7 @@ class ContractNamer:
             category = ' + '.join(unique_keywords)
             return contract_name, category
         
-        # Fallback: extract tokens from prompt
+        # Fallback: extract tokens from prompt (capitalized words)
         tokens = re.findall(r'\b([A-Z][a-z]+)\b', prompt)
         if tokens:
             contract_name = ''.join(tokens[:3])
@@ -111,6 +133,29 @@ class ContractNamer:
         from datetime import datetime
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         return f"Contract_{timestamp}", "generated"
+    
+    def _infer_category(self, prompt: str) -> str:
+        """Infer category from prompt content"""
+        prompt_lower = prompt.lower()
+        
+        if any(word in prompt_lower for word in ['nft', 'erc721', 'erc1155', 'marketplace']):
+            return "nft"
+        elif any(word in prompt_lower for word in ['gaming', 'game', 'p2e', 'play-to-earn']):
+            return "gaming"
+        elif any(word in prompt_lower for word in ['dao', 'governance', 'voting']):
+            return "governance"
+        elif any(word in prompt_lower for word in ['bridge', 'cross-chain', 'multichain']):
+            return "bridge"
+        elif any(word in prompt_lower for word in ['dex', 'amm', 'swap', 'liquidity', 'pool']):
+            return "defi"
+        elif any(word in prompt_lower for word in ['staking', 'yield', 'farm', 'vault']):
+            return "defi"
+        elif any(word in prompt_lower for word in ['presale', 'ico', 'ido']):
+            return "launchpad"
+        elif any(word in prompt_lower for word in ['erc20', 'token']):
+            return "tokens"
+        else:
+            return "other"
     
     def generate_filename(self, prompt: str) -> str:
         """
@@ -139,24 +184,4 @@ class ContractNamer:
         Returns:
             Category like: "tokens", "defi", "nft", "governance"
         """
-        contract_name, category = self.extract_contract_name(prompt)
-        prompt_lower = prompt.lower()
-        
-        if any(word in prompt_lower for word in ['nft', 'erc721', 'erc1155', 'marketplace']):
-            return "nft"
-        elif any(word in prompt_lower for word in ['gaming', 'game', 'p2e', 'play-to-earn']):
-            return "gaming"
-        elif any(word in prompt_lower for word in ['dao', 'governance', 'voting']):
-            return "governance"
-        elif any(word in prompt_lower for word in ['bridge', 'cross-chain', 'multichain']):
-            return "bridge"
-        elif any(word in prompt_lower for word in ['dex', 'amm', 'swap', 'liquidity', 'pool']):
-            return "defi"
-        elif any(word in prompt_lower for word in ['staking', 'yield', 'farm', 'vault']):
-            return "defi"
-        elif any(word in prompt_lower for word in ['presale', 'ico', 'ido']):
-            return "launchpad"
-        elif any(word in prompt_lower for word in ['erc20', 'token']):
-            return "tokens"
-        else:
-            return "other"
+        return self._infer_category(prompt)

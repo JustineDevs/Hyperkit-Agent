@@ -285,10 +285,15 @@ class HyperKitAgent:
 
             # Combine all context
             full_context = f"{context}\n\n{rag_context}".strip()
+            
+            # Extract expected contract name from prompt BEFORE generation
+            from services.generation.contract_namer import ContractNamer
+            namer = ContractNamer()
+            expected_contract_name = namer.generate_filename(prompt).replace(".sol", "")
 
-            # Create enhanced prompt with context
+            # Create enhanced prompt with context and contract name
             enhanced_prompt = self._create_contract_generation_prompt(
-                prompt, full_context
+                prompt, full_context, expected_contract_name
             )
 
             # Use free LLM router for code generation
@@ -316,22 +321,51 @@ class HyperKitAgent:
             filename = namer.generate_filename(prompt)
             category = namer.get_category(prompt)
             
-            # Create organized directory structure for workflow command
+            # Extract expected contract name from filename (remove .sol)
+            expected_contract_name = filename.replace(".sol", "")
+            
+            # Validate and fix contract name in code if needed
+            import re
+            contract_name_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]*)', contract_code)
+            actual_contract_name = contract_name_match.group(1) if contract_name_match else None
+            
+            # If contract name doesn't match expected, fix it
+            if actual_contract_name != expected_contract_name:
+                logger.warning(f"Contract name mismatch: expected '{expected_contract_name}', got '{actual_contract_name}'")
+                logger.info(f"Fixing contract name to '{expected_contract_name}'")
+                
+                # Replace contract name in code
+                if actual_contract_name:
+                    contract_code = contract_code.replace(
+                        f"contract {actual_contract_name}",
+                        f"contract {expected_contract_name}"
+                    )
+                
+            # Save to both workflow directory AND Foundry contracts directory for compilation
             contracts_path = path_manager.get_workflow_dir() / category
             contracts_path.mkdir(parents=True, exist_ok=True)
             
             # Save with smart name
             file_path = contracts_path / filename
             file_path.write_text(contract_code)
-            
             logger.info(f"✅ Contract saved to: {file_path}")
+            
+            # ALSO save to Foundry contracts directory for compilation
+            project_root = Path(__file__).parent.parent.parent.parent
+            foundry_contracts_dir = project_root / "contracts"
+            foundry_contracts_dir.mkdir(parents=True, exist_ok=True)
+            foundry_contract_path = foundry_contracts_dir / filename
+            foundry_contract_path.write_text(contract_code)
+            logger.info(f"✅ Contract saved to Foundry contracts directory: {foundry_contract_path}")
 
             return {
                 "status": "success",
                 "contract_code": contract_code,
+                "contract_name": expected_contract_name,  # Include contract name
                 "filename": filename,
                 "category": category,
                 "path": str(file_path),
+                "foundry_path": str(foundry_contract_path),
                 "prompt": prompt,
                 "context_used": full_context,
                 "provider_used": "free_llm_router",
@@ -397,9 +431,123 @@ class HyperKitAgent:
             logger.error(f"Contract audit failed: {e}")
             return {"status": "error", "error": str(e), "severity": "critical"}
 
+    async def _compile_contract(self, contract_name: str, contract_code: str) -> Dict[str, Any]:
+        """
+        Compile contract with Foundry before deployment.
+        
+        Args:
+            contract_name: Name of the contract
+            contract_code: Contract source code
+            
+        Returns:
+            Compilation result dictionary
+        """
+        try:
+            import subprocess
+            from pathlib import Path
+            
+            project_root = Path(__file__).parent.parent.parent.parent
+            foundry_contracts_dir = project_root / "contracts"
+            
+            # Verify contract file exists
+            contract_file = foundry_contracts_dir / f"{contract_name}.sol"
+            if not contract_file.exists():
+                return {
+                    "success": False,
+                    "error": f"Contract file not found: {contract_file}. Make sure generation saved it correctly.",
+                    "suggestions": [
+                        f"Check if contract was saved to {contract_file}",
+                        "Verify contract generation completed successfully"
+                    ]
+                }
+            
+            logger.info(f"Compiling {contract_name} with Foundry...")
+            logger.info(f"Contract file: {contract_file}")
+            
+            # Run forge build
+            result = subprocess.run(
+                ["forge", "build"],
+                cwd=str(project_root),
+                capture_output=True,
+                text=True,
+                timeout=120
+            )
+            
+            if result.returncode != 0:
+                error_output = result.stderr or result.stdout
+                return {
+                    "success": False,
+                    "error": f"Foundry compilation failed: {error_output[:500]}",
+                    "suggestions": [
+                        "Check contract syntax errors",
+                        "Verify all imports are available",
+                        "Check foundry.toml configuration",
+                        f"Run 'forge build' manually to see full error"
+                    ],
+                    "forge_output": error_output
+                }
+            
+            # Verify artifact was created
+            artifact_path = project_root / "out" / f"{contract_name}.sol" / f"{contract_name}.json"
+            if not artifact_path.exists():
+                # Try alternative path
+                artifact_path = project_root / "out" / f"{contract_name}.json"
+                
+            if not artifact_path.exists():
+                return {
+                    "success": False,
+                    "error": f"Artifact not found after compilation: expected {artifact_path}",
+                    "suggestions": [
+                        "Check foundry.toml output configuration",
+                        "Verify contract name matches exactly",
+                        f"Check out/ directory for generated artifacts"
+                    ]
+                }
+            
+            logger.info(f"✅ Artifact created at: {artifact_path}")
+            
+            return {
+                "success": True,
+                "artifact_path": str(artifact_path),
+                "contract_name": contract_name,
+                "forge_output": result.stdout
+            }
+            
+        except FileNotFoundError:
+            return {
+                "success": False,
+                "error": "Foundry not installed or not in PATH",
+                "suggestions": [
+                    "Install Foundry: curl -L https://foundry.paradigm.xyz | bash",
+                    "Run: foundryup",
+                    "Verify forge is in your PATH"
+                ]
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "error": "Compilation timed out after 120 seconds",
+                "suggestions": [
+                    "Contract may be too complex",
+                    "Check for infinite loops in constructor",
+                    "Verify all dependencies are available"
+                ]
+            }
+        except Exception as e:
+            logger.error(f"Compilation error: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": f"Compilation failed: {str(e)}",
+                "suggestions": [
+                    "Check contract code for syntax errors",
+                    "Verify Foundry installation",
+                    "Check system logs for details"
+                ]
+            }
+
     @safe_operation("deploy_contract")
     async def deploy_contract(
-        self, contract_code: str, network: str = "hyperion"
+        self, contract_code: str, network: str = "hyperion", contract_name: str = None
     ) -> Dict[str, Any]:
         """Deploy contract to blockchain - ENFORCES PRODUCTION MODE"""
         # Enforce production mode for deployment
@@ -454,10 +602,11 @@ class HyperKitAgent:
                 account = Account.from_key(deployer_address)
                 deployer_address = account.address
             
-            # Extract contract name from code for better constructor arg generation
-            import re
-            contract_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]*)', contract_code)
-            contract_name = contract_match.group(1) if contract_match else "Contract"
+            # Use provided contract name or extract from code
+            if not contract_name:
+                import re
+                contract_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]*)', contract_code)
+                contract_name = contract_match.group(1) if contract_match else "Contract"
             
             logger.info(f"Deploying contract: {contract_name}")
             
@@ -611,6 +760,23 @@ class HyperKitAgent:
                 return generation_result
 
             contract_code = generation_result["contract_code"]
+            contract_name = generation_result.get("contract_name", "Contract")
+            
+            # Stage 1.5: Compile contract with Foundry
+            logger.info("Stage 1.5/5: Compiling Contract with Foundry")
+            compilation_result = await self._compile_contract(contract_name, contract_code)
+            if not compilation_result.get("success"):
+                logger.error(f"Compilation failed: {compilation_result.get('error', 'Unknown error')}")
+                return {
+                    "status": "error",
+                    "error": f"Contract compilation failed: {compilation_result.get('error', 'Unknown error')}",
+                    "workflow": "aborted",
+                    "generation": generation_result,
+                    "compilation": compilation_result,
+                    "message": "Workflow terminated due to compilation failure"
+                }
+            
+            logger.info("✅ Contract compiled successfully")
 
             # Stage 2: Audit contract
             logger.info("Stage 2/5: Auditing Contract")
@@ -656,7 +822,7 @@ class HyperKitAgent:
             if not test_only:
                 if audit_severity in ["low", "medium"]:
                     logger.info("Stage 3/5: Deploying to Blockchain")
-                    deployment_result = await self.deploy_contract(contract_code, network)
+                    deployment_result = await self.deploy_contract(contract_code, network, contract_name)
                 elif audit_severity == "high":
                     if allow_insecure:
                         # Auto-proceed if --allow-insecure flag is set
@@ -665,7 +831,7 @@ class HyperKitAgent:
                         print(f"   Issues found: {len(audit_result.get('results', {}).get('issues', []))}")
                         print("⚠️  Proceeding with deployment as --allow-insecure flag is set.")
                         logger.info("Stage 3/5: Deploying to Blockchain (--allow-insecure flag set)")
-                        deployment_result = await self.deploy_contract(contract_code, network)
+                        deployment_result = await self.deploy_contract(contract_code, network, contract_name)
                     else:
                         # Interactive confirmation for high-severity issues
                         print(f"\n⚠️  Audit found HIGH severity issues.")
@@ -677,7 +843,7 @@ class HyperKitAgent:
                             if user_input in ['', 'y', 'yes']:
                                 print("⚠️  Proceeding with deployment as per user request.")
                                 logger.info("Stage 3/5: Deploying to Blockchain (user confirmed despite high severity)")
-                                deployment_result = await self.deploy_contract(contract_code, network)
+                                deployment_result = await self.deploy_contract(contract_code, network, contract_name)
                             else:
                                 print("🚫 Deployment cancelled by user due to audit issues.")
                                 logger.info("Stage 3/5: Skipped (user cancelled due to high severity audit)")
@@ -764,8 +930,9 @@ class HyperKitAgent:
             return {
                 "status": "success",
                 "workflow": "complete_5_stages",
-                "stages_completed": 5,
+                "stages_completed": 6,  # Updated to include compilation
                 "generation": generation_result,
+                "compilation": compilation_result,  # Include compilation results
                 "audit": audit_result,
                 "deployment": deployment_result,
                 "verification": verification_result,
@@ -1011,9 +1178,13 @@ class HyperKitAgent:
         return "openai", "placeholder-key"
 
     def _create_contract_generation_prompt(
-        self, user_prompt: str, context: str = ""
+        self, user_prompt: str, context: str = "", contract_name: str = None
     ) -> str:
         """Create enhanced prompt for contract generation."""
+        contract_name_instruction = ""
+        if contract_name:
+            contract_name_instruction = f"\nCRITICAL: The contract MUST be named exactly '{contract_name}'. Use 'contract {contract_name}' as the contract declaration."
+        
         base_prompt = f"""
 You are an expert Solidity smart contract developer. Generate a secure, production-ready smart contract based on the user's request.
 
@@ -1021,6 +1192,7 @@ User Request: {user_prompt}
 
 Additional Context:
 {context}
+{contract_name_instruction}
 
 Requirements:
 1. Use Solidity ^0.8.0
@@ -1031,6 +1203,7 @@ Requirements:
 6. Use OpenZeppelin contracts when appropriate
 7. Implement proper error handling
 8. Add reentrancy guards where needed
+9. Contract name MUST match the specified name exactly
 
 Generate only the Solidity contract code, no explanations or markdown formatting.
 """
@@ -1088,7 +1261,9 @@ Generate only the Solidity contract code, no explanations or markdown formatting
                 return audit_result
             
             # 5. Deploy contracts
-            deployment_result = await self.deploy_contract(contract_code, "hyperion")
+            # Extract contract name from generation result
+            contract_name = contract_result.get("contract_name") or "Contract"
+            deployment_result = await self.deploy_contract(contract_code, "hyperion", contract_name)
             if not deployment_result.get("success"):
                 return deployment_result
             
