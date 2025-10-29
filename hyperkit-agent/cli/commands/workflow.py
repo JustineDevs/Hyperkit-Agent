@@ -142,9 +142,10 @@ RAG Context for Enhanced Workflow:
             success = _display_success_results(result, network, test_only, verbose)
             if not success:
                 console.print(f"\n[red bold]WORKFLOW TERMINATED DUE TO CRITICAL FAILURE[/red bold]")
-                return
+                ctx.exit(1)  # Exit with error code
         else:
             _display_error_results(result)
+            ctx.exit(1)  # Exit with error code
             
     except Exception as e:
         console.print(f"\n[red bold]Workflow error: {e}[/red bold]")
@@ -228,6 +229,7 @@ def _display_success_results(result: dict, network: str, test_only: bool, verbos
             # FAIL THE WORKFLOW - Don't continue
             console.print(f"\n[red bold]WORKFLOW FAILED - DEPLOYMENT STAGE BROKEN[/red bold]")
             console.print(f"[yellow]Fix the deployment issue before continuing.[/yellow]")
+            console.print(f"\n[red bold]WORKFLOW TERMINATED DUE TO CRITICAL FAILURE[/red bold]")
             return False
     elif test_only:
         table.add_row(

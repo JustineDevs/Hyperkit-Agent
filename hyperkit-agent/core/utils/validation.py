@@ -361,7 +361,7 @@ class Validator:
 
         return result
 
-    def sanitize_input(self, input_str: str, max_length: int = 1000) -> str:
+    def sanitize_input(self, input_str: str, max_length: int = 10000) -> str:
         """Sanitize user input"""
         if not input_str:
             return ""
