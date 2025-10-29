@@ -482,17 +482,58 @@ class HyperKitAgent:
             
             if not openzeppelin_dir.exists() and "@openzeppelin" in contract_code:
                 logger.info("OpenZeppelin contracts not found, installing...")
+                
+                # Check if foundry.toml exists (required for forge install)
+                foundry_toml = project_root / "foundry.toml"
+                if not foundry_toml.exists():
+                    return {
+                        "success": False,
+                        "error": "foundry.toml not found - cannot install dependencies",
+                        "suggestions": [
+                            "Initialize Foundry: forge init (creates foundry.toml)",
+                            "Or ensure foundry.toml exists in project root",
+                            f"Expected location: {foundry_toml}"
+                        ]
+                    }
+                
+                # Install OpenZeppelin (without --no-commit flag - not supported)
+                # Foundry install will add to lib/ but won't auto-commit if in git repo
                 install_result = subprocess.run(
-                    ["forge", "install", "OpenZeppelin/openzeppelin-contracts", "--no-commit"],
+                    ["forge", "install", "OpenZeppelin/openzeppelin-contracts"],
                     cwd=str(project_root),
                     capture_output=True,
                     text=True,
                     timeout=60
                 )
+                
                 if install_result.returncode != 0:
-                    logger.warning(f"Dependency installation had issues: {install_result.stderr}")
-                else:
-                    logger.info("✅ OpenZeppelin dependencies installed")
+                    error_msg = install_result.stderr or install_result.stdout
+                    logger.error(f"Dependency installation failed: {error_msg[:500]}")
+                    return {
+                        "success": False,
+                        "error": f"Failed to install OpenZeppelin dependencies: {error_msg[:300]}",
+                        "suggestions": [
+                            "Run 'forge install OpenZeppelin/openzeppelin-contracts' manually",
+                            "Check if foundry.toml is properly configured",
+                            "Verify Foundry is installed: forge --version",
+                            "Check network connectivity for GitHub access"
+                        ],
+                        "forge_output": error_msg
+                    }
+                
+                # Verify installation succeeded
+                if not openzeppelin_dir.exists():
+                    return {
+                        "success": False,
+                        "error": f"OpenZeppelin installation completed but lib/openzeppelin-contracts not found",
+                        "suggestions": [
+                            "Check lib/ directory for installed dependencies",
+                            f"Expected: {openzeppelin_dir}",
+                            "Run 'forge install OpenZeppelin/openzeppelin-contracts' manually to debug"
+                        ]
+                    }
+                
+                logger.info("✅ OpenZeppelin dependencies installed successfully")
             
             # Run forge build
             result = subprocess.run(
