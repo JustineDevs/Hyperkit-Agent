@@ -96,6 +96,42 @@ def test_rag():
     test_rag_command()
 
 @cli.command()
+@click.option('--workflow-id', help='Workflow ID to dump context for')
+def context(workflow_id):
+    """Dump workflow context for troubleshooting"""
+    from pathlib import Path
+    from core.workflow.context_manager import ContextManager
+    
+    workspace_dir = Path(__file__).parent.parent
+    context_manager = ContextManager(workspace_dir)
+    
+    if workflow_id:
+        context = context_manager.load_context(workflow_id)
+        if context:
+            console.print(f"\n[bold]Workflow Context: {workflow_id}[/bold]")
+            console.print(context.to_json())
+            
+            # Generate diagnostic bundle
+            bundle_path = context_manager.save_diagnostic_bundle(context)
+            console.print(f"\n[green]Diagnostic bundle saved:[/green] {bundle_path}")
+        else:
+            console.print(f"[red]Context not found for workflow: {workflow_id}[/red]")
+    else:
+        # List all contexts
+        contexts_dir = workspace_dir / ".workflow_contexts"
+        if contexts_dir.exists():
+            contexts = list(contexts_dir.glob("*.json"))
+            if contexts:
+                console.print(f"\n[bold]Available workflow contexts:[/bold]")
+                for ctx_file in sorted(contexts, key=lambda x: x.stat().st_mtime, reverse=True)[:10]:
+                    workflow_id = ctx_file.stem
+                    console.print(f"  - {workflow_id}")
+            else:
+                console.print("[yellow]No workflow contexts found[/yellow]")
+        else:
+            console.print("[yellow]No workflow contexts directory found[/yellow]")
+
+@cli.command()
 def limitations():
     """Show all known limitations and broken features"""
     from cli.utils.limitations import show_limitations
