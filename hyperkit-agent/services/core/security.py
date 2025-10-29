@@ -25,21 +25,15 @@ class HyperKitSecurityService:
     async def audit_contract_security(self, contract_code: str) -> Dict[str, Any]:
         """Comprehensive security audit of contract"""
         if not self.security_tools_configured:
-            return self._mock_security_audit(contract_code)
+            raise RuntimeError(
+                "Security tools not configured - cannot perform security audit\n"
+                "  Required: Install Slither, Mythril, or other security tools\n"
+                "  Install: pip install slither-analyzer mythril\n"
+                "  Or use the built-in auditor service"
+            )
         
         # Implement real security auditing
         return await self._real_security_audit(contract_code)
-    
-    def _mock_security_audit(self, contract_code: str) -> Dict[str, Any]:
-        """Mock security audit with clear warnings"""
-        import logging; logging.warning("  WARNING: Using mock security audit - Security tools not fully configured")
-        
-        return {
-            "status": "mock",
-            "vulnerabilities": [],
-            "warnings": ["Mock security audit - Configure security tools for real analysis"],
-            "recommendations": ["Enable Slither, Mythril for comprehensive security analysis"]
-        }
     
     async def _real_security_audit(self, contract_code: str) -> Dict[str, Any]:
         """Real security audit using security tools"""

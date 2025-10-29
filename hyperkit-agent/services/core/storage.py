@@ -46,7 +46,12 @@ class HyperKitStorageService:
     async def store_audit_report(self, report_data: Dict[str, Any]) -> Dict[str, Any]:
         """Store audit report on IPFS using real Pinata API"""
         if not self.ipfs_configured:
-            return self._mock_storage(report_data)
+            raise RuntimeError(
+                "IPFS/Pinata not configured - cannot store audit report\n"
+                "  Required: PINATA_API_KEY and PINATA_SECRET_KEY in .env\n"
+                "  Get keys: https://app.pinata.cloud/\n"
+                "  Fix: Add Pinata credentials to .env file"
+            )
         
         try:
             # Prepare data for IPFS storage
@@ -152,7 +157,12 @@ class HyperKitStorageService:
     async def retrieve_audit_report(self, cid: str) -> Dict[str, Any]:
         """Retrieve audit report from IPFS using real Pinata API"""
         if not self.ipfs_configured:
-            return self._mock_retrieval(cid)
+            raise RuntimeError(
+                "IPFS/Pinata not configured - cannot retrieve audit report\n"
+                "  Required: PINATA_API_KEY and PINATA_SECRET_KEY in .env\n"
+                "  Get keys: https://app.pinata.cloud/\n"
+                "  Fix: Add Pinata credentials to .env file"
+            )
         
         try:
             # Retrieve from IPFS via Pinata gateway
@@ -195,7 +205,12 @@ class HyperKitStorageService:
     async def store_ai_model(self, model_data: Dict[str, Any], model_name: str) -> Dict[str, Any]:
         """Store AI model on IPFS"""
         if not self.ipfs_configured:
-            return self._mock_storage({"type": "ai_model", "name": model_name})
+            raise RuntimeError(
+                "IPFS/Pinata not configured - cannot store AI model\n"
+                "  Required: PINATA_API_KEY and PINATA_SECRET_KEY in .env\n"
+                "  Get keys: https://app.pinata.cloud/\n"
+                "  Fix: Add Pinata credentials to .env file"
+            )
         
         try:
             json_data = json.dumps(model_data, indent=2)
