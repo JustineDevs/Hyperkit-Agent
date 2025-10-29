@@ -1020,20 +1020,46 @@ class HyperKitAgent:
         network: str = "hyperion",
         auto_verification: bool = True,
         test_only: bool = False,
-        allow_insecure: bool = False
+        allow_insecure: bool = False,
+        use_orchestrator: bool = True
     ) -> Dict[str, Any]:
         """
-        Execute the complete 5-stage workflow: generate -> audit -> deploy -> verify -> test.
+        Execute the complete self-healing workflow with dependency management and auto-recovery.
 
         Args:
             user_prompt: User's natural language request
             network: Target blockchain network
             auto_verification: Whether to auto-verify contract
             test_only: Whether to run in test-only mode
+            allow_insecure: Allow deployment despite audit issues
+            use_orchestrator: Use new self-healing orchestrator (default: True)
 
         Returns:
             Dictionary containing complete workflow results
         """
+        # Use new self-healing orchestrator if enabled
+        if use_orchestrator:
+            try:
+                from core.workflow.workflow_orchestrator import WorkflowOrchestrator
+                from pathlib import Path
+                
+                # Get workspace directory
+                workspace_dir = Path(__file__).parent.parent.parent
+                orchestrator = WorkflowOrchestrator(self, workspace_dir)
+                
+                logger.info("🚀 Using self-healing workflow orchestrator")
+                return await orchestrator.run_complete_workflow(
+                    user_prompt=user_prompt,
+                    network=network,
+                    auto_verification=auto_verification,
+                    test_only=test_only,
+                    allow_insecure=allow_insecure
+                )
+            except ImportError as e:
+                logger.warning(f"Orchestrator not available, falling back to legacy workflow: {e}")
+                # Fall through to legacy workflow
+        
+        # Legacy workflow (for backward compatibility)
         try:
             logger.info(f"Starting 5-stage workflow for prompt: {user_prompt}")
 
