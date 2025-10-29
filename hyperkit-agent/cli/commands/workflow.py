@@ -31,6 +31,9 @@ def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_ins
     """
     Run complete AI-powered smart contract workflow with RAG template integration
     
+    ✅ FIXED: Deployment validation has been added - workflow properly fails on errors.
+    No more fake success messages. See docs/HONEST_STATUS.md for details.
+    
     Stages: Generate -> Audit -> Deploy -> Verify -> Test
     
     \b
@@ -47,6 +50,9 @@ def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_ins
         # Deploy high-risk contract
         hyperagent workflow run "create token" --allow-insecure
     """
+    from cli.utils.warnings import show_command_warning
+    show_command_warning('workflow')
+    
     from core.agent.main import HyperKitAgent
     from core.config.loader import get_config
     
@@ -144,8 +150,22 @@ RAG Context for Enhanced Workflow:
             allow_insecure=allow_insecure
         ))
         
-        # Process results
-        if result['status'] == 'success':
+        # FIXED: Process results with explicit validation
+        workflow_status = result.get('status', 'unknown')
+        
+        if workflow_status == 'success':
+            # Additional validation before showing success
+            deployment = result.get('deployment', {})
+            if not test_only and deployment:
+                deploy_status = deployment.get('status')
+                if deploy_status not in ['success', 'deployed', 'skipped']:
+                    # Deployment failed but workflow marked as success - FIX THIS
+                    console.print(f"\n[red bold]CRITICAL: Workflow marked success but deployment failed![/red bold]")
+                    console.print(f"[red]Deployment status: {deploy_status}[/red]")
+                    console.print(f"[red]Deployment error: {deployment.get('error', 'Unknown')}[/red]")
+                    _display_error_results(result)
+                    ctx.exit(1)
+            
             success = _display_success_results(result, network, test_only, verbose)
             if not success:
                 console.print(f"\n[red bold]WORKFLOW TERMINATED DUE TO CRITICAL FAILURE[/red bold]")
