@@ -24,8 +24,13 @@ class PathManager:
     
     @property
     def contracts_dir(self) -> Path:
-        """Main contracts directory"""
+        """Main contracts directory for artifacts/organization"""
         return self.artifacts_dir / "contracts"
+    
+    @property
+    def foundry_contracts_dir(self) -> Path:
+        """Foundry project contracts directory (for compilation/deployment)"""
+        return self.base_dir / "contracts"
     
     def get_command_dir(self, command_type: str = None) -> Path:
         """Get directory for specific command type"""
