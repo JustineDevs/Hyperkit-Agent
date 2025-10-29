@@ -35,8 +35,11 @@ This directory contains technical runbooks, deployment guides, and operational p
 - **IMPLEMENTATION_CHANGES.md**: Implementation change log
 - **VERIFICATION_SYSTEM_COMPLETE_UPDATE.md**: Verification system updates
 - **MYTHRIL_WINDOWS_INSTALLATION.md**: Mythril installation guide
-- **PINATA_SETUP_GUIDE.md**: Pinata IPFS setup guide
 - **OBSIDIAN_RAG_INTEGRATION_COMPLETE.md**: Obsidian RAG integration
+
+**Note**: Setup guides have been moved to [GUIDE/](../GUIDE/):
+- **[Pinata Setup Guide](../GUIDE/PINATA_SETUP_GUIDE.md)**: Pinata IPFS setup guide
+- **[Environment Setup](../GUIDE/ENVIRONMENT_SETUP.md)**: Development environment setup
 
 ### Testing & Validation
 - **TESTING_EVIDENCE.md**: Testing evidence and results
