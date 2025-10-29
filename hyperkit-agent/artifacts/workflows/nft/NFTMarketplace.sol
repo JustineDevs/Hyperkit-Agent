@@ -1,298 +1,264 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @title NftAuctionMarketplace
- * @author Your Name Here
- * @notice A secure and feature-rich marketplace for auctioning gaming NFTs.
- * @dev This contract allows users to create auctions for their ERC721 tokens,
- * place bids, and finalize sales. It includes a platform fee, access control,
- * and security measures like reentrancy guards and a pausable mechanism.
+ * @title HyperMarket
+ * @author Your Name
+ * @notice A secure and feature-rich NFT marketplace that also serves as the ERC721 contract.
+ * It includes listing, buying (ETH/ERC20), bidding, platform fees, and creator royalties.
+ * This contract is designed for production use on EVM-compatible chains like Metis and Hyperion.
  */
-contract NftAuctionMarketplace is Ownable, Pausable, ReentrancyGuard {
+contract HyperMarket is ERC721, ERC721URIStorage, ERC721Royalty, Ownable, Pausable, ReentrancyGuard {
     // =============================================================
     //                           STRUCTS
     // =============================================================
 
-    struct Auction {
+    struct Listing {
         address seller;
-        IERC721 nftContract;
-        uint256 tokenId;
-        uint256 startingBid;
-        uint256 endAt;
-        address highestBidder;
-        uint256 highestBid;
-        bool started;
-        bool ended;
+        uint256 price;
+        uint256 expiresAt;
+        address paymentToken; // address(0) for ETH, otherwise ERC20 address
+    }
+
+    struct Bid {
+        address bidder;
+        uint256 amount; // Bids are always in ETH
     }
 
     // =============================================================
-    //                        STATE VARIABLES
+    //                           STATE
     // =============================================================
 
-    uint256 private _auctionIdCounter;
-    mapping(uint256 => Auction) public auctions;
+    uint256 private _platformFeePercentage; // In basis points (e.g., 250 = 2.5%)
+    uint256 private _royaltyPercentage;     // In basis points (e.g., 500 = 5.0%)
 
-    /// @notice The platform's fee percentage (e.g., 250 for 2.50%).
-    uint256 public platformFeePercent; // Basis points (10000 = 100%)
-
-    /// @notice The amount of fees accumulated and available for withdrawal by the owner.
-    uint256 public accumulatedFees;
+    mapping(uint256 => Listing) private _listings;
+    mapping(uint256 => Bid) private _bids;
+    mapping(uint256 => address) private _creators;
+    mapping(address => uint256) public accruedFees; // paymentToken => amount
 
     // =============================================================
     //                           EVENTS
     // =============================================================
 
-    /**
-     * @notice Emitted when a new auction is created.
-     * @param auctionId The unique identifier for the auction.
-     * @param seller The address of the NFT owner starting the auction.
-     * @param nftContract The address of the ERC721 contract.
-     * @param tokenId The ID of the token being auctioned.
-     * @param startingBid The minimum initial price for the NFT.
-     * @param endAt The timestamp when the auction will end.
-     */
-    event AuctionCreated(
-        uint256 indexed auctionId,
-        address indexed seller,
-        address indexed nftContract,
-        uint256 tokenId,
-        uint256 startingBid,
-        uint256 endAt
-    );
-
-    /**
-     * @notice Emitted when a bid is successfully placed on an auction.
-     * @param auctionId The ID of the auction being bid on.
-     * @param bidder The address of the user placing the bid.
-     * @param amount The value of the bid in wei.
-     */
-    event BidPlaced(
-        uint256 indexed auctionId,
-        address indexed bidder,
-        uint256 amount
-    );
-
-    /**
-     * @notice Emitted when an auction successfully ends and the NFT is transferred.
-     * @param auctionId The ID of the auction that ended.
-     * @param winner The address of the highest bidder who won the auction.
-     * @param finalPrice The final price the NFT was sold for.
-     */
-    event AuctionEnded(
-        uint256 indexed auctionId,
-        address winner,
-        uint256 finalPrice
-    );
-
-    /**
-     * @notice Emitted when an auction is cancelled by the seller.
-     * @param auctionId The ID of the auction that was cancelled.
-     * @param seller The address of the seller who cancelled the auction.
-     */
-    event AuctionCancelled(uint256 indexed auctionId, address indexed seller);
-
-    /**
-     * @notice Emitted when the platform fee is updated by the owner.
-     * @param newFeePercent The new fee in basis points.
-     */
-    event PlatformFeeUpdated(uint256 newFeePercent);
-
-    /**
-     * @notice Emitted when platform fees are withdrawn by the owner.
-     * @param amount The amount of fees withdrawn in wei.
-     */
-    event FeesWithdrawn(uint256 amount);
-
+    event Listed(uint256 indexed tokenId, address indexed seller, uint256 price, address indexed paymentToken, uint256 expiresAt);
+    event Unlisted(uint256 indexed tokenId);
+    event Sold(uint256 indexed tokenId, address indexed seller, address indexed buyer, uint256 price, address paymentToken);
+    event BidPlaced(uint256 indexed tokenId, address indexed bidder, uint256 amount);
+    event BidAccepted(uint256 indexed tokenId, address indexed seller, address indexed bidder, uint256 amount);
+    event BidRejected(uint256 indexed tokenId, address indexed bidder, uint256 amount);
+    event FeePercentageChanged(uint256 newPercentage);
+    event FeesWithdrawn(address indexed paymentToken, uint256 amount);
 
     // =============================================================
     //                           ERRORS
     // =============================================================
 
-    error ZeroAddress();
-    error InvalidDuration();
-    error NotNftOwner();
-    error NftNotApprovedForMarketplace();
-    error AuctionDoesNotExist();
-    error AuctionAlreadyEnded();
-    error AuctionIsStillActive();
-    error AuctionHasNotStarted();
+    error NotOwner();
+    error AlreadyListed();
+    error PriceMustBePositive();
+    error DurationMustBePositive();
+    error NotSeller();
+    error NotListed();
+    error ListingExpired();
+    error IncorrectPaymentToken();
+    error IncorrectEthAmount();
+    error SellerCannotBeBuyer();
     error BidTooLow();
-    error OnlySellerCanCancel();
-    error CannotCancelWithBids();
-    error NoBidsPlaced();
-    error InvalidFeePercent();
-    error ZeroAmount();
+    error NoActiveBid();
+    error FeeTooHigh();
+    error RoyaltyTooHigh();
+    error TransferFailed();
+    error NoFeesToWithdraw();
+    error TokenIsListed();
 
     // =============================================================
     //                         CONSTRUCTOR
     // =============================================================
 
     /**
-     * @notice Sets up the contract, initializes the owner, and sets the initial platform fee.
-     * @param _initialFeePercent The initial platform fee in basis points (e.g., 250 for 2.50%).
+     * @notice Sets up the contract, naming the NFT collection and setting initial fees.
      */
-    constructor(uint256 _initialFeePercent) Ownable(msg.sender) {
-        if (_initialFeePercent > 10000) revert InvalidFeePercent();
-        platformFeePercent = _initialFeePercent;
-        emit PlatformFeeUpdated(_initialFeePercent);
+    constructor() ERC721("HyperMarket NFT", "HNFT") Ownable(msg.sender) {
+        _platformFeePercentage = 250; // 2.5%
+        _royaltyPercentage = 500;     // 5.0%
     }
 
     // =============================================================
-    //                      AUCTION FUNCTIONS
+    //                      LISTING FUNCTIONS
     // =============================================================
 
     /**
-     * @notice Creates a new auction for an ERC721 token.
-     * @dev The caller must be the owner of the NFT and must have approved this contract
-     * to transfer the token on their behalf via `approve()` or `setApprovalForAll()`.
-     * @param _nftContract The address of the ERC721 token contract.
-     * @param _tokenId The ID of the token to be auctioned.
-     * @param _startingBid The minimum bid amount in wei.
-     * @param _duration The duration of the auction in seconds.
-     * @return auctionId The ID of the newly created auction.
+     * @notice Lists an NFT for sale on the marketplace.
+     * @dev The NFT is transferred to the contract for escrow.
+     * @param tokenId The ID of the token to list.
+     * @param price The selling price.
+     * @param duration The duration in seconds the listing will be active.
+     * @param paymentToken The ERC20 token address for payment, or address(0) for ETH.
      */
-    function createAuction(
-        address _nftContract,
-        uint256 _tokenId,
-        uint256 _startingBid,
-        uint256 _duration
-    ) external whenNotPaused returns (uint256) {
-        if (_nftContract == address(0)) revert ZeroAddress();
-        if (_duration == 0) revert InvalidDuration();
+    function listNFT(uint256 tokenId, uint256 price, uint256 duration, address paymentToken)
+        external
+        whenNotPaused
+        nonReentrant
+    {
+        if (ownerOf(tokenId) != msg.sender) revert NotOwner();
+        if (_listings[tokenId].price > 0) revert AlreadyListed();
+        if (price == 0) revert PriceMustBePositive();
+        if (duration == 0) revert DurationMustBePositive();
 
-        IERC721 nft = IERC721(_nftContract);
-        if (nft.ownerOf(_tokenId) != msg.sender) revert NotNftOwner();
-        if (nft.getApproved(_tokenId) != address(this) && !nft.isApprovedForAll(msg.sender, address(this))) {
-            revert NftNotApprovedForMarketplace();
-        }
+        uint256 expiresAt = block.timestamp + duration;
+        _listings[tokenId] = Listing(msg.sender, price, expiresAt, paymentToken);
 
-        uint256 auctionId = ++_auctionIdCounter;
-        uint256 endTime = block.timestamp + _duration;
-
-        auctions[auctionId] = Auction({
-            seller: msg.sender,
-            nftContract: nft,
-            tokenId: _tokenId,
-            startingBid: _startingBid,
-            endAt: endTime,
-            highestBidder: address(0),
-            highestBid: 0,
-            started: true,
-            ended: false
-        });
-
-        emit AuctionCreated(
-            auctionId,
-            msg.sender,
-            _nftContract,
-            _tokenId,
-            _startingBid,
-            endTime
-        );
-
-        return auctionId;
+        _transfer(msg.sender, address(this), tokenId);
+        emit Listed(tokenId, msg.sender, price, paymentToken, expiresAt);
     }
 
     /**
-     * @notice Places a bid on an active auction.
-     * @dev The sent `msg.value` must be greater than the current highest bid
-     * (or the starting bid if it's the first bid). The previous highest bidder
-     * will be refunded their bid amount.
-     * @param _auctionId The ID of the auction to bid on.
+     * @notice Cancels an active listing.
+     * @dev The NFT is returned to the seller. Any active bids are refunded.
+     * @param tokenId The ID of the token to unlist.
      */
-    function placeBid(uint256 _auctionId) external payable nonReentrant whenNotPaused {
-        Auction storage currentAuction = auctions[_auctionId];
+    function unlistNFT(uint256 tokenId) external whenNotPaused nonReentrant {
+        Listing memory listing = _listings[tokenId];
+        if (listing.seller != msg.sender) revert NotSeller();
 
-        if (!currentAuction.started) revert AuctionDoesNotExist();
-        if (currentAuction.ended) revert AuctionAlreadyEnded();
-        if (block.timestamp >= currentAuction.endAt) revert AuctionAlreadyEnded();
+        delete _listings[tokenId];
+        _refundHighestBid(tokenId);
 
-        uint256 currentHighestBid = currentAuction.highestBid == 0 ? currentAuction.startingBid : currentAuction.highestBid;
-        if (msg.value <= currentHighestBid) revert BidTooLow();
+        _transfer(address(this), msg.sender, tokenId);
+        emit Unlisted(tokenId);
+    }
 
-        address previousHighestBidder = currentAuction.highestBidder;
-        uint256 previousHighestBid = currentAuction.highestBid;
+    // =============================================================
+    //                       BUYING FUNCTIONS
+    // =============================================================
 
-        currentAuction.highestBidder = msg.sender;
-        currentAuction.highestBid = msg.value;
+    /**
+     * @notice Buys a listed NFT using ETH.
+     * @param tokenId The ID of the token to purchase.
+     */
+    function buyNFTWithEth(uint256 tokenId) external payable whenNotPaused nonReentrant {
+        Listing memory listing = _listings[tokenId];
+        if (listing.price == 0) revert NotListed();
+        if (block.timestamp >= listing.expiresAt) revert ListingExpired();
+        if (listing.paymentToken != address(0)) revert IncorrectPaymentToken();
+        if (msg.value != listing.price) revert IncorrectEthAmount();
+        if (listing.seller == msg.sender) revert SellerCannotBeBuyer();
 
-        // Refund the previous highest bidder if they exist
-        if (previousHighestBidder != address(0)) {
-            (bool success, ) = previousHighestBidder.call{value: previousHighestBid}("");
-            // If the refund fails, the transaction is reverted.
-            // This is generally safe but relies on the recipient being able to accept Ether.
-            // A pull pattern could be used for more robustness against misbehaving contracts.
-            require(success, "Failed to refund previous bidder");
-        }
+        address seller = listing.seller;
+        delete _listings[tokenId];
+        _refundHighestBid(tokenId);
 
-        emit BidPlaced(_auctionId, msg.sender, msg.value);
+        _handlePayment(tokenId, listing.price, seller, msg.sender, address(0));
+        _transfer(address(this), msg.sender, tokenId);
+
+        emit Sold(tokenId, seller, msg.sender, listing.price, address(0));
     }
 
     /**
-     * @notice Ends an auction, transferring the NFT to the winner and funds to the seller.
-     * @dev Can be called by anyone after the auction's end time has passed.
-     * The platform fee is calculated and stored for the owner to withdraw.
-     * @param _auctionId The ID of the auction to end.
+     * @notice Buys a listed NFT using a specified ERC20 token (e.g., USDC).
+     * @dev Caller must have approved the marketplace to spend the required amount of the ERC20 token.
+     * @param tokenId The ID of the token to purchase.
      */
-    function endAuction(uint256 _auctionId) external nonReentrant whenNotPaused {
-        Auction storage currentAuction = auctions[_auctionId];
+    function buyNFTWithUsdc(uint256 tokenId) external whenNotPaused nonReentrant {
+        Listing memory listing = _listings[tokenId];
+        if (listing.price == 0) revert NotListed();
+        if (block.timestamp >= listing.expiresAt) revert ListingExpired();
+        if (listing.paymentToken == address(0)) revert IncorrectPaymentToken();
+        if (listing.seller == msg.sender) revert SellerCannotBeBuyer();
 
-        if (!currentAuction.started) revert AuctionDoesNotExist();
-        if (currentAuction.ended) revert AuctionAlreadyEnded();
-        if (block.timestamp < currentAuction.endAt) revert AuctionIsStillActive();
-        
-        currentAuction.ended = true; // State change before external calls
+        address seller = listing.seller;
+        address paymentToken = listing.paymentToken;
+        delete _listings[tokenId];
+        _refundHighestBid(tokenId);
 
-        address winner = currentAuction.highestBidder;
+        IERC20(paymentToken).transferFrom(msg.sender, address(this), listing.price);
 
-        if (winner == address(0)) {
-            // No bids were placed, so just end the auction.
-            emit AuctionEnded(_auctionId, address(0), 0);
-            return;
+        _handlePayment(tokenId, listing.price, seller, msg.sender, paymentToken);
+        _transfer(address(this), msg.sender, tokenId);
+
+        emit Sold(tokenId, seller, msg.sender, listing.price, paymentToken);
+    }
+
+    // =============================================================
+    //                       BIDDING FUNCTIONS
+    // =============================================================
+
+    /**
+     * @notice Places a bid in ETH on a listed NFT.
+     * @dev The bid amount is sent with the transaction and held in escrow.
+     * Reverts if the bid is not higher than the current highest bid.
+     * @param tokenId The ID of the token to bid on.
+     */
+    function placeBid(uint256 tokenId) external payable whenNotPaused nonReentrant {
+        Listing memory listing = _listings[tokenId];
+        if (listing.price == 0) revert NotListed();
+        if (block.timestamp >= listing.expiresAt) revert ListingExpired();
+        if (listing.seller == msg.sender) revert SellerCannotBeBuyer();
+
+        Bid memory currentBid = _bids[tokenId];
+        if (msg.value <= currentBid.amount) revert BidTooLow();
+
+        if (currentBid.amount > 0) {
+            (bool success, ) = currentBid.bidder.call{value: currentBid.amount}("");
+            if (!success) revert TransferFailed();
         }
 
-        uint256 finalPrice = currentAuction.highestBid;
-        address seller = currentAuction.seller;
-        IERC721 nftContract = currentAuction.nftContract;
-        uint256 tokenId = currentAuction.tokenId;
-
-        // Calculate and collect platform fee
-        uint256 fee = (finalPrice * platformFeePercent) / 10000;
-        accumulatedFees += fee;
-        uint256 sellerProceeds = finalPrice - fee;
-
-        // Transfer NFT to winner
-        // This requires prior approval from the seller
-        nftContract.safeTransferFrom(seller, winner, tokenId);
-
-        // Transfer funds to seller
-        (bool success, ) = seller.call{value: sellerProceeds}("");
-        require(success, "Failed to send funds to seller");
-
-        emit AuctionEnded(_auctionId, winner, finalPrice);
+        _bids[tokenId] = Bid(msg.sender, msg.value);
+        emit BidPlaced(tokenId, msg.sender, msg.value);
     }
 
     /**
-     * @notice Allows the seller to cancel an auction before any bids have been placed.
-     * @param _auctionId The ID of the auction to cancel.
+     * @notice The seller accepts the current highest bid.
+     * @dev Transfers the NFT to the bidder and distributes funds.
+     * @param tokenId The ID of the token.
      */
-    function cancelAuction(uint256 _auctionId) external whenNotPaused {
-        Auction storage currentAuction = auctions[_auctionId];
+    function acceptBid(uint256 tokenId) external whenNotPaused nonReentrant {
+        Listing memory listing = _listings[tokenId];
+        Bid memory bid = _bids[tokenId];
+        if (listing.seller != msg.sender) revert NotSeller();
+        if (bid.amount == 0) revert NoActiveBid();
 
-        if (!currentAuction.started) revert AuctionDoesNotExist();
-        if (currentAuction.ended) revert AuctionAlreadyEnded();
-        if (msg.sender != currentAuction.seller) revert OnlySellerCanCancel();
-        if (currentAuction.highestBidder != address(0)) revert CannotCancelWithBids();
+        address seller = listing.seller;
+        address bidder = bid.bidder;
+        uint256 bidAmount = bid.amount;
 
-        currentAuction.ended = true;
+        delete _listings[tokenId];
+        delete _bids[tokenId];
 
-        emit AuctionCancelled(_auctionId, msg.sender);
+        _handlePayment(tokenId, bidAmount, seller, bidder, address(0)); // Bids are in ETH
+        _transfer(address(this), bidder, tokenId);
+
+        emit BidAccepted(tokenId, seller, bidder, bidAmount);
+        emit Sold(tokenId, seller, bidder, bidAmount, address(0));
+    }
+
+    /**
+     * @notice The seller rejects the current highest bid.
+     * @dev Refunds the bidder and allows for new, potentially higher bids.
+     * @param tokenId The ID of the token.
+     */
+    function rejectBid(uint256 tokenId) external whenNotPaused nonReentrant {
+        Listing memory listing = _listings[tokenId];
+        Bid memory bid = _bids[tokenId];
+        if (listing.seller != msg.sender) revert NotSeller();
+        if (bid.amount == 0) revert NoActiveBid();
+
+        address bidder = bid.bidder;
+        uint256 amount = bid.amount;
+        delete _bids[tokenId];
+
+        (bool success, ) = bidder.call{value: amount}("");
+        if (!success) revert TransferFailed();
+        emit BidRejected(tokenId, bidder, amount);
     }
 
     // =============================================================
@@ -300,16 +266,29 @@ contract NftAuctionMarketplace is Ownable, Pausable, ReentrancyGuard {
     // =============================================================
 
     /**
-     * @notice Pauses all major marketplace functions.
-     * @dev Only the contract owner can call this. Useful for emergencies.
+     * @notice Mints a new NFT and assigns it to an owner.
+     * @dev Sets the creator for royalty purposes. Only callable by the contract owner.
+     * @param to The address to receive the new NFT.
+     * @param tokenId The ID of the new token.
+     * @param uri The metadata URI for the new token.
      */
-    function pause() external onlyOwner {
+    function safeMint(address to, uint256 tokenId, string memory uri) external onlyOwner {
+        _safeMint(to, tokenId);
+        _setTokenURI(tokenId, uri);
+        _creators[tokenId] = to;
+    }
+
+    /**
+     * @notice Pauses critical marketplace functions in an emergency.
+     * @dev Only callable by the contract owner.
+     */
+    function emergencyPause() external onlyOwner {
         _pause();
     }
 
     /**
-     * @notice Unpauses the marketplace, resuming normal operations.
-     * @dev Only the contract owner can call this.
+     * @notice Resumes marketplace functions after a pause.
+     * @dev Only callable by the contract owner.
      */
     function unpause() external onlyOwner {
         _unpause();
@@ -317,40 +296,151 @@ contract NftAuctionMarketplace is Ownable, Pausable, ReentrancyGuard {
 
     /**
      * @notice Updates the platform fee percentage.
-     * @dev The fee is represented in basis points (1/100 of a percent). Max fee is 100% (10000).
-     * @param _newFeePercent The new fee in basis points (e.g., 500 for 5.00%).
+     * @param newFeePercentage The new fee in basis points (e.g., 300 for 3.0%). Max 10%.
      */
-    function setPlatformFee(uint256 _newFeePercent) external onlyOwner {
-        if (_newFeePercent > 10000) revert InvalidFeePercent(); // Max 100% fee
-        platformFeePercent = _newFeePercent;
-        emit PlatformFeeUpdated(_newFeePercent);
+    function setFeePercentage(uint256 newFeePercentage) external onlyOwner {
+        if (newFeePercentage > 1000) revert FeeTooHigh(); // Max 10%
+        _platformFeePercentage = newFeePercentage;
+        emit FeePercentageChanged(newFeePercentage);
     }
 
     /**
-     * @notice Allows the contract owner to withdraw accumulated platform fees.
+     * @notice Withdraws accumulated platform fees for a specific token.
+     * @param paymentToken The address of the token to withdraw, or address(0) for ETH.
      */
-    function withdrawFees() external onlyOwner nonReentrant {
-        uint256 amount = accumulatedFees;
-        if (amount == 0) revert ZeroAmount();
+    function withdrawFees(address paymentToken) external onlyOwner {
+        uint256 amount = accruedFees[paymentToken];
+        if (amount == 0) revert NoFeesToWithdraw();
 
-        accumulatedFees = 0; // State change before external call
-        
-        (bool success, ) = owner().call{value: amount}("");
-        require(success, "Fee withdrawal failed");
+        accruedFees[paymentToken] = 0;
 
-        emit FeesWithdrawn(amount);
+        if (paymentToken == address(0)) {
+            (bool success, ) = owner().call{value: amount}("");
+            if (!success) revert TransferFailed();
+        } else {
+            IERC20(paymentToken).transfer(owner(), amount);
+        }
+        emit FeesWithdrawn(paymentToken, amount);
     }
 
     // =============================================================
-    //                        VIEW FUNCTIONS
+    //                      INTERNAL & HELPERS
     // =============================================================
 
     /**
-     * @notice Returns the details of a specific auction.
-     * @param _auctionId The ID of the auction.
-     * @return A tuple containing all auction details.
+     * @notice Internal function to calculate and distribute funds from a sale.
      */
-    function getAuction(uint256 _auctionId) external view returns (Auction memory) {
-        return auctions[_auctionId];
+    function _handlePayment(uint256 tokenId, uint256 price, address seller, address buyer, address paymentToken)
+        internal
+    {
+        (address royaltyRecipient, uint256 royaltyAmount) = royaltyInfo(tokenId, price);
+        uint256 platformFee = (price * _platformFeePercentage) / 10000;
+        uint256 sellerProceeds = price - platformFee - royaltyAmount;
+
+        accruedFees[paymentToken] += platformFee;
+
+        if (paymentToken == address(0)) { // ETH payment
+            (bool s1, ) = seller.call{value: sellerProceeds}("");
+            if (!s1) revert TransferFailed();
+            if (royaltyAmount > 0) {
+                (bool s2, ) = royaltyRecipient.call{value: royaltyAmount}("");
+                if (!s2) revert TransferFailed();
+            }
+        } else { // ERC20 payment
+            IERC20 token = IERC20(paymentToken);
+            token.transfer(seller, sellerProceeds);
+            if (royaltyAmount > 0) {
+                token.transfer(royaltyRecipient, royaltyAmount);
+            }
+        }
+    }
+
+    /**
+     * @notice Internal function to refund the highest bid for a token, if one exists.
+     */
+    function _refundHighestBid(uint256 tokenId) internal {
+        Bid memory bid = _bids[tokenId];
+        if (bid.amount > 0) {
+            delete _bids[tokenId];
+            (bool success, ) = bid.bidder.call{value: bid.amount}("");
+            if (!success) revert TransferFailed();
+            emit BidRejected(tokenId, bid.bidder, bid.amount);
+        }
+    }
+
+    // =============================================================
+    //                       VIEW & OVERRIDES
+    // =============================================================
+
+    /**
+     * @notice Hook to prevent direct transfers of listed NFTs.
+     */
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
+        internal
+        override(ERC721)
+    {
+        super._beforeTokenTransfer(from, to, tokenId, batchSize);
+        if (from != address(this) && to != address(this) && from != address(0)) {
+            if (_listings[tokenId].price > 0) revert TokenIsListed();
+        }
+    }
+
+    /**
+     * @notice Returns royalty information for a given token sale, compliant with EIP-2981.
+     */
+    function royaltyInfo(uint256 tokenId, uint256 salePrice)
+        public
+        view
+        override
+        returns (address receiver, uint256 royaltyAmount)
+    {
+        address creator = _creators[tokenId];
+        if (creator == address(0)) {
+            return (address(0), 0);
+        }
+        return (creator, (salePrice * _royaltyPercentage) / 10000);
+    }
+
+    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage, ERC721Royalty) {
+        super._burn(tokenId);
+    }
+
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override(ERC721, ERC721URIStorage)
+        returns (string memory)
+    {
+        return super.tokenURI(tokenId);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, ERC721URIStorage, ERC721Royalty)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * @notice Returns the active listing details for a token.
+     */
+    function getListing(uint256 tokenId) external view returns (Listing memory) {
+        return _listings[tokenId];
+    }
+
+    /**
+     * @notice Returns the current highest bid for a token.
+     */
+    function getHighestBid(uint256 tokenId) external view returns (Bid memory) {
+        return _bids[tokenId];
+    }
+
+    /**
+     * @notice Returns the current platform fee percentage in basis points.
+     */
+    function getPlatformFeePercentage() external view returns (uint256) {
+        return _platformFeePercentage;
     }
 }

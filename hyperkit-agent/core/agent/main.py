@@ -139,6 +139,11 @@ class HyperKitAgent:
             config_loader = get_config()
             self.config = config_loader.to_dict()
 
+        # Validate configuration - fail hard if critical errors
+        from core.config.config_validator import ConfigValidator
+        validator = ConfigValidator(self.config)
+        validator.fail_if_invalid()  # Raises SystemExit if critical errors
+
         # Initialize free LLM router
         from core.llm.router import HybridLLMRouter
 
@@ -158,7 +163,7 @@ class HyperKitAgent:
         
         # Scaffolder removed - focusing on smart contracts only
         
-        # Initialize LazAI Integration (Real AI Agent)
+        # Initialize Alith SDK AI Agent (only AI integration - no LazAI)
         self.ai_agent = HyperKitAIAgent()
         
         # Initialize EDB Integration
@@ -229,30 +234,30 @@ class HyperKitAgent:
         enforce_production_mode("Contract Generation")
         
         try:
-            # Try LazAI integration first
-            if self.ai_agent and hasattr(self.ai_agent, 'lazai_integration'):
-                if self.ai_agent.lazai_integration.lazai_configured:
-                    try:
-                        logger.info("🤖 Using LazAI for contract generation")
-                        requirements = {
-                            "prompt": prompt,
-                            "context": context,
-                            "type": "smart_contract"
-                        }
-                        result = await self.ai_agent.generate_contract(requirements)
-                        if result and result.get("status") == "success":
-                            return {
-                                "status": "success",
-                                "contract_code": result.get("contract_code", ""),
-                                "method": "lazai",
-                                "provider": "LazAI Network",
-                                "metadata": {
-                                    "ai_powered": True,
-                                    "lazai_integration": True
-                                }
+            # Try Alith SDK AI generation (if configured)
+            if self.ai_agent and self.ai_agent.alith_configured:
+                try:
+                    logger.info("Using Alith SDK for contract generation")
+                    requirements = {
+                        "prompt": prompt,
+                        "context": context,
+                        "name": prompt[:50],  # Extract name from prompt
+                        "type": "smart_contract"
+                    }
+                    result = await self.ai_agent.generate_contract(requirements)
+                    if result:
+                        return {
+                            "status": "success",
+                            "contract_code": result,
+                            "method": "alith",
+                            "provider": "Alith SDK",
+                            "metadata": {
+                                "ai_powered": True,
+                                "alith_integration": True
                             }
-                    except Exception as e:
-                        logger.warning(f"LazAI generation failed, falling back to free LLM: {e}")
+                        }
+                except Exception as e:
+                    logger.warning(f"Alith SDK generation failed, falling back to free LLM: {e}")
 
             # Fallback to existing free LLM implementation
             logger.info("🆓 Using free LLM for contract generation")
@@ -396,26 +401,25 @@ class HyperKitAgent:
             Dictionary containing audit results and severity level
         """
         try:
-            # Try LazAI AI-powered audit first
-            if self.ai_agent and hasattr(self.ai_agent, 'lazai_integration'):
-                if self.ai_agent.lazai_integration.lazai_configured:
-                    try:
-                        logger.info("🤖 Using LazAI for AI-powered contract audit")
-                        result = await self.ai_agent.audit_contract(contract_code)
-                        if result and result.get("status") == "success":
-                            return {
-                                "status": "success",
-                                "results": result.get("results", {}),
-                                "severity": result.get("severity", "unknown"),
-                                "method": "lazai",
-                                "provider": "LazAI Network",
-                                "metadata": {
-                                    "ai_powered": True,
-                                    "lazai_integration": True
-                                }
+            # Try Alith SDK AI-powered audit (if configured)
+            if self.ai_agent and self.ai_agent.alith_configured:
+                try:
+                    logger.info("Using Alith SDK for AI-powered contract audit")
+                    result = await self.ai_agent.audit_contract(contract_code)
+                    if result:
+                        return {
+                            "status": "success",
+                            "results": result,
+                            "severity": result.get("severity", "unknown"),
+                            "method": "alith",
+                            "provider": "Alith SDK",
+                            "metadata": {
+                                "ai_powered": True,
+                                "alith_integration": True
                             }
-                    except Exception as e:
-                        logger.warning(f"LazAI audit failed, falling back to static analysis: {e}")
+                        }
+                except Exception as e:
+                    logger.warning(f"Alith SDK audit failed, falling back to static analysis: {e}")
 
             # Fallback to existing static analysis implementation
             logger.info("🔍 Using static analysis tools for contract audit")
@@ -946,11 +950,8 @@ class HyperKitAgent:
                 logger.info("Stage 5/5: Skipped (no deployment)")
                 testing_result = {"status": "skipped", "reason": "no_deployment"}
 
-            # Log audit results with deployment
-            if self.ai_agent and hasattr(self.ai_agent, 'lazai_integration') and deployment_result and deployment_result.get("status") == "success":
-                deployment_address = deployment_result.get("contract_address")
-                if deployment_address:
-                    self.ai_agent.lazai_integration.log_audit(deployment_address, audit_result.get("results", []))
+            # Log audit results with deployment (if Alith SDK supports on-chain logging)
+            # Note: Alith SDK on-chain audit logging can be added here when available
 
             # Return complete workflow results
             return {
@@ -1364,11 +1365,7 @@ Generate only the Solidity contract code, no explanations or markdown formatting
         """Handle simple contract workflow"""
         # Log audit onchain
         audit_log_result = None
-        if self.ai_agent and hasattr(self.ai_agent, 'lazai_integration'):
-            audit_log_result = await self.ai_agent.lazai_integration.log_audit(
-                deployment_result.get("address", ""),
-                audit_result
-            )
+        # Note: On-chain audit logging can be implemented with Alith SDK when available
         
         result = {
             "status": "success",
@@ -1488,14 +1485,8 @@ Generate only the Solidity contract code, no explanations or markdown formatting
             result = await public_contract_auditor.audit_by_address(address, network)
             
             if result.get("status") == "success":
-                # Log audit onchain using Alith
-                audit_log_result = None
-                if self.ai_agent and hasattr(self.ai_agent, 'lazai_integration'):
-                    audit_log_result = await self.ai_agent.lazai_integration.log_audit(
-                        address,
-                        result.get("analysis", {})
-                    )
-                result["audit_logged"] = audit_log_result
+                # Note: On-chain audit logging can be implemented with Alith SDK when available
+                result["audit_logged"] = None
             
             return result
             

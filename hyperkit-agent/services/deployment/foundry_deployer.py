@@ -180,6 +180,25 @@ class FoundryDeployer:
             
             logger.info(f"✅ Artifacts loaded from: {artifact_file}")
             
+            # Create versioned artifact copy for rollback support
+            version_id = None
+            try:
+                from services.deployment.artifact_versioning import ArtifactVersionManager
+                project_root = Path(__file__).parent.parent.parent.parent
+                version_manager = ArtifactVersionManager(project_root)
+                version_id = version_manager.create_version(
+                    contract_name,
+                    artifact_file,
+                    {
+                        "chain_id": chain_id,
+                        "rpc_url": rpc_url[:50] + "..." if len(rpc_url) > 50 else rpc_url,
+                        "deployer_address": account.address
+                    }
+                )
+                logger.info(f"✅ Artifact versioned: {version_id}")
+            except Exception as e:
+                logger.warning(f"Artifact versioning failed (non-critical): {e}")
+            
             # Debug: Log constructor info
             constructor_abi = None
             for item in abi:
@@ -303,12 +322,28 @@ class FoundryDeployer:
                 contract_address = receipt.contractAddress
                 logger.info(f"✅ Contract deployed at: {contract_address}")
                 
+                # Mark artifact version as deployed
+                if version_id:
+                    try:
+                        from services.deployment.artifact_versioning import ArtifactVersionManager
+                        project_root = Path(__file__).parent.parent.parent.parent
+                        version_manager = ArtifactVersionManager(project_root)
+                        version_manager.mark_deployed(version_id, {
+                            "contract_address": contract_address,
+                            "tx_hash": tx_hash.hex(),
+                            "block_number": receipt.blockNumber,
+                            "gas_used": receipt.gasUsed
+                        })
+                    except Exception as e:
+                        logger.warning(f"Failed to mark version as deployed: {e}")
+                
                 return {
                     "success": True,
                     "contract_address": contract_address,
                     "tx_hash": tx_hash.hex(),
                     "gas_used": receipt.gasUsed,
-                    "block_number": receipt.blockNumber
+                    "block_number": receipt.blockNumber,
+                    "artifact_version": version_id
                 }
             else:
                 return {
@@ -318,9 +353,32 @@ class FoundryDeployer:
                 }
                 
         except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
             logger.error(f"Deployment error: {str(e)}")
+            logger.error(f"Error traceback:\n{error_trace}")
+            
+            # Extract useful error context
+            error_type = type(e).__name__
+            error_details = {
+                "error_type": error_type,
+                "error_message": str(e),
+                "contract_name": contract_name,
+                "rpc_url": rpc_url[:50] + "..." if len(rpc_url) > 50 else rpc_url,
+                "chain_id": chain_id,
+                "deployer_address": account.address if 'account' in locals() else "unknown"
+            }
+            
             return {
                 "success": False,
-                "error": str(e),
-                "suggestions": ["Check contract code", "Verify network connection", "Check account balance"]
+                "error": f"{error_type}: {str(e)}",
+                "error_details": error_details,
+                "error_traceback": error_trace,
+                "suggestions": [
+                    f"Check contract code for {contract_name}",
+                    f"Verify RPC connection to {rpc_url[:30]}...",
+                    "Check account balance",
+                    "Verify network chain ID matches configuration",
+                    f"Check error type: {error_type}"
+                ]
             }
