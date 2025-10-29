@@ -11,21 +11,23 @@ from pathlib import Path
 from datetime import datetime
 
 def get_version():
-    """Get version from VERSION file"""
-    # Try current directory first, then parent
-    version_paths = [Path("VERSION"), Path("../VERSION"), Path("../../VERSION")]
+    """Get version from VERSION file (root directory only - source of truth)"""
+    # ROOT DIRECTORY ONLY - Single source of truth
+    script_dir = Path(__file__).parent.parent.parent
+    root_version = script_dir.parent / "VERSION"  # repo root VERSION
     
-    for version_path in version_paths:
-        if version_path.exists():
-            try:
-                with open(version_path, "r") as f:
-                    return f.read().strip()
-            except Exception as e:
-                print(f"ERROR reading VERSION file: {e}")
-                return None
+    if not root_version.exists():
+        print(f"ERROR: VERSION file not found in repo root: {root_version.resolve()}")
+        return None
     
-    print("ERROR: VERSION file not found")
-    return None
+    try:
+        with open(root_version, "r") as f:
+            version = f.read().strip()
+            print(f"📁 Using root VERSION file: {root_version.resolve()}")
+            return version
+    except Exception as e:
+        print(f"ERROR reading VERSION file: {e}")
+        return None
 
 def get_git_info():
     """Get git commit hash and date"""
@@ -116,10 +118,11 @@ def main():
         "REPORTS/**/*.md",            # Local reports
     ]
     
-    # Patterns for parent directory (repo root)
+    # Patterns for parent directory (repo root) - SOURCE OF TRUTH
     parent_patterns = [
-        "../README.md",               # Root README
-        "../CHANGELOG.md",            # Root CHANGELOG
+        "../README.md",               # Root README (source of truth)
+        "../CHANGELOG.md",            # Root CHANGELOG (source of truth)
+        "../SECURITY.md",             # Root SECURITY (source of truth)
         "../docs/**/*.md",            # Root docs if exists
     ]
     
