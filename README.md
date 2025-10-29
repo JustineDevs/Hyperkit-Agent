@@ -9,9 +9,9 @@
 > **AI-Powered Smart Contract Development, Security Auditing, and Multi-Chain Deployment Platform**
 
 <!-- VERSION_PLACEHOLDER -->
-**Version**: 1.5.0
-**Last Updated**: 2025-10-29
-**Commit**: 54620f1
+**Version**: 1.4.8
+**Last Updated**: 2025-01-29
+**Commit**: aac4687
 <!-- /VERSION_PLACEHOLDER -->
 
 > ⚠️ **HONEST STATUS BANNER**  
@@ -78,7 +78,7 @@ Navigate quickly to any section of the documentation:
 
 | Component | Status | Version | Notes |
 |-----------|--------|---------|-------|
-| **IPFS RAG** | ✅ Production Ready | v4.3.0 | Fully functional with real Pinata integration |
+| **IPFS RAG** | ✅ Production Ready | v4.3.0 | Fully functional with real Pinata integration - 13 templates uploaded (ERC20, ERC721, Staking, DAO, DEX, NFT, Lending, Security, Deployment) |
 | **Core System** | 🟡 Development-Grade | v4.1.11+ | Known deployment limitations |
 | **AI Generation** | ✅ Production | v1.2.0 | Alith SDK ONLY (fails hard if unavailable - no fallbacks) |
 | **Security Auditing** | ✅ Functional | v1.2.0 | Multi-source consensus + batch auditing |
@@ -113,7 +113,6 @@ Navigate quickly to any section of the documentation:
 | **Node.js** | 18+ | Package management and versioning | ✅ Required |
 | **Git** | Latest | Version control | ✅ Required |
 | **OpenZeppelin** | v5.0+ | Smart contract libraries | ✅ Installed |
-| **Docker** | Latest | Removed (not required) | ❌ Not Supported |
 | **Slither** | Latest | Static analysis | ✅ Required |
 | **Mythril** | Latest | Security analysis | ✅ Required |
 
@@ -156,11 +155,19 @@ HyperAgent uses Retrieval-Augmented Generation (RAG) to enhance all CLI commands
 
 | Template | Category | Description | CID |
 |----------|----------|-------------|-----|
-| `erc20-template` | contracts | Standard ERC20 token template | `QmYWkBLnCwUHtA4vgsFM4ePrCG9xpo2taHRsvEbbyz2JYs` |
-| `erc721-template` | contracts | NFT contract template | `QmQSsEKKG6JyMhM523ZPeMPDYCyiFxTVKTFqZerjABdTA4` |
-| `security-checklist` | audits | Comprehensive security audit checklist | `QmSecurityChecklist123` |
-| `contract-generation-prompt` | prompts | AI prompt engineering for contract generation | `QmPrompt123` |
-| `hardhat-deploy` | templates | Deployment script best practices | `QmXwNxjvkw9aLZARfvM1bPThKMuP9eqmzD4cevtswKsvvh` |
+| `erc20-template` | contracts | Standard ERC20 fungible token contract template | `QmYWkBLnCwUHtA4vgsFM4ePrCG9xpo2taHRsvEbbyz2JYs` |
+| `erc721-template` | contracts | Standard ERC721 non-fungible token (NFT) contract template | `QmQSsEKKG6JyMhM523ZPeMPDYCyiFxTVKTFqZerjABdTA4` |
+| `staking-pool-template` | DeFi | DeFi staking pool with rewards distribution, reentrancy protection, and pausable functionality | `QmcEC5GeKn1Fge6iefFhACnkmQ25ts3n1d9xkTwQD8nUtp` |
+| `dao-governance-template` | Governance | Complete DAO governance system with proposal creation, voting, time-locked execution, and governance token integration | `QmbXGATk4bAhgi33Lm7CS413vw8iv8WrRXCyr5stZZCFxt` |
+| `dex-template` | DeFi | Automated Market Maker (AMM) DEX with liquidity provision, token swapping, and constant product formula | `QmXTvTf6Titk1hNNpUacpwVmTwcH46inCzTWPdM8DzoWJE` |
+| `nft-collection-template` | NFT | Advanced ERC721 NFT collection with public/whitelist minting, enumerable, URI storage, burnable, and per-address limits | `QmZdQSxUaLjWberFA7D5igsgVgj7Nk97Ly4XgoApo53exR` |
+| `lending-pool-template` | DeFi | Collateralized lending protocol with interest rate model, liquidation mechanism, and health factor monitoring | `QmZoSGuk8W6Zf8L8JwJVWSkYXSj3GgcUWzJN5Un9ASqkEp` |
+| `security-checklist` | audits | Comprehensive security audit best-practices checklist template | `QmRv9N296TqgyJJUSdov5d9jk9jWQHQf8eMKJXfpPmkjAS` |
+| `gas-optimization-audit` | audits | Smart contract gas optimization audit template and checklist | `QmZ3QGB43iF9ntopnbpnPG5pnWxL3DcD2nnQBWU4ECiTY4` |
+| `contract-generation-prompt` | prompts | Prompt engineering template for general smart contract creation | `QmSC6QjuDrhNfpX9vA7P37wC4qXrMf8wYSscf2fLXugU5F` |
+| `generation-style-prompt` | prompts | Prompt template for controlling style or features of generated contracts | `QmeyKuYQoYUToTetEV5ti2t3nBJD5v8TrezXUdP1hbmoUs` |
+| `security-prompts` | prompts | Prompt set for security-focused generation and audit scenarios | `QmYS2tXdBNFj3Pie6RUi5WKFPzGgL173M1wrhQhwsmbmAV` |
+| `hardhat-deploy` | templates | All-in-one template for Hardhat deployment scripts, env config, and best-practice flows | `QmXwNxjvkw9aLZARfvM1bPThKMuP9eqmzD4cevtswKsvvh` |
 
 ### **RAG Features**
 
@@ -636,6 +643,10 @@ npm run reports:status         # Generate status report
 
 ---
 
+⚠️ **SOURCE OF TRUTH**: Project-level meta files (`VERSION`, `package.json`, `CHANGELOG.md`, `SECURITY.md`) exist **only in the root directory**. The `hyperkit-agent/` subdirectory contains package-specific logic only. This ensures a clean, professional OSS structure with no duplicate confusion.
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -965,9 +976,9 @@ Special thanks to all contributors, security researchers, and community members 
 ### 🔗 Quick Links
 
 - 🌐 **Website**: [Hyperionkit.xyz](http://hyperionkit.xyz/)
-- 📚 **Documentation**: [GitHub Docs](https://github.com/JustineDevs/Hyperkit-Agent)
+- 📚 **Documentation**: [GitHub Docs](https://github.com/Hyperionkit/Hyperkit-Agent)
 - 💬 **Discord**: [Join Community](https://discord.com/invite/MDh7jY8vWe)
-- 🐦 **Twitter**: [@HyperKitAgent](https://x.com/HyperionKit)
+- 🐦 **Twitter**: [@HyperKit](https://x.com/HyperionKit)
 - 📧 **Contact**: Hyperkitdev@gmail.com (for security issues)
 - 💰 **Bug Bounty**: See [SECURITY.md](./SECURITY.md)
 
@@ -985,4 +996,4 @@ Special thanks to all contributors, security researchers, and community members 
 
 ---
 
-**Last Updated**: 2025-10-26 | **Version**: 1.5.0+ | **Status**: Production Ready 🚀
+**Last Updated**: 2025-01-29 | **Version**: 1.4.8+ | **Status**: Production Ready 🚀
