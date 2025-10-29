@@ -1,6 +1,6 @@
 # Quick Start Guide - v1.5.0
 
-**Version**: 1.5.0  
+**Version**: 1.4.6  
 **Last Updated**: 2025-10-28
 
 ---

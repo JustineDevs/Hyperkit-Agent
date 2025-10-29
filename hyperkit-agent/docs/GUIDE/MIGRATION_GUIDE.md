@@ -1,6 +1,6 @@
 # Migration Guide - System Refactor v1.5.0
 
-**Version**: 1.5.0  
+**Version**: 1.4.6  
 **Date**: 2025-10-28  
 **Status**: Production Ready
 
