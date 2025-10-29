@@ -1,14 +1,14 @@
 <!-- AUDIT_BADGE_START -->
 **Implementation Status**: ✅ Verified  
-**Version**: 1.5.0  
-**Last Verified**: 2025-10-28  
-**Commit**: `d5465090`  
+**Version**: 1.5.1  
+**Last Verified**: 2025-10-29  
+**Commit**: `aac4687`  
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
 # HyperKit AI Agent - Technical Documentation
 
-**Version**: 1.5.0  
+**Version**: 1.5.1  
 **Last Updated**: October 27, 2025  
 **Status**: Production Ready
 
@@ -285,7 +285,7 @@ await verification.get_verification_status(verification_id: str) -> Dict[str, An
 ./hyperagent verify --address 0x123... --source-file my_contract.sol
 
 # Verify with specific compiler version
-./hyperagent verify --address 0x123... --compiler-version 0.8.19
+./hyperagent verify --address 0x123... --compiler-version 1.4.8
 ```
 
 #### System Monitoring
