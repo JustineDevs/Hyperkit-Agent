@@ -1,6 +1,6 @@
 # Configuration Guide - v1.5.0
 
-**Version**: 1.5.3  
+**Version**: 1.5.4  
 **Last Updated**: 2025-10-28
 
 ---
@@ -222,4 +222,4 @@ These configuration keys are **deprecated** and will trigger warnings:
 - 💰 **Bug Bounty**: See [SECURITY.md](../../../SECURITY.md)
 
 **Last Updated**: 2025-01-29  
-**Version**: 1.5.3
+**Version**: 1.5.4
