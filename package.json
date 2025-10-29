@@ -1,6 +1,6 @@
 {
   "name": "hyperkit",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "Web3 Development Platform with AI Generation and Cross-Chain DeFi Primitives",
   "main": "hyperkit-agent/cli/main.py",
   "scripts": {
