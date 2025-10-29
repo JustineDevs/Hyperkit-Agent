@@ -225,23 +225,75 @@ class FoundryDeployer:
             # Use provided constructor arguments or extract from code
             if constructor_args:
                 logger.info(f"Using provided constructor args: {constructor_args}")
-                tx = contract_factory.constructor(*constructor_args).build_transaction({
-                    'from': account.address,
-                    'nonce': w3.eth.get_transaction_count(account.address),
-                    'gas': 3000000,
-                    'gasPrice': w3.eth.gas_price,
-                    'chainId': chain_id
-                })
+                try:
+                    tx = contract_factory.constructor(*constructor_args).build_transaction({
+                        'from': account.address,
+                        'nonce': w3.eth.get_transaction_count(account.address),
+                        'gas': 3000000,
+                        'gasPrice': w3.eth.gas_price,
+                        'chainId': chain_id
+                    })
+                except Exception as e:
+                    # Constructor args mismatch - provide detailed error
+                    constructor_abi = None
+                    for item in abi:
+                        if item.get('type') == 'constructor':
+                            constructor_abi = item
+                            break
+                    
+                    expected_params = []
+                    if constructor_abi and constructor_abi.get('inputs'):
+                        expected_params = [f"{inp.get('type')} {inp.get('name', '')}" for inp in constructor_abi.get('inputs', [])]
+                    
+                    error_msg = (
+                        f"Constructor arguments mismatch: {str(e)}\n"
+                        f"Expected parameters: {expected_params}\n"
+                        f"Provided arguments: {constructor_args}\n"
+                        f"Provide correct constructor args or use --constructor-args flag"
+                    )
+                    logger.error(error_msg)
+                    raise ValueError(error_msg) from e
             else:
-                # Use ABI constructor info instead of source code parsing
+                # FIXED: Use source code parsing as primary, validate against ABI
+                from services.deployment.constructor_parser import ConstructorArgumentParser
+                parser = ConstructorArgumentParser()
+                
+                # Extract from source code (more reliable than ABI)
+                source_params = parser.extract_constructor_params(contract_source_code)
+                if source_params and source_params[1]:
+                    logger.info(f"Extracting constructor args from source code: {len(source_params[1])} params")
+                    # Generate args from source code parsing (more accurate)
+                    source_args = parser.generate_constructor_args(
+                        contract_source_code,
+                        account.address
+                    )
+                    logger.info(f"Generated from source code: {source_args}")
+                else:
+                    source_args = []
+                
+                # Validate against ABI as secondary check
                 constructor_abi = None
                 for item in abi:
                     if item.get('type') == 'constructor':
                         constructor_abi = item
                         break
                 
-                if constructor_abi and constructor_abi.get('inputs'):
-                    # Generate arguments based on ABI constructor inputs
+                abi_param_count = len(constructor_abi.get('inputs', [])) if constructor_abi else 0
+                source_param_count = len(source_params[1]) if source_params and source_params[1] else 0
+                
+                if abi_param_count != source_param_count:
+                    logger.warning(
+                        f"Param count mismatch: ABI={abi_param_count}, Source={source_param_count}. "
+                        f"Using source code params (more reliable)."
+                    )
+                
+                # Use source code args if available, fallback to ABI
+                if source_args:
+                    final_args = source_args
+                    logger.info(f"Using source-code-extracted constructor args: {final_args}")
+                elif constructor_abi and constructor_abi.get('inputs'):
+                    # Fallback to ABI-based generation
+                    logger.warning("Falling back to ABI-based arg generation (less reliable)")
                     abi_args = []
                     for input_param in constructor_abi.get('inputs', []):
                         param_type = input_param.get('type', '')
@@ -251,7 +303,6 @@ class FoundryDeployer:
                         
                         # Handle tuple types (structs)
                         if param_type.startswith('tuple'):
-                            # Convert struct to tuple
                             struct_values = []
                             for component in input_param.get('components', []):
                                 comp_type = component.get('type', '')
@@ -260,10 +311,8 @@ class FoundryDeployer:
                             abi_args.append(tuple(struct_values))
                         # Handle arrays
                         elif param_type.endswith('[]'):
-                            # Dynamic array - return empty array
                             abi_args.append([])
                         elif '[' in param_type and ']' in param_type:
-                            # Fixed-size array - parse size and generate array
                             match = re.match(r'(\w+)\[(\d+)\]', param_type)
                             if match:
                                 base_type = match.group(1)
@@ -277,9 +326,9 @@ class FoundryDeployer:
                             abi_args.append(account.address)
                         elif param_type == 'uint256':
                             if 'initialSupply' in param_name.lower():
-                                abi_args.append(1000000)  # Initial supply
+                                abi_args.append(1000000)
                             elif 'maxSupply' in param_name.lower():
-                                abi_args.append(10000000)  # Max supply
+                                abi_args.append(10000000)
                             else:
                                 abi_args.append(1000000)
                         elif param_type == 'string':
@@ -294,24 +343,46 @@ class FoundryDeployer:
                         else:
                             abi_args.append(0)
                     
-                    logger.info(f"Using ABI-based constructor args: {abi_args}")
-                    tx = contract_factory.constructor(*abi_args).build_transaction({
-                        'from': account.address,
-                        'nonce': w3.eth.get_transaction_count(account.address),
-                        'gas': 3000000,
-                        'gasPrice': w3.eth.gas_price,
-                        'chainId': chain_id
-                    })
+                    final_args = abi_args
+                    logger.info(f"Using ABI-based constructor args: {final_args}")
                 else:
                     # No constructor or no inputs - deploy without arguments
                     logger.info("No constructor inputs found, deploying without arguments")
-                    tx = contract_factory.constructor().build_transaction({
-                        'from': account.address,
-                        'nonce': w3.eth.get_transaction_count(account.address),
-                        'gas': 3000000,
-                        'gasPrice': w3.eth.gas_price,
-                        'chainId': chain_id
-                    })
+                    final_args = []
+                
+                # Build transaction with validated args
+                try:
+                    if final_args:
+                        tx = contract_factory.constructor(*final_args).build_transaction({
+                            'from': account.address,
+                            'nonce': w3.eth.get_transaction_count(account.address),
+                            'gas': 3000000,
+                            'gasPrice': w3.eth.gas_price,
+                            'chainId': chain_id
+                        })
+                    else:
+                        tx = contract_factory.constructor().build_transaction({
+                            'from': account.address,
+                            'nonce': w3.eth.get_transaction_count(account.address),
+                            'gas': 3000000,
+                            'gasPrice': w3.eth.gas_price,
+                            'chainId': chain_id
+                        })
+                except Exception as e:
+                    # Constructor args mismatch - provide detailed error
+                    expected_params = []
+                    if constructor_abi and constructor_abi.get('inputs'):
+                        expected_params = [f"{inp.get('type')} {inp.get('name', '')}" for inp in constructor_abi.get('inputs', [])]
+                    
+                    error_msg = (
+                        f"Constructor arguments mismatch: {str(e)}\n"
+                        f"Expected parameters: {expected_params}\n"
+                        f"Generated arguments: {final_args}\n"
+                        f"Contract: {contract_name}\n"
+                        f"Fix: Provide correct constructor args via --constructor-args flag"
+                    )
+                    logger.error(f"❌ {error_msg}")
+                    raise ValueError(error_msg) from e
             
             # Sign and send transaction
             signed_tx = account.sign_transaction(tx)
