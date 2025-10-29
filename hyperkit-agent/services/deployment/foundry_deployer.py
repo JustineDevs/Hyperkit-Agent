@@ -125,9 +125,10 @@ class FoundryDeployer:
             logger.info(f"✅ Using account: {account.address}")
             
             # ✅ Use existing compiled artifacts
-            # Look for existing artifacts in the project
-            project_root = Path(__file__).parent.parent.parent
-            out_dir = project_root / "out"
+            # Look for existing artifacts in the foundry project (hyperkit-agent/)
+            # Path from services/deployment/foundry_deployer.py: .. -> services, .. -> hyperkit-agent (foundry project root)
+            foundry_project_dir = Path(__file__).parent.parent.parent
+            out_dir = foundry_project_dir / "out"
             
             if not out_dir.exists():
                 return {
@@ -188,8 +189,10 @@ class FoundryDeployer:
             version_id = None
             try:
                 from services.deployment.artifact_versioning import ArtifactVersionManager
-                project_root = Path(__file__).parent.parent.parent.parent
-                version_manager = ArtifactVersionManager(project_root)
+                # Use foundry project directory for artifact versioning
+                # Path from services/deployment/foundry_deployer.py: .. -> services, .. -> hyperkit-agent
+                foundry_project_dir = Path(__file__).parent.parent.parent
+                version_manager = ArtifactVersionManager(foundry_project_dir)
                 version_id = version_manager.create_version(
                     contract_name,
                     artifact_file,
@@ -401,8 +404,10 @@ class FoundryDeployer:
                 if version_id:
                     try:
                         from services.deployment.artifact_versioning import ArtifactVersionManager
-                        project_root = Path(__file__).parent.parent.parent.parent
-                        version_manager = ArtifactVersionManager(project_root)
+                        # Use foundry project directory for artifact versioning
+                        # Path from services/deployment/foundry_deployer.py: .. -> services, .. -> hyperkit-agent
+                        foundry_project_dir = Path(__file__).parent.parent.parent
+                        version_manager = ArtifactVersionManager(foundry_project_dir)
                         version_manager.mark_deployed(version_id, {
                             "contract_address": contract_address,
                             "tx_hash": tx_hash.hex(),
