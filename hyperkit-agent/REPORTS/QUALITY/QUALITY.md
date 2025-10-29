@@ -408,9 +408,9 @@ Supported networks:
 # CLI Command Validation Report
 
 <!-- VERSION_PLACEHOLDER -->
-**Version**: 1.5.0
+**Version**: 1.5.1
 **Last Updated**: 2025-10-29
-**Commit**: 54620f1
+**Commit**: 62e6cfe
 <!-- /VERSION_PLACEHOLDER -->
 
 ## Summary
@@ -519,9 +519,9 @@ Supported networks:
 # Production Readiness Criteria
 
 <!-- VERSION_PLACEHOLDER -->
-**Version**: 1.5.0
+**Version**: 1.5.1
 **Last Updated**: 2025-10-29
-**Commit**: 54620f1
+**Commit**: 62e6cfe
 <!-- /VERSION_PLACEHOLDER -->
 
 ## Overview
