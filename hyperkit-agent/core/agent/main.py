@@ -147,24 +147,14 @@ class HyperKitAgent:
         # Initialize Intent Router
         self.intent_router = IntentRouter()
         
-        # Initialize Obsidian RAG
-        from services.rag.obsidian_rag_enhanced import ObsidianRAGEnhanced
-
-        # Get RAG config from the config system
-        rag_config = self.config.get("rag_system", {})
-        mcp_enabled = rag_config.get("mcp_enabled", False)
-        
-        # Prepare MCP config
-        mcp_config = {
-            "obsidian_host": "host.docker.internal",
-            "obsidian_api_key": self.config.get("OBSIDIAN_MCP_API_KEY")
-        }
-        
-        self.rag = ObsidianRAGEnhanced(
-            vault_path="",  # MCP Docker handles vault access
-            use_mcp=mcp_enabled,
-            mcp_config=mcp_config,
-        )
+        # Initialize IPFS RAG system (replaces Obsidian)
+        try:
+            from services.rag.ipfs_rag import get_ipfs_rag
+            self.rag = get_ipfs_rag(self.config)
+            logger.info("IPFS RAG system initialized successfully")
+        except Exception as e:
+            logger.warning(f"IPFS RAG initialization failed: {e}")
+            self.rag = None
         
         # Scaffolder removed - focusing on smart contracts only
         

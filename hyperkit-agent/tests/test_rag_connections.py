@@ -19,8 +19,13 @@ import logging
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from services.rag.enhanced_retriever import get_rag_retriever
-from services.rag.obsidian_rag_enhanced import test_obsidian_rag
+# from services.rag.obsidian_rag_enhanced import test_obsidian_rag  # Removed
 from core.config.loader import get_config
+
+# Mock test_obsidian_rag function since module was removed
+async def test_obsidian_rag():
+    """Mock Obsidian RAG test - module was removed"""
+    return False  # Not available
 
 # Suppress warnings
 logging.getLogger('httpx').setLevel(logging.WARNING)
