@@ -472,6 +472,24 @@ class HyperKitAgent:
             logger.info(f"Compiling {contract_name} with Foundry...")
             logger.info(f"Contract file: {contract_file}")
             
+            # Check and install dependencies if needed
+            lib_dir = project_root / "lib"
+            openzeppelin_dir = lib_dir / "openzeppelin-contracts"
+            
+            if not openzeppelin_dir.exists() and "@openzeppelin" in contract_code:
+                logger.info("OpenZeppelin contracts not found, installing...")
+                install_result = subprocess.run(
+                    ["forge", "install", "OpenZeppelin/openzeppelin-contracts", "--no-commit"],
+                    cwd=str(project_root),
+                    capture_output=True,
+                    text=True,
+                    timeout=60
+                )
+                if install_result.returncode != 0:
+                    logger.warning(f"Dependency installation had issues: {install_result.stderr}")
+                else:
+                    logger.info("✅ OpenZeppelin dependencies installed")
+            
             # Run forge build
             result = subprocess.run(
                 ["forge", "build"],
