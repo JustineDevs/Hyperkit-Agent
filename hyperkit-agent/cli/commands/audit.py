@@ -77,7 +77,7 @@ def contract(ctx, contract, address, network, output, format, severity, use_rag)
                 
             else:  # address-based audit
                 console.print(f"🔍 Auditing contract address: {address}")
-                console.print(f"🌐 Network: {network}")
+                console.print(f"Network: {network}")
                 task = progress.add_task("Fetching contract from blockchain...", total=None)
                 
                 # Fetch contract from blockchain
@@ -87,7 +87,7 @@ def contract(ctx, contract, address, network, output, format, severity, use_rag)
                 
                 if not contract_result or not contract_result.get("source"):
                     console.print(f"Error: Could not fetch contract source for {address}", style="red")
-                    console.print(f"💡 This contract may not be verified on the explorer", style="yellow")
+                    console.print(f"Note: This contract may not be verified on the explorer", style="yellow")
                     return
                 
                 contract_code = contract_result["source"]
@@ -116,7 +116,7 @@ def contract(ctx, contract, address, network, output, format, severity, use_rag)
                             f.write(f"**Provider:** {result.get('provider', 'AI')}\n\n")
                             f.write(f"**Results:**\n")
                             f.write(json.dumps(result.get('results', {}), indent=2))
-                    console.print(f"📄 Report saved to: {output}")
+                    console.print(f"Report saved to: {output}")
             else:
                 console.print(f"Audit failed: {result.get('error', 'Unknown error')}", style="red")
                 
@@ -178,7 +178,7 @@ def batch(ctx, directory, file, recursive, network, output, format, severity):
         console.print(f"Found {len(contracts_to_audit)} Solidity contracts")
     
     elif file:
-        console.print(f"📄 Reading contracts from: {file}")
+        console.print(f"Reading contracts from: {file}")
         
         if not Path(file).exists():
             console.print(f"Error: File not found: {file}", style="red")

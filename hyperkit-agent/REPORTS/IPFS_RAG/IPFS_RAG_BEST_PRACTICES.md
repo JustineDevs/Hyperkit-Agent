@@ -56,7 +56,7 @@ Update your documentation:
 ```markdown
 ## Latest Vector Store
 - **CID**: QmS8i2hKniwWMVsYA83y9EaGzBURCdje8JhGpo1AU9tsjx
-- **Version**: 1.4.6
+- **Version**: 1.5.0
 - **Size**: ~2MB compressed
 - **Download**: `hyperagent setup_rag_vectors --fetch-cid QmS8i...`
 ```
@@ -388,7 +388,7 @@ This implementation has been **verified and tested** with:
 ---
 
 **Last Updated**: October 27, 2025  
-**Version**: 1.4.6  
+**Version**: 1.5.0  
 **Status**: ✅ Production Ready
 
 **Your IPFS RAG system is modern, scalable, and fully operational!** 🚀

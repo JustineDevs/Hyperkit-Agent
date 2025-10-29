@@ -31,7 +31,7 @@ def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_ins
     """
     Run complete AI-powered smart contract workflow with RAG template integration
     
-    Stages: Generate → Audit → Deploy → Verify → Test
+    Stages: Generate -> Audit -> Deploy -> Verify -> Test
     
     \b
     Examples:
@@ -218,11 +218,11 @@ def _display_success_results(result: dict, network: str, test_only: bool, verbos
             )
             
             # Show detailed error information
-            console.print(f"\n[red bold]🚨 DEPLOYMENT FAILED[/red bold]")
+            console.print(f"\n[red bold]DEPLOYMENT FAILED[/red bold]")
             console.print(f"[red]Error: {error_msg}[/red]")
             
             if suggestions:
-                console.print(f"\n[yellow]💡 Suggestions:[/yellow]")
+                console.print(f"\n[yellow]Suggestions:[/yellow]")
                 for suggestion in suggestions:
                     console.print(f"  • {suggestion}")
             
@@ -279,8 +279,8 @@ def _display_success_results(result: dict, network: str, test_only: bool, verbos
     if deploy and deploy.get('status') in ['deployed', 'success']:
         contract_address = deploy.get('address', '')
         if contract_address:
-            console.print(f"\n[bold green]📍 Contract Address:[/bold green] [white]{contract_address}[/white]")
-            console.print(f"[bold green]🔗 Explorer URL:[/bold green] [link=https://hyperion-testnet-explorer.metisdevops.link/address/{contract_address}]https://hyperion-testnet-explorer.metisdevops.link/address/{contract_address}[/link]")
+            console.print(f"\n[bold green]Contract Address:[/bold green] [white]{contract_address}[/white]")
+            console.print(f"[bold green]Explorer URL:[/bold green] [link=https://hyperion-testnet-explorer.metisdevops.link/address/{contract_address}]https://hyperion-testnet-explorer.metisdevops.link/address/{contract_address}[/link]")
     
     # Display file path
     if gen and gen.get('path'):

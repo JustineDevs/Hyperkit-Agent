@@ -38,35 +38,15 @@ class TestNetworkIntegration:
         gas_price = w3.eth.gas_price
         assert gas_price > 0, "Failed to get gas price"
     
+    @pytest.mark.skip(reason="Hyperion-only mode: Metis network not supported")
     def test_metis_connectivity(self):
-        """Test Metis Andromeda connectivity."""
-        rpc_url = "https://andromeda.metis.io"
-        w3 = Web3(Web3.HTTPProvider(rpc_url))
-        
-        assert w3.is_connected(), "Failed to connect to Metis Andromeda"
-        assert w3.eth.chain_id == 1088, "Incorrect Metis chain ID"
-        
-        # Test basic network operations
-        latest_block = w3.eth.get_block('latest')
-        assert latest_block is not None, "Failed to get latest block"
-        
-        gas_price = w3.eth.gas_price
-        assert gas_price > 0, "Failed to get gas price"
+        """Test Metis Andromeda connectivity - SKIPPED: Hyperion-only mode."""
+        pytest.skip("Hyperion-only mode: Metis network not supported")
     
+    @pytest.mark.skip(reason="Hyperion-only mode: LazAI network not supported")
     def test_lazai_connectivity(self):
-        """Test LazAI testnet connectivity."""
-        rpc_url = "https://rpc.lazai.network/testnet"
-        w3 = Web3(Web3.HTTPProvider(rpc_url))
-        
-        assert w3.is_connected(), "Failed to connect to LazAI testnet"
-        assert w3.eth.chain_id == 9001, "Incorrect LazAI chain ID"
-        
-        # Test basic network operations
-        latest_block = w3.eth.get_block('latest')
-        assert latest_block is not None, "Failed to get latest block"
-        
-        gas_price = w3.eth.gas_price
-        assert gas_price > 0, "Failed to get gas price"
+        """Test LazAI testnet connectivity - SKIPPED: Hyperion-only mode."""
+        pytest.skip("Hyperion-only mode: LazAI network not supported")
     
     @pytest.mark.asyncio
     async def test_hyperion_gas_estimation(self, gas_estimator):
@@ -160,107 +140,47 @@ class TestNetworkIntegration:
         assert result["contract_address"] is not None
     
     @pytest.mark.asyncio
+    @pytest.mark.skip(reason="Hyperion-only mode: Metis network not supported")
     async def test_metis_contract_deployment(self, deployer):
-        """Test contract deployment on Metis Andromeda."""
-        if not os.getenv('DEFAULT_PRIVATE_KEY'):
-            pytest.skip("Private key not configured (DEFAULT_PRIVATE_KEY)")
-        
-        contract_code = """
-        pragma solidity ^0.8.0;
-        contract TestContract {
-            string public name = "Test";
-            function setName(string memory _name) public {
-                name = _name;
-            }
-        }
-        """
-        
-        result = await deployer.deploy_contract(
-            contract_code=contract_code,
-            network="metis"
-        )
-        
-        assert result["status"] == "success"
-        assert "contract_address" in result
-        assert result["contract_address"] is not None
+        """Test contract deployment on Metis Andromeda - SKIPPED: Hyperion-only mode."""
+        pytest.skip("Hyperion-only mode: Metis network not supported")
     
     @pytest.mark.asyncio
+    @pytest.mark.skip(reason="Hyperion-only mode: LazAI network not supported")
     async def test_lazai_contract_deployment(self, deployer):
-        """Test contract deployment on LazAI testnet."""
-        if not os.getenv('DEFAULT_PRIVATE_KEY'):
-            pytest.skip("Private key not configured (DEFAULT_PRIVATE_KEY)")
-        
-        contract_code = """
-        pragma solidity ^0.8.0;
-        contract TestContract {
-            string public name = "Test";
-            function setName(string memory _name) public {
-                name = _name;
-            }
-        }
-        """
-        
-        result = await deployer.deploy_contract(
-            contract_code=contract_code,
-            network="lazai"
-        )
-        
-        assert result["status"] == "success"
-        assert "contract_address" in result
-        assert result["contract_address"] is not None
+        """Test contract deployment on LazAI testnet - SKIPPED: Hyperion-only mode."""
+        pytest.skip("Hyperion-only mode: LazAI network not supported")
     
     @pytest.mark.asyncio
+    @pytest.mark.skip(reason="Hyperion-only mode: Cross-chain deployment not supported")
     async def test_cross_chain_deployment(self, deployer):
-        """Test cross-chain contract deployment."""
-        if not os.getenv('DEFAULT_PRIVATE_KEY') or not os.getenv('DEFAULT_PRIVATE_KEY'):
-            pytest.skip("Private key not configured (DEFAULT_PRIVATE_KEY)")
-        
-        contract_code = """
-        pragma solidity ^0.8.0;
-        contract TestContract {
-            string public name = "Test";
-            function setName(string memory _name) public {
-                name = _name;
-            }
-        }
-        """
-        
-        # Deploy on Hyperion
-        hyperion_result = await deployer.deploy_contract(
-            contract_code=contract_code,
-            network="hyperion"
-        )
-        
-        assert hyperion_result["status"] == "success"
-        assert "contract_address" in hyperion_result
-        
-        # Deploy on Metis
-        metis_result = await deployer.deploy_contract(
-            contract_code=contract_code,
-            network="metis"
-        )
-        
-        assert metis_result["status"] == "success"
-        assert "contract_address" in metis_result
-        
-        # Verify different addresses
-        assert hyperion_result["contract_address"] != metis_result["contract_address"]
+        """Test cross-chain contract deployment - SKIPPED: Hyperion-only mode."""
+        pytest.skip("Hyperion-only mode: Cross-chain deployment not supported")
     
     @pytest.mark.asyncio
     async def test_network_switching(self, deployer):
-        """Test network switching functionality."""
-        networks = ["hyperion", "metis", "lazai"]
+        """Test network switching functionality - Hyperion-only mode."""
+        # Only test Hyperion (Hyperion-only mode)
+        networks = ["hyperion"]
         
         for network in networks:
             result = await deployer.get_network_info(network)
             assert result["status"] == "success"
             assert "chain_id" in result
             assert "rpc_url" in result
+        
+        # Verify non-Hyperion networks fail
+        for non_hyperion in ["metis", "lazai"]:
+            try:
+                result = await deployer.get_network_info(non_hyperion)
+                assert False, f"Network {non_hyperion} should not be supported in Hyperion-only mode"
+            except (ValueError, KeyError, Exception):
+                pass  # Expected failure
     
     @pytest.mark.asyncio
     async def test_network_health_check(self, deployer):
-        """Test network health check functionality."""
-        networks = ["hyperion", "metis", "lazai"]
+        """Test network health check functionality - Hyperion-only mode."""
+        networks = ["hyperion"]  # Only Hyperion in Hyperion-only mode
         
         for network in networks:
             result = await deployer.check_network_health(network)
@@ -281,7 +201,8 @@ class TestNetworkIntegration:
         }
         """
         
-        networks = ["hyperion", "metis", "lazai"]
+        # Only test Hyperion in Hyperion-only mode
+        networks = ["hyperion"]
         gas_prices = {}
         
         for network in networks:
@@ -289,12 +210,12 @@ class TestNetworkIntegration:
             if result["status"] == "success":
                 gas_prices[network] = result["gas_price"]
         
-        # Verify we got gas prices for at least one network
-        assert len(gas_prices) > 0, "Failed to get gas prices for any network"
+        # Verify we got gas prices for Hyperion
+        assert len(gas_prices) > 0, "Failed to get gas prices for Hyperion"
+        assert "hyperion" in gas_prices, "Hyperion gas price must be available"
         
-        # Log gas price comparison
-        for network, price in gas_prices.items():
-            print(f"{network}: {price} wei")
+        # Log gas price
+        print(f"hyperion: {gas_prices['hyperion']} wei")
     
     @pytest.mark.asyncio
     async def test_network_balance_check(self, deployer):

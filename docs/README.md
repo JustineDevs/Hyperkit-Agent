@@ -90,7 +90,7 @@
 → [VERSION_MANAGEMENT.md](VERSION_MANAGEMENT.md)
 
 **Developer onboarding**
-→ `/hyperkit-agent/Docs/TEAM/DEVELOPER_GUIDE.md`
+→ `/hyperkit-agent/docs/TEAM/DEVELOPER_GUIDE.md`
 
 **Technical API reference**
 → `/hyperkit-agent/docs/API_REFERENCE.md`
@@ -103,7 +103,7 @@
 ## 🌟 Key Features
 
 - **AI-Powered Development**: LLM-driven smart contract generation
-- **Multi-Chain Support**: Deploy to Hyperion, Ethereum, Polygon, and more
+- **Hyperion-Only Mode**: Exclusively deploy to Hyperion testnet (Chain ID: 133717)
 - **Security-First**: Comprehensive auditing with Slither, Mythril, and AI
 - **IPFS RAG**: Decentralized vector storage (production-ready)
 - **Complete CLI**: Full command-line interface for all operations

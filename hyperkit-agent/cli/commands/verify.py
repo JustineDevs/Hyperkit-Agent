@@ -21,7 +21,8 @@ def verify_group():
 @click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
 @click.option('--source', '-s', help='Source code file')
 @click.option('--constructor-args', help='Constructor arguments')
-def contract(address, network, source, constructor_args):
+@click.pass_context
+def contract(ctx, address, network, source, constructor_args):
     """Verify a smart contract on block explorer"""
     # Hardcode Hyperion - no network selection
     network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag

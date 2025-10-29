@@ -12,13 +12,27 @@ from datetime import datetime
 
 def get_current_version():
     """Get current version from VERSION file."""
-    version_file = Path("VERSION")
-    if not version_file.exists():
+    # Try multiple locations: current dir, parent dir, repo root
+    version_paths = [
+        Path("VERSION"),  # Current directory
+        Path("../VERSION"),  # Parent directory (repo root)
+        Path("../../VERSION"),  # Two levels up
+    ]
+    
+    version_file = None
+    for vpath in version_paths:
+        if vpath.exists():
+            version_file = vpath
+            break
+    
+    if not version_file:
         print("❌ VERSION file not found")
+        print("   Searched in: current directory, ../, ../../")
         sys.exit(1)
     
     version = version_file.read_text().strip()
     print(f"📊 Current version: {version}")
+    print(f"📁 Found VERSION file: {version_file.resolve()}")
     return version
 
 def bump_version(version, bump_type):
@@ -47,20 +61,49 @@ def bump_version(version, bump_type):
 
 def update_version_file(new_version):
     """Update VERSION file."""
-    version_file = Path("VERSION")
+    # Try multiple locations: current dir, parent dir, repo root
+    version_paths = [
+        Path("VERSION"),  # Current directory
+        Path("../VERSION"),  # Parent directory (repo root)
+        Path("../../VERSION"),  # Two levels up
+    ]
+    
+    version_file = None
+    for vpath in version_paths:
+        if vpath.exists():
+            version_file = vpath
+            break
+    
+    if not version_file:
+        # If not found, use repo root (parent directory)
+        version_file = Path("../VERSION")
+    
     version_file.write_text(f"{new_version}\n")
-    print(f"✅ Updated VERSION file: {new_version}")
+    print(f"✅ Updated VERSION file: {version_file.resolve()} → {new_version}")
 
 def update_package_json(new_version):
     """Update package.json version."""
-    package_json = Path("package.json")
-    if package_json.exists():
+    # Check both current dir and parent (repo root)
+    package_json_paths = [
+        Path("../package.json"),  # Repo root (most likely)
+        Path("package.json"),  # Current directory
+    ]
+    
+    package_json = None
+    for pkg_path in package_json_paths:
+        if pkg_path.exists():
+            package_json = pkg_path
+            break
+    
+    if package_json and package_json.exists():
         content = package_json.read_text()
         # Update version in package.json
         pattern = r'("version"\s*:\s*")([^"]+)(")'
         updated = re.sub(pattern, f'\\g<1>{new_version}\\g<3>', content)
         package_json.write_text(updated)
-        print(f"✅ Updated package.json: {new_version}")
+        print(f"✅ Updated package.json ({package_json.resolve()}): {new_version}")
+    else:
+        print(f"⚠️  package.json not found, skipping")
 
 def update_pyproject_toml(new_version):
     """Update pyproject.toml version."""
@@ -78,8 +121,22 @@ def create_git_commit(new_version, bump_type):
     import subprocess
     
     try:
+        # Find VERSION file location
+        version_paths = ["VERSION", "../VERSION", "../../VERSION"]
+        version_file = None
+        for vpath in version_paths:
+            if Path(vpath).exists():
+                version_file = vpath
+                break
+        
+        if not version_file:
+            version_file = "../VERSION"  # Default to repo root
+        
         # Stage changes
-        subprocess.run(["git", "add", "VERSION", "package.json", "hyperkit-agent/pyproject.toml"], check=True)
+        files_to_add = [version_file, "../package.json", "pyproject.toml"]
+        # Filter out non-existent files
+        files_to_add = [f for f in files_to_add if Path(f).exists()]
+        subprocess.run(["git", "add"] + files_to_add, check=True)
         
         # Create commit
         commit_msg = f"chore: bump version to {new_version} ({bump_type})"

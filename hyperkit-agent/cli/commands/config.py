@@ -125,24 +125,30 @@ def reset():
     try:
         config_file = Path("config.yaml")
         
-        # Create default configuration
+        # Create default configuration (Hyperion-only)
         default_config = {
             "networks": {
                 "hyperion": {
                     "rpc_url": "https://hyperion-testnet.metisdevops.link",
-                    "chain_id": 1001,
-                    "explorer_url": "https://hyperion-testnet-explorer.metisdevops.link"
-                },
-                "ethereum": {
-                    "rpc_url": "https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY",
-                    "chain_id": 1,
-                    "explorer_url": "https://etherscan.io"
+                    "chain_id": 133717,
+                    "explorer_url": "https://hyperion-testnet-explorer.metisdevops.link",
+                    "status": "testnet",
+                    "default": True
                 }
             },
             "ai_providers": {
-                "openai_api_key": "",
-                "google_api_key": "",
-                "lazai_rsa_private_key": ""
+                "openai": {
+                    "api_key": "",
+                    "model": "gpt-4"
+                },
+                "google": {
+                    "api_key": "",
+                    "model": "gemini-pro"
+                },
+                "anthropic": {
+                    "api_key": "",
+                    "model": "claude-3-sonnet"
+                }
             },
             "security": {
                 "private_key": "",

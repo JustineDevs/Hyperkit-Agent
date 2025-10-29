@@ -155,9 +155,9 @@ def templates(category):
 @click.option('--output', '-o', help='Output directory')
 def from_template(template, output):
     """Generate contract from specific template"""
-    console.print(f"📄 Generating from template: {template}")
+    console.print(f"Generating from template: {template}")
     
     # TODO: Implement template-based generation
-    console.print(f"✅ Generated contract from template: {template}")
+    console.print(f"Generated contract from template: {template}")
     if output:
-        console.print(f"📁 Output directory: {output}")
+        console.print(f"Output directory: {output}")

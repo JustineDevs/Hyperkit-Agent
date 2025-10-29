@@ -202,6 +202,6 @@ Future multi-network support is documented in:
 **Status**: ✅ **COMPLETE** - Hyperion-only refactor fully implemented per CTO audit requirements.
 
 **Date**: October 28, 2025
-**Version**: 1.4.6
+**Version**: 1.5.0
 **Total Tasks Completed**: 14/16 (87.5%)
 

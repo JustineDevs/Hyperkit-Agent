@@ -59,12 +59,12 @@ def contract(ctx, contract, network, private_key, gas_limit, gas_price, construc
         console.print("[yellow]Using Hyperion (only supported network)[/yellow]")
     
     console.print(f"Deploying contract: {contract}")
-    console.print(f"🌐 Network: Hyperion (exclusive deployment target)")
+    console.print(f"Network: Hyperion (exclusive deployment target)")
     
     # Load RAG deployment template if enabled
     deployment_template = None
     if use_rag:
-        console.print("📦 Fetching RAG deployment template for enhanced deployment...", style="blue")
+        console.print("Fetching RAG deployment template for enhanced deployment...", style="blue")
         try:
             deployment_template = asyncio.run(get_template('hardhat-deploy'))
             if deployment_template:
@@ -79,14 +79,14 @@ def contract(ctx, contract, network, private_key, gas_limit, gas_price, construc
     if constructor_args:
         try:
             parsed_args = json.loads(constructor_args)
-            console.print(f"📝 Using provided constructor args: {parsed_args}")
+            console.print(f"Using provided constructor args: {parsed_args}")
         except json.JSONDecodeError as e:
             console.print(f"Invalid JSON in --constructor-args: {e}", style="red")
-            console.print("💡 Format: '[\"0x1234...\", 1000000, \"MyToken\"]'")
+            console.print("Format: '[\"0x1234...\", 1000000, \"MyToken\"]'")
             return
     
     if constructor_file:
-        console.print(f"📄 Loading constructor args from: {constructor_file}")
+        console.print(f"Loading constructor args from: {constructor_file}")
     
     try:
         # Initialize agent
@@ -109,14 +109,14 @@ def contract(ctx, contract, network, private_key, gas_limit, gas_price, construc
             
             if result.get('status') in ['success', 'deployed']:
                 console.print(f"Contract deployed successfully")
-                console.print(f"📄 Contract address: {result.get('address', 'N/A')}")
-                console.print(f"🔗 Transaction hash: {result.get('tx_hash', 'N/A')}")
-                console.print(f"🌐 Network: {network}")
-                console.print(f"🔗 Explorer: https://hyperion-testnet-explorer.metisdevops.link/address/{result.get('address', '')}")
+                console.print(f"Contract address: {result.get('address', 'N/A')}")
+                console.print(f"Transaction hash: {result.get('tx_hash', 'N/A')}")
+                console.print(f"Network: {network}")
+                console.print(f"Explorer: https://hyperion-testnet-explorer.metisdevops.link/address/{result.get('address', '')}")
             else:
                 console.print(f"Deployment failed: {result.get('error', 'Unknown error')}", style="red")
                 if result.get('recovery_suggestions'):
-                    console.print("\n💡 Suggestions:")
+                    console.print("\nSuggestions:")
                     for suggestion in result.get('recovery_suggestions', []):
                         console.print(f"  • {suggestion}")
                 
@@ -148,9 +148,9 @@ def status(network):
 @click.option('--network', '-n', default='hyperion', help='Network')
 def info(address, network):
     """Get deployment information"""
-    console.print(f"📋 Contract Information")
-    console.print(f"📍 Address: {address}")
-    console.print(f"🌐 Network: {network}")
+    console.print(f"Contract Information")
+    console.print(f"Address: {address}")
+    console.print(f"Network: {network}")
     
     # Retrieve contract information
     try:

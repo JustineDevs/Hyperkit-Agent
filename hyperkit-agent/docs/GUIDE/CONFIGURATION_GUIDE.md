@@ -1,6 +1,6 @@
 # Configuration Guide - v1.5.0
 
-**Version**: 1.4.6  
+**Version**: 1.5.0  
 **Last Updated**: 2025-10-28
 
 ---
@@ -46,30 +46,22 @@ PINATA_SECRET_KEY=your_pinata_secret_key
 
 **Note**: Obsidian/MCP RAG is deprecated. IPFS Pinata is now the exclusive RAG backend.
 
-### 3. Network Configuration
+### 3. Network Configuration - HYPERION-ONLY MODE
 
-#### Hyperion Testnet
+**🔴 CRITICAL**: Hyperion is the **EXCLUSIVE** deployment target. All other networks are not supported in code.
+
+#### Hyperion Testnet (EXCLUSIVE)
 ```bash
 HYPERION_RPC_URL=https://hyperion-testnet.metisdevops.link
-HYPERION_CHAIN_ID=133717  # Updated from 1001
+HYPERION_CHAIN_ID=133717
 HYPERION_EXPLORER_URL=https://hyperion-testnet-explorer.metisdevops.link
+HYPERION_EXPLORER_API_KEY=your_hyperion_explorer_api_key_here  # Optional
 ```
 
-#### LazAI Testnet (Network Only)
-```bash
-LAZAI_RPC_URL=https://rpc.lazai.network/testnet
-LAZAI_CHAIN_ID=9001  # Updated from 8888
-LAZAI_EXPLORER_URL=https://testnet-explorer.lazai.network
-```
-
-**Important**: LazAI is a blockchain network (RPC endpoint), NOT an AI agent. Do not use LAZAI_API_KEY for AI functions.
-
-#### Metis Mainnet
-```bash
-METIS_RPC_URL=https://andromeda.metis.io/?owner=1088
-METIS_CHAIN_ID=1088
-METIS_EXPLORER_URL=https://andromeda-explorer.metis.io
-```
+**Note**: 
+- Hyperion is the only supported network in production code.
+- Future network support (LazAI, Metis) is **documentation-only** - see [ROADMAP.md](../ROADMAP.md).
+- No multi-network code exists - system will fail clearly if non-Hyperion network is attempted.
 
 ### 4. Wallet Configuration
 

@@ -1,6 +1,6 @@
 {
   "name": "hyperkit-agent",
-  "version": "4.3.1",
+  "version": "1.4.7",
   "description": "HyperKit AI Agent - Smart Contract Generation, Auditing, and Deployment",
   "main": "core/agent/main.py",
   "scripts": {
@@ -23,7 +23,7 @@
     "changeset:publish": "changeset publish",
     "changeset:status": "changeset status",
     "changeset:check": "changeset status --since HEAD~1",
-    "version": "changeset version",
+    "version": "1.4.7",
     "release": "changeset publish",
     "precommit": "changeset status --since HEAD~1 && npm run format:check && npm run lint && npm run type-check && npm run security"
   },

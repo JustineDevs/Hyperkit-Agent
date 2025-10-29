@@ -1,6 +1,6 @@
 # Migration Guide - System Refactor v1.5.0
 
-**Version**: 1.4.6  
+**Version**: 1.5.0  
 **Date**: 2025-10-28  
 **Status**: Production Ready
 
@@ -52,13 +52,13 @@ PINATA_SECRET_KEY=your_pinata_secret_key
 # Get keys from: https://app.pinata.cloud/
 ```
 
-#### Update Network Chain IDs
+#### Update Network Chain IDs - HYPERION-ONLY
 ```bash
 # Update Hyperion chain ID:
 HYPERION_CHAIN_ID=133717  # Changed from 1001
 
-# Update LazAI chain ID (if using):
-LAZAI_CHAIN_ID=9001  # Changed from 8888
+# Note: LazAI and Metis network configs removed - Hyperion-only mode
+# Future network support documented in ROADMAP.md only
 ```
 
 ### 2. Update Configuration Files
@@ -68,12 +68,13 @@ LAZAI_CHAIN_ID=9001  # Changed from 8888
 networks:
   hyperion:
     chain_id: 133717  # Updated from 1001
+    rpc_url: https://hyperion-testnet.metisdevops.link
+    explorer_url: https://hyperion-testnet-explorer.metisdevops.link
+    default: true
     # ... rest of config
   
-  lazai:
-    chain_id: 9001  # Updated from 8888 (if used)
-    # Note: LazAI is network-only, NOT an AI agent
-    # ... rest of config
+  # Note: LazAI and Metis network configs removed - Hyperion-only mode
+  # Future network support documented in ROADMAP.md only
 ```
 
 ### 3. Code Changes (If Custom Code)

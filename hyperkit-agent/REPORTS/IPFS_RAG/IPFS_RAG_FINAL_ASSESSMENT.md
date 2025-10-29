@@ -309,6 +309,6 @@ The IPFS RAG implementation:
 ---
 
 **Last Updated**: October 27, 2025  
-**Version**: 1.4.6  
+**Version**: 1.5.0  
 **Assessment**: ✅ **IPFS RAG - PRODUCTION READY**  
 **System-Wide**: See `HONEST_STATUS_ASSESSMENT.md`

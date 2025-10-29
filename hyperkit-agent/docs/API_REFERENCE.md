@@ -1,6 +1,6 @@
 <!-- AUDIT_BADGE_START -->
 **Implementation Status**: ✅ Verified  
-**Version**: 1.4.6  
+**Version**: 1.5.0  
 **Last Verified**: 2025-10-28  
 **Commit**: `d5465090`  
 **Branch**: `main`  
@@ -8,7 +8,7 @@
 
 # HyperKit AI Agent - API Reference
 
-**Version**: 1.4.6  
+**Version**: 1.5.0  
 **Base URL**: `https://api.hyperkit.ai`  
 **Last Updated**: October 27, 2025
 

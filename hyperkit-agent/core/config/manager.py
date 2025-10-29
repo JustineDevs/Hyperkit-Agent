@@ -65,22 +65,13 @@ class ConfigManager:
             # 'LAZAI_RSA_PRIVATE_KEY': os.getenv('LAZAI_RSA_PRIVATE_KEY'),  # Not used
             'IPFS_JWT': os.getenv('IPFS_JWT'),
             
-            # Blockchain Network Configuration
+            # Blockchain Network Configuration - HYPERION-ONLY
             'DEFAULT_NETWORK': os.getenv('DEFAULT_NETWORK', 'hyperion'),
             'HYPERION_RPC_URL': os.getenv('HYPERION_RPC_URL'),
             'HYPERION_CHAIN_ID': os.getenv('HYPERION_CHAIN_ID', '133717'),
             'HYPERION_EXPLORER_URL': os.getenv('HYPERION_EXPLORER_URL'),
-            # HYPERION-ONLY: Metis and LazAI network configs removed
+            # HYPERION-ONLY: Legacy network configs (Ethereum, Polygon, Arbitrum, Metis, LazAI) removed
             # Future network support documented in ROADMAP.md only
-            'ETHEREUM_RPC_URL': os.getenv('ETHEREUM_RPC_URL'),
-            'ETHEREUM_CHAIN_ID': os.getenv('ETHEREUM_CHAIN_ID', '1'),
-            'ETHEREUM_EXPLORER_URL': os.getenv('ETHEREUM_EXPLORER_URL'),
-            'POLYGON_RPC_URL': os.getenv('POLYGON_RPC_URL'),
-            'POLYGON_CHAIN_ID': os.getenv('POLYGON_CHAIN_ID', '137'),
-            'POLYGON_EXPLORER_URL': os.getenv('POLYGON_EXPLORER_URL'),
-            'ARBITRUM_RPC_URL': os.getenv('ARBITRUM_RPC_URL'),
-            'ARBITRUM_CHAIN_ID': os.getenv('ARBITRUM_CHAIN_ID', '42161'),
-            'ARBITRUM_EXPLORER_URL': os.getenv('ARBITRUM_EXPLORER_URL'),
             
             # Wallet Configuration
             'DEFAULT_PRIVATE_KEY': os.getenv('DEFAULT_PRIVATE_KEY'),
@@ -90,11 +81,9 @@ class ConfigManager:
             'PINATA_API_KEY': os.getenv('PINATA_API_KEY'),
             'PINATA_SECRET_KEY': os.getenv('PINATA_SECRET_KEY') or os.getenv('PINATA_API_SECRET'),  # Support both names
             
-            # Explorer API Keys
-            'ETHEREUM_EXPLORER_API_KEY': os.getenv('ETHEREUM_EXPLORER_API_KEY'),
-            'POLYGON_EXPLORER_API_KEY': os.getenv('POLYGON_EXPLORER_API_KEY'),
-            'ARBITRUM_EXPLORER_API_KEY': os.getenv('ARBITRUM_EXPLORER_API_KEY'),
-            'METIS_EXPLORER_API_KEY': os.getenv('METIS_EXPLORER_API_KEY'),
+            # Explorer API Keys - HYPERION-ONLY
+            'HYPERION_EXPLORER_API_KEY': os.getenv('HYPERION_EXPLORER_API_KEY'),
+            # Legacy explorer API keys (Ethereum, Polygon, Arbitrum, Metis, LazAI) removed - Hyperion-only mode
             
             # IPFS Pinata RAG Configuration (Obsidian removed - IPFS Pinata exclusive)
             

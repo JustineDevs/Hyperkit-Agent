@@ -169,5 +169,5 @@ See [IPFS_RAG_FINAL_ASSESSMENT.md](IPFS_RAG_FINAL_ASSESSMENT.md) for comprehensi
 ---
 
 **Last Updated**: October 27, 2025  
-**Version**: 1.4.6  
+**Version**: 1.5.0  
 **Status**: ✅ Production Ready

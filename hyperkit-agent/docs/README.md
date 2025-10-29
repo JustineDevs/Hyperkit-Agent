@@ -105,5 +105,5 @@ When adding new documentation:
 ---
 
 **Last Updated**: October 27, 2025  
-**Version**: 1.4.6  
+**Version**: 1.5.0  
 **Maintained By**: Documentation Team

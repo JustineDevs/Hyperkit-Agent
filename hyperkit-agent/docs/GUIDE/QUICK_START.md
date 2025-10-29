@@ -1,6 +1,6 @@
 # Quick Start Guide - v1.5.0
 
-**Version**: 1.4.6  
+**Version**: 1.5.0  
 **Last Updated**: 2025-10-28
 
 ---
@@ -75,8 +75,9 @@ hyperagent batch-audit --directory contracts/
 
 ### Deployment
 ```bash
-# Deploy to Hyperion testnet
-hyperagent deploy contract MyToken.sol --network hyperion
+# Deploy to Hyperion testnet (exclusive deployment target)
+hyperagent deploy contract MyToken.sol
+# Note: --network flag is deprecated/hidden - Hyperion is hardcoded
 
 # Deploy with constructor arguments
 hyperagent deploy contract MyToken.sol --constructor-args '["MyToken", "MTK", 1000000]'

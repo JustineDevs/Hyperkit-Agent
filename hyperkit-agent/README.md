@@ -47,11 +47,11 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 
 | Network | Chain ID | Status | RPC Endpoint | Explorer | Features |
 |---------|----------|--------|--------------|----------|----------|
-| **Hyperion Testnet** | 133717 | ✅ Testnet | https://hyperion-testnet.metisdevops.link | [Explorer](https://hyperion-testnet-explorer.metisdevops.link) | Deploy, Verify, Monitor |
-| **LazAI Testnet** | 9001 | ✅ Testnet | https://rpc.lazai.network/testnet | [Explorer](https://testnet-explorer.lazai.network) | Deploy, Verify (Network only - not AI agent) |
-| **Metis Mainnet** | 1088 | ✅ Production | https://andromeda.metis.io/?owner=1088 | [Explorer](https://andromeda-explorer.metis.io) | Full Support |
+| **Hyperion Testnet** | 133717 | ✅ **EXCLUSIVE** | https://hyperion-testnet.metisdevops.link | [Explorer](https://hyperion-testnet-explorer.metisdevops.link) | Deploy, Verify, Monitor |
 
-> **Note**: All networks optimized for AI-powered smart contract deployment and verification.
+> **🔴 HYPERION-ONLY MODE**: Hyperion is the **EXCLUSIVE** deployment target. All CLI commands are hardcoded to Hyperion.  
+> **Future network support (LazAI, Metis) is DOCUMENTATION ONLY** - see [ROADMAP.md](./docs/ROADMAP.md).  
+> **No multi-network code exists** - system will fail clearly if non-Hyperion network is attempted.
 
 ---
 
@@ -742,4 +742,4 @@ Special thanks to all contributors, security researchers, and community members 
 
 ---
 
-**Last Updated**: 2025-10-26 | **Version**: 1.4.6+ | **Status**: Production Ready 🚀
+**Last Updated**: 2025-10-26 | **Version**: 1.5.0+ | **Status**: Production Ready 🚀

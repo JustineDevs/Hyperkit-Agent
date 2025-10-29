@@ -161,5 +161,5 @@ Your IPFS RAG system is **FULLY OPERATIONAL** with **REAL** decentralized storag
 ---
 
 **Date**: October 27, 2025  
-**Version**: 1.4.6  
+**Version**: 1.5.0  
 **Status**: ✅ REAL IPFS INTEGRATION WORKING

@@ -59,13 +59,11 @@ def mock_config():
             "hyperion": {
                 "rpc_url": "https://hyperion-testnet.metisdevops.link",
                 "chain_id": 133717,  # Correct chain ID
-                "explorer_url": "https://hyperion-testnet-explorer.metisdevops.link"
-            },
-            "lazai": {
-                "rpc_url": "https://rpc.lazai.network/testnet",
-                "chain_id": 9001,  # Correct chain ID (LazAI is network-only, NOT AI agent)
-                "explorer_url": "https://testnet-explorer.lazai.network"
+                "explorer_url": "https://hyperion-testnet-explorer.metisdevops.link",
+                "default": True
             }
+            # HYPERION-ONLY: LazAI and Metis network configs removed
+            # Future network support documented in ROADMAP.md only
         },
         "test_mode": True
     }
