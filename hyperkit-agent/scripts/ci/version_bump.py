@@ -11,28 +11,19 @@ from pathlib import Path
 from datetime import datetime
 
 def get_current_version():
-    """Get current version from VERSION file."""
-    # Try multiple locations: current dir, parent dir, repo root
-    version_paths = [
-        Path("VERSION"),  # Current directory
-        Path("../VERSION"),  # Parent directory (repo root)
-        Path("../../VERSION"),  # Two levels up
-    ]
+    """Get current version from VERSION file (root directory only - source of truth)."""
+    # ROOT DIRECTORY ONLY - Single source of truth
+    script_dir = Path(__file__).parent.parent.parent
+    root_version = script_dir.parent / "VERSION"  # repo root VERSION
     
-    version_file = None
-    for vpath in version_paths:
-        if vpath.exists():
-            version_file = vpath
-            break
-    
-    if not version_file:
-        print("❌ VERSION file not found")
-        print("   Searched in: current directory, ../, ../../")
+    if not root_version.exists():
+        print("❌ VERSION file not found in repo root")
+        print(f"   Expected: {root_version.resolve()}")
         sys.exit(1)
     
-    version = version_file.read_text().strip()
+    version = root_version.read_text().strip()
     print(f"📊 Current version: {version}")
-    print(f"📁 Found VERSION file: {version_file.resolve()}")
+    print(f"📁 Using root VERSION file: {root_version.resolve()}")
     return version
 
 def bump_version(version, bump_type):
@@ -60,97 +51,339 @@ def bump_version(version, bump_type):
     return new_version
 
 def update_version_file(new_version):
-    """Update VERSION file."""
-    # Try multiple locations: current dir, parent dir, repo root
-    version_paths = [
-        Path("VERSION"),  # Current directory
-        Path("../VERSION"),  # Parent directory (repo root)
-        Path("../../VERSION"),  # Two levels up
-    ]
+    """Update VERSION file (root directory only - source of truth)."""
+    # ROOT DIRECTORY ONLY - Single source of truth
+    script_dir = Path(__file__).parent.parent.parent
+    root_version = script_dir.parent / "VERSION"  # repo root VERSION
     
-    version_file = None
-    for vpath in version_paths:
-        if vpath.exists():
-            version_file = vpath
-            break
-    
-    if not version_file:
-        # If not found, use repo root (parent directory)
-        version_file = Path("../VERSION")
-    
-    version_file.write_text(f"{new_version}\n")
-    print(f"✅ Updated VERSION file: {version_file.resolve()} → {new_version}")
+    root_version.write_text(f"{new_version}\n")
+    print(f"✅ Updated root VERSION file: {root_version.resolve()} → {new_version}")
 
 def update_package_json(new_version):
-    """Update package.json version."""
-    # Check both current dir and parent (repo root)
-    package_json_paths = [
-        Path("../package.json"),  # Repo root (most likely)
-        Path("package.json"),  # Current directory
-    ]
+    """Update package.json version (root directory only - source of truth)."""
+    # ROOT DIRECTORY ONLY - Single source of truth
+    script_dir = Path(__file__).parent.parent.parent
+    root_package_json = script_dir.parent / "package.json"  # repo root package.json
     
-    package_json = None
-    for pkg_path in package_json_paths:
-        if pkg_path.exists():
-            package_json = pkg_path
-            break
-    
-    if package_json and package_json.exists():
-        content = package_json.read_text()
+    if root_package_json.exists():
+        content = root_package_json.read_text()
         # Update version in package.json
         pattern = r'("version"\s*:\s*")([^"]+)(")'
         updated = re.sub(pattern, f'\\g<1>{new_version}\\g<3>', content)
-        package_json.write_text(updated)
-        print(f"✅ Updated package.json ({package_json.resolve()}): {new_version}")
+        root_package_json.write_text(updated)
+        print(f"✅ Updated root package.json: {root_package_json.resolve()} → {new_version}")
     else:
-        print(f"⚠️  package.json not found, skipping")
+        print(f"⚠️  Root package.json not found at {root_package_json.resolve()}, skipping")
 
 def update_pyproject_toml(new_version):
-    """Update pyproject.toml version."""
-    pyproject_toml = Path("hyperkit-agent/pyproject.toml")
+    """Update pyproject.toml version (relative to repo root - single source of truth)."""
+    script_dir = Path(__file__).parent.parent.parent
+    repo_root = script_dir.parent
+    pyproject_toml = repo_root / "hyperkit-agent" / "pyproject.toml"
+    
     if pyproject_toml.exists():
         content = pyproject_toml.read_text()
         # Update version in pyproject.toml
         pattern = r'(version\s*=\s*")([^"]+)(")'
         updated = re.sub(pattern, f'\\g<1>{new_version}\\g<3>', content)
         pyproject_toml.write_text(updated)
-        print(f"✅ Updated pyproject.toml: {new_version}")
+        print(f"✅ Updated pyproject.toml: {pyproject_toml.relative_to(repo_root)} → {new_version}")
+    else:
+        print(f"⚠️  pyproject.toml not found at {pyproject_toml.resolve()}, skipping")
 
-def create_git_commit(new_version, bump_type):
-    """Create git commit for version bump."""
+def get_commit_message_for_file(file_path, new_version, bump_type):
+    """Generate professional commit message based on file path and context."""
+    file_path_str = str(file_path)
+    file_name = file_path.name.lower()
+    
+    # Version files - special handling
+    if file_name == "version":
+        return f"chore(release): bump version to {new_version} ({bump_type})"
+    
+    if "package.json" in file_name:
+        return f"chore(release): update package.json version to {new_version}"
+    
+    if "pyproject.toml" in file_name:
+        return f"chore(release): update pyproject.toml version to {new_version}"
+    
+    # Documentation files
+    if file_path_str.endswith(".md"):
+        if "readme" in file_name:
+            return f"docs: update README version to {new_version}"
+        elif "changelog" in file_name:
+            return f"docs: update CHANGELOG for version {new_version}"
+        elif "security" in file_name:
+            return f"docs: update SECURITY version to {new_version}"
+        elif "/docs/" in file_path_str.lower() or "\\docs\\" in file_path_str.lower():
+            return f"docs: update documentation for version {new_version}"
+        elif "/reports/" in file_path_str.lower() or "\\reports\\" in file_path_str.lower():
+            return f"docs: update reports for version {new_version}"
+        else:
+            return f"docs: update {file_path.name} for version {new_version}"
+    
+    # Configuration files
+    if file_name in ["config.yaml", "config.yml", ".env", ".env.example"]:
+        return f"config: update {file_path.name} for version {new_version}"
+    
+    # Scripts
+    if file_path_str.endswith((".py", ".js", ".sh", ".bash")):
+        if "/scripts/" in file_path_str.lower() or "\\scripts\\" in file_path_str.lower():
+            script_type = "ci" if "/ci/" in file_path_str.lower() or "\\ci\\" in file_path_str.lower() else "script"
+            return f"chore({script_type}): update {file_path.name} for version {new_version}"
+        else:
+            return f"chore: update {file_path.name} for version {new_version}"
+    
+    # Workflow files
+    if ".github/workflows" in file_path_str or ".github\\workflows" in file_path_str:
+        return f"ci: update workflow {file_path.name} for version {new_version}"
+    
+    # Root-level files
+    if "/" not in file_path_str.replace("\\", "/") or file_path_str.count("/") == 1 or file_path_str.count("\\") <= 2:
+        if file_path_str.endswith((".json", ".yaml", ".yml", ".toml", ".txt")):
+            return f"chore: update {file_path.name} for version {new_version}"
+    
+    # Default professional message
+    return f"chore: update {file_path.name} for version {new_version}"
+
+def get_all_changed_files(repo_root):
+    """Get all changed files in the repository (including untracked)."""
     import subprocess
     
     try:
-        # Find VERSION file location
-        version_paths = ["VERSION", "../VERSION", "../../VERSION"]
-        version_file = None
-        for vpath in version_paths:
-            if Path(vpath).exists():
-                version_file = vpath
-                break
+        # Get all modified, added, and untracked files
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+            check=True
+        )
         
-        if not version_file:
-            version_file = "../VERSION"  # Default to repo root
+        files = []
+        for line in result.stdout.strip().split("\n"):
+            if not line.strip():
+                continue
+            
+            # Parse git status output: "XY filename"
+            # X = status of index, Y = status of work tree
+            # M = modified, A = added, ?? = untracked
+            status = line[:2]
+            file_path = line[3:].strip().strip('"')
+            
+            # Skip deleted files (marked with "D" or " D")
+            if status[0] == "D" or status[1] == "D":
+                continue
+            
+            # Get full path relative to repo root
+            full_path = repo_root / file_path
+            if full_path.exists():
+                files.append(full_path)
         
-        # Stage changes
-        files_to_add = [version_file, "../package.json", "pyproject.toml"]
-        # Filter out non-existent files
-        files_to_add = [f for f in files_to_add if Path(f).exists()]
-        subprocess.run(["git", "add"] + files_to_add, check=True)
+        return files
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️  Could not get changed files: {e}")
+        return []
+    except Exception as e:
+        print(f"⚠️  Error getting changed files: {e}")
+        return []
+
+def commit_all_changed_files(repo_root, new_version, bump_type):
+    """Commit all changed files individually with professional commit messages."""
+    import subprocess
+    
+    changed_files = get_all_changed_files(repo_root)
+    
+    if not changed_files:
+        print("ℹ️  No changed files detected")
+        return 0
+    
+    print(f"\n📋 Found {len(changed_files)} changed file(s)")
+    
+    # Group files for better organization (but still commit individually)
+    version_files = []
+    doc_files = []
+    config_files = []
+    script_files = []
+    workflow_files = []
+    other_files = []
+    
+    for file_path in changed_files:
+        file_path_str = str(file_path)
+        file_name = file_path.name.lower()
         
-        # Create commit
-        commit_msg = f"chore: bump version to {new_version} ({bump_type})"
-        subprocess.run(["git", "commit", "-m", commit_msg], check=True)
-        print(f"✅ Created git commit: {commit_msg}")
+        if file_name == "version" or "package.json" in file_name or "pyproject.toml" in file_name:
+            version_files.append(file_path)
+        elif file_path_str.endswith(".md"):
+            doc_files.append(file_path)
+        elif file_name in ["config.yaml", "config.yml", ".env", ".env.example"] or ".github" in file_path_str:
+            if ".github/workflows" in file_path_str or ".github\\workflows" in file_path_str:
+                workflow_files.append(file_path)
+            else:
+                config_files.append(file_path)
+        elif file_path_str.endswith((".py", ".js", ".sh", ".bash")):
+            script_files.append(file_path)
+        else:
+            other_files.append(file_path)
+    
+    committed_count = 0
+    
+    # Commit version files first (highest priority)
+    for file_path in version_files:
+        relative_path = file_path.relative_to(repo_root)
+        commit_msg = get_commit_message_for_file(file_path, new_version, bump_type)
         
-        # Create tag
+        try:
+            subprocess.run(["git", "add", str(relative_path)], cwd=str(repo_root), check=True)
+            subprocess.run(
+                ["git", "commit", "-m", commit_msg],
+                cwd=str(repo_root),
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            print(f"✅ Committed: {relative_path}")
+            committed_count += 1
+        except subprocess.CalledProcessError as e:
+            if "nothing to commit" in (e.stderr or "").lower():
+                print(f"ℹ️  No changes: {relative_path}")
+            else:
+                print(f"⚠️  Failed to commit {relative_path}: {e}")
+    
+    # Commit documentation files
+    for file_path in doc_files:
+        relative_path = file_path.relative_to(repo_root)
+        commit_msg = get_commit_message_for_file(file_path, new_version, bump_type)
+        
+        try:
+            subprocess.run(["git", "add", str(relative_path)], cwd=str(repo_root), check=True)
+            subprocess.run(
+                ["git", "commit", "-m", commit_msg],
+                cwd=str(repo_root),
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            print(f"✅ Committed: {relative_path}")
+            committed_count += 1
+        except subprocess.CalledProcessError as e:
+            if "nothing to commit" in (e.stderr or "").lower():
+                print(f"ℹ️  No changes: {relative_path}")
+            else:
+                print(f"⚠️  Failed to commit {relative_path}: {e}")
+    
+    # Commit config and workflow files
+    for file_path in config_files + workflow_files:
+        relative_path = file_path.relative_to(repo_root)
+        commit_msg = get_commit_message_for_file(file_path, new_version, bump_type)
+        
+        try:
+            subprocess.run(["git", "add", str(relative_path)], cwd=str(repo_root), check=True)
+            subprocess.run(
+                ["git", "commit", "-m", commit_msg],
+                cwd=str(repo_root),
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            print(f"✅ Committed: {relative_path}")
+            committed_count += 1
+        except subprocess.CalledProcessError as e:
+            if "nothing to commit" in (e.stderr or "").lower():
+                print(f"ℹ️  No changes: {relative_path}")
+            else:
+                print(f"⚠️  Failed to commit {relative_path}: {e}")
+    
+    # Commit script files
+    for file_path in script_files:
+        relative_path = file_path.relative_to(repo_root)
+        commit_msg = get_commit_message_for_file(file_path, new_version, bump_type)
+        
+        try:
+            subprocess.run(["git", "add", str(relative_path)], cwd=str(repo_root), check=True)
+            subprocess.run(
+                ["git", "commit", "-m", commit_msg],
+                cwd=str(repo_root),
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            print(f"✅ Committed: {relative_path}")
+            committed_count += 1
+        except subprocess.CalledProcessError as e:
+            if "nothing to commit" in (e.stderr or "").lower():
+                print(f"ℹ️  No changes: {relative_path}")
+            else:
+                print(f"⚠️  Failed to commit {relative_path}: {e}")
+    
+    # Commit other files
+    for file_path in other_files:
+        relative_path = file_path.relative_to(repo_root)
+        commit_msg = get_commit_message_for_file(file_path, new_version, bump_type)
+        
+        try:
+            subprocess.run(["git", "add", str(relative_path)], cwd=str(repo_root), check=True)
+            subprocess.run(
+                ["git", "commit", "-m", commit_msg],
+                cwd=str(repo_root),
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            print(f"✅ Committed: {relative_path}")
+            committed_count += 1
+        except subprocess.CalledProcessError as e:
+            if "nothing to commit" in (e.stderr or "").lower():
+                print(f"ℹ️  No changes: {relative_path}")
+            else:
+                print(f"⚠️  Failed to commit {relative_path}: {e}")
+    
+    return committed_count
+
+def create_git_commit(new_version, bump_type):
+    """Create git commit and tag for version bump - commits ALL changed files individually."""
+    import subprocess
+    
+    try:
+        # ROOT DIRECTORY ONLY - Single source of truth
+        script_dir = Path(__file__).parent.parent.parent
+        repo_root = script_dir.parent
+        
+        print(f"\n🔍 Scanning repository for changed files...")
+        committed_count = commit_all_changed_files(repo_root, new_version, bump_type)
+        
+        if committed_count == 0:
+            print("⚠️  No files committed (no changes detected)")
+            return
+        
+        print(f"\n✅ Successfully committed {committed_count} file(s)")
+        
+        # Create tag (from repo root) - check if exists first
         tag_name = f"v{new_version}"
-        subprocess.run(["git", "tag", tag_name], check=True)
-        print(f"✅ Created git tag: {tag_name}")
+        result = subprocess.run(
+            ["git", "tag", "-l", tag_name],
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        
+        if result.stdout.strip():
+            print(f"⚠️  Tag {tag_name} already exists, skipping tag creation")
+        else:
+            subprocess.run(["git", "tag", tag_name], cwd=str(repo_root), check=True)
+            print(f"✅ Created git tag: {tag_name}")
         
     except subprocess.CalledProcessError as e:
         print(f"⚠️  Git operations failed: {e}")
-        print("   You may need to commit manually")
+        if hasattr(e, 'stderr') and e.stderr:
+            print(f"   Error details: {e.stderr}")
+        print("   You may need to commit and tag manually")
+    except FileNotFoundError:
+        print("⚠️  Git not found. Skipping git operations.")
+        print("   Files updated but not committed. Commit manually:")
+        print(f"   git add .")
+        print(f"   git commit -m \"chore(release): bump version to {new_version} ({bump_type})\"")
+        print(f"   git tag v{new_version}")
 
 def main():
     """Main function."""
@@ -191,8 +424,8 @@ def main():
     print(f"🏷️  Git Tag: v{new_version}")
     print("\n📋 Next Steps:")
     print("  1. Review changes: git show HEAD")
-    print("  2. Push to remote: git push origin main --tags")
-    print("  3. Sync docs: npm run version:sync")
+    print("  2. Update docs: npm run version:update-docs")
+    print("  3. Push to remote: git push origin main --tags")
     print("=" * 50)
 
 if __name__ == "__main__":
