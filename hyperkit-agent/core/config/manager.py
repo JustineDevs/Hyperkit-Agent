@@ -32,8 +32,13 @@ class ConfigManager:
         """Load configuration from multiple sources"""
         self._config = {}
         
-        # Load environment variables
-        load_dotenv()
+        # Load environment variables - check project root first
+        project_root = Path(__file__).parent.parent.parent
+        env_file = project_root / ".env"
+        if env_file.exists():
+            load_dotenv(dotenv_path=str(env_file), override=True)
+        else:
+            load_dotenv(override=True)
         
         # Load from config.yaml
         config_file = Path(__file__).parent.parent.parent / "config.yaml"

@@ -20,9 +20,22 @@ class IPFSRAG:
     
     def __init__(self, config: Dict[str, Any] = None):
         """Initialize IPFS RAG system with Pinata configuration."""
+        import os
         self.config = config or {}
-        self.pinata_api_key = self.config.get('PINATA_API_KEY') or self.config.get('pinata', {}).get('api_key')
-        self.pinata_secret_key = self.config.get('PINATA_SECRET_KEY') or self.config.get('pinata', {}).get('secret_key')
+        # Check multiple locations for Pinata keys
+        self.pinata_api_key = (
+            self.config.get('PINATA_API_KEY') or
+            self.config.get('storage', {}).get('pinata', {}).get('api_key') or
+            self.config.get('pinata', {}).get('api_key') or
+            os.getenv('PINATA_API_KEY')
+        )
+        self.pinata_secret_key = (
+            self.config.get('PINATA_SECRET_KEY') or
+            self.config.get('storage', {}).get('pinata', {}).get('secret_key') or
+            self.config.get('pinata', {}).get('secret_key') or
+            os.getenv('PINATA_SECRET_KEY') or
+            os.getenv('PINATA_API_SECRET')  # Legacy support
+        )
         self.pinata_enabled = bool(self.pinata_api_key and self.pinata_secret_key)
         
         # IPFS Gateways for retrieval

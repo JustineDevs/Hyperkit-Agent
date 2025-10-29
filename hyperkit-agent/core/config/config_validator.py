@@ -137,14 +137,17 @@ class ConfigValidator:
                 "  Get key: https://lazai.network"
             )
         
-        # IPFS RAG validation
+        # IPFS RAG validation - check multiple locations
         pinata_key = (
             self.config.get('PINATA_API_KEY') or
+            self.config.get('storage', {}).get('pinata', {}).get('api_key') or
             os.getenv('PINATA_API_KEY')
         )
         pinata_secret = (
             self.config.get('PINATA_SECRET_KEY') or
-            os.getenv('PINATA_SECRET_KEY')
+            self.config.get('storage', {}).get('pinata', {}).get('secret_key') or
+            os.getenv('PINATA_SECRET_KEY') or
+            os.getenv('PINATA_API_SECRET')  # Legacy support
         )
         
         if not pinata_key or not pinata_secret:

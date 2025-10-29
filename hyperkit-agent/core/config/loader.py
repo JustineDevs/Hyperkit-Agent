@@ -61,8 +61,18 @@ class ConfigLoader:
     def _load_config(self) -> None:
         """Load configuration from YAML file and environment variables with schema validation."""
         try:
-            # Load environment variables first
-            load_dotenv()
+            # Load environment variables first - check multiple .env locations
+            project_root = Path(__file__).parent.parent.parent
+            env_file = project_root / ".env"
+            
+            # Try project root first, then current directory
+            if env_file.exists():
+                load_dotenv(dotenv_path=str(env_file), override=True)
+                logger.debug(f"Loaded .env from {env_file}")
+            else:
+                # Fallback to current directory
+                load_dotenv(override=True)
+                logger.debug("Loaded .env from current directory")
             
             # Load YAML configuration
             if self.config_path.exists():
@@ -136,13 +146,21 @@ class ConfigLoader:
         elif os.getenv('PRIVATE_KEY'):  # Legacy support
             self.config['default_private_key'] = os.getenv('PRIVATE_KEY')
         
-        # IPFS Storage Configuration
-        if os.getenv('PINATA_API_KEY'):
-            self.config.setdefault('storage', {}).setdefault('pinata', {})['api_key'] = os.getenv('PINATA_API_KEY')
-        if os.getenv('PINATA_SECRET_KEY'):
-            self.config.setdefault('storage', {}).setdefault('pinata', {})['secret_key'] = os.getenv('PINATA_SECRET_KEY')
-        elif os.getenv('PINATA_API_SECRET'):  # Legacy support
-            self.config.setdefault('storage', {}).setdefault('pinata', {})['secret_key'] = os.getenv('PINATA_API_SECRET')
+        # IPFS Storage Configuration (Pinata)
+        pinata_key = os.getenv('PINATA_API_KEY')
+        pinata_secret = os.getenv('PINATA_SECRET_KEY') or os.getenv('PINATA_API_SECRET')  # Legacy support
+        
+        if pinata_key:
+            # Store in nested location (for storage service)
+            self.config.setdefault('storage', {}).setdefault('pinata', {})['api_key'] = pinata_key
+            # Also store at top level (for RAG and validator access)
+            self.config['PINATA_API_KEY'] = pinata_key
+            
+        if pinata_secret:
+            # Store in nested location (for storage service)
+            self.config.setdefault('storage', {}).setdefault('pinata', {})['secret_key'] = pinata_secret
+            # Also store at top level (for RAG and validator access)
+            self.config['PINATA_SECRET_KEY'] = pinata_secret
         
         # MCP Configuration (deprecated - IPFS Pinata RAG now used exclusively)
         if os.getenv('MCP_ENABLED'):
@@ -306,7 +324,14 @@ class ConfigLoader:
             ValueError: If required settings missing
         """
         try:
-            load_dotenv()
+            # Load .env file from project root
+            project_root = Path(__file__).parent.parent.parent
+            env_file = project_root / ".env"
+            if env_file.exists():
+                load_dotenv(dotenv_path=str(env_file), override=True)
+            else:
+                load_dotenv(override=True)
+            
             settings = Settings()
             
             # ✅ Explicitly build dict (not Pydantic model)

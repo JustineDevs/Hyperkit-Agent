@@ -1,28 +1,30 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/interfaces/IERC2981.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @title HyperMarket
  * @author Your Name
- * @notice A secure and feature-rich NFT marketplace.
- * It combines ERC721 NFT functionality with a marketplace for listing, selling, and bidding.
- * Supports sales in native ETH and USDC, with built-in platform fees and creator royalties (EIP-2981).
- * This contract is designed for Metis (1088) and Hyperion (133717) chains.
+ * @notice A feature-rich, secure NFT marketplace for listing, selling, and bidding on ERC721 tokens.
+ * Supports ETH and USDC payments, platform fees, and EIP-2981 royalties.
  */
-contract HyperMarket is ERC721, ERC721Enumerable, ERC721URIStorage, IERC2981, Ownable, Pausable, ReentrancyGuard {
+contract HyperMarket is Ownable, ReentrancyGuard, Pausable {
 
-    //----------- STRUCTS -----------//
+    // EIP-2981 Royalty Standard Interface
+    interface IERC2981 is IERC165 {
+        function royaltyInfo(uint256 tokenId, uint256 salePrice)
+            external
+            view
+            returns (address receiver, uint256 royaltyAmount);
+    }
 
+    // Structs
     struct Listing {
         address seller;
         uint256 price;
@@ -33,360 +35,385 @@ contract HyperMarket is ERC721, ERC721Enumerable, ERC721URIStorage, IERC2981, Ow
     struct Bid {
         address bidder;
         uint256 amount;
-        address paymentToken; // Matches the listing's payment token
     }
 
-    //----------- STATE VARIABLES -----------//
+    // Constants
+    uint16 public constant MAX_FEE_PERCENTAGE = 1000; // 10%
+    uint16 private constant BASIS_POINTS = 10000;
+    bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
+    address private constant ETH_ADDRESS = address(0);
 
-    uint256 private _nextTokenId;
+    // State Variables
+    uint16 public platformFeeBasisPoints;
+    address public immutable usdcTokenAddress;
 
-    address public usdcTokenAddress;
-    address payable public feeRecipient;
+    // Mappings
+    // NFT Contract Address -> Token ID -> Listing
+    mapping(address => mapping(uint256 => Listing)) public listings;
+    // NFT Contract Address -> Token ID -> Highest Bid
+    mapping(address => mapping(uint256 => Bid)) public bids;
+    // Token Address -> Amount
+    mapping(address => uint256) public platformFeesAccrued;
 
-    uint256 public platformFeePercentage; // In basis points, e.g., 250 for 2.5%
-    uint256 public constant ROYALTY_PERCENTAGE = 500; // 5% creator royalty
-    uint256 public constant BASIS_POINTS = 10000;
+    // Events
+    event NFTListed(
+        address indexed seller,
+        address indexed nftAddress,
+        uint256 indexed tokenId,
+        uint256 price,
+        address paymentToken,
+        uint256 expiresAt
+    );
+    event NFTUnlisted(
+        address indexed seller,
+        address indexed nftAddress,
+        uint256 indexed tokenId
+    );
+    event NFTSold(
+        address indexed seller,
+        address indexed buyer,
+        address indexed nftAddress,
+        uint256 tokenId,
+        uint256 price,
+        address paymentToken
+    );
+    event BidPlaced(
+        address indexed bidder,
+        address indexed nftAddress,
+        uint256 indexed tokenId,
+        uint256 amount
+    );
+    event BidAccepted(
+        address indexed seller,
+        address indexed bidder,
+        address indexed nftAddress,
+        uint256 tokenId,
+        uint256 amount
+    );
+    event BidRejected(
+        address indexed seller,
+        address indexed nftAddress,
+        uint256 indexed tokenId,
+        address bidder,
+        uint256 amount
+    );
+    event FeesWithdrawn(address indexed token, address indexed recipient, uint256 amount);
+    event PlatformFeeUpdated(uint16 newFee);
 
-    mapping(uint256 => Listing) public listings;
-    mapping(uint256 => Bid) public highestBid;
-    mapping(uint256 => address) private _tokenCreators;
-    mapping(address => uint256) public accumulatedFees;
-
-    //----------- EVENTS -----------//
-
-    event Listed(uint256 indexed tokenId, address indexed seller, uint256 price, address indexed paymentToken, uint256 expiresAt);
-    event Unlisted(uint256 indexed tokenId);
-    event Sold(uint256 indexed tokenId, address seller, address indexed buyer, uint256 price, address indexed paymentToken);
-    event BidPlaced(uint256 indexed tokenId, address indexed bidder, uint256 amount, address indexed paymentToken);
-    event BidAccepted(uint256 indexed tokenId, address seller, address indexed bidder, uint256 amount, address indexed paymentToken);
-    event FeePercentageChanged(uint256 newFeePercentage);
-    event FeesWithdrawn(address indexed recipient, address indexed token, uint256 amount);
-
-    //----------- ERRORS -----------//
-
+    // Errors
     error NotNFTOwner();
-    error TokenNotListed();
+    error NotApprovedForMarketplace();
+    error PriceMustBeAboveZero();
+    error DurationMustBeAboveZero();
     error TokenAlreadyListed();
+    error TokenNotListed();
     error ListingExpired();
-    error ListingNotExpired();
-    error PriceMustBeGreaterThanZero();
-    error DurationMustBePositive();
+    error NotTheSeller();
+    error BuyerCannotBeSeller();
     error InvalidPaymentToken();
     error IncorrectPaymentAmount();
-    error NoBidExists();
+    error NoBid();
+    error BidderCannotBeSeller();
     error BidTooLow();
-    error NotHighestBidder();
-    error CallerNotSeller();
-    error Paused();
-    error InvalidFeePercentage();
     error TransferFailed();
-    error NotTheCreator();
+    error FeeTooHigh();
+    error ZeroAddress();
 
-    //----------- CONSTRUCTOR -----------//
 
     /**
-     * @param _usdcTokenAddress The address of the USDC stablecoin contract.
-     * @param _feeRecipient The address where platform fees will be sent.
+     * @notice Sets up the marketplace with USDC address and initial platform fee.
+     * @param _usdcTokenAddress The address of the USDC contract.
+     * @param _initialFeeBasisPoints The initial platform fee in basis points (e.g., 250 for 2.5%).
      */
-    constructor(address _usdcTokenAddress, address payable _feeRecipient) ERC721("HyperMarket NFT", "HNFT") {
-        if (_usdcTokenAddress == address(0) || _feeRecipient == address(0)) {
-            revert("Zero address not allowed");
-        }
+    constructor(address _usdcTokenAddress, uint16 _initialFeeBasisPoints) Ownable(msg.sender) {
+        if (_usdcTokenAddress == address(0)) revert ZeroAddress();
+        if (_initialFeeBasisPoints > MAX_FEE_PERCENTAGE) revert FeeTooHigh();
         usdcTokenAddress = _usdcTokenAddress;
-        feeRecipient = _feeRecipient;
-        platformFeePercentage = 250; // Default 2.5%
+        platformFeeBasisPoints = _initialFeeBasisPoints;
     }
-
-    //----------- MARKETPLACE - LISTING FUNCTIONS -----------//
 
     /**
      * @notice Lists an NFT for sale.
-     * @dev The NFT is transferred to the contract for escrow.
+     * @dev The contract must be approved to transfer the NFT.
+     * @param nftAddress The address of the ERC721 contract.
      * @param tokenId The ID of the token to list.
-     * @param price The selling price in wei (for ETH) or atomic units (for USDC).
-     * @param duration The duration in seconds for which the listing will be active.
+     * @param price The selling price in the smallest unit of the payment token.
+     * @param paymentToken The token for payment (address(0) for ETH, or USDC address).
+     * @param duration The duration of the listing in seconds.
      */
-    function listNFT(uint256 tokenId, uint256 price, uint256 duration) external whenNotPaused {
-        if (ownerOf(tokenId) != _msgSender()) revert NotNFTOwner();
-        if (_isListed(tokenId)) revert TokenAlreadyListed();
-        if (price == 0) revert PriceMustBeGreaterThanZero();
-        if (duration == 0) revert DurationMustBePositive();
-        
-        address paymentToken = usdcTokenAddress; // Default to USDC, can be extended for more tokens
+    function listNFT(
+        address nftAddress,
+        uint256 tokenId,
+        uint256 price,
+        address paymentToken,
+        uint256 duration
+    ) external whenNotPaused {
+        IERC721 nft = IERC721(nftAddress);
+        if (nft.ownerOf(tokenId) != msg.sender) revert NotNFTOwner();
+        if (!nft.isApprovedForAll(msg.sender, address(this)) && nft.getApproved(tokenId) != address(this)) {
+            revert NotApprovedForMarketplace();
+        }
+        if (price == 0) revert PriceMustBeAboveZero();
+        if (duration == 0) revert DurationMustBeAboveZero();
+        if (listings[nftAddress][tokenId].seller != address(0)) revert TokenAlreadyListed();
+        if (paymentToken != ETH_ADDRESS && paymentToken != usdcTokenAddress) revert InvalidPaymentToken();
 
         uint256 expiresAt = block.timestamp + duration;
-        listings[tokenId] = Listing(_msgSender(), price, paymentToken, expiresAt);
+        listings[nftAddress][tokenId] = Listing({
+            seller: msg.sender,
+            price: price,
+            paymentToken: paymentToken,
+            expiresAt: expiresAt
+        });
 
-        _safeTransfer(msg.sender, address(this), tokenId, "");
-        
-        emit Listed(tokenId, _msgSender(), price, paymentToken, expiresAt);
+        emit NFTListed(msg.sender, nftAddress, tokenId, price, paymentToken, expiresAt);
     }
-    
+
     /**
-     * @notice Unlists an NFT from the marketplace.
-     * @dev Refunds any existing highest bid and returns the NFT to the seller.
+     * @notice Removes an NFT from the marketplace.
+     * @dev Only the original lister can unlist. If a bid exists, it is refunded.
+     * @param nftAddress The address of the ERC721 contract.
      * @param tokenId The ID of the token to unlist.
      */
-    function unlistNFT(uint256 tokenId) external nonReentrant {
-        Listing memory listing = listings[tokenId];
-        if (listing.seller != _msgSender()) revert CallerNotSeller();
+    function unlistNFT(address nftAddress, uint256 tokenId) external nonReentrant {
+        Listing memory listing = listings[nftAddress][tokenId];
+        if (listing.seller != msg.sender) revert NotTheSeller();
 
-        _clearListingAndRefundBid(tokenId);
-
-        _safeTransfer(address(this), listing.seller, tokenId, "");
-
-        emit Unlisted(tokenId);
-    }
-
-    //----------- MARKETPLACE - BUYING FUNCTIONS -----------//
-
-    /**
-     * @notice Buys a listed NFT using ETH.
-     * @dev The function is payable and expects msg.value to be the price.
-     * @param tokenId The ID of the token to buy.
-     */
-    function buyNFTWithETH(uint256 tokenId) external payable whenNotPaused nonReentrant {
-        Listing memory listing = listings[tokenId];
-        if (listing.price == 0) revert TokenNotListed();
-        if (block.timestamp > listing.expiresAt) revert ListingExpired();
-        if (msg.value != listing.price) revert IncorrectPaymentAmount();
-
-        _handleSale(tokenId, _msgSender());
-    }
-
-    /**
-     * @notice Buys a listed NFT using USDC.
-     * @dev Caller must have approved the contract to spend USDC on their behalf.
-     * @param tokenId The ID of the token to buy.
-     */
-    function buyNFTWithUSDC(uint256 tokenId) external whenNotPaused nonReentrant {
-        Listing memory listing = listings[tokenId];
-        if (listing.price == 0) revert TokenNotListed();
-        if (block.timestamp > listing.expiresAt) revert ListingExpired();
-        if (listing.paymentToken != usdcTokenAddress) revert InvalidPaymentToken();
+        _clearListingAndRefundBid(nftAddress, tokenId);
         
-        IERC20(usdcTokenAddress).transferFrom(_msgSender(), address(this), listing.price);
-
-        _handleSale(tokenId, _msgSender());
+        emit NFTUnlisted(msg.sender, nftAddress, tokenId);
     }
 
-    //----------- MARKETPLACE - BIDDING FUNCTIONS -----------//
+    /**
+     * @notice Buys a listed NFT.
+     * @dev Payment is sent with the transaction (ETH via msg.value, USDC via prior approval).
+     * @param nftAddress The address of the ERC721 contract.
+     * @param tokenId The ID of the token to buy.
+     */
+    function buyNFT(address nftAddress, uint256 tokenId) external payable nonReentrant whenNotPaused {
+        Listing memory listing = listings[nftAddress][tokenId];
+
+        if (listing.seller == address(0)) revert TokenNotListed();
+        if (block.timestamp > listing.expiresAt) revert ListingExpired();
+        if (listing.seller == msg.sender) revert BuyerCannotBeSeller();
+
+        if (listing.paymentToken == ETH_ADDRESS) {
+            if (msg.value != listing.price) revert IncorrectPaymentAmount();
+        } else {
+            if (msg.value != 0) revert IncorrectPaymentAmount();
+            IERC20(listing.paymentToken).transferFrom(msg.sender, address(this), listing.price);
+        }
+
+        _processSale(nftAddress, tokenId, msg.sender);
+    }
 
     /**
      * @notice Places a bid on a listed NFT.
-     * @dev Holds the bid amount in escrow. Refunds the previous highest bidder.
+     * @dev A bid must be higher than the current highest bid. The previous bidder is refunded.
+     *      Funds for the bid are escrowed.
+     * @param nftAddress The address of the ERC721 contract.
      * @param tokenId The ID of the token to bid on.
-     * @param bidAmount The amount of the bid.
+     * @param bidAmount The amount of the bid in the listing's payment currency.
      */
-    function placeBid(uint256 tokenId, uint256 bidAmount) external payable whenNotPaused nonReentrant {
-        Listing memory listing = listings[tokenId];
-        if (listing.price == 0) revert TokenNotListed();
+    function placeBid(address nftAddress, uint256 tokenId, uint256 bidAmount) external payable nonReentrant whenNotPaused {
+        Listing memory listing = listings[nftAddress][tokenId];
+        if (listing.seller == address(0)) revert TokenNotListed();
         if (block.timestamp > listing.expiresAt) revert ListingExpired();
+        if (listing.seller == msg.sender) revert BidderCannotBeSeller();
+        if (bidAmount == 0) revert PriceMustBeAboveZero();
 
-        Bid memory currentHighestBid = highestBid[tokenId];
-        if (bidAmount <= currentHighestBid.amount) revert BidTooLow();
+        if (listing.paymentToken == ETH_ADDRESS) {
+            if (msg.value != bidAmount) revert IncorrectPaymentAmount();
+        } else {
+            if (msg.value > 0) revert IncorrectPaymentAmount();
+            IERC20(listing.paymentToken).transferFrom(msg.sender, address(this), bidAmount);
+        }
+        
+        Bid memory currentBid = bids[nftAddress][tokenId];
+        if (bidAmount <= currentBid.amount) revert BidTooLow();
 
-        _refundBid(tokenId); // Refund previous bidder if one exists
+        // Effect: Update the new highest bid first
+        bids[nftAddress][tokenId] = Bid({bidder: msg.sender, amount: bidAmount});
 
-        // Escrow the new bid
-        if (listing.paymentToken == usdcTokenAddress) {
-            IERC20(usdcTokenAddress).transferFrom(_msgSender(), address(this), bidAmount);
-        } else { // Handle native ETH
-             if(msg.value != bidAmount) revert IncorrectPaymentAmount();
+        // Interaction: Refund the previous bidder
+        if (currentBid.bidder != address(0)) {
+            _safeTransfer(listing.paymentToken, currentBid.bidder, currentBid.amount);
         }
 
-        highestBid[tokenId] = Bid(_msgSender(), bidAmount, listing.paymentToken);
-        emit BidPlaced(tokenId, _msgSender(), bidAmount, listing.paymentToken);
+        emit BidPlaced(msg.sender, nftAddress, tokenId, bidAmount);
     }
-    
+
     /**
-     * @notice Accepts the highest bid for a listed NFT.
-     * @dev Can only be called by the NFT seller.
+     * @notice The seller accepts the current highest bid for an NFT.
+     * @param nftAddress The address of the ERC721 contract.
      * @param tokenId The ID of the token.
      */
-    function acceptBid(uint256 tokenId) external whenNotPaused nonReentrant {
-        Listing memory listing = listings[tokenId];
-        if (listing.seller != _msgSender()) revert CallerNotSeller();
-        if (block.timestamp > listing.expiresAt) revert ListingExpired();
+    function acceptBid(address nftAddress, uint256 tokenId) external nonReentrant whenNotPaused {
+        Listing memory listing = listings[nftAddress][tokenId];
+        if (listing.seller != msg.sender) revert NotTheSeller();
+        
+        Bid memory highestBid = bids[nftAddress][tokenId];
+        if (highestBid.bidder == address(0)) revert NoBid();
 
-        Bid memory bidToAccept = highestBid[tokenId];
-        if (bidToAccept.bidder == address(0)) revert NoBidExists();
+        // Override listing price with bid amount for sale processing
+        listings[nftAddress][tokenId].price = highestBid.amount;
 
-        // The bid amount is already held in escrow by the contract
-        _handleSale(tokenId, bidToAccept.bidder);
-    }
-
-    //----------- ADMIN FUNCTIONS -----------//
-
-    /**
-     * @notice Sets the platform fee percentage.
-     * @param _newFeePercentage The new fee in basis points (e.g., 300 for 3.0%).
-     */
-    function setFeePercentage(uint256 _newFeePercentage) external onlyOwner {
-        if (_newFeePercentage > 1000) revert InvalidFeePercentage(); // Max 10% fee
-        platformFeePercentage = _newFeePercentage;
-        emit FeePercentageChanged(_newFeePercentage);
+        _processSale(nftAddress, tokenId, highestBid.bidder);
+        
+        emit BidAccepted(listing.seller, highestBid.bidder, nftAddress, tokenId, highestBid.amount);
     }
 
     /**
-     * @notice Withdraws accumulated fees to the fee recipient.
+     * @notice The seller rejects the current highest bid for an NFT.
+     * @dev This refunds the bidder and clears the bid, allowing for new bids.
+     * @param nftAddress The address of the ERC721 contract.
+     * @param tokenId The ID of the token.
      */
-    function withdrawFees() external onlyOwner nonReentrant {
-        uint256 ethBalance = accumulatedFees[address(0)];
-        if (ethBalance > 0) {
-            accumulatedFees[address(0)] = 0;
-            (bool success, ) = feeRecipient.call{value: ethBalance}("");
-            if (!success) revert TransferFailed();
-            emit FeesWithdrawn(feeRecipient, address(0), ethBalance);
-        }
+    function rejectBid(address nftAddress, uint256 tokenId) external nonReentrant {
+        Listing memory listing = listings[nftAddress][tokenId];
+        if (listing.seller != msg.sender) revert NotTheSeller();
+        
+        Bid memory highestBid = bids[nftAddress][tokenId];
+        if (highestBid.bidder == address(0)) revert NoBid();
 
-        uint256 usdcBalance = accumulatedFees[usdcTokenAddress];
-        if (usdcBalance > 0) {
-            accumulatedFees[usdcTokenAddress] = 0;
-            IERC20(usdcTokenAddress).transfer(feeRecipient, usdcBalance);
-            emit FeesWithdrawn(feeRecipient, usdcTokenAddress, usdcBalance);
-        }
+        // Effect
+        delete bids[nftAddress][tokenId];
+        
+        // Interaction
+        _safeTransfer(listing.paymentToken, highestBid.bidder, highestBid.amount);
+        
+        emit BidRejected(listing.seller, nftAddress, tokenId, highestBid.bidder, highestBid.amount);
     }
-    
+
+    // --- Admin Functions ---
+
     /**
-     * @notice Pauses key marketplace functions in an emergency.
+     * @notice Updates the platform fee. Can only be called by the owner.
+     * @param _newFeeBasisPoints The new fee in basis points (100 = 1%).
      */
-    function emergencyPause() external onlyOwner {
+    function setFeePercentage(uint16 _newFeeBasisPoints) external onlyOwner {
+        if (_newFeeBasisPoints > MAX_FEE_PERCENTAGE) revert FeeTooHigh();
+        platformFeeBasisPoints = _newFeeBasisPoints;
+        emit PlatformFeeUpdated(_newFeeBasisPoints);
+    }
+
+    /**
+     * @notice Withdraws accrued platform fees. Can only be called by the owner.
+     * @param tokenAddress The address of the token to withdraw (address(0) for ETH).
+     */
+    function withdrawFees(address tokenAddress) external onlyOwner nonReentrant {
+        uint256 amount = platformFeesAccrued[tokenAddress];
+        if (amount == 0) return;
+        
+        platformFeesAccrued[tokenAddress] = 0;
+        _safeTransfer(tokenAddress, owner(), amount);
+
+        emit FeesWithdrawn(tokenAddress, owner(), amount);
+    }
+
+    /**
+     * @notice Pauses the contract in case of an emergency.
+     */
+    function pause() external onlyOwner {
         _pause();
     }
 
     /**
-     * @notice Resumes the marketplace after a pause.
+     * @notice Unpauses the contract.
      */
     function unpause() external onlyOwner {
         _unpause();
     }
 
-    //----------- NFT MINTING & ROYALTY FUNCTIONS -----------//
+
+    // --- Internal & Private Functions ---
 
     /**
-     * @notice Mints a new NFT and assigns its creator for royalty purposes.
-     * @param to The address to mint the NFT to.
-     * @param tokenURI_ The URI for the token's metadata.
-     * @return The ID of the newly minted token.
+     * @dev Core logic for handling a sale, distributing funds, and transferring the NFT.
      */
-    function safeMint(address to, string memory tokenURI_) external onlyOwner returns (uint256) {
-        uint256 tokenId = _nextTokenId++;
-        _safeMint(to, tokenId);
-        _setTokenURI(tokenId, tokenURI_);
-        _tokenCreators[tokenId] = to; // Set the initial minter as the creator
-        return tokenId;
-    }
-    
-    /**
-     * @notice EIP-2981 royalty information.
-     * @param tokenId The ID of the token.
-     * @param salePrice The price the token was sold for.
-     * @return The royalty recipient and the royalty amount.
-     */
-    function royaltyInfo(uint256 tokenId, uint256 salePrice) external view override returns (address receiver, uint256 royaltyAmount) {
-        address creator = _tokenCreators[tokenId];
-        if (creator == address(0)) {
-            return (address(0), 0);
+    function _processSale(address nftAddress, uint256 tokenId, address buyer) private {
+        Listing memory listing = listings[nftAddress][tokenId];
+
+        // 1. Effects (State Changes)
+        _clearListingAndBid(nftAddress, tokenId);
+        
+        // 2. Calculations
+        uint256 salePrice = listing.price;
+        uint256 fee = (salePrice * platformFeeBasisPoints) / BASIS_POINTS;
+        (address royaltyReceiver, uint256 royaltyAmount) = _getRoyaltyInfo(nftAddress, tokenId, salePrice);
+
+        uint256 sellerProceeds = salePrice - fee - royaltyAmount;
+        
+        platformFeesAccrued[listing.paymentToken] += fee;
+
+        // 3. Interactions (External Calls)
+        IERC721(nftAddress).safeTransferFrom(listing.seller, buyer, tokenId);
+        
+        _safeTransfer(listing.paymentToken, listing.seller, sellerProceeds);
+        if (royaltyAmount > 0 && royaltyReceiver != address(0)) {
+            _safeTransfer(listing.paymentToken, royaltyReceiver, royaltyAmount);
         }
-        return (creator, (salePrice * ROYALTY_PERCENTAGE) / BASIS_POINTS);
+        // The buyer's payment is already held by the contract from buyNFT/placeBid
+
+        emit NFTSold(listing.seller, buyer, nftAddress, tokenId, salePrice, listing.paymentToken);
     }
     
-    //----------- INTERNAL & HELPER FUNCTIONS -----------//
-    
     /**
-     * @dev Internal function to handle the logic of a sale.
-     * Calculates and distributes funds for fees, royalties, and to the seller.
-     * Transfers the NFT to the buyer and cleans up state.
+     * @dev Clears a listing and its associated bid without refunding. Used during a sale.
      */
-    function _handleSale(uint256 tokenId, address buyer) internal {
-        Listing memory listing = listings[tokenId];
-        uint256 price = highestBid[tokenId].amount > 0 ? highestBid[tokenId].amount : listing.price;
-        
-        // 1. Calculate and distribute funds
-        uint256 platformFee = (price * platformFeePercentage) / BASIS_POINTS;
-        uint256 creatorRoyalty = (price * ROYALTY_PERCENTAGE) / BASIS_POINTS;
-        uint256 sellerProceeds = price - platformFee - creatorRoyalty;
-        
-        address creator = _tokenCreators[tokenId];
+    function _clearListingAndBid(address nftAddress, uint256 tokenId) private {
+        delete listings[nftAddress][tokenId];
+        delete bids[nftAddress][tokenId];
+    }
 
-        accumulatedFees[listing.paymentToken] += platformFee;
+    /**
+     * @dev Clears a listing and refunds any existing bid. Used during unlisting.
+     */
+    function _clearListingAndRefundBid(address nftAddress, uint256 tokenId) private {
+        Listing memory listing = listings[nftAddress][tokenId];
+        Bid memory currentBid = bids[nftAddress][tokenId];
 
-        // 2. Transfer funds
-        if (listing.paymentToken == usdcTokenAddress) {
-            IERC20(usdcTokenAddress).transfer(creator, creatorRoyalty);
-            IERC20(usdcTokenAddress).transfer(listing.seller, sellerProceeds);
-        } else {
-            _sendValue(payable(creator), creatorRoyalty);
-            _sendValue(payable(listing.seller), sellerProceeds);
+        delete listings[nftAddress][tokenId];
+        delete bids[nftAddress][tokenId];
+        
+        if (currentBid.bidder != address(0)) {
+            _safeTransfer(listing.paymentToken, currentBid.bidder, currentBid.amount);
         }
-        
-        // 3. Clean up state and transfer NFT
-        _clearListingAndRefundBid(tokenId);
-        _safeTransfer(address(this), buyer, tokenId, "");
-        
-        emit Sold(tokenId, listing.seller, buyer, price, listing.paymentToken);
     }
 
     /**
-     * @dev Clears a listing and refunds any existing highest bid.
+     * @dev Retrieves EIP-2981 royalty information if the NFT contract supports it.
      */
-    function _clearListingAndRefundBid(uint256 tokenId) internal {
-        _refundBid(tokenId);
-        delete listings[tokenId];
-    }
-    
-    /**
-     * @dev Refunds the current highest bid for a token, if one exists.
-     */
-    function _refundBid(uint256 tokenId) internal {
-        Bid memory currentHighestBid = highestBid[tokenId];
-        if (currentHighestBid.bidder != address(0)) {
-            delete highestBid[tokenId];
-            if (currentHighestBid.paymentToken == usdcTokenAddress) {
-                IERC20(usdcTokenAddress).transfer(currentHighestBid.bidder, currentHighestBid.amount);
-            } else {
-                _sendValue(payable(currentHighestBid.bidder), currentHighestBid.amount);
+    function _getRoyaltyInfo(address nftAddress, uint256 tokenId, uint256 salePrice)
+        private
+        view
+        returns (address receiver, uint256 royaltyAmount)
+    {
+        try IERC165(nftAddress).supportsInterface(_INTERFACE_ID_ERC2981) returns (bool supports) {
+            if (supports) {
+                return IERC2981(nftAddress).royaltyInfo(tokenId, salePrice);
             }
+        } catch {
+            // Contract does not support ERC165 or call reverted. Fallback to no royalties.
+        }
+        return (address(0), 0);
+    }
+    
+    /**
+     * @dev Safely transfers ETH or ERC20 tokens.
+     */
+    function _safeTransfer(address token, address to, uint256 value) private {
+        if (value == 0) return;
+        if (token == ETH_ADDRESS) {
+            (bool success, ) = to.call{value: value}("");
+            if (!success) revert TransferFailed();
+        } else {
+            IERC20(token).transfer(to, value);
         }
     }
 
     /**
-     * @dev Helper to check if a token is currently listed.
+     * @dev Allow contract to receive ETH.
      */
-    function _isListed(uint256 tokenId) internal view returns (bool) {
-        return listings[tokenId].seller != address(0);
-    }
-
-    /**
-     * @dev Safe ETH transfer helper.
-     */
-    function _sendValue(address payable recipient, uint256 amount) internal {
-        if (amount == 0) return;
-        (bool success, ) = recipient.call{value: amount}("");
-        if (!success) revert TransferFailed();
-    }
-
-    //----------- OVERRIDES -----------//
-
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize) internal override(ERC721, ERC721Enumerable) {
-        super._beforeTokenTransfer(from, to, tokenId, batchSize);
-        // Prevent transfer of a listed token unless it's the marketplace contract moving it
-        if (from != address(this) && to != address(this) && _isListed(tokenId)) {
-            revert("Token is locked in the marketplace.");
-        }
-    }
-
-    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
-        if(_isListed(tokenId)) revert TokenAlreadyListed();
-        super._burn(tokenId);
-    }
-
-    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
-    }
-
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable, ERC721URIStorage, IERC165) returns (bool) {
-        return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
-    }
+    receive() external payable {}
 }
