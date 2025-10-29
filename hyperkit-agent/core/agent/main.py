@@ -517,20 +517,59 @@ class HyperKitAgent:
                     "forge_output": error_output
                 }
             
-            # Verify artifact was created
+            # Verify artifact was created - check multiple possible paths
             artifact_path = project_root / "out" / f"{contract_name}.sol" / f"{contract_name}.json"
             if not artifact_path.exists():
-                # Try alternative path
-                artifact_path = project_root / "out" / f"{contract_name}.json"
+                # Try alternative paths
+                alternative_paths = [
+                    project_root / "out" / f"{contract_name}.json",
+                    project_root / "out" / contract_name / f"{contract_name}.json",
+                ]
+                for alt_path in alternative_paths:
+                    if alt_path.exists():
+                        artifact_path = alt_path
+                        break
                 
             if not artifact_path.exists():
+                # List actual artifacts found to help debug
+                out_dir = project_root / "out"
+                found_artifacts = []
+                if out_dir.exists():
+                    for json_file in out_dir.rglob("*.json"):
+                        # Only show contract artifacts, not test artifacts
+                        if "Test" not in json_file.name:
+                            found_artifacts.append(str(json_file.relative_to(project_root)))
+                
+                error_msg = (
+                    f"Artifact not found after compilation\n"
+                    f"  Expected: out/{contract_name}.sol/{contract_name}.json\n"
+                    f"  Or: out/{contract_name}.json\n"
+                    f"  Contract name: {contract_name}"
+                )
+                
+                if found_artifacts:
+                    error_msg += f"\n  \n  Actual artifacts found in out/:\n"
+                    for artifact in found_artifacts[:10]:  # Show first 10
+                        error_msg += f"    - {artifact}\n"
+                    if len(found_artifacts) > 10:
+                        error_msg += f"    ... and {len(found_artifacts) - 10} more"
+                else:
+                    error_msg += "\n  No artifacts found in out/ directory"
+                
                 return {
                     "success": False,
-                    "error": f"Artifact not found after compilation: expected {artifact_path}",
+                    "error": error_msg,
+                    "expected_path": f"out/{contract_name}.sol/{contract_name}.json",
+                    "contract_name": contract_name,
+                    "found_artifacts": found_artifacts,
                     "suggestions": [
-                        "Check foundry.toml output configuration",
-                        "Verify contract name matches exactly",
-                        f"Check out/ directory for generated artifacts"
+                        f"Check if contract name in code matches '{contract_name}' exactly",
+                        "Verify foundry.toml output configuration",
+                        "Check compilation output for errors",
+                        "Run 'forge build' manually to see full compilation log",
+                        f"Expected artifact paths:\n"
+                        f"  - out/{contract_name}.sol/{contract_name}.json\n"
+                        f"  - out/{contract_name}.json"
                     ]
                 }
             
