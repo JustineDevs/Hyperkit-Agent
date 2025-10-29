@@ -389,7 +389,11 @@ class FoundryDeployer:
             
             # Sign and send transaction
             signed_tx = account.sign_transaction(tx)
-            tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+            # Use raw_transaction (snake_case) for Web3.py v6+, fallback to rawTransaction for v5
+            raw_tx = getattr(signed_tx, 'raw_transaction', None) or getattr(signed_tx, 'rawTransaction', None)
+            if not raw_tx:
+                raise ValueError("Could not find raw transaction in signed transaction object")
+            tx_hash = w3.eth.send_raw_transaction(raw_tx)
             
             logger.info(f"✅ Transaction sent: {tx_hash.hex()}")
             
