@@ -1,6 +1,6 @@
 # Configuration Guide - v1.5.0
 
-**Version**: 1.5.0  
+**Version**: 1.5.1  
 **Last Updated**: 2025-10-28
 
 ---
@@ -210,3 +210,16 @@ These configuration keys are **deprecated** and will trigger warnings:
 
 **Questions?** Check `/docs` directory or open an issue on GitHub.
 
+---
+
+## 🔗 **Connect With Us**
+
+- 🌐 **Website**: [Hyperionkit.xyz](http://hyperionkit.xyz/)
+- 📚 **Documentation**: [GitHub Docs](https://github.com/Hyperionkit/Hyperkit-Agent)
+- 💬 **Discord**: [Join Community](https://discord.com/invite/MDh7jY8vWe)
+- 🐦 **Twitter**: [@HyperKit](https://x.com/HyperionKit)
+- 📧 **Contact**: [Hyperkitdev@gmail.com](mailto:Hyperkitdev@gmail.com) (for security issues)
+- 💰 **Bug Bounty**: See [SECURITY.md](../../../SECURITY.md)
+
+**Last Updated**: 2025-01-29  
+**Version**: 1.5.1
