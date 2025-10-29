@@ -1,6 +1,6 @@
 # Migration Guide - System Refactor v1.5.0
 
-**Version**: 1.5.0  
+**Version**: 1.5.1  
 **Date**: 2025-10-28  
 **Status**: Production Ready
 
@@ -280,4 +280,18 @@ hyperagent deploy contract MyToken.sol --network hyperion
 
 **Status**: ✅ Ready for Production  
 **Need Help?**: Open an issue on GitHub or check `/docs` directory
+
+---
+
+## 🔗 **Connect With Us**
+
+- 🌐 **Website**: [Hyperionkit.xyz](http://hyperionkit.xyz/)
+- 📚 **Documentation**: [GitHub Docs](https://github.com/Hyperionkit/Hyperkit-Agent)
+- 💬 **Discord**: [Join Community](https://discord.com/invite/MDh7jY8vWe)
+- 🐦 **Twitter**: [@HyperKit](https://x.com/HyperionKit)
+- 📧 **Contact**: [Hyperkitdev@gmail.com](mailto:Hyperkitdev@gmail.com) (for security issues)
+- 💰 **Bug Bounty**: See [SECURITY.md](../../../SECURITY.md)
+
+**Last Updated**: 2025-01-29  
+**Version**: 1.5.1
 
