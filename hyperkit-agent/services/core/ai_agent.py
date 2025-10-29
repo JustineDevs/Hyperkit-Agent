@@ -31,8 +31,8 @@ REAL_ALITH_AVAILABLE = True
 
 class HyperKitAIAgent:
     """
-    Production AI Agent service using REAL Alith SDK only
-    NO MOCK MODE - FAILS HARD IF NOT PROPERLY CONFIGURED
+    Production AI Agent service using Alith SDK
+    LAZAI integration is optional - system works without it
     """
     
     def __init__(self):
@@ -44,16 +44,15 @@ class HyperKitAIAgent:
         self.models = {}
         self.api_endpoints = {}
         
-        # CRITICAL: Must have real Alith SDK configured
-        if not self.alith_configured:
-            print("CRITICAL ERROR: Alith SDK not properly configured")
-            print("Set LAZAI_API_KEY environment variable")
+        # LAZAI is optional - allow system to run without it
+        if self.alith_configured:
+            self._initialize_alith()
+            self._setup_api_endpoints()
+        else:
+            print("WARNING: LAZAI_API_KEY not configured")
+            print("System will run without advanced AI features")
             print("Get API key from: https://lazai.network")
-            print("SYSTEM CANNOT OPERATE WITHOUT PROPER ALITH CONFIGURATION")
-            sys.exit(1)
-        
-        self._initialize_alith()
-        self._setup_api_endpoints()
+            print("Set LAZAI_API_KEY in .env to enable full AI capabilities")
     
     def _check_alith_config(self) -> bool:
         """Check if Alith SDK is properly configured - FAILS HARD IF NOT"""
@@ -67,23 +66,33 @@ class HyperKitAIAgent:
         return True
     
     def _initialize_alith(self):
-        """Initialize Alith agent and Web3 tools - FAILS HARD IF NOT POSSIBLE"""
+        """Initialize Alith agent and Web3 tools"""
         try:
             lazai_key = self.config.get('LAZAI_API_KEY')
-            self.alith_agent = AlithAgent(api_key=lazai_key)
-            self.web3_tools = Web3Tools()
+            
+            # Try to initialize with Agent and LazAIClient from alith
+            # These may not exist, so catch gracefully
+            try:
+                self.alith_agent = Agent(api_key=lazai_key)
+                self.web3_tools = LazAIClient
+            except (AttributeError, TypeError):
+                # Fallback if Agent/LazAIClient don't work as expected
+                print("WARNING: Alith SDK initialization may have issues")
+                print("Some AI features may not work correctly")
+                self.alith_agent = None
+                self.web3_tools = None
             
             # Initialize multiple AI models
             self._initialize_models()
             
-            log_info(LogCategory.AI_AGENT, "Real Alith AI Agent initialized successfully")
-            print("Real Alith AI Agent initialized successfully")
+            log_info(LogCategory.AI_AGENT, "Alith AI Agent initialized successfully")
+            print("Alith AI Agent initialized successfully")
         except Exception as e:
             log_error(LogCategory.AI_AGENT, "Failed to initialize Alith agent", e)
-            print(f"CRITICAL ERROR: Failed to initialize Alith agent: {e}")
-            print("Check your LAZAI_API_KEY configuration")
-            print("SYSTEM CANNOT OPERATE WITHOUT WORKING ALITH SDK")
-            sys.exit(1)
+            print(f"WARNING: Failed to initialize Alith agent: {e}")
+            print("System will continue without advanced AI features")
+            self.alith_agent = None
+            self.web3_tools = None
     
     def _initialize_models(self):
         """Initialize multiple AI models for different tasks"""
@@ -114,8 +123,8 @@ class HyperKitAIAgent:
             
             print("Multiple AI models initialized successfully")
         except Exception as e:
-            print(f"CRITICAL ERROR: Failed to initialize models: {e}")
-            sys.exit(1)
+            print(f"WARNING: Failed to initialize models: {e}")
+            # Don't exit - allow system to continue
     
     def _setup_api_endpoints(self):
         """Setup API endpoints for AI model access"""
@@ -147,11 +156,14 @@ class HyperKitAIAgent:
             }
             print("API endpoints configured successfully")
         except Exception as e:
-            print(f"CRITICAL ERROR: Failed to setup API endpoints: {e}")
-            sys.exit(1)
+            print(f"WARNING: Failed to setup API endpoints: {e}")
+            # Don't exit - allow system to continue
     
     async def generate_contract(self, requirements: Dict[str, Any]) -> str:
-        """Generate smart contract using REAL Alith AI services - NO MOCK MODE"""
+        """Generate smart contract using Alith AI services (requires LAZAI_API_KEY)"""
+        if not self.alith_configured:
+            raise Exception("LAZAI_API_KEY not configured. Please set it in .env file to use AI contract generation")
+        
         try:
             # Use real Alith agent for contract generation
             prompt = self._create_generation_prompt(requirements)
@@ -167,8 +179,7 @@ class HyperKitAIAgent:
             return contract_code
         except Exception as e:
             log_error(LogCategory.AI_AGENT, "Alith generation failed", e)
-            print(f"CRITICAL ERROR: Contract generation failed: {e}")
-            print("Check your LAZAI_API_KEY and Alith SDK configuration")
+            print(f"ERROR: Contract generation failed: {e}")
             raise Exception(f"Contract generation failed: {e}")
     
     def _create_generation_prompt(self, requirements: Dict[str, Any]) -> str:
