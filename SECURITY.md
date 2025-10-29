@@ -375,7 +375,7 @@ We thank the following security researchers:
 ---
 
 **Last Updated**: 2025-01-29
-**Version**: 1.5.1
+**Version**: 1.5.3
 **Project**: HyperKit Web3 Development Platform
 
 Thank you for helping keep HyperKit secure! 🔒
