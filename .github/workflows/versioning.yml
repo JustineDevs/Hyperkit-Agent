@@ -40,10 +40,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r hyperkit-agent/requirements.txt
       
-      - name: Run version update
+      - name: Run version bump
         run: |
-          export BUMP_TYPE=${{ github.event.inputs.bump_type }}
-          python .github/workflows/scripts/version_update.py
+          python hyperkit-agent/scripts/ci/version_bump.py ${{ github.event.inputs.bump_type }}
+      
+      - name: Update documentation versions
+        run: |
+          python hyperkit-agent/scripts/ci/update_version_in_docs.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
@@ -57,13 +60,15 @@ jobs:
       - name: Create Release (if auto_push enabled)
         if: github.event.inputs.auto_push == 'true'
         run: |
-          # Get the new version from git tag
-          NEW_VERSION=$(git describe --tags --abbrev=0)
-          echo "New version: $NEW_VERSION"
+          # Get the new version from VERSION file (source of truth)
+          NEW_VERSION=$(cat VERSION | tr -d '\n')
+          TAG_NAME="v${NEW_VERSION}"
+          echo "New version: ${NEW_VERSION}"
+          echo "Tag name: ${TAG_NAME}"
           
           # Create GitHub release
-          gh release create $NEW_VERSION \
-            --title "Release $NEW_VERSION" \
+          gh release create ${TAG_NAME} \
+            --title "Release ${NEW_VERSION}" \
             --notes "Automated release via version workflow" \
             --generate-notes
         env:
