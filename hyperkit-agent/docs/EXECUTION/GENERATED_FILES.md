@@ -1,6 +1,6 @@
 <!-- AUDIT_BADGE_START -->
 **Implementation Status**: ✅ Verified  
-**Version**: 1.5.1  
+**Version**: 1.5.3  
 **Last Verified**: 2025-10-29  
 **Commit**: `aac4687`  
 **Branch**: `main`  
@@ -16,25 +16,51 @@ The HyperKit AI Agent generates various files during its operation. This documen
 
 ### 1. Smart Contracts
 
-**Default Location**: `./contracts/agent_generate/`
-**CLI Option**: `--output-dir` parameter
+**Organized File Structure**: All generated files are now saved to organized artifact directories based on command type and category.
+
+**Workflow Command**: Contracts saved to `artifacts/workflows/{category}/`
+**Generate Command**: Contracts saved to `artifacts/generate/{category}/`
+**Audit Command**: Reports saved to `artifacts/audit/`
+**Deploy Command**: Deployment info saved to `artifacts/deploy/{category}/`
+**Verify Command**: Verification results saved to `artifacts/verify/{category}/`
+
+**Categories**: `tokens`, `defi`, `gaming`, `nft`, `governance`, `bridge`, `launchpad`, `other`
 
 ```bash
-# Default location
-./contracts/agent_generate/
-├── ERC20Token.sol
-├── StakingContract.sol
-├── VaultContract.sol
+# Workflow command files (organized by category)
+hyperkit-agent/artifacts/workflows/
+├── tokens/
+│   └── ERC20Token.sol
+├── defi/
+│   ├── StakingContract.sol
+│   └── DEX.sol
+├── gaming/
+│   └── GamingToken.sol
+├── nft/
+│   └── NFTMarketplace.sol
+├── governance/
+│   └── DAO.sol
 └── ...
 
-# Custom location
-python cli.py generate "Create ERC20 token" --output-dir ./my-contracts/
+# Generate command files
+hyperkit-agent/artifacts/generate/
+├── tokens/
+│   └── MyToken.sol
+├── defi/
+│   └── StakingPool.sol
+└── ...
+
+# ALSO saved to foundry contracts/ for compilation
+hyperkit-agent/contracts/
+├── MultiSigWallet.sol  # From workflow
+├── GamingToken.sol
+└── ...
 ```
 
 **File Naming**:
-- Auto-adds `.sol` extension if not provided
-- Uses descriptive names based on contract type
-- Timestamps can be added for versioning
+- Contract name extracted from generated code
+- Automatically categorized based on contract content
+- Saved to both organized location AND foundry directory for compilation
 
 ### 2. Audit Reports
 
