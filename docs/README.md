@@ -119,7 +119,7 @@
 ---
 
 **Last Updated**: October 27, 2025  
-**Version**: 1.5.0  
+**Version**: 1.5.1  
 **Status**: Active Development
 
 ---
