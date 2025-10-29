@@ -28,11 +28,16 @@ def audit_contracts(files: tuple, directory: str, output: str, format: str, batc
     """
     Audit multiple contracts in batch.
     
+    ✅ COMPLETE: All export formats including PDF and Excel are now fully functional.
+    See docs/HONEST_STATUS.md for details.
+    
     Examples:
         hyperagent batch-audit contracts -f Contract1.sol -f Contract2.sol
         hyperagent batch-audit contracts -d contracts/ --format all
         hyperagent batch-audit contracts -f *.sol --format excel -n "Q4 Audit"
     """
+    from cli.utils.warnings import show_command_warning
+    show_command_warning('batch-audit')
     try:
         from services.audit.batch_auditor import BatchAuditor
         from services.audit.report_aggregator import ReportAggregator
