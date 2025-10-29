@@ -15,7 +15,14 @@ console = Console()
 
 @click.group()
 def config_group():
-    """Manage configuration settings"""
+    """
+    Manage configuration settings
+    
+    ⚠️  WARNING: This command has partial implementation - some features may be limited.
+    See docs/HONEST_STATUS.md for details.
+    """
+    from cli.utils.warnings import show_command_warning
+    show_command_warning('config')
     pass
 
 @config_group.command()
