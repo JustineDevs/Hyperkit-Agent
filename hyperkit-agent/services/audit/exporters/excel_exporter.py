@@ -71,6 +71,7 @@ class ExcelExporter(BaseExporter):
             self._create_summary_sheet(wb, report)
             self._create_contracts_sheet(wb, report)
             self._create_findings_sheet(wb, report)
+            self._create_statistics_sheet(wb, report)
             
             # Save workbook
             wb.save(output_path)
@@ -204,6 +205,67 @@ class ExcelExporter(BaseExporter):
             ws.column_dimensions[get_column_letter(col)].width = 15
         for col in [3, 4, 6]:
             ws.column_dimensions[get_column_letter(col)].width = 50
+    
+    def _create_statistics_sheet(self, wb, report: Dict[str, Any]):
+        """Create statistics and charts sheet"""
+        from openpyxl.styles import Font, Alignment
+        
+        ws = wb.create_sheet("Statistics")
+        
+        # Title
+        ws['A1'] = "Audit Statistics & Analysis"
+        ws['A1'].font = Font(size=14, bold=True)
+        ws.merge_cells('A1:B1')
+        
+        row = 3
+        
+        # Severity Distribution
+        ws[f'A{row}'] = "Severity Distribution"
+        ws[f'A{row}'].font = Font(bold=True, size=12)
+        row += 1
+        
+        findings_by_severity = report.get('findings_by_severity', {})
+        ws[f'A{row}'] = "Severity"
+        ws[f'B{row}'] = "Count"
+        ws[f'A{row}'].font = Font(bold=True)
+        ws[f'B{row}'].font = Font(bold=True)
+        row += 1
+        
+        for severity, count in sorted(findings_by_severity.items(), 
+                                     key=lambda x: {'critical': 0, 'high': 1, 'medium': 2, 'low': 3, 
+                                                    'informational': 4, 'gas-optimization': 5}.get(x[0], 99)):
+            ws[f'A{row}'] = severity.capitalize()
+            ws[f'B{row}'] = count
+            row += 1
+        
+        # Contract Risk Levels
+        row += 2
+        ws[f'A{row}'] = "Risk Level Distribution"
+        ws[f'A{row}'].font = Font(bold=True, size=12)
+        row += 1
+        
+        ws[f'A{row}'] = "Risk Level"
+        ws[f'B{row}'] = "Count"
+        ws[f'A{row}'].font = Font(bold=True)
+        ws[f'B{row}'].font = Font(bold=True)
+        row += 1
+        
+        risk_levels = {}
+        for contract_data in report.get('contracts', {}).values():
+            risk = contract_data.get('risk_level', 'unknown')
+            risk_levels[risk] = risk_levels.get(risk, 0) + 1
+        
+        for risk, count in sorted(risk_levels.items()):
+            ws[f'A{row}'] = risk.capitalize()
+            ws[f'B{row}'] = count
+            row += 1
+        
+        # Auto-size columns
+        ws.column_dimensions['A'].width = 25
+        ws.column_dimensions['B'].width = 15
+        
+        # Note: Charts require additional openpyxl.chart setup which can be added if needed
+        # For now, providing the data in tables is sufficient
     
     def _fallback_to_csv(self, report: Dict[str, Any], output_path: str) -> bool:
         """Fallback to CSV export if openpyxl not available"""
