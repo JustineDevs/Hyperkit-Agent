@@ -1,14 +1,21 @@
 # Security Policy
 
-## Supported Versions
+⚠️ **SOURCE OF TRUTH**: This file is the canonical security policy for the entire HyperAgent project.
 
-We provide security updates for the following versions of HyperKit:
+## 🔒 Security Commitment
+
+HyperKit AI Agent is committed to maintaining the highest security standards. This document outlines our security practices, reporting procedures, and how we handle security vulnerabilities.
+
+## 🛡️ Supported Versions
+
+We provide security updates for the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| 0.9.x   | :white_check_mark: |
-| < 0.9   | :x:                |
+| 1.5.x   | ✅ Yes             |
+| 1.4.x   | ✅ Yes             |
+| 1.0.x   | ✅ Yes             |
+| < 1.0   | ❌ No              |
 
 ## Reporting a Vulnerability
 
@@ -170,26 +177,205 @@ We follow responsible disclosure practices:
 - [Solidity Security Considerations](https://docs.soliditylang.org/en/latest/security-considerations.html)
 - [Foundry Security Testing](https://book.getfoundry.sh/tutorials/best-practices/security)
 
-## Bug Bounty Program
+## 🏆 Bug Bounty Program
 
-We maintain a bug bounty program for security researchers:
+We reward security researchers who responsibly disclose vulnerabilities:
 
-- **Scope**: HyperKit core functionality, smart contracts, and infrastructure
-- **Rewards**: $100 - $10,000 depending on severity and impact
-- **Eligibility**: Must follow responsible disclosure
-- **Terms**: [Bug Bounty Terms](https://hyperionkit.xyz/security/bug-bounty)
-- **Special Rewards**: Higher rewards for smart contract vulnerabilities
+### Reward Structure
 
-## Security Changelog
+| Severity | Reward |
+|----------|--------|
+| Critical | $1,000 - $5,000 |
+| High | $500 - $1,000 |
+| Medium | $100 - $500 |
+| Low | $50 - $100 |
 
-All security-related changes are documented in our [Security Changelog](SECURITY_CHANGELOG.md).
+### Scope
 
-## Questions?
+**In Scope:**
+- Smart contract vulnerabilities
+- Authentication/authorization issues
+- Data exposure
+- Injection vulnerabilities
+- Cryptographic issues
+- Denial of Service (DoS)
 
-If you have questions about security or need clarification on any security-related matter, please contact us at [security@hyperionkit.xyz](mailto:security@hyperionkit.xyz).
+**Out of Scope:**
+- Social engineering
+- Physical attacks
+- Third-party services
+- Known issues in dependencies
+- Issues requiring physical access
+
+### Rules
+
+1. **No Public Disclosure**: Until fix is released
+2. **No Data Destruction**: Don't delete or modify data
+3. **No Service Disruption**: Don't disrupt services
+4. **Good Faith**: Act in good faith
+5. **One Submission Per Issue**: No duplicates
+
+## 🔍 Security Features
+
+### Implemented Security Measures
+
+#### 1. **Input Validation**
+- All user inputs are validated
+- Type checking enforced
+- Sanitization of dangerous characters
+
+#### 2. **Authentication & Authorization**
+- API key-based authentication
+- Role-based access control
+- Session management
+
+#### 3. **Cryptographic Security**
+- Secure key storage
+- TLS/SSL for communications
+- Proper hashing algorithms
+
+#### 4. **Smart Contract Security**
+- OpenZeppelin libraries
+- ReentrancyGuard pattern
+- Access control modifiers
+- Event logging
+
+#### 5. **Dependency Management**
+- Regular dependency updates
+- Vulnerability scanning
+- Version pinning
+
+### Security Tools Integrated
+
+- **Slither**: Static analysis for Solidity
+- **Mythril**: Symbolic execution for smart contracts
+- **Bandit**: Python security linter
+- **Safety**: Dependency vulnerability scanner
+- **GitHub Secret Scanning**: Automatic secret detection
+
+## 📋 Security Checklist
+
+Before deploying to production:
+
+### Code Security
+- [ ] All dependencies updated
+- [ ] Security scan passed (bandit, safety)
+- [ ] No hardcoded secrets
+- [ ] Input validation implemented
+- [ ] Error handling robust
+
+### Smart Contract Security
+- [ ] Slither analysis passed
+- [ ] Mythril scan passed
+- [ ] Access controls implemented
+- [ ] Reentrancy protection added
+- [ ] Events emitted for state changes
+
+### Infrastructure Security
+- [ ] TLS/SSL enabled
+- [ ] Firewall configured
+- [ ] Monitoring enabled
+- [ ] Backup procedures tested
+- [ ] Incident response plan ready
+
+### Testing
+- [ ] Unit tests passed
+- [ ] Integration tests passed
+- [ ] Security tests passed
+- [ ] Penetration testing completed
+- [ ] Load testing completed
+
+## 🚧 Common Vulnerabilities
+
+### How We Prevent Them
+
+#### 1. **Reentrancy Attacks**
+- Use OpenZeppelin's `ReentrancyGuard`
+- Follow Checks-Effects-Interactions pattern
+- Comprehensive testing
+
+#### 2. **Integer Overflow/Underflow**
+- Use Solidity 0.8+ (built-in checks)
+- SafeMath for older versions
+- Extensive testing
+
+#### 3. **Access Control Issues**
+- OpenZeppelin `Ownable`/`AccessControl`
+- Role-based permissions
+- Proper modifier usage
+
+#### 4. **Injection Attacks**
+- Input validation
+- Parameterized queries
+- Output encoding
+
+#### 5. **DoS Attacks**
+- Rate limiting
+- Gas optimization
+- Circuit breakers
+
+## 📊 Security Audit History
+
+| Date | Auditor | Findings | Status |
+|------|---------|----------|--------|
+| TBD | External Audit | Pending | 🔜 Planned |
+
+## 🔄 Security Update Process
+
+### How We Handle Security Updates
+
+1. **Discovery**: Issue reported or discovered
+2. **Triage**: Assess severity and impact
+3. **Fix**: Develop and test fix
+4. **Review**: Security team review
+5. **Release**: Deploy fix
+6. **Disclosure**: Coordinated disclosure
+
+### Notification Channels
+
+- **Security Advisories**: GitHub Security Advisories
+- **Email**: security@hyperkit.dev
+- **Discord**: #security-announcements
+- **Website**: https://hyperkit.dev/security
+
+## 📞 Contact
+
+### Security Team
+
+- **Email**: security@hyperkit.dev
+- **PGP Key**: Available at https://hyperkit.dev/pgp-key
+- **Response Time**: 24-48 hours
+
+### General Security Questions
+
+For non-sensitive security questions:
+- GitHub Discussions: https://github.com/JustineDevs/Hyperkit-Agent/discussions
+- Discord: #security channel
+
+## 🙏 Acknowledgments
+
+We thank the following security researchers:
+
+*(List will be updated as vulnerabilities are reported and fixed)*
+
+## 📚 Resources
+
+### Security Best Practices
+
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [Smart Contract Security Best Practices](https://consensys.github.io/smart-contract-best-practices/)
+- [Solidity Security Considerations](https://docs.soliditylang.org/en/latest/security-considerations.html)
+
+### Security Tools
+
+- [Slither](https://github.com/crytic/slither)
+- [Mythril](https://github.com/ConsenSys/mythril)
+- [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts/)
 
 ---
 
-**Last Updated**: October 17, 2025
-**Version**: 1.4.6
+**Last Updated**: 2025-01-29
+**Version**: 1.5.1
 **Project**: HyperKit Web3 Development Platform
+
+Thank you for helping keep HyperKit secure! 🔒
