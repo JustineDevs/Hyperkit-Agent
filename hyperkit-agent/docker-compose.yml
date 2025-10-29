@@ -1,8 +1,0 @@
-version: '3.8'
-
-services:
-  # IPFS Pinata integration only - no Obsidian services
-
-networks:
-  hyperkit-network:
-    driver: bridge

@@ -64,27 +64,12 @@ def test_openai_api() -> Tuple[str, str, bool]:
         return ("OPENAI_API_KEY", f"connection error: {str(e)[:100]}", False)
 
 
+# DEPRECATED: Obsidian MCP API test removed - Obsidian RAG is deprecated
+# IPFS Pinata RAG is now the exclusive RAG backend
+# This test function is kept for backward compatibility but always returns "deprecated"
 def test_obsidian_mcp_api() -> Tuple[str, str, bool]:
-    """Test Obsidian MCP API key validity."""
-    api_key = os.getenv("OBSIDIAN_API_KEY")
-    if not api_key or api_key == "your_obsidian_api_key_here":
-        return ("OBSIDIAN_MCP_API_KEY", "not set or using placeholder", False)
-    
-    try:
-        headers = {"Authorization": f"Bearer {api_key}"}
-        base_url = os.getenv("OBSIDIAN_API_URL", "http://127.0.0.1:27124")
-        response = requests.get(f"{base_url}/health", headers=headers, timeout=5)
-        
-        if response.status_code == 200:
-            return ("OBSIDIAN_MCP_API_KEY", "working", True)
-        elif response.status_code == 401:
-            return ("OBSIDIAN_MCP_API_KEY", "invalid API key", False)
-        elif response.status_code == 403:
-            return ("OBSIDIAN_MCP_API_KEY", "forbidden", False)
-        else:
-            return ("OBSIDIAN_MCP_API_KEY", f"error {response.status_code}: {response.text[:100]}", False)
-    except requests.exceptions.RequestException as e:
-        return ("OBSIDIAN_MCP_API_KEY", f"connection error: {str(e)[:100]}", False)
+    """DEPRECATED: Obsidian MCP API - use IPFS Pinata RAG instead."""
+    return ("OBSIDIAN_MCP_API_KEY", "deprecated - use PINATA_API_KEY instead", False)
 
 
 def test_langsmith_api() -> Tuple[str, str, bool]:
@@ -139,17 +124,11 @@ def test_hyperion_rpc() -> Tuple[str, str, bool]:
         return ("HYPERION_RPC", f"connection error: {str(e)[:100]}", False)
 
 
+# DEPRECATED: Docker test removed - Docker/MCP deprecated
+# Docker is no longer required for Hyperion-only operation
 def test_docker_availability() -> Tuple[str, str, bool]:
-    """Test Docker availability for MCP."""
-    try:
-        import docker
-        client = docker.from_env()
-        client.ping()
-        return ("DOCKER", "working", True)
-    except ImportError:
-        return ("DOCKER", "not installed (pip install docker)", False)
-    except Exception as e:
-        return ("DOCKER", f"error: {str(e)[:100]}", False)
+    """DEPRECATED: Docker removed - not required."""
+    return ("DOCKER", "deprecated - not required for Hyperion-only operation", False)
 
 
 def print_results(results: List[Tuple[str, str, bool]]) -> None:

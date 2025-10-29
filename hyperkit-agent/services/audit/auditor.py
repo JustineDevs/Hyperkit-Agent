@@ -43,18 +43,25 @@ class SmartContractAuditor:
         
         # Initialize Alith AI auditor (if enabled and available)
         self.alith_agent = None
-        if self.config.get("alith_enabled", False):
+        if self.config.get("alith_enabled", False) or self.config.get("ALITH_ENABLED", False):
             try:
-                from services.alith import HyperKitAlithAgent, is_alith_available
+                # Use Alith SDK directly (services.alith is just a stub)
+                from alith import Agent
+                from core.config.manager import config
                 
-                if is_alith_available():
-                    alith_config = self.config.get("alith", {})
-                    self.alith_agent = HyperKitAlithAgent(alith_config)
-                    self.tools_available["alith"] = True
-                    logger.info("✅ Alith AI auditor initialized")
-                else:
-                    logger.warning("Alith SDK not available")
+                # Alith SDK requires OpenAI API key
+                openai_key = config.get('OPENAI_API_KEY') or config.get('openai', {}).get('api_key')
+                if not openai_key:
+                    logger.warning("Alith SDK requires OPENAI_API_KEY - AI auditing disabled")
                     self.tools_available["alith"] = False
+                else:
+                    self.alith_agent = Agent(api_key=openai_key)
+                    self.tools_available["alith"] = True
+                    logger.info("✅ Alith AI auditor initialized with OpenAI key")
+            except ImportError:
+                logger.warning("Alith SDK not installed. Install with: pip install alith>=0.12.0")
+                logger.warning("AI auditing will use fallback LLM only")
+                self.tools_available["alith"] = False
             except Exception as e:
                 logger.warning(f"Failed to initialize Alith auditor: {e}")
                 self.tools_available["alith"] = False
@@ -101,7 +108,15 @@ class SmartContractAuditor:
     async def audit(self, contract_code: str) -> Dict[str, Any]:
         """
         Perform comprehensive audit of a smart contract.
-
+        
+        Execution Order (CRITICAL - must follow this order):
+        1. Slither (static analysis) - fastest, catches syntax/structure issues
+        2. Mythril (symbolic execution) - deeper analysis, requires Slither to pass
+        3. Custom pattern analysis - lightweight, always runs
+        4. Alith AI analysis - AI-powered insights, requires previous tools to complete
+        
+        At least ONE tool (Slither, Mythril, or Alith AI) must be available.
+        
         Args:
             contract_code: Solidity contract code to audit
 
@@ -110,6 +125,24 @@ class SmartContractAuditor:
         """
         try:
             logger.info("Starting comprehensive contract audit")
+            
+            # Validate at least one tool is available
+            available_tool_count = sum([
+                self.tools_available.get("slither", False),
+                self.tools_available.get("mythril", False),
+                self.tools_available.get("alith", False)
+            ])
+            
+            if available_tool_count == 0:
+                error_msg = (
+                    "No security tools available for auditing\n"
+                    "  Required: At least one of (Slither, Mythril, Alith AI) must be installed\n"
+                    "  Install Slither: pip install slither-analyzer\n"
+                    "  Install Mythril: pip install mythril\n"
+                    "  Configure Alith: Set OPENAI_API_KEY and ALITH_ENABLED=true"
+                )
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
 
             # Create temporary file for contract with UTF-8 encoding
             with tempfile.NamedTemporaryFile(
@@ -124,39 +157,47 @@ class SmartContractAuditor:
                 "tools_used": [],
                 "findings": [],
                 "severity": "unknown",
+                "execution_order": []
             }
 
-            # Run all available tools and collect results
+            # Run all available tools in correct order and collect results
             tool_results = {}
             
-            # Run Slither analysis
+            # STAGE 1: Run Slither analysis (static analysis - fastest)
             if self.tools_available["slither"]:
+                logger.info("Running Slither static analysis (Stage 1/4)")
                 slither_results = await self._run_slither(temp_file)
                 audit_results["slither"] = slither_results
                 audit_results["tools_used"].append("slither")
+                audit_results["execution_order"].append("slither")
                 tool_results["slither"] = slither_results.get("findings", [])
                 audit_results["findings"].extend(slither_results.get("findings", []))
 
-            # Run Mythril analysis
+            # STAGE 2: Run Mythril analysis (symbolic execution - deeper analysis)
             if self.tools_available["mythril"]:
+                logger.info("Running Mythril symbolic execution (Stage 2/4)")
                 mythril_results = await self._run_mythril(temp_file)
                 audit_results["mythril"] = mythril_results
                 audit_results["tools_used"].append("mythril")
+                audit_results["execution_order"].append("mythril")
                 tool_results["mythril"] = mythril_results.get("findings", [])
                 audit_results["findings"].extend(mythril_results.get("findings", []))
 
-            # Run custom pattern analysis
+            # STAGE 3: Run custom pattern analysis (lightweight, always runs)
+            logger.info("Running custom pattern analysis (Stage 3/4)")
             custom_results = await self._run_custom_patterns(contract_code)
             audit_results["custom"] = custom_results
             audit_results["tools_used"].append("custom")
+            audit_results["execution_order"].append("custom")
             tool_results["custom"] = custom_results.get("findings", [])
             audit_results["findings"].extend(custom_results.get("findings", []))
             
-            # Run Alith AI analysis (NEW)
+            # STAGE 4: Run Alith AI analysis (AI-powered insights - runs last)
             if self.tools_available.get("alith") and self.alith_agent:
                 try:
-                    logger.info("Running Alith AI security analysis...")
+                    logger.info("Running Alith AI security analysis (Stage 4/4)")
                     ai_results = await self.alith_agent.audit_contract(contract_code)
+                    audit_results["execution_order"].append("alith_ai")
                     
                     if ai_results.get("success"):
                         audit_results["alith"] = ai_results

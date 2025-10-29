@@ -49,45 +49,69 @@ class ConfigValidator:
         }
     
     def _validate_networks(self):
-        """Validate network configurations"""
+        """
+        Validate network configurations - HYPERION ONLY.
+        
+        CRITICAL: Fail hard if non-Hyperion networks configured.
+        Future network support documented in ROADMAP.md only.
+        """
         networks = self.config.get('networks', {})
         
         if not networks:
-            self.errors.append("No networks configured in config")
+            self.errors.append("CRITICAL: No networks configured - Hyperion is required")
             return
         
+        # HYPERION-ONLY: Reject LazAI and Metis network configs
+        unsupported_networks = ['lazai', 'metis', 'ethereum', 'polygon', 'arbitrum']
+        for network_name in networks.keys():
+            network_lower = network_name.lower()
+            if network_lower in unsupported_networks:
+                self.errors.append(
+                    f"CRITICAL: Network '{network_name}' is not supported (HYPERION-ONLY MODE)\n"
+                    f"  Removed networks: {', '.join(unsupported_networks)}\n"
+                    f"  Supported network: hyperion only\n"
+                    f"  Future network support documented in ROADMAP.md only\n"
+                    f"  Fix: Remove '{network_name}' from config.yaml/.env"
+                )
+                continue
+        
+        # Validate Hyperion network exists and is properly configured
+        if 'hyperion' not in networks:
+            self.errors.append(
+                "CRITICAL: Hyperion network not configured (HYPERION-ONLY MODE)\n"
+                "  Required: Hyperion network configuration in config.yaml/.env\n"
+                "  Fix: Add Hyperion network config (chain_id: 133717)"
+            )
+            return
+        
+        hyperion_config = networks.get('hyperion', {})
         required_fields = ['rpc_url', 'chain_id']
         
-        for network_name, network_config in networks.items():
-            if not isinstance(network_config, dict):
-                self.errors.append(f"Network '{network_name}' config is not a dictionary")
-                continue
-            
-            for field in required_fields:
-                if field not in network_config:
-                    self.errors.append(
-                        f"Network '{network_name}' missing required field: {field}\n"
-                        f"  Required: {required_fields}\n"
-                        f"  Current config: {list(network_config.keys())}\n"
-                        f"  Fix: Add '{field}' to network config in .env or config.yaml"
-                    )
-                elif not network_config[field]:
-                    self.errors.append(
-                        f"Network '{network_name}' has empty {field}\n"
-                        f"  Fix: Set {network_name.upper()}_{field.upper()} in .env"
-                    )
-                elif field == 'rpc_url' and not isinstance(network_config[field], str):
-                    self.errors.append(
-                        f"Network '{network_name}' RPC URL must be string, got {type(network_config[field])}\n"
-                        f"  Current value: {network_config[field]}\n"
-                        f"  Fix: Ensure {network_name.upper()}_RPC_URL is a string in .env"
-                    )
-                elif field == 'chain_id' and not isinstance(network_config[field], int):
-                    self.errors.append(
-                        f"Network '{network_name}' chain_id must be integer, got {type(network_config[field])}\n"
-                        f"  Current value: {network_config[field]}\n"
-                        f"  Fix: Ensure {network_name.upper()}_CHAIN_ID is an integer in .env"
-                    )
+        for field in required_fields:
+            if field not in hyperion_config:
+                self.errors.append(
+                    f"CRITICAL: Hyperion network missing required field: {field}\n"
+                    f"  Required: {required_fields}\n"
+                    f"  Current config: {list(hyperion_config.keys())}\n"
+                    f"  Fix: Add '{field}' to Hyperion network config"
+                )
+            elif not hyperion_config[field]:
+                self.errors.append(
+                    f"CRITICAL: Hyperion network has empty {field}\n"
+                    f"  Fix: Set HYPERION_{field.upper()} in .env"
+                )
+            elif field == 'rpc_url' and not isinstance(hyperion_config[field], str):
+                self.errors.append(
+                    f"CRITICAL: Hyperion RPC URL must be string\n"
+                    f"  Current value: {hyperion_config[field]}\n"
+                    f"  Fix: Ensure HYPERION_RPC_URL is a string"
+                )
+            elif field == 'chain_id' and hyperion_config[field] != 133717:
+                self.errors.append(
+                    f"CRITICAL: Hyperion chain_id must be 133717\n"
+                    f"  Current value: {hyperion_config[field]}\n"
+                    f"  Fix: Set HYPERION_CHAIN_ID=133717"
+                )
     
     def _validate_private_keys(self):
         """Validate private key configuration"""
@@ -122,19 +146,49 @@ class ConfigValidator:
             )
     
     def _validate_ai_rag_config(self):
-        """Validate AI and RAG configuration - fail if missing in production"""
-        # Alith SDK validation
-        lazai_key = (
-            self.config.get('LAZAI_API_KEY') or
-            os.getenv('LAZAI_API_KEY')
+        """
+        Validate AI and RAG configuration.
+        
+        NOTE: LazAI is network-only (blockchain RPC), NOT an AI agent.
+        Alith SDK is the ONLY AI agent and uses OpenAI API key.
+        """
+        # Check for deprecated config keys and reject them
+        deprecated_keys = {
+            'OBSIDIAN_API_KEY': 'Obsidian RAG is deprecated - use IPFS Pinata RAG instead',
+            'OBSIDIAN_MCP_API_KEY': 'Obsidian MCP RAG is deprecated - use IPFS Pinata RAG instead',
+            'MCP_ENABLED': 'MCP/Obsidian RAG is deprecated - IPFS Pinata RAG is exclusive',
+            'LAZAI_API_KEY': 'LazAI is network-only (not AI agent) - use OPENAI_API_KEY for Alith SDK',
+        }
+        
+        for deprecated_key, message in deprecated_keys.items():
+            if self.config.get(deprecated_key) or os.getenv(deprecated_key):
+                self.warnings.append(
+                    f"Deprecated config key detected: {deprecated_key}\n"
+                    f"  {message}\n"
+                    f"  Action: Remove {deprecated_key} from .env and config.yaml\n"
+                    f"  Fix: Use IPFS Pinata for RAG, OpenAI key for Alith SDK"
+                )
+        
+        # Alith SDK validation - uses OpenAI API key, not LazAI key
+        openai_key = (
+            self.config.get('OPENAI_API_KEY') or
+            self.config.get('openai', {}).get('api_key') or
+            os.getenv('OPENAI_API_KEY')
         )
         
-        if not lazai_key or lazai_key in ['your_lazai_api_key_here', '']:
+        alith_enabled = (
+            self.config.get('ALITH_ENABLED') or
+            self.config.get('alith', {}).get('enabled') or
+            os.getenv('ALITH_ENABLED', 'true').lower() == 'true'
+        )
+        
+        if alith_enabled and (not openai_key or openai_key in ['your_openai_api_key_here', '']):
             self.warnings.append(
-                "LAZAI_API_KEY not configured - AI features will be limited\n"
-                "  Impact: Contract generation and auditing will use fallback LLM\n"
-                "  Fix: Set LAZAI_API_KEY in .env to enable full AI capabilities\n"
-                "  Get key: https://lazai.network"
+                "Alith SDK enabled but OpenAI API key not configured\n"
+                "  Impact: Alith SDK requires OpenAI API key - advanced AI features disabled\n"
+                "  Fix: Set OPENAI_API_KEY in .env (Alith SDK uses OpenAI key)\n"
+                "  Get key: https://platform.openai.com/api-keys\n"
+                "  Note: LazAI is network-only, NOT used for AI agent"
             )
         
         # IPFS RAG validation - check multiple locations

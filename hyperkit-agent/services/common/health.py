@@ -149,11 +149,9 @@ health_checker = HealthChecker()
 def check_rpc_health() -> Dict[str, Any]:
     """Check RPC endpoint health"""
     try:
-        # This would be configured based on your setup
+        # HYPERION-ONLY: Only Hyperion RPC endpoint supported
         rpc_urls = [
-            "https://hyperion-testnet.metisdevops.link",
-            "https://rpc.lazai.network/testnet",
-            "https://andromeda.metis.io"
+            "https://hyperion-testnet.metisdevops.link"
         ]
         
         healthy_rpcs = 0
@@ -188,12 +186,12 @@ def check_rpc_health() -> Dict[str, Any]:
 def check_ai_health() -> Dict[str, Any]:
     """Check AI provider health"""
     try:
-        # Check if API keys are configured
+        # Check if API keys are configured (Alith SDK only - no LazAI AI agent)
         api_keys = {
             'google': bool(os.getenv('GOOGLE_API_KEY')),
-            'openai': bool(os.getenv('OPENAI_API_KEY')),
-            'anthropic': bool(os.getenv('ANTHROPIC_API_KEY')),
-            'lazai': bool(os.getenv('LAZAI_API_KEY'))
+            'openai': bool(os.getenv('OPENAI_API_KEY')),  # Required for Alith SDK
+            'anthropic': bool(os.getenv('ANTHROPIC_API_KEY'))
+            # LazAI removed - network-only, NOT an AI agent
         }
         
         configured_providers = sum(api_keys.values())

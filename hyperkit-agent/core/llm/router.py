@@ -57,20 +57,26 @@ class HybridLLMRouter:
         
         # Initialize Alith SDK (NEW)
         alith_config = self.config.get("alith", {})
-        if alith_config.get("enabled", False) and openai_key:  # Alith requires OpenAI key
-            try:
-                from services.alith import HyperKitAlithAgent, is_alith_available
-                
-                if is_alith_available():
-                    self.alith_agent = HyperKitAlithAgent(alith_config)
+        # Alith SDK integration - use directly (services.alith is just a stub)
+        if alith_config.get("enabled", False) or self.config.get("ALITH_ENABLED", False):
+            if openai_key:  # Alith requires OpenAI key
+                try:
+                    from alith import Agent
+                    self.alith_agent = Agent(api_key=openai_key)
                     self.alith_available = True
                     logger.info("✅ Alith AI agent initialized for advanced auditing")
-                else:
-                    logger.warning("Alith SDK not installed. Install with: pip install alith")
-            except Exception as e:
-                logger.warning(f"Failed to initialize Alith: {e}")
+                except ImportError:
+                    logger.warning("Alith SDK not installed. Install with: pip install alith>=0.12.0")
+                    logger.warning("Advanced AI features will use fallback LLM only")
+                    self.alith_available = False
+                except Exception as e:
+                    logger.warning(f"Failed to initialize Alith: {e}")
+                    self.alith_available = False
+            else:
+                logger.warning("Alith SDK requires OPENAI_API_KEY - using fallback LLM only")
+                self.alith_available = False
         else:
-            logger.info("Alith SDK not enabled in configuration")
+            self.alith_available = False
 
     def route(
         self, prompt: str, task_type: str = "general", prefer_local: bool = False

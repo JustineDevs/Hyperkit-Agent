@@ -221,7 +221,7 @@ class HyperKitAgent:
         """
         Generate a smart contract based on natural language prompt.
         ENFORCES PRODUCTION MODE - no silent fallbacks to mock implementations.
-        Tries LazAI first, falls back to free LLM models.
+        Uses Alith SDK ONLY - fails hard if Alith unavailable (no fallback).
 
         Args:
             prompt: Natural language description of the contract
@@ -257,142 +257,39 @@ class HyperKitAgent:
                             }
                         }
                 except Exception as e:
-                    logger.warning(f"Alith SDK generation failed, falling back to free LLM: {e}")
-
-            # Fallback to existing free LLM implementation
-            logger.info("🆓 Using free LLM for contract generation")
-            from services.generation.generator import ContractGenerator
-            from core.config.paths import PathManager
-
-            validator = Validator()
-            error_handler = ErrorHandler()
-
-            # Validate input
-            prompt_result = validator.validate_prompt(prompt)
-            if not prompt_result.is_valid:
-                return error_handler.handle_error(
-                    ValueError("Invalid prompt"), 
-                    f"prompt validation failed: {'; '.join(prompt_result.errors)}"
-                )
-
-            # Sanitize input (fails hard on truncation)
-            try:
-                prompt = validator.sanitize_input(prompt)
-                context = validator.sanitize_input(context)
-            except ValueError as ve:
-                # Input truncation error - fail hard with clear message
-                logger.error(f"Input validation failed: {ve}")
-                return error_handler.handle_error(
-                    ve,
-                    f"Input too long: {str(ve)}. Please reduce prompt size or split into smaller requests."
-                )
-
-            # Retrieve context from IPFS Pinata RAG
-            rag_context = ""
-            if self.rag:
-                try:
-                    rag_context = await self.rag.retrieve(prompt)
-                except Exception as e:
-                    logger.warning(f"IPFS RAG context retrieval failed: {e}")
-                    rag_context = ""
-
-            # Combine all context
-            full_context = f"{context}\n\n{rag_context}".strip()
-            
-            # Extract expected contract name from prompt BEFORE generation
-            from services.generation.contract_namer import ContractNamer
-            namer = ContractNamer()
-            expected_contract_name = namer.generate_filename(prompt).replace(".sol", "")
-
-            # Create enhanced prompt with context and contract name
-            enhanced_prompt = self._create_contract_generation_prompt(
-                prompt, full_context, expected_contract_name
-            )
-
-            # Use free LLM router for code generation
-            contract_code = self.llm_router.route(
-                enhanced_prompt, task_type="code", prefer_local=True
-            )
-
-            # Post-process the generated code
-            contract_code = self._post_process_contract(contract_code)
-
-            # Validate generated contract
-            contract_result = validator.validate_contract_code(contract_code)
-            if not contract_result.is_valid:
-                error_info = error_handler.create_validation_error(
-                    "contract_code", contract_code, "; ".join(contract_result.errors)
-                )
-                return error_handler.format_error_response(error_info)
-
-            # Use smart naming and organized directories
-            from services.generation.contract_namer import ContractNamer
-            namer = ContractNamer()
-            path_manager = PathManager(command_type="workflow")
-            
-            # Generate smart filename and category
-            filename = namer.generate_filename(prompt)
-            category = namer.get_category(prompt)
-            
-            # Extract expected contract name from filename (remove .sol)
-            expected_contract_name = filename.replace(".sol", "")
-            
-            # Validate and fix contract name in code if needed
-            import re
-            contract_name_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]*)', contract_code)
-            actual_contract_name = contract_name_match.group(1) if contract_name_match else None
-            
-            # If contract name doesn't match expected, fix it
-            if actual_contract_name != expected_contract_name:
-                logger.warning(f"Contract name mismatch: expected '{expected_contract_name}', got '{actual_contract_name}'")
-                logger.info(f"Fixing contract name to '{expected_contract_name}'")
-                
-                # Replace contract name in code
-                if actual_contract_name:
-                    contract_code = contract_code.replace(
-                        f"contract {actual_contract_name}",
-                        f"contract {expected_contract_name}"
+                    logger.error(f"CRITICAL: Alith SDK generation failed: {e}")
+                    # HARD FAIL - NO FALLBACK: Alith SDK is the ONLY AI agent
+                    raise RuntimeError(
+                        f"CRITICAL: Contract generation failed - Alith SDK unavailable\n"
+                        f"  Error: {e}\n"
+                        f"  Required: Alith SDK with OpenAI API key\n"
+                        f"  Fix: Install alith>=0.12.0 and configure OPENAI_API_KEY\n"
+                        f"  NO FALLBACK MODE: System will not silently switch to other providers"
                     )
-                
-            # Save to both workflow directory AND Foundry contracts directory for compilation
-            contracts_path = path_manager.get_workflow_dir() / category
-            contracts_path.mkdir(parents=True, exist_ok=True)
-            
-            # Save with smart name
-            file_path = contracts_path / filename
-            file_path.write_text(contract_code)
-            logger.info(f"✅ Contract saved to: {file_path}")
-            
-            # ALSO save to Foundry contracts directory for compilation
-            project_root = Path(__file__).parent.parent.parent.parent
-            foundry_contracts_dir = project_root / "contracts"
-            foundry_contracts_dir.mkdir(parents=True, exist_ok=True)
-            foundry_contract_path = foundry_contracts_dir / filename
-            foundry_contract_path.write_text(contract_code)
-            logger.info(f"✅ Contract saved to Foundry contracts directory: {foundry_contract_path}")
 
-            return {
-                "status": "success",
-                "contract_code": contract_code,
-                "contract_name": expected_contract_name,  # Include contract name
-                "filename": filename,
-                "category": category,
-                "path": str(file_path),
-                "foundry_path": str(foundry_contract_path),
-                "prompt": prompt,
-                "context_used": full_context,
-                "provider_used": "free_llm_router",
-                "warnings": prompt_result.warnings + contract_result.warnings,
-            }
+            # HARD FAIL - No fallback LLM allowed
+            logger.error("CRITICAL: Alith SDK not configured and no fallback allowed")
+            raise RuntimeError(
+                "CRITICAL: Alith SDK is the ONLY AI agent and is not configured\n"
+                "  Required: Install alith>=0.12.0 and configure OPENAI_API_KEY\n"
+                "  NO FALLBACK: System fails hard if Alith SDK unavailable\n"
+                "  Fix: Set ALITH_ENABLED=true and OPENAI_API_KEY in .env"
+            )
+
+        except RuntimeError:
+            # Re-raise RuntimeErrors (hard fails) - don't catch them
+            raise
         except Exception as e:
             logger.error(f"Contract generation failed: {e}")
+            from core.handlers import ErrorHandler
+            error_handler = ErrorHandler()
             return error_handler.handle_error(e, f"Contract generation failed: {e}")
 
     @safe_operation("audit_contract")
     async def audit_contract(self, contract_code: str) -> Dict[str, Any]:
         """
         Audit a smart contract using AI-powered analysis.
-        Tries LazAI first, falls back to static analysis tools.
+        Uses Alith SDK for AI auditing - falls back to static analysis tools only.
 
         Args:
             contract_code: Solidity contract code to audit
@@ -1808,12 +1705,16 @@ Generate only the Solidity contract code, no explanations or markdown formatting
 # Example usage and testing
 async def main():
     """Example usage of the HyperKit Agent."""
+    # HYPERION-ONLY configuration
     config = {
-        "openai_api_key": "your-api-key-here",
+        "openai_api_key": "your-api-key-here",  # Required for Alith SDK
         "networks": {
-            "hyperion": "https://hyperion-testnet.metisdevops.link",
-            "metis": "https://andromeda.metis.io",
-            "lazai": "https://rpc.lazai.network/testnet",
+            "hyperion": {
+                "rpc_url": "https://hyperion-testnet.metisdevops.link",
+                "chain_id": 133717,
+                "explorer_url": "https://hyperion-testnet-explorer.metisdevops.link"
+            }
+            # Future network support (LazAI, Metis) documented in ROADMAP.md only
         },
     }
 

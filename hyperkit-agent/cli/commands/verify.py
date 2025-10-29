@@ -18,13 +18,18 @@ def verify_group():
 
 @verify_group.command()
 @click.option('--address', '-a', required=True, help='Contract address')
-@click.option('--network', '-n', default='hyperion', help='Network')
+@click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
 @click.option('--source', '-s', help='Source code file')
 @click.option('--constructor-args', help='Constructor arguments')
 def contract(address, network, source, constructor_args):
     """Verify a smart contract on block explorer"""
+    # Hardcode Hyperion - no network selection
+    network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
+    if ctx.params.get('network') and ctx.params.get('network') != 'hyperion':
+        console.print(f"[yellow]WARNING: Network '{ctx.params.get('network')}' not supported - using Hyperion[/yellow]")
+    
     console.print(f"Verifying contract: {address}")
-    console.print(f"Network: {network}")
+    console.print(f"Network: Hyperion (exclusive deployment target)")
     
     try:
         from services.verification.explorer_api import ExplorerAPI
@@ -72,12 +77,15 @@ def contract(address, network, source, constructor_args):
 
 @verify_group.command()
 @click.option('--address', '-a', required=True, help='Contract address')
-@click.option('--network', '-n', default='hyperion', help='Network')
+@click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
 def status(address, network):
     """Check verification status"""
+    # Hardcode Hyperion - no network selection
+    network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
+    
     console.print(f"Verification Status")
     console.print(f"Address: {address}")
-    console.print(f"Network: {network}")
+    console.print(f"Network: Hyperion (exclusive deployment target)")
     
     try:
         from services.verification.explorer_api import ExplorerAPI
@@ -103,12 +111,15 @@ def status(address, network):
 
 @verify_group.command()
 @click.option('--address', '-a', required=True, help='Contract address')
-@click.option('--network', '-n', default='hyperion', help='Network')
+@click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
 def deployment(address, network):
     """Verify deployment details"""
+    # Hardcode Hyperion - no network selection
+    network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
+    
     console.print(f"Deployment Verification")
     console.print(f"Address: {address}")
-    console.print(f"Network: {network}")
+    console.print(f"Network: Hyperion (exclusive deployment target)")
     
     try:
         from services.verification.explorer_api import ExplorerAPI
@@ -134,10 +145,13 @@ def deployment(address, network):
         console.print(f"This command requires real explorer integration")
 
 @verify_group.command()
-@click.option('--network', '-n', default='hyperion', help='Network')
+@click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
 def list(network):
     """List verified contracts"""
-    console.print(f"Verified Contracts on {network}")
+    # Hardcode Hyperion - no network selection
+    network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
+    
+    console.print(f"Verified Contracts on Hyperion")
     
     try:
         from services.verification.explorer_api import ExplorerAPI

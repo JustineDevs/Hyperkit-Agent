@@ -23,7 +23,7 @@ cd Hyperkit-Agent/hyperkit-agent
 pip install -r requirements.txt
 
 # Optional: Install IPFS features
-pip install -r requirements-optional.txt
+pip install -r requirements.txt
 ```
 
 ---

@@ -12,7 +12,7 @@ class PDFExporter(BaseExporter):
     """
     Export audit reports to PDF format.
     
-    Note: Requires 'reportlab' package from requirements-optional.txt
+    Note: Requires 'reportlab' package from requirements.txt
     Falls back to HTML export if reportlab is not available.
     """
     

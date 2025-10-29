@@ -1,98 +1,105 @@
 """
 AI Agent Service
 Production-ready Alith SDK integration for HyperKit Agent
-NO MOCK MODE - REQUIRES REAL ALITH SDK
+
+CRITICAL: Alith SDK is the ONLY AI agent - no LazAI AI, no mocks, no fallbacks.
+LazAI is network-only (deployment endpoint), NOT an AI agent.
 """
 
 import asyncio
 import json
-import sys
+import logging
 from typing import Dict, Any, List, Optional
 from core.config.manager import config
 from .logging_system import logger, LogCategory, log_info, log_error, log_warning
 
-# CRITICAL: Require real Alith SDK - NO MOCK MODE
+# Check if Alith SDK is available
 try:
-    from alith import Agent, LazAIClient
+    from alith import Agent
     ALITH_AVAILABLE = True
 except ImportError:
     ALITH_AVAILABLE = False
-    print("CRITICAL ERROR: Alith SDK not available")
-    print("This system REQUIRES real Alith SDK - NO MOCK MODE")
-    print("Install with: pip install alith>=0.12.0")
-    print("Get API key from: https://lazai.network")
-    print("SYSTEM CANNOT OPERATE WITHOUT ALITH SDK")
-    sys.exit(1)
-
-# Import real Alith implementation
-# Note: services/alith/agent.py not implemented yet - using direct Alith SDK
-REAL_ALITH_AVAILABLE = True
+    logging.warning("Alith SDK not available - AI agent features will be disabled")
+    logging.warning("Install with: pip install alith>=0.12.0")
+    logging.warning("Note: System can operate with fallback LLM but advanced AI features require Alith SDK")
 
 
 class HyperKitAIAgent:
     """
-    Production AI Agent service using Alith SDK
-    LAZAI integration is optional - system works without it
+    Production AI Agent service using Alith SDK ONLY.
+    
+    CRITICAL NOTES:
+    - Alith SDK is the ONLY AI agent - no LazAI AI agent exists
+    - LazAI is network-only (blockchain RPC endpoint), NOT an AI service
+    - If Alith SDK not configured, system uses fallback LLM (OpenAI/Gemini)
+    - Hard fail on operations that require Alith if not configured
     """
     
     def __init__(self):
         self.config = config
         self.alith_agent = None
-        self.web3_tools = None
-        self.real_alith_agent = None
         self.alith_configured = self._check_alith_config()
         self.models = {}
         self.api_endpoints = {}
         
-        # LAZAI is optional - allow system to run without it
         if self.alith_configured:
             self._initialize_alith()
             self._setup_api_endpoints()
         else:
-            print("WARNING: LAZAI_API_KEY not configured")
-            print("System will run without advanced AI features")
-            print("Get API key from: https://lazai.network")
-            print("Set LAZAI_API_KEY in .env to enable full AI capabilities")
+            log_warning(LogCategory.AI_AGENT, "Alith SDK not configured - using fallback LLM")
+            logging.warning("Alith SDK not configured - advanced AI features disabled")
+            logging.warning("System will use fallback LLM (OpenAI/Gemini) for contract operations")
+            logging.warning("To enable Alith SDK:")
+            logging.warning("  1. Install: pip install alith>=0.12.0")
+            logging.warning("  2. Configure OpenAI API key (Alith requires it)")
+            logging.warning("  3. Set ALITH_ENABLED=true in .env")
     
     def _check_alith_config(self) -> bool:
-        """Check if Alith SDK is properly configured - FAILS HARD IF NOT"""
+        """Check if Alith SDK is properly configured"""
         if not ALITH_AVAILABLE:
             return False
-            
-        lazai_key = self.config.get('LAZAI_API_KEY')
-        if not lazai_key or lazai_key.strip() == '' or lazai_key == 'your_lazai_api_key_here':
+        
+        # Alith SDK requires OpenAI API key (based on LLM router)
+        openai_key = self.config.get('OPENAI_API_KEY') or self.config.get('openai', {}).get('api_key')
+        if not openai_key or openai_key.strip() == '' or openai_key == 'your_openai_api_key_here':
             return False
-            
-        return True
+        
+        # Check if Alith is enabled in config
+        alith_enabled = self.config.get('ALITH_ENABLED') or self.config.get('alith', {}).get('enabled', True)
+        if isinstance(alith_enabled, str):
+            alith_enabled = alith_enabled.lower() == 'true'
+        
+        return bool(alith_enabled)
     
     def _initialize_alith(self):
-        """Initialize Alith agent and Web3 tools"""
+        """Initialize Alith SDK agent - uses OpenAI API key (Alith requirement)"""
         try:
-            lazai_key = self.config.get('LAZAI_API_KEY')
+            # Alith SDK uses OpenAI API key (not LazAI key - LazAI is network only)
+            openai_key = self.config.get('OPENAI_API_KEY') or self.config.get('openai', {}).get('api_key')
+            if not openai_key:
+                raise ValueError("OpenAI API key required for Alith SDK")
             
-            # Try to initialize with Agent and LazAIClient from alith
-            # These may not exist, so catch gracefully
+            # Initialize Alith Agent with OpenAI key
             try:
-                self.alith_agent = Agent(api_key=lazai_key)
-                self.web3_tools = LazAIClient
-            except (AttributeError, TypeError):
-                # Fallback if Agent/LazAIClient don't work as expected
-                print("WARNING: Alith SDK initialization may have issues")
-                print("Some AI features may not work correctly")
-                self.alith_agent = None
-                self.web3_tools = None
+                self.alith_agent = Agent(api_key=openai_key)
+                log_info(LogCategory.AI_AGENT, "Alith SDK Agent initialized with OpenAI key")
+            except (AttributeError, TypeError) as e:
+                log_error(LogCategory.AI_AGENT, f"Alith SDK Agent initialization failed: {e}", e)
+                raise ValueError(f"Alith SDK Agent failed to initialize: {e}")
             
             # Initialize multiple AI models
             self._initialize_models()
             
             log_info(LogCategory.AI_AGENT, "Alith AI Agent initialized successfully")
-            print("Alith AI Agent initialized successfully")
+            logging.info("✅ Alith SDK AI Agent initialized successfully")
         except Exception as e:
             log_error(LogCategory.AI_AGENT, "Failed to initialize Alith agent", e)
-            print(f"WARNING: Failed to initialize Alith agent: {e}")
-            print("System will continue without advanced AI features")
+            logging.error(f"CRITICAL: Failed to initialize Alith SDK agent: {e}")
+            logging.error("Advanced AI features will be unavailable")
+            logging.error("System will continue with fallback LLM only")
             self.alith_agent = None
-            self.web3_tools = None
+            # Hard fail would be: raise RuntimeError("Alith SDK initialization failed")
+            # But we allow graceful degradation to fallback LLM
     
     def _initialize_models(self):
         """Initialize multiple AI models for different tasks"""
@@ -160,9 +167,25 @@ class HyperKitAIAgent:
             # Don't exit - allow system to continue
     
     async def generate_contract(self, requirements: Dict[str, Any]) -> str:
-        """Generate smart contract using Alith AI services (requires LAZAI_API_KEY)"""
+        """
+        Generate smart contract using Alith SDK AI services.
+        
+        Requires:
+        - Alith SDK installed (pip install alith>=0.12.0)
+        - OpenAI API key configured (OPENAI_API_KEY)
+        - ALITH_ENABLED=true in config
+        
+        Raises:
+            RuntimeError: If Alith SDK not configured
+        """
         if not self.alith_configured:
-            raise Exception("LAZAI_API_KEY not configured. Please set it in .env file to use AI contract generation")
+            raise RuntimeError(
+                "Alith SDK not configured - cannot generate contract with AI\n"
+                "  Required: OpenAI API key (OPENAI_API_KEY) + Alith SDK installed\n"
+                "  Install: pip install alith>=0.12.0\n"
+                "  Configure: Set OPENAI_API_KEY and ALITH_ENABLED=true in .env\n"
+                "  Note: LazAI is network-only, NOT an AI agent"
+            )
         
         try:
             # Use real Alith agent for contract generation
@@ -216,16 +239,22 @@ Generate a production-ready smart contract with the following requirements:
             }
         except Exception as e:
             log_error(LogCategory.AI_AGENT, "AI audit failed", e)
-            print(f"CRITICAL ERROR: Contract audit failed: {e}")
-            print("Check your LAZAI_API_KEY and Alith SDK configuration")
-            raise Exception(f"Contract audit failed: {e}")
+            raise RuntimeError(
+                f"Contract audit failed: {e}\n"
+                "  Check: OpenAI API key (OPENAI_API_KEY) is configured\n"
+                "  Check: Alith SDK is installed: pip install alith>=0.12.0\n"
+                "  Check: ALITH_ENABLED=true in config"
+            )
     
-    async def get_web3_tools(self) -> Any:
-        """Get Web3 tools for blockchain interaction - REQUIRES REAL ALITH SDK"""
-        if not self.web3_tools:
-            raise Exception("Web3 tools not available - Alith SDK not properly initialized")
+    async def get_web3_tools(self) -> Optional[Any]:
+        """
+        Get Web3 tools for blockchain interaction.
         
-        return self.web3_tools
+        NOTE: Web3 tools are separate from AI agent functionality.
+        Use blockchain service for Web3 operations, not AI agent.
+        """
+        # Web3 tools are handled by blockchain service, not AI agent
+        return None
     
     async def analyze_gas_usage(self, contract_code: str) -> Dict[str, Any]:
         """Analyze gas usage using REAL Alith AI - NO MOCK MODE"""

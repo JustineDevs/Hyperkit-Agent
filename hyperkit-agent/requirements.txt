@@ -23,8 +23,8 @@ eth-typing>=5.0.0,<6.0
 google-generativeai>=0.3.0,<1.0
 openai>=1.3.0,<2.0
 anthropic>=0.7.0,<1.0
-# alith>=0.12.0,<1.0  # MOVED TO OPTIONAL: AI agent framework for Web3 (dependency conflict with dstack-sdk)
-# lazai>=0.1.0,<1.0  # LazAI network integration - Not yet available on PyPI
+alith>=0.12.0,<1.0  # AI agent framework for Web3 (Alith SDK - uses OpenAI key)
+# Note: LazAI is network-only (blockchain RPC), NOT an AI agent - no SDK needed
 
 # Configuration & Data
 pyyaml>=6.0.0,<7.0
@@ -66,8 +66,8 @@ pre-commit>=3.0.0,<4.0
 sphinx>=7.0.0,<8.0
 sphinx-rtd-theme>=1.3.0,<2.0
 
-# MCP Docker Integration (Optional)
-docker>=6.0.0,<7.0
+# Docker removed - not required for Hyperion-only operation
+# No containerization needed - native Python operation only
 flask>=2.0.0,<3.0
 flask-cors>=4.0.0,<5.0
 
@@ -80,9 +80,16 @@ urllib3>=2.5.0,<3.0
 
 # Vector Database & RAG
 chromadb>=0.4.0,<1.0  # Vector database for embeddings and similarity search
-# ipfshttpclient - MOVED TO OPTIONAL: Install separately for IPFS RAG features
-# Install with: pip install ipfshttpclient (if available for your Python version)
-# Note: IPFS RAG is production-ready but optional. Core system works without it.
+
+# IPFS RAG Integration (Production-Ready)
+# Note: May not be compatible with all Python versions (3.10-3.12)
+# If installation fails, IPFS RAG features will be disabled but core system will work
+# IPFS RAG provides: Decentralized vector storage, CID-based version tracking, Multi-gateway fallback, Pinata integration
+ipfshttpclient>=0.8.0a2,<1.0  # IPFS HTTP client for Pinata RAG (exclusive RAG backend)
+
+# Optional Export Formats for Batch Audit Reporting
+reportlab>=4.0.0,<5.0  # PDF export
+openpyxl>=3.1.0,<4.0  # Excel export
 
 # Removed dependencies for production readiness:
 # - solcx (Windows incompatibility - using Foundry CLI instead)

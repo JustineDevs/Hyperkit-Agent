@@ -21,7 +21,7 @@ def generate_group():
 @click.option('--type', '-t', required=True, help='Contract type (ERC20, ERC721, DeFi, etc.)')
 @click.option('--name', '-n', required=True, help='Contract name')
 @click.option('--output', '-o', help='Output directory')
-@click.option('--network', default='hyperion', help='Target network')
+@click.option('--network', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
 @click.option('--template', help='Use specific template')
 @click.option('--use-rag/--no-use-rag', default=True, help='Use RAG templates for enhanced context')
 @click.pass_context
@@ -31,8 +31,13 @@ def contract(ctx, type, name, output, network, template, use_rag):
     from core.config.loader import get_config
     from services.core.rag_template_fetcher import get_template
     
+    # Hardcode Hyperion - no network selection
+    network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
+    if ctx.params.get('network') and ctx.params.get('network') != 'hyperion':
+        console.print(f"[yellow]WARNING: Network '{ctx.params.get('network')}' not supported - using Hyperion[/yellow]")
+    
     console.print(f"Generating {type} contract: {name}")
-    console.print(f"Network: {network}")
+    console.print(f"Network: Hyperion (exclusive deployment target)")
     
     try:
         # Initialize agent

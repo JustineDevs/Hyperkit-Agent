@@ -8,7 +8,14 @@ import subprocess
 import os
 from pathlib import Path
 from click.testing import CliRunner
-from cli.main import cli
+try:
+    from cli.main import cli
+except ImportError:
+    # Fallback for direct CLI module import
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from cli.main import cli
 
 
 class TestDocumentedWorkflows:

@@ -27,6 +27,8 @@ class ConfigManager:
         if not hasattr(self, '_initialized'):
             self._initialized = True
             self._load_config()
+            # Validate config on startup - fail hard on critical errors
+            self._validate_startup_config()
     
     def _load_config(self):
         """Load configuration from multiple sources"""
@@ -54,11 +56,13 @@ class ConfigManager:
             'OPENAI_API_KEY': os.getenv('OPENAI_API_KEY'),
             'GOOGLE_API_KEY': os.getenv('GOOGLE_API_KEY'),
             'ANTHROPIC_API_KEY': os.getenv('ANTHROPIC_API_KEY'),
-            'LAZAI_API_KEY': os.getenv('LAZAI_API_KEY'),
+            # LAZAI_API_KEY removed - LazAI is network-only, NOT an AI agent
+            # Use OPENAI_API_KEY for Alith SDK (only AI agent)
             
-            # LazAI Network Configuration
-            'LAZAI_EVM_ADDRESS': os.getenv('LAZAI_EVM_ADDRESS'),
-            'LAZAI_RSA_PRIVATE_KEY': os.getenv('LAZAI_RSA_PRIVATE_KEY'),
+            # LazAI Network Configuration - DEPRECATED (network-only, not AI agent)
+            # Future network support documented in ROADMAP.md only
+            # 'LAZAI_EVM_ADDRESS': os.getenv('LAZAI_EVM_ADDRESS'),  # Not used
+            # 'LAZAI_RSA_PRIVATE_KEY': os.getenv('LAZAI_RSA_PRIVATE_KEY'),  # Not used
             'IPFS_JWT': os.getenv('IPFS_JWT'),
             
             # Blockchain Network Configuration
@@ -66,12 +70,8 @@ class ConfigManager:
             'HYPERION_RPC_URL': os.getenv('HYPERION_RPC_URL'),
             'HYPERION_CHAIN_ID': os.getenv('HYPERION_CHAIN_ID', '133717'),
             'HYPERION_EXPLORER_URL': os.getenv('HYPERION_EXPLORER_URL'),
-            'METIS_RPC_URL': os.getenv('METIS_RPC_URL'),
-            'METIS_CHAIN_ID': os.getenv('METIS_CHAIN_ID', '1088'),
-            'METIS_EXPLORER_URL': os.getenv('METIS_EXPLORER_URL'),
-            'LAZAI_RPC_URL': os.getenv('LAZAI_RPC_URL'),
-            'LAZAI_CHAIN_ID': os.getenv('LAZAI_CHAIN_ID', '9001'),
-            'LAZAI_EXPLORER_URL': os.getenv('LAZAI_EXPLORER_URL'),
+            # HYPERION-ONLY: Metis and LazAI network configs removed
+            # Future network support documented in ROADMAP.md only
             'ETHEREUM_RPC_URL': os.getenv('ETHEREUM_RPC_URL'),
             'ETHEREUM_CHAIN_ID': os.getenv('ETHEREUM_CHAIN_ID', '1'),
             'ETHEREUM_EXPLORER_URL': os.getenv('ETHEREUM_EXPLORER_URL'),
@@ -157,38 +157,35 @@ class ConfigManager:
         return all(self.get(key) for key in required_keys)
     
     def get_api_keys(self) -> Dict[str, str]:
-        """Get all API keys"""
+        """
+        Get all API keys - HYPERION-ONLY MODE.
+        
+        Returns API keys for Alith SDK (OpenAI), IPFS Pinata RAG, and fallback LLMs.
+        LazAI API key removed - LazAI is network-only, NOT an AI agent.
+        """
         return {
-            'openai': self.get('OPENAI_API_KEY'),
-            'google': self.get('GOOGLE_API_KEY'),
-            'anthropic': self.get('ANTHROPIC_API_KEY'),
-            'lazai': self.get('LAZAI_API_KEY'),
-            'pinata': self.get('PINATA_API_KEY')
+            'openai': self.get('OPENAI_API_KEY'),  # Required for Alith SDK (ONLY AI agent)
+            'google': self.get('GOOGLE_API_KEY'),  # Optional fallback LLM
+            'anthropic': self.get('ANTHROPIC_API_KEY'),  # Optional fallback LLM
+            # LAZAI_API_KEY removed - LazAI is network-only, NOT an AI agent
+            'pinata': self.get('PINATA_API_KEY')  # Required for IPFS Pinata RAG (exclusive)
         }
     
     def get_network_config(self) -> Dict[str, str]:
-        """Get network configuration"""
+        """
+        Get network configuration - HYPERION ONLY.
+        
+        Returns Hyperion network configuration only.
+        Future network support (LazAI, Metis) documented in ROADMAP.md only.
+        """
         return {
-            'default_network': self.get('DEFAULT_NETWORK', 'hyperion'),
+            'default_network': 'hyperion',  # Hardcoded - Hyperion is exclusive
             'hyperion_rpc': self.get('HYPERION_RPC_URL'),
             'hyperion_chain_id': self.get('HYPERION_CHAIN_ID', '133717'),
             'hyperion_explorer': self.get('HYPERION_EXPLORER_URL'),
-            'metis_rpc': self.get('METIS_RPC_URL'),
-            'metis_chain_id': self.get('METIS_CHAIN_ID', '1088'),
-            'metis_explorer': self.get('METIS_EXPLORER_URL'),
-            'lazai_rpc': self.get('LAZAI_RPC_URL'),
-            'lazai_chain_id': self.get('LAZAI_CHAIN_ID', '9001'),
-            'lazai_explorer': self.get('LAZAI_EXPLORER_URL'),
-            'ethereum_rpc': self.get('ETHEREUM_RPC_URL'),
-            'ethereum_chain_id': self.get('ETHEREUM_CHAIN_ID', '1'),
-            'ethereum_explorer': self.get('ETHEREUM_EXPLORER_URL'),
-            'polygon_rpc': self.get('POLYGON_RPC_URL'),
-            'polygon_chain_id': self.get('POLYGON_CHAIN_ID', '137'),
-            'polygon_explorer': self.get('POLYGON_EXPLORER_URL'),
-            'arbitrum_rpc': self.get('ARBITRUM_RPC_URL'),
-            'arbitrum_chain_id': self.get('ARBITRUM_CHAIN_ID', '42161'),
-            'arbitrum_explorer': self.get('ARBITRUM_EXPLORER_URL'),
-            'private_key': self.get('DEFAULT_PRIVATE_KEY') or self.get('PRIVATE_KEY')  # Prefer DEFAULT_PRIVATE_KEY
+            'private_key': self.get('DEFAULT_PRIVATE_KEY') or self.get('PRIVATE_KEY'),
+            # HYPERION-ONLY: LazAI, Metis, and other networks removed
+            # Future network support documented in ROADMAP.md only
         }
     
     def get_storage_config(self) -> Dict[str, str]:
@@ -209,13 +206,21 @@ class ConfigManager:
         }
     
     def get_lazai_config(self) -> Dict[str, str]:
-        """Get LazAI network configuration"""
-        return {
-            'evm_address': self.get('LAZAI_EVM_ADDRESS'),
-            'rsa_private_key': self.get('LAZAI_RSA_PRIVATE_KEY'),
-            'ipfs_jwt': self.get('IPFS_JWT'),
-            'api_key': self.get('LAZAI_API_KEY')
-        }
+        """
+        DEPRECATED: LazAI network configuration removed (HYPERION-ONLY MODE).
+        
+        LazAI is network-only (blockchain RPC), NOT an AI agent.
+        Future network support documented in ROADMAP.md only.
+        
+        Raises:
+            NotImplementedError: Always - LazAI config removed for Hyperion-only mode
+        """
+        raise NotImplementedError(
+            "LazAI network configuration removed (HYPERION-ONLY MODE)\n"
+            "  Hyperion is the exclusive deployment target\n"
+            "  LazAI is network-only, NOT an AI agent\n"
+            "  Future network support documented in ROADMAP.md only"
+        )
     
     def get_security_config(self) -> Dict[str, Any]:
         """Get security configuration"""
@@ -247,6 +252,30 @@ class ConfigManager:
         }
     
     # Obsidian methods removed - IPFS Pinata RAG is now exclusive
+    
+    def _validate_startup_config(self):
+        """
+        Validate critical configuration on startup - abort if missing/invalid.
+        This prevents runtime errors by catching config issues early.
+        """
+        from core.config.config_validator import ConfigValidator
+        
+        # Boot-time config validation - fail hard on critical errors
+        validator = ConfigValidator(self._config)
+        validator.fail_if_invalid()  # Raises SystemExit(1) if critical errors found
+        
+        # If we reach here, validation passed (no critical errors)
+        # Log warnings if any (critical errors already handled by fail_if_invalid)
+        result = validator.validate_all()
+        if result['non_critical_issues'] > 0:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning("=" * 80)
+            logger.warning("CONFIGURATION WARNINGS")
+            logger.warning("=" * 80)
+            for warning in result['warnings']:
+                logger.warning(f"\n[WARNING] {warning}")
+            logger.warning("=" * 80)
 
 # Global instance
 config = ConfigManager()

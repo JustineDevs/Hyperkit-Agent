@@ -1,6 +1,14 @@
 """
-Simple MCP Client - Direct API Integration
-No Docker dependency, direct HTTP calls to Obsidian API
+DEPRECATED: Simple MCP Client - Direct API Integration
+
+⚠️  WARNING: This module is DEPRECATED and no longer used.
+   Obsidian RAG integration has been completely removed.
+   IPFS Pinata is now the exclusive RAG backend.
+   
+   This module is kept for reference only and should not be used.
+   All RAG operations now use services/rag/ipfs_rag.py
+
+Original purpose: Direct HTTP calls to Obsidian API
 """
 
 import requests
@@ -11,7 +19,10 @@ import json
 logger = logging.getLogger(__name__)
 
 class SimpleMCPClient:
-    """Simple MCP client that works directly with Obsidian API"""
+    """
+    DEPRECATED: Simple MCP client - Obsidian API integration removed.
+    Use IPFS Pinata RAG instead (services/rag/ipfs_rag.py)
+    """
     
     def __init__(self, api_key: str, base_url: str = "http://localhost:27124"):
         self.api_key = api_key

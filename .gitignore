@@ -1,3 +1,8 @@
+# Modules
+[submodule "hyperkit-agent/lib/openzeppelin-contracts"]
+	path = hyperkit-agent/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+
 # Python
 __pycache__/
 *.py[cod]

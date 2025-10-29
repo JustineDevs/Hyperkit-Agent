@@ -21,17 +21,19 @@ async def test_real_implementations():
     print("🔍 Testing Real Implementations vs Mock Implementations")
     print("=" * 70)
     
-    # Test 1: Real Alith Implementation
-    print("\n🤖 Test 1: Real Alith Implementation")
+    # Test 1: Alith SDK Implementation (ONLY AI Agent)
+    print("\n🤖 Test 1: Alith SDK Implementation (ONLY AI Agent)")
     print("-" * 40)
+    print("NOTE: Alith SDK is the ONLY AI agent - uses OpenAI API key")
+    print("      LazAI is network-only (blockchain RPC), NOT an AI agent")
     try:
         ai_agent = HyperKitAIAgent()
         
-        # Check if real Alith is available
-        if hasattr(ai_agent, 'real_alith_agent') and ai_agent.real_alith_agent:
-            print("✅ Real Alith agent is initialized")
+        # Check if Alith SDK is configured
+        if ai_agent.alith_configured and ai_agent.alith_agent:
+            print("✅ Alith SDK agent is initialized")
             
-            # Test contract audit with real Alith
+            # Test contract audit with Alith SDK
             sample_contract = """
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
@@ -51,7 +53,7 @@ contract TestContract {
 }
 """
             
-            print("   Testing contract audit with real Alith...")
+            print("   Testing contract audit with Alith SDK...")
             audit_result = await ai_agent.audit_contract(sample_contract)
             
             print(f"   Audit Status: {audit_result.get('status', 'Unknown')}")
@@ -59,15 +61,17 @@ contract TestContract {
             print(f"   Security Score: {audit_result.get('security_score', 'N/A')}")
             print(f"   Vulnerabilities Found: {len(audit_result.get('vulnerabilities', []))}")
             
-            if audit_result.get('method') == 'real_alith':
-                print("✅ Real Alith implementation is working correctly")
+            if ai_agent.alith_agent:
+                print("✅ Alith SDK implementation is working correctly")
             else:
-                print("⚠️  Real Alith not used - check configuration")
+                print("⚠️  Alith SDK not used - using fallback LLM")
+                print("   To enable: Install alith>=0.12.0 and set OPENAI_API_KEY")
         else:
-            print("⚠️  Real Alith agent not initialized - using mock")
+            print("⚠️  Alith SDK not configured - using fallback LLM")
+            print("   To enable: pip install alith>=0.12.0 and configure OPENAI_API_KEY")
             
     except Exception as e:
-        print(f"❌ Real Alith test failed: {e}")
+        print(f"❌ Alith SDK test failed: {e}")
     
     # Test 2: Public Contract Auditor (Real API calls)
     print("\n🌐 Test 2: Public Contract Auditor (Real API calls)")

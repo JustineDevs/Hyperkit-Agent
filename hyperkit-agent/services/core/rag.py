@@ -46,8 +46,10 @@ class HyperKitRAGService:
             return cid
         except Exception as e:
             self.logger.error(f"Error storing document in vector database: {e}")
-            # Return mock storage ID
-            return "mock_vector_id"
+            raise RuntimeError(
+                f"Vector storage failed: {e}\n"
+                "  Use IPFS Pinata RAG service instead (services/rag/ipfs_rag.py)"
+            )
     
     async def search_similar(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
         """Search for similar documents"""
@@ -71,13 +73,9 @@ class HyperKitRAGService:
             results = await ipfs_client.search_similar(query, limit)
             return results
         except Exception as e:
-            self.logger.error(f"Error in similarity search: {e}")
-            # Return mock results
-            return [
-                {
-                "id": "real_1",
-                "content": "Real document 1",
-                "similarity": 0.95,
-                "metadata": {"type": "real"}
-            }
-        ]
+            # Hard fail - no mock fallback
+            raise RuntimeError(
+                f"Vector similarity search failed: {e}\n"
+                "  Required: Configure vector store (ChromaDB, etc.)\n"
+                "  Or use IPFS Pinata RAG service instead (services/rag/ipfs_rag.py)"
+            )

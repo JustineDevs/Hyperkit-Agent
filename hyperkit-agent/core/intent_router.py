@@ -71,11 +71,9 @@ class IntentRouter:
                 if re.search(pattern, prompt_lower):
                     return self._extract_parameters(intent_type, user_prompt)
         
-        # Fallback to smart contract analysis
-        if any(indicator in prompt_lower for indicator in self.smart_contract_indicators):
-            return self._extract_parameters(IntentType.SIMPLE_CONTRACT, user_prompt)
-        else:
-            return self._extract_parameters(IntentType.SIMPLE_CONTRACT, user_prompt)
+        # Default to smart contract generation (no fallback - always returns intent)
+        # This ensures all prompts are processed as contract generation requests
+        return self._extract_parameters(IntentType.SIMPLE_CONTRACT, user_prompt)
 
     def _extract_parameters(self, intent_type: IntentType, prompt: str) -> Tuple[IntentType, Dict[str, any]]:
         """Extract relevant parameters based on intent type"""

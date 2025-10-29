@@ -320,7 +320,7 @@ hyperagent audit contract.sol --no-mythril  # Skip Mythril (slow)
 
 ```bash
 # Try to install (may fail on some Python versions)
-pip install -r requirements-optional.txt
+pip install -r requirements.txt
 
 # Alternative: Use Pinata API (no package needed)
 export PINATA_API_KEY=your_key

@@ -15,10 +15,10 @@ class PublicContractAuditor:
     """Audits public contracts by address or explorer URL"""
     
     def __init__(self):
+        # HYPERION-ONLY: Only Hyperion explorer supported
         self.explorer_apis = {
-            'hyperion': 'https://hyperion-testnet.metisdevops.link/api',
-            'metis': 'https://andromeda.metaswap.org/api',
-            'lazai': 'https://testnet-explorer.lazai.network/api'
+            'hyperion': 'https://hyperion-testnet-explorer.metisdevops.link/api'
+            # Future network support (LazAI, Metis) documented in ROADMAP.md only
         }
     
     async def audit_by_address(self, address: str, network: str = 'hyperion') -> Dict[str, Any]:
@@ -260,15 +260,13 @@ class PublicContractAuditor:
             # Extract address from common explorer URL patterns
             if '/address/' in url:
                 address = url.split('/address/')[-1].split('?')[0]
-                # Determine network from URL
+                # Determine network from URL - HYPERION ONLY
+                # Future network support (LazAI, Metis) documented in ROADMAP.md only
                 if 'hyperion' in url:
                     network = 'hyperion'
-                elif 'andromeda' in url or 'metis' in url:
-                    network = 'metis'
-                elif 'lazai' in url:
-                    network = 'lazai'
                 else:
-                    network = 'unknown'
+                    # Default to Hyperion (only supported network)
+                    network = 'hyperion'
                 
                 return address, network
             

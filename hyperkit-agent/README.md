@@ -38,8 +38,8 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 | **Testing Framework** | ✅ Functional | v1.0.0 | 10/10 E2E tests passing |
 | **CI/CD Pipeline** | ✅ Active | v1.0.0 | Multi-Python version testing |
 | **Documentation** | ✅ Complete | v2.0.0 | Production-grade docs |
-| **Alith SDK** | 🚧 Partial | v0.12.0 | Mock implementation (upgrade pending) |
-| **LazAI Integration** | 🚧 Partial | v0.1.0 | SDK placeholder ready |
+| **Alith SDK** | ✅ Production | v0.12.0 | AI agent for contract generation & auditing |
+| **IPFS Pinata RAG** | ✅ Production | v1.2.0 | Exclusive RAG backend (Obsidian removed) |
 
 ---
 
@@ -47,8 +47,8 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 
 | Network | Chain ID | Status | RPC Endpoint | Explorer | Features |
 |---------|----------|--------|--------------|----------|----------|
-| **Hyperion Testnet** | 1001 | 🚧 Testnet (Mainnet Soon) | https://hyperion-testnet.metisdevops.link | [Explorer](https://hyperion-testnet-explorer.metisdevops.link) | Deploy, Verify, Monitor |
-| **LazAI Testnet** | 8888 | 🚧 Testnet (Mainnet Soon) | https://lazai-testnet-rpc.example.com | [Explorer](https://lazai-explorer.example.com) | Deploy (Coming Soon) |
+| **Hyperion Testnet** | 133717 | ✅ Testnet | https://hyperion-testnet.metisdevops.link | [Explorer](https://hyperion-testnet-explorer.metisdevops.link) | Deploy, Verify, Monitor |
+| **LazAI Testnet** | 9001 | ✅ Testnet | https://rpc.lazai.network/testnet | [Explorer](https://testnet-explorer.lazai.network) | Deploy, Verify (Network only - not AI agent) |
 | **Metis Mainnet** | 1088 | ✅ Production | https://andromeda.metis.io/?owner=1088 | [Explorer](https://andromeda-explorer.metis.io) | Full Support |
 
 > **Note**: All networks optimized for AI-powered smart contract deployment and verification.
@@ -64,9 +64,9 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 | **Node.js** | 18+ | Package management and versioning | ✅ Required |
 | **Git** | Latest | Version control | ✅ Required |
 | **OpenZeppelin** | v5.0+ | Smart contract libraries | ✅ Installed |
-| **Docker** | Latest | MCP server containerization | ⚙️ Optional |
-| **Slither** | Latest | Static analysis | ⚙️ Optional |
-| **Mythril** | Latest | Security analysis | ⚙️ Optional |
+| **Docker** | Latest | Legacy MCP (deprecated - IPFS Pinata used) | ⚙️ Not Required |
+| **Slither** | Latest | Static analysis | ✅ Required |
+| **Mythril** | Latest | Security analysis | ✅ Required |
 
 ---
 
@@ -77,8 +77,9 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 | **Google Gemini** | gemini-pro | Contract generation, analysis | `GOOGLE_API_KEY` | ✅ Supported |
 | **OpenAI** | gpt-4 | Advanced reasoning, auditing | `OPENAI_API_KEY` | ✅ Supported |
 | **Anthropic Claude** | claude-3-sonnet | Code review, optimization | `ANTHROPIC_API_KEY` | ✅ Supported |
-| **Alith SDK** | v0.12.0+ | On-chain AI inference | `alith` package | 🚧 Mock Mode |
-| **LazAI** | Custom | Specialized AI features | `LAZAI_API_KEY` | 🚧 Coming Soon |
+| **Alith SDK** | v0.12.0+ | AI-powered contract generation & auditing | `OPENAI_API_KEY` + `alith` package | ✅ Production |
+| **IPFS Pinata RAG** | Latest | Template storage & retrieval | `PINATA_API_KEY` | ✅ Production |
+| **LazAI Network** | Latest | Blockchain RPC (network only, NOT AI) | Network config | ✅ Production |
 
 ---
 

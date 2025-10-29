@@ -162,15 +162,14 @@ class ConfigLoader:
             # Also store at top level (for RAG and validator access)
             self.config['PINATA_SECRET_KEY'] = pinata_secret
         
-        # MCP Configuration (deprecated - IPFS Pinata RAG now used exclusively)
+        # MCP Configuration - DEPRECATED (IPFS Pinata RAG is exclusive)
+        # MCP config keys still loaded for backward compatibility but ignored
+        # All MCP/Obsidian functionality has been removed
+        # If MCP_ENABLED is set, log warning but don't use it
         if os.getenv('MCP_ENABLED'):
-            self.config.setdefault('mcp', {})['enabled'] = os.getenv('MCP_ENABLED', 'false').lower() == 'true'
-        if os.getenv('MCP_DOCKER'):
-            self.config.setdefault('mcp', {})['docker'] = os.getenv('MCP_DOCKER', 'false').lower() == 'true'
-        if os.getenv('MCP_HOST'):
-            self.config.setdefault('mcp', {})['host'] = os.getenv('MCP_HOST')
-        if os.getenv('MCP_PORT'):
-            self.config.setdefault('mcp', {})['port'] = os.getenv('MCP_PORT')
+            logging.warning("MCP_ENABLED detected but MCP/Obsidian RAG is deprecated")
+            logging.warning("IPFS Pinata RAG is now the exclusive RAG backend")
+            # Don't load MCP config - it's deprecated
         
         # Explorer API Keys
         if os.getenv('ETHEREUM_EXPLORER_API_KEY'):

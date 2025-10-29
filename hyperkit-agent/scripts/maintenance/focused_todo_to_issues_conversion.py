@@ -53,7 +53,7 @@ def should_scan_file(file_path: str) -> bool:
     # Skip certain files
     skip_files = [
         'package-lock.json', 'yarn.lock', 'poetry.lock',
-        'requirements.txt', 'requirements-optional.txt',
+        'requirements.txt',
         'foundry.lock', 'foundry.toml'
     ]
     

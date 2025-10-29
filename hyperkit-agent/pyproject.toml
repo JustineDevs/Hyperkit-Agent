@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10,<4.0"
 license = {text = "MIT"}
 authors = [
-    {name = "HyperKit Team", email = "team@hyperkit.ai"}
+    {name = "HyperKit Team", email = "hyperkitdev@gmail.com"}
 ]
 keywords = ["blockchain", "smart-contracts", "ai", "security", "defi", "web3"]
 classifiers = [
@@ -41,7 +41,7 @@ dependencies = [
     "anthropic>=0.7.0,<1.0",
     "alith>=0.12.0,<1.0",
     "ipfshttpclient>=0.8.0a2,<1.0",
-    # "lazai>=0.1.0,<1.0",  # Not yet available on PyPI
+    # LazAI removed - network-only, NOT an AI agent. Use Alith SDK for AI.
     "pyyaml>=6.0.0,<7.0",
     "jsonschema>=4.18.0,<5.0",
     "requests>=2.31.0,<3.0",
@@ -56,6 +56,9 @@ dependencies = [
     "urllib3>=2.5.0,<3.0",
     "typing-extensions>=4.12.0,<5.0",
     "platformdirs>=4.2.0,<5.0",
+    "chromadb>=0.4.0,<1.0",
+    "reportlab>=4.0.0,<5.0",
+    "openpyxl>=3.1.0,<4.0",
 ]
 
 [project.optional-dependencies]

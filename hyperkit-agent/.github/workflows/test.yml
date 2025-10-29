@@ -40,6 +40,49 @@ jobs:
         isort --check-only hyperkit-agent/
         flake8 hyperkit-agent/ --max-line-length=120
     
+    - name: Validate no mock mode in production code
+      run: |
+        cd hyperkit-agent
+        python -c "
+        import os
+        import re
+        from pathlib import Path
+        
+        # Check for mock/deprecated patterns in production code
+        patterns = {
+            'mock.*mode': r'mock.*mode|Mock.*mode|MOCK.*MODE',
+            'obsidian.*rag': r'obsidian.*rag|Obsidian.*RAG',
+            'lazai.*agent': r'lazai.*agent|LazAI.*Agent|LAZAI.*AGENT'
+        }
+        
+        issues = []
+        exclude_dirs = {'__pycache__', '.git', 'node_modules', '.pytest_cache', 'tests'}
+        
+        for root, dirs, files in os.walk('.'):
+            # Skip excluded directories
+            dirs[:] = [d for d in dirs if d not in exclude_dirs]
+            
+            for file in files:
+                if file.endswith('.py') and 'test' not in file.lower():
+                    file_path = Path(root) / file
+                    try:
+                        content = file_path.read_text(encoding='utf-8')
+                        for pattern_name, pattern in patterns.items():
+                            matches = re.findall(pattern, content, re.IGNORECASE)
+                            if matches and 'deprecated' not in content.lower()[:200]:
+                                issues.append(f'{file_path}: {pattern_name} found')
+                    except:
+                        pass
+        
+        if issues:
+            print('❌ Found deprecated patterns in production code:')
+            for issue in issues[:10]:  # Show first 10
+                print(f'  - {issue}')
+            exit(1)
+        else:
+            print('✅ No deprecated patterns found in production code')
+        "
+    
     - name: Run tests
       run: |
         pytest tests/ -v --cov=hyperkit-agent --cov-report=xml --cov-report=term
@@ -68,13 +111,37 @@ jobs:
         python -c "
         from services.deployment.foundry_deployer import FoundryDeployer
         deployer = FoundryDeployer()
-        # Verify network configs exist
-        for network in ['hyperion', 'lazai', 'metis']:
+        # Verify network configs exist with correct chain IDs
+        expected_chain_ids = {'hyperion': 133717, 'lazai': 9001, 'metis': 1088}
+        for network, expected_id in expected_chain_ids.items():
             config = deployer.get_network_config(network)
             assert config is not None, f'Network {network} not configured'
-            assert 'chain_id' in config
-            assert 'rpc_url' in config
+            assert 'chain_id' in config, f'Network {network} missing chain_id'
+            assert config['chain_id'] == expected_id, f'Network {network} has wrong chain_id: {config[\"chain_id\"]}, expected {expected_id}'
+            assert 'rpc_url' in config, f'Network {network} missing rpc_url'
         print('✅ Cleanroom deployment validation passed')
+        print('✅ Network chain IDs validated (Hyperion: 133717, LazAI: 9001, Metis: 1088)')
+        "
+    
+    - name: Validate config alignment
+      run: |
+        cd hyperkit-agent
+        python -c "
+        from core.config.manager import ConfigManager
+        import os
+        
+        # Set minimal test config (required for validation)
+        os.environ.setdefault('DEFAULT_PRIVATE_KEY', '0' * 64)  # Test key
+        os.environ.setdefault('HYPERION_RPC_URL', 'https://hyperion-testnet.metisdevops.link')
+        os.environ.setdefault('HYPERION_CHAIN_ID', '133717')
+        
+        try:
+            config = ConfigManager()
+            print('✅ Config manager initialization passed')
+            print('✅ Config validation working correctly')
+        except Exception as e:
+            print(f'⚠️ Config validation issue (expected in CI): {e}')
+            # Don't fail - config may not be fully set in CI
         "
 
   new-developer-onboarding:

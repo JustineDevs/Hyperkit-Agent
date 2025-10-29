@@ -36,7 +36,7 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 
 - 🤖 **AI-First Approach**: Generate production-ready smart contracts from natural language
 - 🔒 **Multi-Layer Security**: Comprehensive auditing with Slither, Mythril, and AI analysis
-- 🌐 **Multi-Chain Ready**: Deploy to Hyperion, LazAI, and Metis with one command
+- 🌐 **Hyperion-Focused**: Deploy to Hyperion testnet (exclusive deployment target)
 - ✅ **Auto-Verification**: Automatic contract verification on block explorers
 - 🚀 **5-Stage Workflow**: Generate → Audit → Deploy → Verify → Test
 
@@ -79,15 +79,15 @@ Navigate quickly to any section of the documentation:
 |-----------|--------|---------|-------|
 | **IPFS RAG** | ✅ Production Ready | v4.3.0 | Fully functional with real Pinata integration |
 | **Core System** | 🟡 Development-Grade | v4.1.11+ | Known deployment limitations |
-| **AI Generation** | ✅ Functional | v1.2.0 | Multi-provider support (with fallbacks) |
+| **AI Generation** | ✅ Production | v1.2.0 | Alith SDK ONLY (fails hard if unavailable - no fallbacks) |
 | **Security Auditing** | ✅ Functional | v1.2.0 | Multi-source consensus + batch auditing |
 | **Deployment Pipeline** | ⚠️ Limited | v1.2.0 | ⚠️ Constructor/ABI issues for complex contracts |
 | **Verification System** | ✅ Functional | v1.1.0 | Hyperion explorer integration |
 | **Testing Framework** | ✅ Functional | v1.0.0 | 10/10 E2E tests passing (testnet only) |
 | **CI/CD Pipeline** | ✅ Active | v1.0.0 | Multi-Python version testing |
 | **Documentation** | ✅ Complete | v2.0.0 | Honest and transparent |
-| **Alith SDK** | 🚧 Partial | v0.12.0 | Mock implementation (upgrade pending) |
-| **LazAI Integration** | 🚧 Partial | v0.1.0 | SDK placeholder ready |
+| **Alith SDK** | ✅ Production | v0.12.0 | Real implementation (uses OpenAI key) |
+| **LazAI Network** | ✅ Configured | - | Blockchain RPC only (NOT AI agent) |
 
 ---
 
@@ -95,9 +95,9 @@ Navigate quickly to any section of the documentation:
 
 | Network | Chain ID | Status | RPC Endpoint | Explorer | Features |
 |---------|----------|--------|--------------|----------|----------|
-| **Hyperion Testnet** | 1001 | 🚧 Testnet (Mainnet Soon) | https://hyperion-testnet.metisdevops.link | [Explorer](https://hyperion-testnet-explorer.metisdevops.link) | Deploy, Verify, Monitor |
-| **LazAI Testnet** | 8888 | 🚧 Testnet (Mainnet Soon) | https://lazai-testnet-rpc.example.com | [Explorer](https://lazai-explorer.example.com) | Deploy (Coming Soon) |
-| **Metis Mainnet** | 1088 | ✅ Mainnet | https://andromeda.metis.io/?owner=1088 | [Explorer](https://andromeda-explorer.metis.io) | Full Support |
+| **Hyperion Testnet** | 133717 | ✅ Testnet (Exclusive) | https://hyperion-testnet.metisdevops.link | [Explorer](https://hyperion-testnet-explorer.metisdevops.link) | Deploy, Verify, Monitor |
+
+> **HYPERION-ONLY MODE**: Hyperion is the exclusive deployment target. Future network support (LazAI, Metis) documented in [ROADMAP.md](hyperkit-agent/docs/ROADMAP.md) only.
 
 > **Note**: All networks optimized for AI-powered smart contract deployment and verification.
 
@@ -112,7 +112,7 @@ Navigate quickly to any section of the documentation:
 | **Node.js** | 18+ | Package management and versioning | ✅ Required |
 | **Git** | Latest | Version control | ✅ Required |
 | **OpenZeppelin** | v5.0+ | Smart contract libraries | ✅ Installed |
-| **Docker** | Latest | MCP server containerization | ⚙️ Optional |
+| **Docker** | Latest | Removed (not required) | ❌ Not Supported |
 | **Slither** | Latest | Static analysis | ✅ Required |
 | **Mythril** | Latest | Security analysis | ✅ Required |
 
@@ -125,8 +125,9 @@ Navigate quickly to any section of the documentation:
 | **Google Gemini** | gemini-pro | Contract generation, analysis | `GOOGLE_API_KEY` | ✅ Supported |
 | **OpenAI** | gpt-4 | Advanced reasoning, auditing | `OPENAI_API_KEY` | ✅ Supported |
 | **Anthropic Claude** | claude-3-sonnet | Code review, optimization | `ANTHROPIC_API_KEY` | ✅ Supported |
-| **Alith SDK** | v0.12.0+ | On-chain AI inference | `alith` package | 🚧 Mock Mode |
-| **LazAI** | Custom | Specialized AI features | `LAZAI_API_KEY` | 🚧 Coming Soon |
+| **Alith SDK** | v0.12.0+ | On-chain AI inference | `OPENAI_API_KEY` + `alith` package | ✅ Production |
+| **LazAI Network** | - | Blockchain RPC (network only) | Not applicable | ✅ Configured |
+| **IPFS Pinata RAG** | Latest | Exclusive RAG backend | `PINATA_API_KEY` + `PINATA_SECRET_KEY` | ✅ Production |
 
 ---
 

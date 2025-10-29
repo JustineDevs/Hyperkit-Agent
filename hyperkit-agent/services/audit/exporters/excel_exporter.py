@@ -12,7 +12,7 @@ class ExcelExporter(BaseExporter):
     """
     Export audit reports to Excel format.
     
-    Note: Requires 'openpyxl' package from requirements-optional.txt
+    Note: Requires 'openpyxl' package from requirements.txt
     Falls back to CSV export if openpyxl is not available.
     """
     

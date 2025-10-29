@@ -1,6 +1,8 @@
 """
 IPFS Pinata RAG System for HyperKit Agent
-Replaces Obsidian RAG with IPFS-based retrieval from Pinata
+
+IPFS Pinata is the exclusive RAG backend - no Obsidian, no MCP, no other RAG systems.
+All RAG operations use IPFS Pinata via CID registry.
 """
 
 import asyncio

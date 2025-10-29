@@ -20,7 +20,7 @@ def workflow_group():
 
 @workflow_group.command(name='run')
 @click.argument('prompt')
-@click.option('--network', '-n', default='hyperion', help='Target network (default: hyperion)')
+@click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
 @click.option('--no-audit', is_flag=True, help='Skip security audit stage')
 @click.option('--no-verify', is_flag=True, help='Skip contract verification stage')
 @click.option('--test-only', is_flag=True, help='Generate and audit only (no deployment)')
@@ -126,12 +126,19 @@ RAG Context for Enhanced Workflow:
 {chr(10).join(rag_sections)}"""
                 console.print("Prompt enhanced with RAG context", style="green")
         
+        # Hardcode Hyperion - no network selection
+        network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
+        if ctx.params.get('network') and ctx.params.get('network') != 'hyperion':
+            console.print(f"[red]WARNING: Network '{ctx.params.get('network')}' not supported[/red]")
+            console.print("[yellow]Using Hyperion (only supported network)[/yellow]")
+        
         # Run workflow
-        console.print("\n[cyan]Starting 5-stage workflow...[/cyan]\n")
+        console.print("\n[cyan]Starting 5-stage workflow...[/cyan]")
+        console.print(f"[dim]Network: Hyperion (exclusive deployment target)[/dim]\n")
         
         result = asyncio.run(agent.run_workflow(
             user_prompt=enhanced_prompt,
-            network=network,
+            network="hyperion",  # Hardcoded - Hyperion only
             auto_verification=not no_verify,
             test_only=test_only,
             allow_insecure=allow_insecure

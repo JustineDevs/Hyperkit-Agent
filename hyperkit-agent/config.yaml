@@ -10,29 +10,16 @@ ai_providers:
     model: 'claude-3-sonnet'
 
 networks:
-  # Primary Network: Hyperion Testnet (Mainnet Coming Soon)
+  # HYPERION-ONLY CONFIGURATION
+  # Future network support (LazAI, Metis) documented in ROADMAP.md only
+  # No multi-network logic - Hyperion is the exclusive deployment target
+  
   hyperion:
-    chain_id: 1001
+    chain_id: 133717
     explorer_url: https://hyperion-testnet-explorer.metisdevops.link
     rpc_url: https://hyperion-testnet.metisdevops.link
     status: testnet
-    mainnet_coming_soon: true
-  
-  # Primary Network: LazAI Testnet (Mainnet Coming Soon)
-  lazai:
-    chain_id: 8888  # Update with actual chain ID
-    explorer_url: https://lazai-explorer.example.com  # Update with actual explorer
-    rpc_url: https://lazai-testnet-rpc.example.com  # Update with actual RPC
-    status: testnet
-    mainnet_coming_soon: true
-  
-  # Primary Network: Metis Mainnet
-  metis:
-    chain_id: 1088
-    explorer_url: https://andromeda-explorer.metis.io
-    rpc_url: https://andromeda.metis.io/?owner=1088
-    status: mainnet
-    mainnet_coming_soon: false
+    default: true  # Hardcoded default - no network selection
 
 security:
   enable_audit: true

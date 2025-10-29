@@ -19,7 +19,7 @@ def deploy_group():
 
 @deploy_group.command()
 @click.option('--contract', '-c', required=True, help='Contract file path')
-@click.option('--network', '-n', default='hyperion', help='Target network')
+@click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
 @click.option('--private-key', '-k', help='Private key for deployment')
 @click.option('--gas-limit', '-g', type=int, help='Gas limit for deployment')
 @click.option('--gas-price', help='Gas price for deployment')
@@ -52,8 +52,14 @@ def contract(ctx, contract, network, private_key, gas_limit, gas_price, construc
     from core.agent.main import HyperKitAgent
     from core.config.loader import get_config
     
+    # Hardcode Hyperion - no network selection
+    network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
+    if ctx.params.get('network') and ctx.params.get('network') != 'hyperion':
+        console.print(f"[red]WARNING: Network '{ctx.params.get('network')}' not supported[/red]")
+        console.print("[yellow]Using Hyperion (only supported network)[/yellow]")
+    
     console.print(f"Deploying contract: {contract}")
-    console.print(f"🌐 Network: {network}")
+    console.print(f"🌐 Network: Hyperion (exclusive deployment target)")
     
     # Load RAG deployment template if enabled
     deployment_template = None

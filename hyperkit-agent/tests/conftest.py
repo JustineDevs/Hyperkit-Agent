@@ -4,7 +4,7 @@ Test configuration and fixtures for HyperKit AI Agent tests
 
 import pytest
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
 from pathlib import Path
 
 # Add the parent directory to the path
@@ -15,8 +15,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 def setup_test_environment():
     """Set up test environment variables."""
     # Set test API keys for all tests
-    os.environ["OPENAI_API_KEY"] = "test-openai-key"
+    os.environ["OPENAI_API_KEY"] = "test-openai-key"  # Required for Alith SDK
     os.environ["GOOGLE_API_KEY"] = "test-google-key"
+    os.environ["PINATA_API_KEY"] = "test-pinata-key"  # Required for IPFS Pinata RAG
+    os.environ["PINATA_SECRET_KEY"] = "test-pinata-secret"  # Required for IPFS Pinata RAG
+    os.environ["ALITH_ENABLED"] = "true"
     os.environ["TEST_MODE"] = "true"
     os.environ["HYPERION_RPC_URL"] = "https://hyperion-testnet.metisdevops.link"
     
@@ -33,19 +36,35 @@ def setup_test_environment():
             mock_model.generate_content.return_value.text = "Test contract code"
             mock_gemini.return_value = mock_model
             
-            yield
+            # Mock Alith SDK (ONLY AI agent)
+            with patch('alith.Agent') as mock_alith:
+                mock_alith_agent = Mock()
+                mock_alith_agent.analyze_gas = AsyncMock(return_value={"gas_optimizations": []})
+                mock_alith_agent.generate_contract = AsyncMock(return_value="contract Test {}")
+                mock_alith_agent.audit_contract = AsyncMock(return_value={"status": "success", "findings": []})
+                mock_alith.return_value = mock_alith_agent
+                
+                yield
 
 @pytest.fixture
 def mock_config():
     """Provide a mock configuration for testing."""
     return {
-        "openai_api_key": "test-openai-key",
+        "openai_api_key": "test-openai-key",  # Required for Alith SDK (ONLY AI agent)
         "google_api_key": "test-google-key",
+        "PINATA_API_KEY": "test-pinata-key",  # Required for IPFS Pinata RAG (exclusive)
+        "PINATA_SECRET_KEY": "test-pinata-secret",  # Required for IPFS Pinata RAG
+        "ALITH_ENABLED": True,
         "networks": {
             "hyperion": {
                 "rpc_url": "https://hyperion-testnet.metisdevops.link",
-                "chain_id": 133717,
+                "chain_id": 133717,  # Correct chain ID
                 "explorer_url": "https://hyperion-testnet-explorer.metisdevops.link"
+            },
+            "lazai": {
+                "rpc_url": "https://rpc.lazai.network/testnet",
+                "chain_id": 9001,  # Correct chain ID (LazAI is network-only, NOT AI agent)
+                "explorer_url": "https://testnet-explorer.lazai.network"
             }
         },
         "test_mode": True

@@ -229,8 +229,7 @@ cd Hyperkit-Agent
 
 # Install dependencies
 cd hyperkit-agent
-pip install -r requirements.txt
-pip install -r requirements-optional.txt
+pip install -r requirements.txt  # All dependencies (includes Alith SDK and IPFS features)
 
 # Run tests
 pytest tests/

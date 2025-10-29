@@ -50,39 +50,43 @@ class FoundryDeployer:
         else:
             return 0
     
-    def get_network_config(self, network: str) -> dict:
+    def get_network_config(self, network: str = None) -> dict:
         """
-        Get network configuration for primary supported networks
+        Get network configuration - HYPERION ONLY.
         
-        Primary Networks:
-        - Hyperion Testnet (Mainnet Coming Soon)
-        - LazAI Testnet (Mainnet Coming Soon)
-        - Metis Mainnet
+        CRITICAL: Hyperion is the exclusive deployment target.
+        Future network support (LazAI, Metis) documented in ROADMAP.md only.
+        
+        Args:
+            network: Ignored - Hyperion is hardcoded (kept for API compatibility)
+        
+        Returns:
+            Hyperion testnet configuration (only supported network)
+        
+        Raises:
+            ValueError: If network is specified and not 'hyperion'
         """
-        networks = {
-            "hyperion": {
-                "chain_id": 1001,
-                "explorer_url": "https://hyperion-testnet-explorer.metisdevops.link",
-                "rpc_url": "https://hyperion-testnet.metisdevops.link",
-                "status": "testnet",
-                "mainnet_coming_soon": True
-            },
-            "lazai": {
-                "chain_id": 8888,  # Update with actual LazAI chain ID
-                "explorer_url": "https://lazai-explorer.example.com",  # Update with actual explorer
-                "rpc_url": "https://lazai-testnet-rpc.example.com",  # Update with actual RPC
-                "status": "testnet",
-                "mainnet_coming_soon": True
-            },
-            "metis": {
-                "chain_id": 1088,
-                "explorer_url": "https://andromeda-explorer.metis.io",
-                "rpc_url": "https://andromeda.metis.io/?owner=1088",
-                "status": "mainnet",
-                "mainnet_coming_soon": False
-            }
+        # Hardcode Hyperion - no multi-network logic
+        hyperion_config = {
+            "chain_id": 133717,
+            "explorer_url": "https://hyperion-testnet-explorer.metisdevops.link",
+            "rpc_url": "https://hyperion-testnet.metisdevops.link",
+            "status": "testnet",
+            "supported": True,
+            "default": True,
+            "name": "Hyperion Testnet"
         }
-        return networks.get(network)
+        
+        # Fail hard if non-Hyperion network requested
+        if network and network.lower() != "hyperion":
+            raise ValueError(
+                f"CRITICAL: Network '{network}' is not supported.\n"
+                f"  HYPERION-ONLY MODE: Only 'hyperion' network is supported.\n"
+                f"  Future network support documented in ROADMAP.md only.\n"
+                f"  Fix: Remove --network flag or use --network hyperion (default)"
+            )
+        
+        return hyperion_config
     
     def deploy(
         self, 

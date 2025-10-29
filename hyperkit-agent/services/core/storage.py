@@ -141,18 +141,7 @@ class HyperKitStorageService:
                 "error": str(e)
             }
     
-    def _mock_storage(self, report_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Mock storage with clear warnings"""
-        import logging; logging.warning("  WARNING: Using mock storage - IPFS not configured")
-        import logging; logging.warning("  To enable IPFS: Set PINATA_API_KEY and PINATA_SECRET_KEY")
-        import logging; logging.warning("  Get API keys from: https://app.pinata.cloud/")
-        
-        return {
-            "status": "mock",
-            "cid": "mock_cid_12345",
-            "url": "https://mock-ipfs.com/mock_cid_12345",
-            "warnings": ["Mock storage - Real IPFS requires Pinata configuration"]
-        }
+    # DEPRECATED: _mock_storage removed - system now fails hard if IPFS not configured
     
     async def retrieve_audit_report(self, cid: str) -> Dict[str, Any]:
         """Retrieve audit report from IPFS using real Pinata API"""
@@ -191,16 +180,7 @@ class HyperKitStorageService:
                 "message": "IPFS retrieval failed"
             }
     
-    def _mock_retrieval(self, cid: str) -> Dict[str, Any]:
-        """Mock retrieval with clear warnings"""
-        import logging; logging.warning("  WARNING: Using mock retrieval - IPFS not configured")
-        import logging; logging.warning("  To enable IPFS: Set PINATA_API_KEY and PINATA_SECRET_KEY")
-        
-        return {
-            "status": "mock",
-            "data": {"mock": "data", "cid": cid},
-            "warnings": ["Mock retrieval - Real IPFS requires Pinata configuration"]
-        }
+    # DEPRECATED: _mock_retrieval removed - system now fails hard if IPFS not configured
     
     async def store_ai_model(self, model_data: Dict[str, Any], model_name: str) -> Dict[str, Any]:
         """Store AI model on IPFS"""
