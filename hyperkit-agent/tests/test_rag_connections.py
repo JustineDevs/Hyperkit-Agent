@@ -2,11 +2,13 @@
 """
 RAG Connection Testing Utility
 
-This script tests all RAG connections:
-1. Obsidian MCP connection
-2. IPFS storage connection
-3. Local knowledge base
+This script tests IPFS Pinata RAG connections:
+1. IPFS Pinata connection
+2. CID registry loading
+3. Template retrieval
 4. Overall system health
+
+Note: Obsidian RAG has been removed - IPFS Pinata is now exclusive
 """
 
 import asyncio
@@ -18,14 +20,8 @@ import logging
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from services.rag.enhanced_retriever import get_rag_retriever
-# from services.rag.obsidian_rag_enhanced import test_obsidian_rag  # Removed
+from services.rag.ipfs_rag import get_ipfs_rag
 from core.config.loader import get_config
-
-# Mock test_obsidian_rag function since module was removed
-async def test_obsidian_rag():
-    """Mock Obsidian RAG test - module was removed"""
-    return False  # Not available
 
 # Suppress warnings
 logging.getLogger('httpx').setLevel(logging.WARNING)
@@ -47,67 +43,48 @@ async def test_all_rag_connections():
         "components": {}
     }
     
-    # Test 1: Obsidian RAG
-    print("\n1. Testing Obsidian RAG Connection...")
+    # Test 1: IPFS Pinata RAG
+    print("\n1. Testing IPFS Pinata RAG Connection...")
     try:
-        obsidian_success = await test_obsidian_rag()
-        results["components"]["obsidian"] = {
-            "status": "success" if obsidian_success else "failed",
-            "test_result": obsidian_success
-        }
-        print(f"   Obsidian RAG: {'✅ PASSED' if obsidian_success else '❌ FAILED'}")
-    except Exception as e:
-        results["components"]["obsidian"] = {
-            "status": "error",
-            "error": str(e)
-        }
-        print(f"   Obsidian RAG: ❌ ERROR - {e}")
-    
-    # Test 2: Enhanced RAG Retriever
-    print("\n2. Testing Enhanced RAG Retriever...")
-    try:
-        retriever = get_rag_retriever()
-        connection_results = await retriever.test_connections()
-        results["components"]["enhanced_retriever"] = connection_results
+        config = get_config().to_dict()
+        ipfs_rag = get_ipfs_rag(config)
+        connection_results = await ipfs_rag.test_connections()
+        results["components"]["ipfs_pinata"] = connection_results
         
-        # Print results
-        for source, status in connection_results.items():
-            status_icon = "✅" if status["status"] == "success" else "❌"
-            print(f"   {source.title()}: {status_icon} {status['status']}")
-            if "error" in status:
-                print(f"     Error: {status['error']}")
-            if "file_count" in status:
-                print(f"     Files: {status['file_count']}")
-                
+        status = connection_results.get("status", "failed")
+        pinata_enabled = connection_results.get("pinata_enabled", False)
+        registry_loaded = connection_results.get("cid_registry_loaded", False)
+        
+        print(f"   Pinata Enabled: {'✅' if pinata_enabled else '❌'}")
+        print(f"   CID Registry: {'✅' if registry_loaded else '❌'}")
+        print(f"   Overall Status: {'✅ PASSED' if status == 'success' else '❌ FAILED'}")
+        
     except Exception as e:
-        results["components"]["enhanced_retriever"] = {
+        results["components"]["ipfs_pinata"] = {
             "status": "error",
             "error": str(e)
         }
-        print(f"   Enhanced Retriever: ❌ ERROR - {e}")
+        print(f"   IPFS Pinata RAG: ❌ ERROR - {e}")
     
-    # Test 3: Configuration Check
-    print("\n3. Testing Configuration...")
+    # Test 2: Configuration Check
+    print("\n2. Testing Configuration...")
     try:
         config = get_config().to_dict()
         
-        # Check Obsidian config
-        obsidian_config = config.get("rag", {}).get("obsidian", {})
-        mcp_config = config.get("mcp", {})
+        # Check Pinata IPFS config
+        pinata_config = config.get("storage", {}).get("pinata", {})
         
         config_status = {
-            "obsidian_api_key": bool(obsidian_config.get("api_key")),
-            "obsidian_vault_path": bool(obsidian_config.get("vault_path")),
-            "mcp_enabled": mcp_config.get("enabled", False),
-            "mcp_docker": mcp_config.get("docker", False)
+            "pinata_api_key": bool(pinata_config.get("api_key")),
+            "pinata_secret_key": bool(pinata_config.get("secret_key")),
+            "cid_registry_exists": Path("docs/RAG_TEMPLATES/cid-registry.json").exists()
         }
         
         results["components"]["configuration"] = config_status
         
-        print(f"   Obsidian API Key: {'✅' if config_status['obsidian_api_key'] else '❌'}")
-        print(f"   Obsidian Vault Path: {'✅' if config_status['obsidian_vault_path'] else '❌'}")
-        print(f"   MCP Enabled: {'✅' if config_status['mcp_enabled'] else '❌'}")
-        print(f"   MCP Docker: {'✅' if config_status['mcp_docker'] else '❌'}")
+        print(f"   Pinata API Key: {'✅' if config_status['pinata_api_key'] else '❌'}")
+        print(f"   Pinata Secret Key: {'✅' if config_status['pinata_secret_key'] else '❌'}")
+        print(f"   CID Registry File: {'✅' if config_status['cid_registry_exists'] else '❌'}")
         
     except Exception as e:
         results["components"]["configuration"] = {
@@ -116,11 +93,12 @@ async def test_all_rag_connections():
         }
         print(f"   Configuration: ❌ ERROR - {e}")
     
-    # Test 4: Content Retrieval Test
-    print("\n4. Testing Content Retrieval...")
+    # Test 3: Content Retrieval Test
+    print("\n3. Testing Content Retrieval...")
     try:
-        retriever = get_rag_retriever()
-        test_content = await retriever.retrieve("smart contract security", max_results=3)
+        config = get_config().to_dict()
+        ipfs_rag = get_ipfs_rag(config)
+        test_content = await ipfs_rag.retrieve("smart contract security", max_results=3)
         
         retrieval_status = {
             "content_length": len(test_content),
@@ -177,7 +155,7 @@ async def test_all_rag_connections():
 async def main():
     """Main test function."""
     print("🚀 RAG Connection Test Suite")
-    print("Testing Obsidian MCP, IPFS, and Local Knowledge Base")
+    print("Testing IPFS Pinata RAG (Obsidian removed - IPFS Pinata exclusive)")
     
     try:
         results = await test_all_rag_connections()

@@ -148,11 +148,13 @@ class ConfigValidator:
         )
         
         if not pinata_key or not pinata_secret:
-            self.warnings.append(
-                "Pinata IPFS not configured - RAG system will be read-only\n"
-                "  Impact: Cannot upload templates or reports to IPFS\n"
+            self.errors.append(
+                "Pinata IPFS not configured - RAG system requires Pinata\n"
+                "  Required for: IPFS RAG context retrieval, template upload, report storage\n"
+                "  Impact: RAG operations will fail without Pinata credentials\n"
                 "  Fix: Set PINATA_API_KEY and PINATA_SECRET_KEY in .env\n"
-                "  Get keys: https://app.pinata.cloud/"
+                "  Get keys: https://app.pinata.cloud/\n"
+                "  Note: IPFS Pinata is now the exclusive RAG backend - no fallbacks"
             )
     
     def _validate_ipfs_config(self):

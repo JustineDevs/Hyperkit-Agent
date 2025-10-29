@@ -27,9 +27,7 @@ class Settings(BaseSettings):
     
     google_api_key: str = ""
     openai_api_key: str = ""
-    obsidian_mcp_api_key: str = ""
-    obsidian_api_url: str = "http://127.0.0.1:27123"
-    obsidian_vault_path: str = ""
+    # Obsidian fields removed - IPFS Pinata RAG is now exclusive
     hyperion_rpc_url: str = "https://hyperion-testnet.metisdevops.link"
     hyperion_chain_id: int = 133717
     lazai_rpc_url: str = "https://rpc.lazai.network/testnet"
@@ -146,15 +144,7 @@ class ConfigLoader:
         elif os.getenv('PINATA_API_SECRET'):  # Legacy support
             self.config.setdefault('storage', {}).setdefault('pinata', {})['secret_key'] = os.getenv('PINATA_API_SECRET')
         
-        # Obsidian RAG Configuration
-        if os.getenv('OBSIDIAN_API_KEY'):
-            self.config.setdefault('rag', {}).setdefault('obsidian', {})['api_key'] = os.getenv('OBSIDIAN_API_KEY')
-        if os.getenv('OBSIDIAN_API_BASE_URL'):
-            self.config.setdefault('rag', {}).setdefault('obsidian', {})['api_base_url'] = os.getenv('OBSIDIAN_API_BASE_URL')
-        if os.getenv('OBSIDIAN_VAULT_PATH'):
-            self.config.setdefault('rag', {}).setdefault('obsidian', {})['vault_path'] = os.getenv('OBSIDIAN_VAULT_PATH')
-        
-        # MCP Configuration
+        # MCP Configuration (deprecated - IPFS Pinata RAG now used exclusively)
         if os.getenv('MCP_ENABLED'):
             self.config.setdefault('mcp', {})['enabled'] = os.getenv('MCP_ENABLED', 'false').lower() == 'true'
         if os.getenv('MCP_DOCKER'):
@@ -174,17 +164,7 @@ class ConfigLoader:
         if os.getenv('METIS_EXPLORER_API_KEY'):
             self.config.setdefault('explorers', {})['metis'] = os.getenv('METIS_EXPLORER_API_KEY')
         
-        # Obsidian Configuration
-        if os.getenv('OBSIDIAN_VAULT_PATH'):
-            self.config.setdefault('rag', {}).setdefault('obsidian', {})['vault_path'] = os.getenv('OBSIDIAN_VAULT_PATH')
-        if os.getenv('OBSIDIAN_MCP_API_KEY'):
-            self.config.setdefault('rag', {}).setdefault('obsidian', {})['api_key'] = os.getenv('OBSIDIAN_MCP_API_KEY')
-        if os.getenv('OBSIDIAN_HOST'):
-            self.config.setdefault('rag', {}).setdefault('obsidian', {})['host'] = os.getenv('OBSIDIAN_HOST')
-        if os.getenv('MCP_ENABLED'):
-            self.config.setdefault('rag', {}).setdefault('obsidian', {})['mcp_enabled'] = os.getenv('MCP_ENABLED').lower() == 'true'
-        if os.getenv('DOCKER_ENABLED'):
-            self.config.setdefault('rag', {}).setdefault('obsidian', {})['docker_enabled'] = os.getenv('DOCKER_ENABLED').lower() == 'true'
+        # IPFS Pinata RAG is now the exclusive RAG backend - no Obsidian config needed
         
         # Logging Configuration
         if os.getenv('LOG_LEVEL'):
@@ -359,9 +339,7 @@ class ConfigLoader:
                 },
                 "GOOGLE_API_KEY": settings.google_api_key,
                 "OPENAI_API_KEY": settings.openai_api_key,
-                "OBSIDIAN_MCP_API_KEY": settings.obsidian_mcp_api_key,
-                "OBSIDIAN_API_URL": settings.obsidian_api_url,
-                "OBSIDIAN_VAULT_PATH": settings.obsidian_vault_path,
+                # Obsidian config removed - IPFS Pinata RAG exclusive
                 "DEFAULT_NETWORK": settings.default_network,
                 "DEFAULT_PRIVATE_KEY": settings.default_private_key,
             }

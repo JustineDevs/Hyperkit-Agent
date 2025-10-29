@@ -287,13 +287,13 @@ class HyperKitAgent:
                     f"Input too long: {str(ve)}. Please reduce prompt size or split into smaller requests."
                 )
 
-            # Retrieve context from Obsidian vault
+            # Retrieve context from IPFS Pinata RAG
             rag_context = ""
             if self.rag:
                 try:
                     rag_context = await self.rag.retrieve(prompt)
                 except Exception as e:
-                    logger.warning(f"RAG context retrieval failed: {e}")
+                    logger.warning(f"IPFS RAG context retrieval failed: {e}")
                     rag_context = ""
 
             # Combine all context

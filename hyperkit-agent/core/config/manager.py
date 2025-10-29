@@ -91,12 +91,7 @@ class ConfigManager:
             'ARBITRUM_EXPLORER_API_KEY': os.getenv('ARBITRUM_EXPLORER_API_KEY'),
             'METIS_EXPLORER_API_KEY': os.getenv('METIS_EXPLORER_API_KEY'),
             
-            # Obsidian RAG Configuration
-            'MCP_ENABLED': os.getenv('MCP_ENABLED', 'false').lower() == 'true',
-            'DOCKER_ENABLED': os.getenv('DOCKER_ENABLED', 'false').lower() == 'true',
-            'OBSIDIAN_HOST': os.getenv('OBSIDIAN_HOST'),
-            'OBSIDIAN_MCP_API_KEY': os.getenv('OBSIDIAN_MCP_API_KEY'),
-            'OBSIDIAN_VAULT_PATH': os.getenv('OBSIDIAN_VAULT_PATH'),
+            # IPFS Pinata RAG Configuration (Obsidian removed - IPFS Pinata exclusive)
             
             # Logging and Monitoring
             'LOG_LEVEL': os.getenv('LOG_LEVEL', 'INFO'),
@@ -246,15 +241,7 @@ class ConfigManager:
             'private_inference': self.get('ALITH_PRIVATE_INFERENCE', False)
         }
     
-    def get_obsidian_config(self) -> Dict[str, str]:
-        """Get Obsidian RAG configuration"""
-        return {
-            'mcp_enabled': self.get('MCP_ENABLED', False),
-            'docker_enabled': self.get('DOCKER_ENABLED', False),
-            'host': self.get('OBSIDIAN_HOST'),
-            'api_key': self.get('OBSIDIAN_MCP_API_KEY'),
-            'vault_path': self.get('OBSIDIAN_VAULT_PATH')
-        }
+    # Obsidian methods removed - IPFS Pinata RAG is now exclusive
 
 # Global instance
 config = ConfigManager()

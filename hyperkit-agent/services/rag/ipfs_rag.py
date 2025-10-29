@@ -40,7 +40,13 @@ class IPFSRAG:
         if self.pinata_enabled:
             logger.info("IPFS RAG initialized with Pinata integration")
         else:
-            logger.warning("IPFS RAG initialized without Pinata (read-only mode)")
+            # Production mode: Require Pinata for RAG operations
+            logger.error("CRITICAL: Pinata API keys not configured")
+            logger.error("IPFS Pinata RAG requires PINATA_API_KEY and PINATA_SECRET_KEY")
+            logger.error("Get keys from: https://app.pinata.cloud/")
+            logger.error("Add to .env file to enable RAG functionality")
+            # Don't raise here - let retrieve() handle it per-operation
+            # This allows system to start but RAG operations will fail
     
     def _load_cid_registry(self):
         """Load CID registry for prompt templates."""
@@ -57,13 +63,27 @@ class IPFSRAG:
         """
         Retrieve relevant context from IPFS based on query.
         
+        Requires Pinata API keys to be configured for production operation.
+        
         Args:
             query: Search query
             max_results: Maximum number of results to return
             
         Returns:
             Combined context string from relevant IPFS documents
+            
+        Raises:
+            RuntimeError: If Pinata is not configured
         """
+        if not self.pinata_enabled:
+            raise RuntimeError(
+                "IPFS Pinata RAG requires Pinata API keys to be configured\n"
+                "  Required: PINATA_API_KEY and PINATA_SECRET_KEY in .env\n"
+                "  Get keys: https://app.pinata.cloud/\n"
+                "  Fix: Add Pinata credentials to .env file\n"
+                "  Note: RAG context retrieval requires Pinata configuration"
+            )
+        
         try:
             # Search CID registry for relevant templates
             results = []
@@ -110,8 +130,12 @@ class IPFSRAG:
             CID of uploaded content
         """
         if not self.pinata_enabled:
-            logger.warning("Pinata not configured - cannot upload")
-            return None
+            raise RuntimeError(
+                "IPFS Pinata RAG requires Pinata API keys to upload templates\n"
+                "  Required: PINATA_API_KEY and PINATA_SECRET_KEY in .env\n"
+                "  Get keys: https://app.pinata.cloud/\n"
+                "  Fix: Add Pinata credentials to .env file"
+            )
         
         try:
             pinata_metadata = {
@@ -218,6 +242,60 @@ class IPFSRAG:
     def get_available_templates(self) -> List[str]:
         """Get list of available template names."""
         return list(self.cid_registry.keys())
+    
+    async def test_connections(self) -> Dict[str, Any]:
+        """Test IPFS Pinata RAG connections and return status."""
+        results = {
+            "status": "failed",
+            "pinata_enabled": self.pinata_enabled,
+            "cid_registry_loaded": bool(self.cid_registry),
+            "template_count": len(self.cid_registry),
+            "test_retrieve": "skipped",
+            "test_upload": "skipped"
+        }
+        
+        if self.pinata_enabled:
+            # Test retrieval
+            try:
+                test_query = "smart contract"
+                content = await self.retrieve(test_query, max_results=1)
+                if content:
+                    results["test_retrieve"] = "success"
+                else:
+                    results["test_retrieve"] = "success (no results)"
+            except Exception as e:
+                results["test_retrieve"] = f"failed ({str(e)[:50]})"
+            
+            # Test upload (only if Pinata enabled)
+            try:
+                test_cid = await self.upload_template(
+                    "test_template",
+                    "This is a test template",
+                    {"description": "Test", "version": "test"}
+                )
+                if test_cid:
+                    results["test_upload"] = "success"
+                else:
+                    results["test_upload"] = "failed (no CID)"
+            except Exception as e:
+                results["test_upload"] = f"failed ({str(e)[:50]})"
+        
+        # Determine overall status
+        if self.pinata_enabled and self.cid_registry:
+            if results["test_retrieve"] == "success" or results["test_retrieve"] == "success (no results)":
+                results["status"] = "success"
+            elif results["test_retrieve"] == "skipped":
+                results["status"] = "partial_success"
+            else:
+                results["status"] = "failed"
+        elif not self.pinata_enabled:
+            results["status"] = "failed"
+            results["error"] = "Pinata API keys not configured"
+        elif not self.cid_registry:
+            results["status"] = "partial_success"
+            results["warning"] = "CID registry not loaded"
+        
+        return results
 
 
 # Convenience function to create RAG instance
