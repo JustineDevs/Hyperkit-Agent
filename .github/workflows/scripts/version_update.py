@@ -27,16 +27,18 @@ CHANGESET_DIR = ROOT / ".changeset"
 CHANGESET_PENDING_DIR = CHANGESET_DIR / "pending"
 
 # Files to update with version numbers
+# ⚠️ LEGACY: This script references old file locations
+# For production, use hyperkit-agent/scripts/ci/version_bump.py instead
 VERSION_FILES = [
-    "package.json",
-    "hyperkit-agent/package.json", 
-    "hyperkit-agent/setup.py",
-    "hyperkit-agent/services/defi/primitives_generator.py"
+    "package.json",  # ✅ Root package.json (exists)
+    # ❌ "hyperkit-agent/package.json" - REMOVED (use root only)
+    # ❌ "hyperkit-agent/setup.py" - REMOVED (use pyproject.toml)
+    "hyperkit-agent/pyproject.toml",  # ✅ Updated to use pyproject.toml
 ]
 
 CHANGELOG_FILES = [
-    "CHANGELOG.md",
-    "hyperkit-agent/CHANGELOG.md"
+    "CHANGELOG.md",  # ✅ Root CHANGELOG (source of truth)
+    # ❌ "hyperkit-agent/CHANGELOG.md" - REMOVED (use root only)
 ]
 
 def get_current_version() -> str:
