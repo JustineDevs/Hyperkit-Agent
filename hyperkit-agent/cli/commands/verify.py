@@ -23,7 +23,15 @@ def verify_group():
 @click.option('--constructor-args', help='Constructor arguments')
 @click.pass_context
 def contract(ctx, address, network, source, constructor_args):
-    """Verify a smart contract on block explorer"""
+    """
+    Verify a smart contract on block explorer
+    
+    ✅ IMPLEMENTED: Full Hyperion Explorer (Blockscout) API integration.
+    Supports contract verification, status checking, and deployment info.
+    See docs/HONEST_STATUS.md for details.
+    """
+    from cli.utils.warnings import show_command_warning
+    show_command_warning('verify')
     # Hardcode Hyperion - no network selection
     network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
     if ctx.params.get('network') and ctx.params.get('network') != 'hyperion':
