@@ -13,15 +13,15 @@ from .logging_system import logger, LogCategory, log_info, log_error, log_warnin
 
 # CRITICAL: Require real Alith SDK - NO MOCK MODE
 try:
-    from alith import AlithAgent, Web3Tools
+    from alith import Agent, LazAIClient
     ALITH_AVAILABLE = True
 except ImportError:
     ALITH_AVAILABLE = False
-    print("❌ CRITICAL ERROR: Alith SDK not available")
-    print("❌ This system REQUIRES real Alith SDK - NO MOCK MODE")
-    print("❌ Install with: pip install alith>=0.12.0")
-    print("❌ Get API key from: https://lazai.network")
-    print("❌ SYSTEM CANNOT OPERATE WITHOUT ALITH SDK")
+    print("CRITICAL ERROR: Alith SDK not available")
+    print("This system REQUIRES real Alith SDK - NO MOCK MODE")
+    print("Install with: pip install alith>=0.12.0")
+    print("Get API key from: https://lazai.network")
+    print("SYSTEM CANNOT OPERATE WITHOUT ALITH SDK")
     sys.exit(1)
 
 # Import real Alith implementation
@@ -46,10 +46,10 @@ class HyperKitAIAgent:
         
         # CRITICAL: Must have real Alith SDK configured
         if not self.alith_configured:
-            print("❌ CRITICAL ERROR: Alith SDK not properly configured")
-            print("❌ Set LAZAI_API_KEY environment variable")
-            print("❌ Get API key from: https://lazai.network")
-            print("❌ SYSTEM CANNOT OPERATE WITHOUT PROPER ALITH CONFIGURATION")
+            print("CRITICAL ERROR: Alith SDK not properly configured")
+            print("Set LAZAI_API_KEY environment variable")
+            print("Get API key from: https://lazai.network")
+            print("SYSTEM CANNOT OPERATE WITHOUT PROPER ALITH CONFIGURATION")
             sys.exit(1)
         
         self._initialize_alith()
@@ -77,12 +77,12 @@ class HyperKitAIAgent:
             self._initialize_models()
             
             log_info(LogCategory.AI_AGENT, "Real Alith AI Agent initialized successfully")
-            print("✅ Real Alith AI Agent initialized successfully")
+            print("Real Alith AI Agent initialized successfully")
         except Exception as e:
             log_error(LogCategory.AI_AGENT, "Failed to initialize Alith agent", e)
-            print(f"❌ CRITICAL ERROR: Failed to initialize Alith agent: {e}")
-            print("❌ Check your LAZAI_API_KEY configuration")
-            print("❌ SYSTEM CANNOT OPERATE WITHOUT WORKING ALITH SDK")
+            print(f"CRITICAL ERROR: Failed to initialize Alith agent: {e}")
+            print("Check your LAZAI_API_KEY configuration")
+            print("SYSTEM CANNOT OPERATE WITHOUT WORKING ALITH SDK")
             sys.exit(1)
     
     def _initialize_models(self):
@@ -112,9 +112,9 @@ class HyperKitAIAgent:
                 'status': 'active'
             }
             
-            print("✅ Multiple AI models initialized successfully")
+            print("Multiple AI models initialized successfully")
         except Exception as e:
-            print(f"❌ CRITICAL ERROR: Failed to initialize models: {e}")
+            print(f"CRITICAL ERROR: Failed to initialize models: {e}")
             sys.exit(1)
     
     def _setup_api_endpoints(self):
@@ -145,9 +145,9 @@ class HyperKitAIAgent:
                     'description': 'Get available AI models'
                 }
             }
-            print("✅ API endpoints configured successfully")
+            print("API endpoints configured successfully")
         except Exception as e:
-            print(f"❌ CRITICAL ERROR: Failed to setup API endpoints: {e}")
+            print(f"CRITICAL ERROR: Failed to setup API endpoints: {e}")
             sys.exit(1)
     
     async def generate_contract(self, requirements: Dict[str, Any]) -> str:
@@ -167,8 +167,8 @@ class HyperKitAIAgent:
             return contract_code
         except Exception as e:
             log_error(LogCategory.AI_AGENT, "Alith generation failed", e)
-            print(f"❌ CRITICAL ERROR: Contract generation failed: {e}")
-            print("❌ Check your LAZAI_API_KEY and Alith SDK configuration")
+            print(f"CRITICAL ERROR: Contract generation failed: {e}")
+            print("Check your LAZAI_API_KEY and Alith SDK configuration")
             raise Exception(f"Contract generation failed: {e}")
     
     def _create_generation_prompt(self, requirements: Dict[str, Any]) -> str:
@@ -205,11 +205,11 @@ Generate a production-ready smart contract with the following requirements:
             }
         except Exception as e:
             log_error(LogCategory.AI_AGENT, "AI audit failed", e)
-            print(f"❌ CRITICAL ERROR: Contract audit failed: {e}")
-            print("❌ Check your LAZAI_API_KEY and Alith SDK configuration")
+            print(f"CRITICAL ERROR: Contract audit failed: {e}")
+            print("Check your LAZAI_API_KEY and Alith SDK configuration")
             raise Exception(f"Contract audit failed: {e}")
     
-    async def get_web3_tools(self) -> Web3Tools:
+    async def get_web3_tools(self) -> Any:
         """Get Web3 tools for blockchain interaction - REQUIRES REAL ALITH SDK"""
         if not self.web3_tools:
             raise Exception("Web3 tools not available - Alith SDK not properly initialized")
@@ -227,7 +227,7 @@ Generate a production-ready smart contract with the following requirements:
             
             return response
         except Exception as e:
-            print(f"❌ CRITICAL ERROR: Gas analysis failed: {e}")
+            print(f"CRITICAL ERROR: Gas analysis failed: {e}")
             raise Exception(f"Gas analysis failed: {e}")
     
     def get_available_models(self) -> Dict[str, Any]:

@@ -25,12 +25,13 @@ class SimpleIPFSClient:
         """Upload content to Pinata IPFS."""
         if not self.pinata_api_key or not self.pinata_secret_key:
             print("WARNING: Pinata API keys not configured. Using mock CID.")
-            return f"mock_cid_{hash(content) % 1000000}"
+            return f"mock_cid_{abs(hash(content)) % 1000000}"
         
         try:
             headers = {
                 'pinata_api_key': self.pinata_api_key,
-                'pinata_secret_api_key': self.pinata_secret_key
+                'pinata_secret_api_key': self.pinata_secret_key,
+                'Content-Type': 'application/json'
             }
             
             data = {
@@ -49,7 +50,7 @@ class SimpleIPFSClient:
                 result = response.json()
                 return result.get('IpfsHash')
             else:
-                print(f"ERROR: Pinata upload failed: {response.status_code}")
+                print(f"ERROR: Pinata upload failed: {response.status_code} - {response.text}")
                 return None
                 
         except Exception as e:
