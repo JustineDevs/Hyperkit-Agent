@@ -58,7 +58,7 @@ API references, CLI documentation, and technical specifications.
 
 ### For New Developers
 1. [Developer Guide](./TEAM/DEVELOPER_GUIDE.md)
-2. [Environment Setup](./TEAM/ENVIRONMENT_SETUP.md)
+2. [Environment Setup](./GUIDE/ENVIRONMENT_SETUP.md)
 3. [Team Coordination](./TEAM/TEAM_COORDINATION_GUIDE.md)
 
 ### For Operations
@@ -104,6 +104,17 @@ When adding new documentation:
 
 ---
 
-**Last Updated**: October 27, 2025  
-**Version**: 1.5.0  
+## 🔗 **Connect With Us**
+
+- 🌐 **Website**: [Hyperionkit.xyz](http://hyperionkit.xyz/)
+- 📚 **Documentation**: [GitHub Docs](https://github.com/Hyperionkit/Hyperkit-Agent)
+- 💬 **Discord**: [Join Community](https://discord.com/invite/MDh7jY8vWe)
+- 🐦 **Twitter**: [@HyperKit](https://x.com/HyperionKit)
+- 📧 **Contact**: [Hyperkitdev@gmail.com](mailto:Hyperkitdev@gmail.com) (for security issues)
+- 💰 **Bug Bounty**: See [SECURITY.md](../../../SECURITY.md)
+
+---
+
+**Last Updated**: 2025-01-29  
+**Version**: 1.5.1  
 **Maintained By**: Documentation Team
