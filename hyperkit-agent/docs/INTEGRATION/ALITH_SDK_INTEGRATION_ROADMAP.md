@@ -1,17 +1,10 @@
-<!-- AUDIT_BADGE_START -->
-**Implementation Status**: ✅ Verified  
-**Version**: 1.5.0  
-**Last Verified**: 2025-10-28  
-**Commit**: `d5465090`  
-**Branch**: `main`  
-<!-- AUDIT_BADGE_END -->
+# ⚠️ Alith SDK Integration Roadmap for HyperKit Agent
 
-# Alith SDK Integration Roadmap for HyperKit Agent
-
-**Date**: October 25, 2024  
-**Current Status**: ❌ NO Alith SDK Integration (Confirmed via audit logs)  
+**Status**: ⚠️ **OPTIONAL - NOT INSTALLED BY DEFAULT**  
+**Last Updated**: October 28, 2025  
+**Current State**: Alith SDK moved to optional dependencies (CI/CD compatibility issues)  
 **Partnership**: LazAI Network / Metis Ecosystem  
-**Timeline**: 10-week phased implementation  
+**Installation**: `pip install -r requirements-optional.txt` (may fail due to dstack-sdk dependency)  
 
 ---
 
@@ -524,10 +517,10 @@ async def test_natural_language_query():
 **Performance Targets**:
 | Metric | Target | Current | Status |
 |--------|--------|---------|--------|
-| AI Inference | < 3 sec | TBD | 🎯 |
-| Web3 Query | < 500ms | TBD | 🎯 |
-| Full Audit | < 10 sec | TBD | 🎯 |
-| Cache Hit Rate | > 80% | TBD | 🎯 |
+| AI Inference | < 3 sec | Measured post-launch | 🎯 |
+| Web3 Query | < 500ms | Measured post-launch | 🎯 |
+| Full Audit | < 10 sec | Measured post-launch | 🎯 |
+| Cache Hit Rate | > 80% | Measured post-launch | 🎯 |
 
 **Deliverables**:
 - [x] Performance targets achieved
@@ -598,7 +591,7 @@ hyperagent ask "What are common reentrancy patterns?"
    - Audit confidence: 30% → 85%+ (55 point improvement)
    - Inference latency: < 3 seconds
    - Success rate: 95%+ on verified contracts
-   - User satisfaction: TBD (post-launch metric)
+   - User satisfaction: Measured post-launch via community feedback
 
 **Deliverables**:
 - [x] Production deployment complete
