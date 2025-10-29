@@ -930,6 +930,33 @@ class HyperKitAgent:
             # Log audit results with deployment (if Alith SDK supports on-chain logging)
             # Note: Alith SDK on-chain audit logging can be added here when available
 
+            # FIXED: Validate deployment actually succeeded before marking workflow as success
+            if not test_only:
+                # Check that deployment was attempted and succeeded
+                if not deployment_result:
+                    return {
+                        "status": "error",
+                        "error": "Deployment was not attempted",
+                        "workflow": "failed",
+                        "generation": generation_result,
+                        "audit": audit_result,
+                        "deployment": {"status": "error", "error": "Deployment not attempted"}
+                    }
+                
+                # Double-check deployment status (don't trust single check)
+                deploy_status = deployment_result.get("status")
+                if deploy_status not in ["success", "deployed"]:
+                    error_msg = deployment_result.get('error', 'Unknown deployment error')
+                    return {
+                        "status": "error",
+                        "error": f"Deployment failed: {error_msg}",
+                        "workflow": "failed",
+                        "generation": generation_result,
+                        "audit": audit_result,
+                        "deployment": deployment_result,
+                        "message": "Workflow failed at deployment stage"
+                    }
+            
             # Return complete workflow results
             return {
                 "status": "success",
