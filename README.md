@@ -153,21 +153,48 @@ HyperAgent uses Retrieval-Augmented Generation (RAG) to enhance all CLI commands
 
 ### **Available Templates**
 
-| Template | Category | Description | CID |
-|----------|----------|-------------|-----|
-| `erc20-template` | contracts | Standard ERC20 fungible token contract template | `QmYWkBLnCwUHtA4vgsFM4ePrCG9xpo2taHRsvEbbyz2JYs` |
-| `erc721-template` | contracts | Standard ERC721 non-fungible token (NFT) contract template | `QmQSsEKKG6JyMhM523ZPeMPDYCyiFxTVKTFqZerjABdTA4` |
-| `staking-pool-template` | DeFi | DeFi staking pool with rewards distribution, reentrancy protection, and pausable functionality | `QmcEC5GeKn1Fge6iefFhACnkmQ25ts3n1d9xkTwQD8nUtp` |
-| `dao-governance-template` | Governance | Complete DAO governance system with proposal creation, voting, time-locked execution, and governance token integration | `QmbXGATk4bAhgi33Lm7CS413vw8iv8WrRXCyr5stZZCFxt` |
-| `dex-template` | DeFi | Automated Market Maker (AMM) DEX with liquidity provision, token swapping, and constant product formula | `QmXTvTf6Titk1hNNpUacpwVmTwcH46inCzTWPdM8DzoWJE` |
-| `nft-collection-template` | NFT | Advanced ERC721 NFT collection with public/whitelist minting, enumerable, URI storage, burnable, and per-address limits | `QmZdQSxUaLjWberFA7D5igsgVgj7Nk97Ly4XgoApo53exR` |
-| `lending-pool-template` | DeFi | Collateralized lending protocol with interest rate model, liquidation mechanism, and health factor monitoring | `QmZoSGuk8W6Zf8L8JwJVWSkYXSj3GgcUWzJN5Un9ASqkEp` |
-| `security-checklist` | audits | Comprehensive security audit best-practices checklist template | `QmRv9N296TqgyJJUSdov5d9jk9jWQHQf8eMKJXfpPmkjAS` |
-| `gas-optimization-audit` | audits | Smart contract gas optimization audit template and checklist | `QmZ3QGB43iF9ntopnbpnPG5pnWxL3DcD2nnQBWU4ECiTY4` |
-| `contract-generation-prompt` | prompts | Prompt engineering template for general smart contract creation | `QmSC6QjuDrhNfpX9vA7P37wC4qXrMf8wYSscf2fLXugU5F` |
-| `generation-style-prompt` | prompts | Prompt template for controlling style or features of generated contracts | `QmeyKuYQoYUToTetEV5ti2t3nBJD5v8TrezXUdP1hbmoUs` |
-| `security-prompts` | prompts | Prompt set for security-focused generation and audit scenarios | `QmYS2tXdBNFj3Pie6RUi5WKFPzGgL173M1wrhQhwsmbmAV` |
-| `hardhat-deploy` | templates | All-in-one template for Hardhat deployment scripts, env config, and best-practice flows | `QmXwNxjvkw9aLZARfvM1bPThKMuP9eqmzD4cevtswKsvvh` |
+> **📁 Registry Location**: `docs/RAG_TEMPLATES/cid-registry.json`  
+> **📊 Total Templates**: 13 (all uploaded and verified)  
+> **🔗 Gateway**: [Pinata IPFS Gateway](https://gateway.pinata.cloud)
+
+#### **Contract Templates**
+| Template | Description | CID |
+|----------|-------------|-----|
+| `erc20-template` | Standard ERC20 fungible token contract template | `QmYWkBLnCwUHtA4vgsFM4ePrCG9xpo2taHRsvEbbyz2JYs` |
+| `erc721-template` | Standard ERC721 non-fungible token (NFT) contract template | `QmQSsEKKG6JyMhM523ZPeMPDYCyiFxTVKTFqZerjABdTA4` |
+
+#### **DeFi Templates**
+| Template | Description | CID |
+|----------|-------------|-----|
+| `staking-pool-template` | DeFi staking pool with rewards distribution, reentrancy protection, and pausable functionality | `QmcEC5GeKn1Fge6iefFhACnkmQ25ts3n1d9xkTwQD8nUtp` |
+| `dao-governance-template` | Complete DAO governance system with proposal creation, voting, time-locked execution, and governance token integration | `QmbXGATk4bAhgi33Lm7CS413vw8iv8WrRXCyr5stZZCFxt` |
+| `dex-template` | Automated Market Maker (AMM) DEX with liquidity provision, token swapping, and constant product formula | `QmXTvTf6Titk1hNNpUacpwVmTwcH46inCzTWPdM8DzoWJE` |
+| `lending-pool-template` | Collateralized lending protocol with interest rate model, liquidation mechanism, and health factor monitoring | `QmZoSGuk8W6Zf8L8JwJVWSkYXSj3GgcUWzJN5Un9ASqkEp` |
+
+#### **NFT Templates**
+| Template | Description | CID |
+|----------|-------------|-----|
+| `nft-collection-template` | Advanced ERC721 NFT collection with public/whitelist minting, enumerable, URI storage, burnable, and per-address limits | `QmZdQSxUaLjWberFA7D5igsgVgj7Nk97Ly4XgoApo53exR` |
+
+#### **Audit Templates**
+| Template | Description | CID |
+|----------|-------------|-----|
+| `security-checklist` | Comprehensive security audit best-practices checklist template | `QmRv9N296TqgyJJUSdov5d9jk9jWQHQf8eMKJXfpPmkjAS` |
+| `gas-optimization-audit` | Smart contract gas optimization audit template and checklist | `QmZ3QGB43iF9ntopnbpnPG5pnWxL3DcD2nnQBWU4ECiTY4` |
+
+#### **Prompt Templates**
+| Template | Description | CID |
+|----------|-------------|-----|
+| `contract-generation-prompt` | Prompt engineering template for general smart contract creation | `QmSC6QjuDrhNfpX9vA7P37wC4qXrMf8wYSscf2fLXugU5F` |
+| `generation-style-prompt` | Prompt template for controlling style or features of generated contracts | `QmeyKuYQoYUToTetEV5ti2t3nBJD5v8TrezXUdP1hbmoUs` |
+| `security-prompts` | Prompt set for security-focused generation and audit scenarios | `QmYS2tXdBNFj3Pie6RUi5WKFPzGgL173M1wrhQhwsmbmAV` |
+
+#### **Deployment Templates**
+| Template | Description | CID |
+|----------|-------------|-----|
+| `hardhat-deploy` | All-in-one template for Hardhat deployment scripts, env config, and best-practice flows | `QmXwNxjvkw9aLZARfvM1bPThKMuP9eqmzD4cevtswKsvvh` |
+
+> **💡 Tip**: All templates are stored on IPFS via Pinata. See [`docs/RAG_TEMPLATES/README.md`](docs/RAG_TEMPLATES/README.md) for upload process and maintenance.
 
 ### **RAG Features**
 
