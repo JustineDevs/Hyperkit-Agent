@@ -765,10 +765,14 @@ Generate only the Solidity contract code, no explanations or markdown formatting
             logger.info(f"Generated contract: {filename} (Category: {category})")
             
             # 3. Organize in proper directory structure
+            # For generate command: artifacts/generate/{category}/
             if output_dir:
                 contracts_path = Path(output_dir) / "contracts" / category / "generated"
             else:
-                contracts_path = self.path_manager.get_category_dir(category)
+                # Use generate command directory for organized structure
+                generate_dir = self.path_manager.get_generate_dir()
+                contracts_path = generate_dir / category
+                logger.debug(f"Saving to generate command directory: {contracts_path}")
             
             contracts_path.mkdir(parents=True, exist_ok=True)
             
