@@ -27,7 +27,14 @@ def audit_group():
 @click.option('--use-rag/--no-use-rag', default=True, help='Use RAG security checklists for enhanced auditing')
 @click.pass_context
 def contract(ctx, contract, address, network, output, format, severity, use_rag):
-    """Audit a smart contract for security issues using RAG checklists"""
+    """
+    Audit a smart contract for security issues using RAG checklists
+    
+    ⚠️  WARNING: Core auditing works, but batch/viewing features are incomplete.
+    See docs/HONEST_STATUS.md for details.
+    """
+    from cli.utils.warnings import show_command_warning
+    show_command_warning('audit')
     from core.agent.main import HyperKitAgent
     from core.config.loader import get_config
     
