@@ -1,14 +1,14 @@
 <!-- AUDIT_BADGE_START -->
 **Implementation Status**: ✅ Verified  
-**Version**: 1.5.0  
-**Last Verified**: 2025-10-28  
-**Commit**: `d5465090`  
+**Version**: 1.5.1  
+**Last Verified**: 2025-10-29  
+**Commit**: `aac4687`  
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
 # Wallet Security Extensions - Complete Guide
 
-**Version**: 1.5.0  
+**Version**: 1.5.1  
 **Date**: October 25, 2024  
 **Status**: Production Ready  
 
@@ -444,7 +444,7 @@ pip install networkx web3 requests scikit-learn
 For full functionality, install Foundry (Anvil):
 
 ```bash
-# See ENVIRONMENT_SETUP.md for Foundry installation
+# See ../GUIDE/ENVIRONMENT_SETUP.md for Foundry installation
 ```
 
 ---
