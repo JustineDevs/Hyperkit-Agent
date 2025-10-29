@@ -26,7 +26,14 @@ def generate_group():
 @click.option('--use-rag/--no-use-rag', default=True, help='Use RAG templates for enhanced context')
 @click.pass_context
 def contract(ctx, type, name, output, network, template, use_rag):
-    """Generate a smart contract with AI using RAG templates for context"""
+    """
+    Generate a smart contract with AI using RAG templates for context
+    
+    ⚠️  WARNING: Templates are limited - many advanced templates not yet implemented.
+    See docs/HONEST_STATUS.md for details.
+    """
+    from cli.utils.warnings import show_command_warning
+    show_command_warning('generate')
     from core.agent.main import HyperKitAgent
     from core.config.loader import get_config
     from services.core.rag_template_fetcher import get_template
@@ -56,7 +63,16 @@ def contract(ctx, type, name, output, network, template, use_rag):
                 
                 # Get appropriate contract template
                 template_name = template or f"{type.lower()}-template"
-                contract_template = asyncio.run(get_template(template_name))
+                
+                # FIXED: Better error handling for missing templates
+                contract_template = None
+                try:
+                    contract_template = asyncio.run(get_template(template_name))
+                    if not contract_template:
+                        console.print(f"Template '{template_name}' not found, continuing without template", style="yellow")
+                except Exception as template_error:
+                    console.print(f"Template '{template_name}' unavailable: {template_error}", style="yellow")
+                    console.print("Continuing with generation prompt only", style="yellow")
                 
                 # Compose enhanced prompt
                 if generation_prompt and contract_template:
@@ -151,13 +167,90 @@ def templates(category):
                 console.print(f"  • {item}")
 
 @generate_group.command()
-@click.option('--template', '-t', required=True, help='Template name')
+@click.option('--template', '-t', required=True, help='Template name from IPFS RAG')
+@click.option('--name', '-n', help='Contract name (optional)')
 @click.option('--output', '-o', help='Output directory')
-def from_template(template, output):
-    """Generate contract from specific template"""
-    console.print(f"Generating from template: {template}")
+@click.option('--use-rag/--no-use-rag', default=True, help='Use RAG templates')
+@click.pass_context
+def from_template(ctx, template, name, output, use_rag):
+    """
+    Generate contract from specific template
     
-    # TODO: Implement template-based generation
-    console.print(f"Generated contract from template: {template}")
-    if output:
-        console.print(f"Output directory: {output}")
+    ⚠️  WARNING: This command fetches template from RAG but may not handle all template types.
+    See docs/HONEST_STATUS.md for details.
+    """
+    from cli.utils.warnings import show_command_warning
+    show_command_warning('generate')
+    
+    console.print(f"Generating contract from template: {template}")
+    
+    try:
+        from services.core.rag_template_fetcher import get_template
+        from core.agent.main import HyperKitAgent
+        from core.config.loader import get_config
+        import asyncio
+        
+        # Fetch template
+        if use_rag:
+            console.print(f"Fetching template '{template}' from RAG...", style="blue")
+            try:
+                template_content = asyncio.run(get_template(template))
+                if not template_content:
+                    console.print(f"[red]Template '{template}' not found in RAG[/red]")
+                    console.print("[yellow]Available templates can be listed with: hyperagent generate templates[/yellow]")
+                    ctx.exit(1)
+                    return
+            except Exception as e:
+                console.print(f"[red]Failed to fetch template: {e}[/red]")
+                console.print("[yellow]Check template name or RAG connection[/yellow]")
+                ctx.exit(1)
+                return
+        else:
+            console.print("[yellow]RAG disabled - cannot fetch template[/yellow]")
+            ctx.exit(1)
+            return
+        
+        # Initialize agent
+        config = get_config().to_dict()
+        agent = HyperKitAgent(config)
+        
+        # Build prompt from template
+        contract_name = name or "Contract"
+        prompt = f"""Generate a smart contract based on the following template:
+
+Template:
+{template_content}
+
+Contract Name: {contract_name}
+Please generate a complete, production-ready contract following the template structure and best practices.
+"""
+        
+        # Generate contract
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Generating contract from template...", total=None)
+            
+            result = asyncio.run(agent.generate_contract(prompt))
+            
+            if result['status'] == 'success':
+                file_path = result['path']
+                console.print(f"[green]Generated contract from template: {template}[/green]")
+                console.print(f"Saved to: {file_path}")
+                
+                if output:
+                    import shutil
+                    shutil.copy(file_path, output)
+                    console.print(f"Copied to: {output}")
+            else:
+                console.print(f"[red]Generation failed: {result.get('error', 'Unknown error')}[/red]")
+                ctx.exit(1)
+    
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        if ctx.obj.get('debug'):
+            import traceback
+            console.print(traceback.format_exc())
+        ctx.exit(1)
