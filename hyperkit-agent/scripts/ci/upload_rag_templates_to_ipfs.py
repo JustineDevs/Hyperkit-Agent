@@ -16,8 +16,9 @@ from datetime import datetime
 # Load environment variables
 load_dotenv()
 
-# Directories
-TEMPLATES_DIR = Path(__file__).parent.parent / "artifacts" / "rag_templates"
+# Directories - Fix paths: from scripts/ci/upload_rag_templates_to_ipfs.py
+# parent.parent.parent = hyperkit-agent/
+TEMPLATES_DIR = Path(__file__).parent.parent.parent / "artifacts" / "rag_templates"
 REGISTRY_PATH = Path(__file__).parent.parent.parent / "docs" / "RAG_TEMPLATES" / "cid-registry.json"
 
 async def upload_to_pinata(file_path: Path, metadata: dict = None) -> dict:
@@ -92,8 +93,72 @@ async def upload_all_templates():
     print(f"\nAPI Key: {api_key[:15]}...")
     print(f"Secret: {secret_key[:15]}...")
     
-    # Load registry
-    registry = json.loads(REGISTRY_PATH.read_text(encoding='utf-8'))
+    # Load or create registry
+    REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if REGISTRY_PATH.exists():
+        registry = json.loads(REGISTRY_PATH.read_text(encoding='utf-8'))
+    else:
+        print("\n[INFO] Registry file not found, creating new registry...")
+        registry = {
+            "metadata": {
+                "version": "1.0.0",
+                "last_updated": datetime.now().isoformat(),
+                "purpose": "CID registry mapping for AI agent RAG template lookups",
+                "note": "Each template has unique CID for decentralized storage"
+            },
+            "templates": {}
+        }
+        # Auto-discover templates and add to registry
+        template_files = list(TEMPLATES_DIR.glob("*.txt"))
+        for template_file in template_files:
+            template_name = template_file.stem
+            # Determine category and description based on name
+            category = "contracts"
+            description = f"Template: {template_name}"
+            
+            if "staking" in template_name.lower():
+                category = "DeFi"
+                description = "DeFi staking pool with rewards distribution"
+            elif "dao" in template_name.lower() or "governance" in template_name.lower():
+                category = "Governance"
+                description = "DAO governance system with voting"
+            elif "dex" in template_name.lower():
+                category = "DeFi"
+                description = "Automated Market Maker (AMM) DEX"
+            elif "nft" in template_name.lower():
+                category = "NFT"
+                description = "Advanced ERC721 NFT collection"
+            elif "lending" in template_name.lower():
+                category = "DeFi"
+                description = "Collateralized lending protocol"
+            elif "erc20" in template_name.lower():
+                category = "contracts"
+                description = "Standard ERC20 token template"
+            elif "erc721" in template_name.lower():
+                category = "contracts"
+                description = "Standard ERC721 NFT template"
+            elif "security" in template_name.lower() or "audit" in template_name.lower():
+                category = "audits"
+                description = "Security audit template"
+            elif "deploy" in template_name.lower():
+                category = "templates"
+                description = "Deployment template"
+            elif "prompt" in template_name.lower() or "generation" in template_name.lower():
+                category = "prompts"
+                description = "Contract generation prompt"
+            
+            registry["templates"][template_name] = {
+                "description": description,
+                "filename": template_file.name,
+                "category": category,
+                "cid": "PENDING - Upload to Pinata",
+                "uploaded": False,
+                "prepared": True
+            }
+        
+        # Save initial registry
+        REGISTRY_PATH.write_text(json.dumps(registry, indent=2), encoding='utf-8')
+        print(f"[OK] Created registry with {len(registry['templates'])} templates")
     
     # Get all template files
     template_files = list(TEMPLATES_DIR.glob("*.txt"))
@@ -132,12 +197,19 @@ async def upload_all_templates():
                 print(f"CID: {result['cid']}")
                 print(f"Gateway: {result['gateway_url']}")
                 
-                # Update registry
-                if template_name in registry["templates"]:
-                    registry["templates"][template_name]["cid"] = result["cid"]
-                    registry["templates"][template_name]["uploaded"] = True
-                    registry["templates"][template_name]["upload_date"] = datetime.now().isoformat()
-                    registry["templates"][template_name]["gateway_url"] = result["gateway_url"]
+                # Update registry (create entry if missing)
+                if template_name not in registry["templates"]:
+                    registry["templates"][template_name] = {
+                        "description": f"Template: {template_name}",
+                        "filename": template_file.name,
+                        "category": "contracts",
+                        "uploaded": False
+                    }
+                
+                registry["templates"][template_name]["cid"] = result["cid"]
+                registry["templates"][template_name]["uploaded"] = True
+                registry["templates"][template_name]["upload_date"] = datetime.now().isoformat()
+                registry["templates"][template_name]["gateway_url"] = result["gateway_url"]
                 
                 upload_results.append(result)
             else:
