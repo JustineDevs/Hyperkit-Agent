@@ -13,7 +13,14 @@ console = Console()
 
 @click.group()
 def monitor_group():
-    """Monitor system health and performance"""
+    """
+    Monitor system health and performance
+    
+    ⚠️  WARNING: This command has partial implementation - some features may be limited.
+    See docs/HONEST_STATUS.md for details.
+    """
+    from cli.utils.warnings import show_command_warning
+    show_command_warning('monitor')
     pass
 
 @monitor_group.command()
