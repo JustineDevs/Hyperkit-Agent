@@ -246,14 +246,81 @@ class HyperKitAgent:
                     }
                     result = await self.ai_agent.generate_contract(requirements)
                     if result:
+                        # Extract contract name and determine category - MUST extract AFTER cleaning
+                        from core.tools.utils import extract_contract_info
+                        from services.generation.contract_namer import ContractNamer
+                        from core.config.paths import PathManager
+                        import re
+                        
+                        # Extract contract name with validation
+                        contract_info = extract_contract_info(result)
+                        contract_name = contract_info.get("contract_name")
+                        
+                        # Validate contract name - ensure it's a valid identifier and not from comments
+                        if not contract_name or len(contract_name) < 3 or not re.match(r'^[A-Z][a-zA-Z0-9_]*$', contract_name):
+                            # Try more robust extraction
+                            contract_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]+)', result)
+                            if contract_match:
+                                contract_name = contract_match.group(1)
+                            else:
+                                # Last resort: use default
+                                contract_name = "Contract"
+                                logger.warning(f"Could not extract valid contract name, using default: {contract_name}")
+                        
+                        logger.info(f"📝 Extracted contract name: {contract_name}")
+                        
+                        # Determine category from prompt or contract code
+                        namer = ContractNamer()
+                        category = namer.get_category(prompt)  # Get category from prompt
+                        
+                        # If category couldn't be determined from prompt, infer from contract code
+                        if category == "other":
+                            category = namer._infer_category_from_code(result)
+                        
+                        logger.info(f"📁 Determined category: {category}")
+                        
+                        # Use PathManager for proper organization
+                        path_manager = PathManager(command_type="workflow")
+                        workflow_dir = path_manager.get_workflow_dir()
+                        category_dir = workflow_dir / category
+                        category_dir.mkdir(parents=True, exist_ok=True)
+                        
+                        # PRIMARY: Save to organized location: artifacts/workflows/{category}/
+                        organized_file = category_dir / f"{contract_name}.sol"
+                        try:
+                            organized_file.write_text(result, encoding="utf-8")
+                            logger.info(f"✅ Contract saved to organized location: {organized_file}")
+                        except Exception as e:
+                            logger.error(f"❌ Failed to save to organized location: {e}")
+                            raise
+                        
+                        # SECONDARY: ALSO save to foundry contracts/ directory for compilation
+                        from pathlib import Path
+                        foundry_project_dir = Path(__file__).parent.parent.parent
+                        foundry_contracts_dir = foundry_project_dir / "contracts"
+                        foundry_contracts_dir.mkdir(exist_ok=True)
+                        
+                        foundry_contract_file = foundry_contracts_dir / f"{contract_name}.sol"
+                        try:
+                            foundry_contract_file.write_text(result, encoding="utf-8")
+                            logger.info(f"✅ Contract also saved for Foundry compilation: {foundry_contract_file}")
+                        except Exception as e:
+                            logger.warning(f"⚠️ Could not save to foundry directory (non-fatal): {e}")
+                            # Don't raise - organized location is primary
+                        
                         return {
                             "status": "success",
                             "contract_code": result,
+                            "contract_name": contract_name,
+                            "category": category,
+                            "path": str(organized_file),  # Primary path (organized)
+                            "foundry_path": str(foundry_contract_file),  # Foundry compilation path
                             "method": "alith",
                             "provider": "Alith SDK",
                             "metadata": {
                                 "ai_powered": True,
-                                "alith_integration": True
+                                "alith_integration": True,
+                                "category": category
                             }
                         }
                 except Exception as e:
@@ -355,87 +422,296 @@ class HyperKitAgent:
             import subprocess
             from pathlib import Path
             
-            project_root = Path(__file__).parent.parent.parent.parent
-            foundry_contracts_dir = project_root / "contracts"
+            # Determine correct paths: foundry.toml is in hyperkit-agent/, not root
+            # Path from core/agent/main.py: .. -> core, .. -> hyperkit-agent (foundry project root)
+            foundry_project_dir = Path(__file__).parent.parent.parent
+            project_root = foundry_project_dir.parent  # Root of HyperAgent repo
             
-            # Verify contract file exists
-            contract_file = foundry_contracts_dir / f"{contract_name}.sol"
-            if not contract_file.exists():
+            # Contracts are now saved directly to foundry project directory (from generate_contract)
+            foundry_contracts_dir = foundry_project_dir / "contracts"
+            
+            # Foundry project configuration
+            lib_dir = foundry_project_dir / "lib"
+            openzeppelin_dir = lib_dir / "openzeppelin-contracts"
+            foundry_toml = foundry_project_dir / "foundry.toml"
+            
+            # Verify contract file exists - check multiple locations in priority order
+            contract_file = None
+            
+            # Priority 1: Foundry contracts/ directory (primary location for compilation)
+            potential_file = foundry_contracts_dir / f"{contract_name}.sol"
+            if potential_file.exists():
+                contract_file = potential_file
+                logger.debug(f"Contract found in foundry directory: {contract_file}")
+            else:
+                # Priority 2: Check organized workflows/{category}/ location
+                from services.generation.contract_namer import ContractNamer
+                from core.config.paths import PathManager
+                
+                # Try to infer category from code or prompt
+                namer = ContractNamer()
+                category = namer._infer_category_from_code(contract_code)
+                
+                path_manager = PathManager(command_type="workflow")
+                workflow_dir = path_manager.get_workflow_dir()
+                organized_file = workflow_dir / category / f"{contract_name}.sol"
+                
+                if organized_file.exists():
+                    contract_file = organized_file
+                    logger.info(f"Contract found in organized location: {contract_file}")
+                    # Copy to foundry directory for compilation
+                    foundry_contracts_dir.mkdir(exist_ok=True)
+                    import shutil
+                    foundry_target = foundry_contracts_dir / f"{contract_name}.sol"
+                    shutil.copy2(contract_file, foundry_target)
+                    contract_file = foundry_target  # Use the foundry location for compilation
+                    logger.info(f"Copied to foundry directory for compilation: {contract_file}")
+                else:
+                    # Priority 3: Check root contracts/ directory (backward compatibility)
+                    root_contracts_dir = project_root / "contracts"
+                    root_contract_file = root_contracts_dir / f"{contract_name}.sol"
+                    if root_contract_file.exists():
+                        logger.info(f"Contract found in root directory, copying to foundry project...")
+                        foundry_contracts_dir.mkdir(exist_ok=True)
+                        import shutil
+                        shutil.copy2(root_contract_file, potential_file)
+                        contract_file = potential_file
+                        logger.info(f"Copied {root_contract_file} to {contract_file}")
+            
+            # If still not found, return error with all locations checked
+            if not contract_file or not contract_file.exists():
                 return {
                     "success": False,
-                    "error": f"Contract file not found: {contract_file}. Make sure generation saved it correctly.",
+                    "error": f"Contract file not found: {contract_name}.sol",
                     "suggestions": [
-                        f"Check if contract was saved to {contract_file}",
-                        "Verify contract generation completed successfully"
+                        f"Checked foundry directory: {foundry_contracts_dir / f'{contract_name}.sol'}",
+                        f"Checked organized workflows location (if category known)",
+                        f"Checked root directory: {project_root / 'contracts' / f'{contract_name}.sol'}",
+                        "Verify contract generation completed successfully and saved the file",
+                        "Check artifacts/workflows/{category}/ for organized location"
+                    ],
+                    "searched_locations": [
+                        str(foundry_contracts_dir),
+                        f"artifacts/workflows/{category} (if category determined)",
+                        str(project_root / "contracts")
                     ]
                 }
             
             logger.info(f"Compiling {contract_name} with Foundry...")
             logger.info(f"Contract file: {contract_file}")
+            logger.info(f"Foundry project directory: {foundry_project_dir}")
             
-            # Check and install dependencies if needed
-            lib_dir = project_root / "lib"
-            openzeppelin_dir = lib_dir / "openzeppelin-contracts"
+            # Professional dependency management: check if already installed
+            needs_openzeppelin = "@openzeppelin" in contract_code
             
-            if not openzeppelin_dir.exists() and "@openzeppelin" in contract_code:
-                logger.info("OpenZeppelin contracts not found, installing...")
+            if needs_openzeppelin:
+                logger.info(f"Contract requires OpenZeppelin - checking installation...")
                 
-                # Check if foundry.toml exists (required for forge install)
-                foundry_toml = project_root / "foundry.toml"
-                if not foundry_toml.exists():
-                    return {
-                        "success": False,
-                        "error": "foundry.toml not found - cannot install dependencies",
-                        "suggestions": [
-                            "Initialize Foundry: forge init (creates foundry.toml)",
-                            "Or ensure foundry.toml exists in project root",
-                            f"Expected location: {foundry_toml}"
-                        ]
-                    }
+                # Professional check: verify OpenZeppelin is installed and has contracts
+                # Check for contracts/ subdirectory (required for imports)
+                contracts_dir = openzeppelin_dir / "contracts"
                 
-                # Install OpenZeppelin (without --no-commit flag - not supported)
-                # Foundry install will add to lib/ but won't auto-commit if in git repo
-                install_result = subprocess.run(
-                    ["forge", "install", "OpenZeppelin/openzeppelin-contracts"],
-                    cwd=str(project_root),
-                    capture_output=True,
-                    text=True,
-                    timeout=60
+                # More thorough verification: check multiple indicators
+                dir_exists = openzeppelin_dir.exists()
+                contracts_dir_exists = contracts_dir.exists()
+                has_sol_files = False
+                has_package_json = False
+                
+                if contracts_dir_exists:
+                    try:
+                        sol_files = list(contracts_dir.rglob("*.sol"))
+                        has_sol_files = len(sol_files) > 0
+                        if has_sol_files:
+                            logger.debug(f"   Found {len(sol_files)} Solidity files in OpenZeppelin contracts")
+                    except Exception as e:
+                        logger.warning(f"   Error checking for .sol files: {e}")
+                
+                if openzeppelin_dir.exists():
+                    package_json = openzeppelin_dir / "package.json"
+                    has_package_json = package_json.exists()
+                
+                openzeppelin_installed = (
+                    dir_exists and
+                    contracts_dir_exists and
+                    has_sol_files  # Must have actual contract files
                 )
                 
-                if install_result.returncode != 0:
-                    error_msg = install_result.stderr or install_result.stdout
-                    logger.error(f"Dependency installation failed: {error_msg[:500]}")
-                    return {
-                        "success": False,
-                        "error": f"Failed to install OpenZeppelin dependencies: {error_msg[:300]}",
-                        "suggestions": [
-                            "Run 'forge install OpenZeppelin/openzeppelin-contracts' manually",
-                            "Check if foundry.toml is properly configured",
-                            "Verify Foundry is installed: forge --version",
-                            "Check network connectivity for GitHub access"
-                        ],
-                        "forge_output": error_msg
-                    }
+                logger.debug(f"   OpenZeppelin check: dir={dir_exists}, contracts_dir={contracts_dir_exists}, sol_files={has_sol_files}, package_json={has_package_json}")
                 
-                # Verify installation succeeded
-                if not openzeppelin_dir.exists():
-                    return {
-                        "success": False,
-                        "error": f"OpenZeppelin installation completed but lib/openzeppelin-contracts not found",
-                        "suggestions": [
-                            "Check lib/ directory for installed dependencies",
-                            f"Expected: {openzeppelin_dir}",
-                            "Run 'forge install OpenZeppelin/openzeppelin-contracts' manually to debug"
-                        ]
-                    }
-                
-                logger.info("✅ OpenZeppelin dependencies installed successfully")
+                if openzeppelin_installed:
+                    logger.info(f"✅ OpenZeppelin contracts already installed at {openzeppelin_dir}")
+                else:
+                    logger.warning(f"⚠️  OpenZeppelin not properly installed")
+                    logger.info(f"   Attempting installation to {openzeppelin_dir}...")
+                    
+                    # Verify foundry.toml exists (required for forge install)
+                    if not foundry_toml.exists():
+                        return {
+                            "success": False,
+                            "error": f"foundry.toml not found - cannot install dependencies",
+                            "suggestions": [
+                                f"Initialize Foundry in {foundry_project_dir}: cd hyperkit-agent && forge init",
+                                f"Or ensure foundry.toml exists at: {foundry_toml}",
+                                "Foundry configuration is required for dependency management"
+                            ],
+                            "foundry_project_path": str(foundry_project_dir)
+                        }
+                    
+                    # Verify Foundry is installed and accessible
+                    try:
+                        forge_check = subprocess.run(
+                            ["forge", "--version"],
+                            capture_output=True,
+                            text=True,
+                            timeout=5
+                        )
+                        if forge_check.returncode != 0:
+                            return {
+                                "success": False,
+                                "error": "Foundry (forge) not found or not working",
+                                "suggestions": [
+                                    "Install Foundry: curl -L https://foundry.paradigm.xyz | bash",
+                                    "Then run: foundryup",
+                                    "Verify: forge --version"
+                                ]
+                            }
+                    except FileNotFoundError:
+                        return {
+                            "success": False,
+                            "error": "Foundry (forge) not installed",
+                            "suggestions": [
+                                "Install Foundry: curl -L https://foundry.paradigm.xyz | bash",
+                                "Then run: foundryup",
+                                "Verify: forge --version"
+                            ]
+                        }
+                    
+                    # Install OpenZeppelin (use foundry project directory as cwd)
+                    logger.info(f"Installing OpenZeppelin contracts to {openzeppelin_dir}...")
+                    logger.info(f"   Running: forge install OpenZeppelin/openzeppelin-contracts --no-commit")
+                    logger.info(f"   Working directory: {foundry_project_dir}")
+                    
+                    # Ensure lib directory exists
+                    lib_dir.mkdir(exist_ok=True)
+                    
+                    install_result = subprocess.run(
+                        ["forge", "install", "OpenZeppelin/openzeppelin-contracts", "--no-commit"],
+                        cwd=str(foundry_project_dir),
+                        capture_output=True,
+                        text=True,
+                        timeout=120
+                    )
+                    
+                    # Log forge output for debugging (show to user at info level for visibility)
+                    if install_result.stdout:
+                        logger.info(f"Forge install output: {install_result.stdout[:1000]}")
+                    if install_result.stderr:
+                        logger.info(f"Forge install stderr: {install_result.stderr[:1000]}")
+                    
+                    # Check installation result - handle already installed case gracefully
+                    if install_result.returncode != 0:
+                        error_msg = install_result.stderr or install_result.stdout
+                        
+                        # Check if error is "already installed" - verify it actually exists
+                        if "already installed" in error_msg.lower() or "exists" in error_msg.lower():
+                            logger.info("⚠️  Forge reports OpenZeppelin already installed - verifying...")
+                            # Re-check if it actually exists now
+                            contracts_check = openzeppelin_dir / "contracts"
+                            if contracts_check.exists() and any(contracts_check.rglob("*.sol")):
+                                logger.info("✅ Verified: OpenZeppelin contracts are installed")
+                                openzeppelin_installed = True
+                            else:
+                                logger.warning("⚠️  Forge says installed but files not found - may need git submodule update")
+                                # Try to force reinstall
+                                logger.info("   Attempting forced reinstall...")
+                                force_result = subprocess.run(
+                                    ["forge", "install", "OpenZeppelin/openzeppelin-contracts", "--force", "--no-commit"],
+                                    cwd=str(foundry_project_dir),
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=120
+                                )
+                                if force_result.returncode == 0:
+                                    logger.info("✅ Forced reinstall successful")
+                                else:
+                                    error_msg = force_result.stderr or force_result.stdout
+                                    logger.error(f"❌ Forced reinstall failed: {error_msg[:300]}")
+                        else:
+                            logger.error(f"❌ Dependency installation failed: {error_msg[:500]}")
+                            return {
+                                "success": False,
+                                "error": f"Failed to install OpenZeppelin dependencies: {error_msg[:300]}",
+                                "suggestions": [
+                                    f"Run manually: cd {foundry_project_dir} && forge install OpenZeppelin/openzeppelin-contracts --no-commit",
+                                    f"If already installed, try: cd {foundry_project_dir} && forge install OpenZeppelin/openzeppelin-contracts --force",
+                                    f"Check foundry.toml configuration at: {foundry_toml}",
+                                    "Verify Foundry is installed: forge --version",
+                                    "Check network connectivity for GitHub access",
+                                    f"Verify lib/ directory is writable: {lib_dir}",
+                                    "Try: git submodule update --init --recursive (if using git)"
+                                ],
+                                "forge_output": error_msg[:500]
+                            }
+                    else:
+                        logger.info("✅ Forge install command completed successfully")
+                    
+                    # Verify installation succeeded (re-check after potential install)
+                    # Only re-verify if we attempted installation (don't skip if already verified)
+                    if not openzeppelin_installed:
+                        logger.info("Verifying OpenZeppelin installation...")
+                        contracts_dir_check = openzeppelin_dir / "contracts"
+                        
+                        try:
+                            sol_file_count = len(list(contracts_dir_check.rglob("*.sol"))) if contracts_dir_check.exists() else 0
+                            openzeppelin_installed_final = (
+                                openzeppelin_dir.exists() and
+                                contracts_dir_check.exists() and
+                                sol_file_count > 0
+                            )
+                            logger.debug(f"   Verification: dir={openzeppelin_dir.exists()}, contracts={contracts_dir_check.exists()}, files={sol_file_count}")
+                        except Exception as e:
+                            logger.error(f"   Error during verification: {e}")
+                            openzeppelin_installed_final = False
+                    else:
+                        openzeppelin_installed_final = True
+                    
+                    if not openzeppelin_installed_final:
+                        contracts_dir_check = openzeppelin_dir / "contracts"
+                        return {
+                            "success": False,
+                            "error": f"OpenZeppelin installation completed but verification failed",
+                            "suggestions": [
+                                f"Check lib/ directory: {lib_dir}",
+                                f"Expected OpenZeppelin at: {openzeppelin_dir}",
+                                f"Expected contracts at: {contracts_dir_check}",
+                                f"Run manually to debug: cd {foundry_project_dir} && forge install OpenZeppelin/openzeppelin-contracts",
+                                "Check file system permissions",
+                                f"Verify foundry.toml remappings include: @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
+                            ],
+                            "checked_path": str(openzeppelin_dir),
+                            "contracts_path": str(contracts_dir_check)
+                        }
+                    
+                    logger.info(f"✅ OpenZeppelin dependencies installed successfully at {openzeppelin_dir}")
+                    logger.debug(f"   Contracts available at: {contracts_dir_check}")
             
-            # Run forge build
+            # Contract is already in foundry project directory (contracts/)
+            # Run forge build from foundry project directory
+            logger.info(f"Building contract with Foundry from {foundry_project_dir}...")
+            logger.debug(f"   Contract file: {contract_file}")
+            logger.debug(f"   Foundry remappings should resolve @openzeppelin/contracts/ to {openzeppelin_dir / 'contracts'}")
+            
+            # Verify remappings are correct before building
+            if needs_openzeppelin and openzeppelin_dir.exists():
+                remapping_file = foundry_project_dir / "remappings.txt"
+                if remapping_file.exists():
+                    logger.debug(f"   Found remappings.txt: {remapping_file}")
+                else:
+                    logger.debug(f"   Using foundry.toml remappings (remappings.txt not found)")
+            
             result = subprocess.run(
                 ["forge", "build"],
-                cwd=str(project_root),
+                cwd=str(foundry_project_dir),
                 capture_output=True,
                 text=True,
                 timeout=120
@@ -449,19 +725,23 @@ class HyperKitAgent:
                     "suggestions": [
                         "Check contract syntax errors",
                         "Verify all imports are available",
-                        "Check foundry.toml configuration",
-                        f"Run 'forge build' manually to see full error"
+                        f"Check foundry.toml configuration at: {foundry_toml}",
+                        f"Run 'cd {foundry_project_dir} && forge build' manually to see full error",
+                        "Verify contract is in contracts/ directory"
                     ],
-                    "forge_output": error_output
+                    "forge_output": error_output,
+                    "foundry_project_path": str(foundry_project_dir)
                 }
             
-            # Verify artifact was created - check multiple possible paths
-            artifact_path = project_root / "out" / f"{contract_name}.sol" / f"{contract_name}.json"
+            # Verify artifact was created - check foundry project's out/ directory
+            artifact_path = foundry_project_dir / "out" / f"{contract_name}.sol" / f"{contract_name}.json"
             if not artifact_path.exists():
-                # Try alternative paths
+                # Try alternative paths (contract name might vary)
                 alternative_paths = [
-                    project_root / "out" / f"{contract_name}.json",
-                    project_root / "out" / contract_name / f"{contract_name}.json",
+                    foundry_project_dir / "out" / f"{contract_name}.json",
+                    foundry_project_dir / "out" / contract_name / f"{contract_name}.json",
+                    # Also check root out/ in case of symlink setup
+                    project_root / "out" / f"{contract_name}.sol" / f"{contract_name}.json",
                 ]
                 for alt_path in alternative_paths:
                     if alt_path.exists():
@@ -470,11 +750,17 @@ class HyperKitAgent:
                 
             if not artifact_path.exists():
                 # List actual artifacts found to help debug
-                out_dir = project_root / "out"
+                out_dir = foundry_project_dir / "out"
                 found_artifacts = []
                 if out_dir.exists():
                     for json_file in out_dir.rglob("*.json"):
                         # Only show contract artifacts, not test artifacts
+                        if "Test" not in json_file.name:
+                            found_artifacts.append(str(json_file.relative_to(foundry_project_dir)))
+                # Also check root out/ as fallback
+                root_out_dir = project_root / "out"
+                if root_out_dir.exists():
+                    for json_file in root_out_dir.rglob("*.json"):
                         if "Test" not in json_file.name:
                             found_artifacts.append(str(json_file.relative_to(project_root)))
                 
