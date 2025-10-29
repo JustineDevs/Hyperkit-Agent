@@ -27,9 +27,9 @@
 # Integration SDK Audit Report
 
 <!-- VERSION_PLACEHOLDER -->
-**Version**: 1.5.1
+**Version**: 1.5.3
 **Last Updated**: 2025-10-29
-**Commit**: 62e6cfe
+**Commit**: 9c37c84
 <!-- /VERSION_PLACEHOLDER -->
 
 ## Summary
