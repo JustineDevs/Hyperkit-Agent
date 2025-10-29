@@ -178,6 +178,20 @@ npm run hyperagent:version
 
 If you encounter any issues:
 1. Check [INSTALLATION_GUIDE.md](./INSTALLATION_GUIDE.md) troubleshooting section
-2. Review [hyperkit-agent/README.md](./hyperkit-agent/README.md)
-3. Check [hyperkit-agent/docs/TROUBLESHOOTING_GUIDE.md](./hyperkit-agent/docs/TROUBLESHOOTING_GUIDE.md)
+2. Review [hyperkit-agent/README.md](../README.md)
+3. Check [hyperkit-agent/docs/TROUBLESHOOTING_GUIDE.md](../TROUBLESHOOTING_GUIDE.md)
+
+---
+
+## 🔗 **Connect With Us**
+
+- 🌐 **Website**: [Hyperionkit.xyz](http://hyperionkit.xyz/)
+- 📚 **Documentation**: [GitHub Docs](https://github.com/Hyperionkit/Hyperkit-Agent)
+- 💬 **Discord**: [Join Community](https://discord.com/invite/MDh7jY8vWe)
+- 🐦 **Twitter**: [@HyperKit](https://x.com/HyperionKit)
+- 📧 **Contact**: [Hyperkitdev@gmail.com](mailto:Hyperkitdev@gmail.com) (for security issues)
+- 💰 **Bug Bounty**: See [SECURITY.md](../../../SECURITY.md)
+
+**Last Updated**: 2025-01-29  
+**Version**: 1.5.1
 
