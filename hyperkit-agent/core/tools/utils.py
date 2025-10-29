@@ -265,19 +265,29 @@ def format_contract_code(code: str) -> str:
 
 
 def save_contract_to_file(
-    code: str, filename: str, directory: str = "./contracts/agent_generate"
+    code: str, filename: str, directory: str = None
 ) -> str:
     """
     Save contract code to a file.
+    
+    Note: For workflow-generated contracts, use foundry project directory.
+    This utility defaults to foundry contracts/ directory if no directory specified.
 
     Args:
         code: Solidity contract code
         filename: Name of the file
-        directory: Directory to save the file
+        directory: Directory to save the file (defaults to foundry project contracts/)
 
     Returns:
         Path to the saved file
     """
+    from pathlib import Path
+    
+    # Default to foundry project contracts directory
+    if directory is None:
+        # Path from core/tools/utils.py: .. -> core, .. -> hyperkit-agent
+        foundry_project_dir = Path(__file__).parent.parent.parent
+        directory = str(foundry_project_dir / "contracts")
     Path(directory).mkdir(parents=True, exist_ok=True)
 
     if not filename.endswith(".sol"):
