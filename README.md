@@ -6,10 +6,10 @@
 
 
 
-> **AI-Powered Smart Contract Development, Security Auditing, and Multi-Chain Deployment Platform**
+> **AI-Powered Smart Contract Development, Security Auditing, and Deployment Platform for Hyperion Testnet**
 
 <!-- VERSION_PLACEHOLDER -->
-**Version**: 1.4.8
+**Version**: 1.5.3
 **Last Updated**: 2025-01-29
 **Commit**: aac4687
 <!-- /VERSION_PLACEHOLDER -->
@@ -30,7 +30,7 @@
 
 ## Overview
 
-HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contract development, security auditing, and multi-chain deployment. By combining Large Language Models (LLMs), Retrieval-Augmented Generation (RAG), and blockchain technology, HyperAgent streamlines the entire smart contract lifecycle—from natural language prompts to production-ready, audited, and deployed contracts.
+HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contract development, security auditing, and deployment on Hyperion testnet. By combining Large Language Models (LLMs), Retrieval-Augmented Generation (RAG), and blockchain technology, HyperAgent streamlines the entire smart contract lifecycle—from natural language prompts to production-ready, audited, and deployed contracts.
 
 ### **Why HyperAgent?**
 
@@ -80,15 +80,15 @@ Navigate quickly to any section of the documentation:
 |-----------|--------|---------|-------|
 | **IPFS RAG** | ✅ Production Ready | v4.3.0 | Fully functional with real Pinata integration - 13 templates uploaded (ERC20, ERC721, Staking, DAO, DEX, NFT, Lending, Security, Deployment) |
 | **Core System** | 🟡 Development-Grade | v4.1.11+ | Known deployment limitations |
-| **AI Generation** | ✅ Production | v1.2.0 | Alith SDK ONLY (fails hard if unavailable - no fallbacks) |
-| **Security Auditing** | ✅ Functional | v1.2.0 | Multi-source consensus + batch auditing |
-| **Deployment Pipeline** | ⚠️ Limited | v1.2.0 | ⚠️ Constructor/ABI issues for complex contracts |
-| **Verification System** | ✅ Functional | v1.1.0 | Hyperion explorer integration |
-| **Testing Framework** | ✅ Functional | v1.0.0 | 10/10 E2E tests passing (testnet only) |
+| **AI Generation** | ✅ Production | v1.2.0 | Alith SDK integration (constructor parsing fixed) |
+| **Security Auditing** | ✅ Functional | v1.2.0 | Multi-source consensus + batch auditing with PDF/Excel export |
+| **Deployment Pipeline** | ✅ Functional | v1.2.0 | Constructor argument parsing fixed, source code parsing prioritized |
+| **Verification System** | ✅ Functional | v1.1.0 | Hyperion explorer (Blockscout) integration complete |
+| **Testing Framework** | ✅ Functional | v1.0.0 | E2E tests passing (testnet only) |
 | **CI/CD Pipeline** | ✅ Active | v1.0.0 | Multi-Python version testing |
 | **Documentation** | ✅ Complete | v2.0.0 | Honest and transparent |
 | **Alith SDK** | ✅ Production | v0.12.0 | Real implementation (uses OpenAI key) |
-| **Network Support** | ✅ Hyperion-Only | - | **EXCLUSIVE**: Only Hyperion testnet (Chain ID: 133717) |
+| **Network Support** | ✅ Hyperion | - | Hyperion testnet (Chain ID: 133717) |
 
 ---
 
@@ -126,7 +126,7 @@ Navigate quickly to any section of the documentation:
 | **OpenAI** | gpt-4 | Advanced reasoning, auditing | `OPENAI_API_KEY` | ✅ Supported |
 | **Anthropic Claude** | claude-3-sonnet | Code review, optimization | `ANTHROPIC_API_KEY` | ✅ Supported |
 | **Alith SDK** | v0.12.0+ | On-chain AI inference | `OPENAI_API_KEY` + `alith` package | ✅ Production |
-| **LazAI Network** | - | Blockchain RPC (network only) | Not applicable | ✅ Configured |
+| **LazAI Network** | - | Documentation only (future support) | Not applicable | 📋 Planned |
 | **IPFS Pinata RAG** | Latest | Exclusive RAG backend | `PINATA_API_KEY` + `PINATA_SECRET_KEY` | ✅ Production |
 
 ---
@@ -238,9 +238,17 @@ python -c "from services.core.rag_template_fetcher import get_template_fetcher; 
 ```
 
 ---
+
+## 🛠️ System Commands
+
+| Feature | Description | Command | Status |
+|---------|-------------|---------|--------|
 | **System Monitoring** | Health checks, resource tracking | `hyperagent monitor` | ✅ |
-| **Report Generation** | JSON/Markdown audit reports | `hyperagent audit report` | ✅ |
+| **Report Generation** | JSON/Markdown/PDF/Excel audit reports | `hyperagent audit report` | ✅ |
 | **5-Stage Workflows** | End-to-end automation | `hyperagent workflow run` | ✅ |
+| **Version Management** | Dynamic version display | `hyperagent version` | ✅ |
+| **Configuration Management** | Full config file management | `hyperagent config` | ✅ |
+| **Limitations Display** | Honest status reporting | `hyperagent limitations` | ✅ |
 
 ---
 
@@ -251,7 +259,7 @@ python -c "from services.core.rag_template_fetcher import get_template_fetcher; 
 | ✅ **Production-Ready Infrastructure** | CI/CD, testing, docs complete | GitHub Actions passing |
 | ✅ **10/10 E2E Tests Passing** | Comprehensive deployment validation | `pytest tests/` |
 | ✅ **Batch Audit Implementation** | Audit multiple contracts efficiently | Fully functional |
-| ✅ **Network Migration Complete** | Focused on 3 primary networks | Hyperion, LazAI, Metis |
+| ✅ **Network Migration Complete** | Hyperion-only focus | Hyperion testnet (exclusive) |
 | ✅ **Security Policy + Bug Bounty** | TBD reward program | SECURITY.md |
 | ✅ **Professional Documentation** | Contributing, Security, Templates | All docs complete |
 | ✅ **Honest Status Reporting** | No fake success messages | `hyperagent limitations` |
@@ -284,7 +292,7 @@ npm run hyperagent:test
 | **Network Connectivity** | RPC connection test | ✅ Online |
 | **Version Consistency** | `npm run version:check` | Consistent |
 | **NPM Scripts** | `npm run hyperagent:status` | All systems operational |
-| **E2E Tests** | `npm run hyperagent:test` | 36/37 tests passing |
+| **E2E Tests** | `npm run hyperagent:test` | Tests passing (testnet only) |
 
 ---
 
@@ -296,41 +304,33 @@ Copy and paste these natural language prompts:
 |----------|--------|---------|--------|
 | **ERC20 Token** | `"Create a simple ERC20 token with 1M supply"` | hyperion | Token contract |
 | **Gaming Token** | `"Create a gaming token with rewards and staking"` | hyperion | Advanced token |
-| **NFT Collection** | `"Create an ERC721 NFT collection with 10K supply"` | metis | NFT contract |
+| **NFT Collection** | `"Create an ERC721 NFT collection with 10K supply"` | hyperion | NFT contract |
 | **DAO Governance** | `"Create a DAO with proposal and voting system"` | hyperion | Governance |
-| **DeFi Staking** | `"Create a staking contract with 10% APY"` | metis | Staking pool |
+| **DeFi Staking** | `"Create a staking contract with 10% APY"` | hyperion | Staking pool |
 | **Multisig Wallet** | `"Create a 2-of-3 multisig wallet"` | hyperion | Wallet contract |
+
+> **⚠️ Note**: The `--network` flag is deprecated. Hyperion is the only supported network and is used automatically.
 
 ### Copy-Paste Ready Commands:
 
-   ```bash
-# ERC20 Token
-hyperagent workflow run "Create a simple ERC20 token with 1M supply" --network hyperion
-   ```
-
-   ```bash
-# Gaming Token
-hyperagent workflow run "Create a gaming token with rewards and staking" --network hyperion
-   ```
-
-   ```bash
-# NFT Collection
-hyperagent workflow run "Create an ERC721 NFT collection with 10K supply" --network metis
-   ```
-
-   ```bash
-# DAO Governance
-hyperagent workflow run "Create a DAO with proposal and voting system" --network hyperion
-   ```
-
-   ```bash
-# DeFi Staking
-hyperagent workflow run "Create a staking contract with 10% APY" --network metis
-   ```
-
 ```bash
+# ERC20 Token
+hyperagent workflow run "Create a simple ERC20 token with 1M supply"
+
+# Gaming Token
+hyperagent workflow run "Create a gaming token with rewards and staking"
+
+# NFT Collection
+hyperagent workflow run "Create an ERC721 NFT collection with 10K supply"
+
+# DAO Governance
+hyperagent workflow run "Create a DAO with proposal and voting system"
+
+# DeFi Staking
+hyperagent workflow run "Create a staking contract with 10% APY"
+
 # Multisig Wallet
-hyperagent workflow run "Create a 2-of-3 multisig wallet" --network hyperion
+hyperagent workflow run "Create a 2-of-3 multisig wallet"
 ```
 
 ---
@@ -341,15 +341,15 @@ Complete AI-powered workflow automation:
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `workflow run` | Execute full Generate→Audit→Deploy→Verify→Test | `hyperagent workflow run "Create ERC20" --network hyperion` |
+| `workflow run` | Execute full Generate→Audit→Deploy→Verify→Test | `hyperagent workflow run "Create ERC20"` |
 | `workflow list` | Show available workflow templates | `hyperagent workflow list` |
 | `workflow status` | Check workflow run status | `hyperagent workflow status <id>` |
 
 ### Copy-Paste Commands:
 
 ```bash
-# Run complete workflow
-hyperagent workflow run "Your prompt here" --network hyperion
+# Run complete workflow (Hyperion network is automatic)
+hyperagent workflow run "Your prompt here"
 
 # List all available templates
 hyperagent workflow list
@@ -394,7 +394,7 @@ hyperagent generate test artifacts/contracts/MyToken.sol
 hyperagent audit contract --contract MyToken.sol --output report.json
 
 # Audit deployed contract
-hyperagent audit contract --address 0x123... --network hyperion
+hyperagent audit contract --address 0x123...
 
 # Batch audit directory
 hyperagent audit batch --directory ./contracts --recursive --output ./reports
@@ -410,16 +410,16 @@ hyperagent audit report --report reports/MyToken_audit.json
 
 | Command | Purpose | Example |
 |---------|---------|---------|
-| `deploy` | Deploy contract to network | `hyperagent deploy --contract MyToken.sol --network hyperion` |
-| `verify contract` | Verify on explorer | `hyperagent verify contract 0x123... --network hyperion` |
+| `deploy` | Deploy contract to network | `hyperagent deploy --contract MyToken.sol` |
+| `verify contract` | Verify on explorer | `hyperagent verify contract 0x123...` |
 | `monitor system` | System health check | `hyperagent monitor system` |
 
 ```bash
-# Deploy contract
-hyperagent deploy --contract artifacts/MyToken.sol --network hyperion --args "MyToken" "MTK" 1000000
+# Deploy contract (Hyperion network is automatic)
+hyperagent deploy --contract artifacts/MyToken.sol --args "MyToken" "MTK" 1000000
 
 # Verify deployed contract
-hyperagent verify contract 0xYourContractAddress --network hyperion
+hyperagent verify contract 0xYourContractAddress
 
 # Monitor system health
 hyperagent monitor system
@@ -442,22 +442,22 @@ Copy-paste these prompts for real-world use cases:
 
 ```bash
 # Token Launch
-hyperagent workflow run "Create an ERC20 token called GameCoin with 10M supply, 18 decimals, and burn functionality" --network hyperion
+hyperagent workflow run "Create an ERC20 token called GameCoin with 10M supply, 18 decimals, and burn functionality"
 
 # NFT Marketplace
-hyperagent workflow run "Create an NFT marketplace with royalties and auction system" --network metis
+hyperagent workflow run "Create an NFT marketplace with royalties and auction system"
 
 # Yield Farm
-hyperagent workflow run "Create a yield farming contract with LP token staking and reward distribution" --network hyperion
+hyperagent workflow run "Create a yield farming contract with LP token staking and reward distribution"
 
 # Lottery System
-hyperagent workflow run "Create a decentralized lottery with VRF randomness and weekly draws" --network hyperion
+hyperagent workflow run "Create a decentralized lottery with VRF randomness and weekly draws"
 
 # Escrow Service
-hyperagent workflow run "Create a P2P escrow contract with dispute resolution" --network metis
+hyperagent workflow run "Create a P2P escrow contract with dispute resolution"
 
 # Subscription Model
-hyperagent workflow run "Create a subscription payment contract with monthly billing" --network hyperion
+hyperagent workflow run "Create a subscription payment contract with monthly billing"
 ```
 
 ---
@@ -468,7 +468,7 @@ hyperagent workflow run "Create a subscription payment contract with monthly bil
 |---------|---------|---------|
 | `audit contract --severity` | Filter by severity level | `hyperagent audit contract --severity critical` |
 | `audit batch --output` | Generate security reports | `hyperagent audit batch --directory ./contracts --output ./security-reports` |
-| `verify contract` | Verify contract source | `hyperagent verify contract 0x123... --network hyperion` |
+| `verify contract` | Verify contract source | `hyperagent verify contract 0x123...` |
 | `limitations` | Show known security limitations | `hyperagent limitations` |
 
 ```bash
@@ -478,8 +478,8 @@ hyperagent audit contract --contract MyToken.sol --severity high
 # Batch audit with reports
 hyperagent audit batch --directory ./contracts --recursive --output ./security-reports --format json
 
-# Verify contract on explorer
-hyperagent verify contract 0xYourAddress --network hyperion
+# Verify contract on explorer (Hyperion automatic)
+hyperagent verify contract 0xYourAddress
 
 # Show security limitations
 hyperagent limitations
@@ -555,7 +555,7 @@ hyperagent limitations
 | Use Case | Workflow | Commands |
 |----------|----------|----------|
 | **Multi-Contract Project** | Generate → Audit All → Deploy → Verify | `hyperagent audit batch --directory ./contracts` |
-| **Cross-Chain Deployment** | Deploy to multiple networks | Deploy to Hyperion → Deploy to Metis |
+| **Multi-Contract Deployment** | Deploy multiple contracts sequentially | `hyperagent deploy --contract Contract1.sol` then `hyperagent deploy --contract Contract2.sol` |
 | **Security Review** | Comprehensive audit pipeline | `hyperagent audit batch --severity critical` |
 | **Automated Testing** | Generate + test contracts | `hyperagent generate test MyContract.sol` |
 | **CI/CD Integration** | Automated deployment pipeline | GitHub Actions workflow |
@@ -571,13 +571,11 @@ HyperAgent provides comprehensive npm scripts for version management, CLI access
 | Script | Purpose | Example |
 |--------|---------|---------|
 | `version:current` | Display current version from VERSION file | `npm run version:current` |
-| `version:show` | Show current version with label | `npm run version:show` |
 | `version:check` | Check version consistency between package.json and VERSION file | `npm run version:check` |
-| `version:patch` | Bump patch version (1.4.6 → 1.4.7) | `npm run version:patch` |
-| `version:minor` | Bump minor version (1.4.6 → 1.5.0) | `npm run version:minor` |
-| `version:major` | Bump major version (1.4.6 → 2.0.0) | `npm run version:major` |
-| `version:sync` | Sync version across all documentation files | `npm run version:sync` |
-| `version:fix` | Fix version inconsistencies | `npm run version:fix` |
+| `version:patch` | Bump patch version (1.5.2 → 1.5.3) | `npm run version:patch` |
+| `version:minor` | Bump minor version (1.5.3 → 1.6.0) | `npm run version:minor` |
+| `version:major` | Bump major version (1.5.3 → 2.0.0) | `npm run version:major` |
+| `version:update-docs` | Sync version across all documentation files | `npm run version:update-docs` |
 
 ### **HyperAgent CLI Access**
 
@@ -624,8 +622,8 @@ HyperAgent provides comprehensive npm scripts for version management, CLI access
 ```bash
 # Version management
 npm run version:check          # Check consistency
-npm run version:patch          # Bump patch version
-npm run version:sync           # Sync across docs
+npm run version:patch          # Bump patch version (auto-commits all changed files)
+npm run version:update-docs    # Sync version in all documentation
 
 # CLI access
 npm run hyperagent:status      # Check system status
@@ -651,16 +649,16 @@ npm run hyperagent:test        # Run tests before changes
 npm run docs:audit             # Check for documentation drift
 
 # Release workflow
-npm run version:patch          # Bump version
-npm run version:sync           # Update all docs
-npm run hyperagent:test:all    # Run full test suite
+npm run version:patch          # Bump version (auto-commits all changed files)
+npm run version:update-docs    # Update version in all docs
+npm run hyperagent:test:all     # Run full test suite
 npm run reports:status         # Generate status report
 ```
 
 ### **NPM Scripts Benefits**
 
 - ✅ **Centralized Access**: All functionality accessible via npm scripts
-- ✅ **Version Management**: Automated version bumping and syncing
+- ✅ **Version Management**: Automated version bumping with auto-commit (all changed files) and doc syncing
 - ✅ **CLI Integration**: Easy access to all hyperagent commands
 - ✅ **Documentation**: Automated doc updates and drift prevention
 - ✅ **Reports**: Organized report generation and management
@@ -737,14 +735,11 @@ ANTHROPIC_API_KEY=your_anthropic_api_key_here
 DEFAULT_PRIVATE_KEY=your_private_key_here
 DEFAULT_NETWORK=hyperion
 
-# Network RPC URLs
+# Network RPC URLs (Hyperion is the exclusive supported network)
 HYPERION_RPC_URL=https://hyperion-testnet.metisdevops.link
-LAZAI_RPC_URL=https://lazai-testnet-rpc.example.com
-METIS_RPC_URL=https://andromeda.metis.io/?owner=1088
 
 # Explorer API Keys
 HYPERION_EXPLORER_API_KEY=your_hyperion_api_key
-METIS_EXPLORER_API_KEY=your_metis_api_key
 
 # Security Settings
 ENABLE_AUDIT=true
@@ -761,7 +756,7 @@ LOG_LEVEL=INFO
 | Component | Status | Location | Notes |
 |-----------|--------|----------|-------|
 | **AI Providers** | ⚙️ Configure | `.env` | Set API keys for Google/OpenAI/Anthropic |
-| **Networks** | ✅ Configured | `config.yaml` | Hyperion, LazAI, Metis |
+| **Networks** | ✅ Configured | `config.yaml` | Hyperion testnet (exclusive) |
 | **Private Keys** | ⚠️ Required | `.env` | Set `DEFAULT_PRIVATE_KEY` |
 | **Foundry** | ✅ Installed | System | Run `forge --version` to verify |
 | **OpenZeppelin** | ✅ Installed | `lib/` | Run `forge install OpenZeppelin/openzeppelin-contracts` |
@@ -811,7 +806,6 @@ HyperAgent documentation is organized into clear categories:
 
 **For Integrators:**
 - [Alith SDK Integration](./hyperkit-agent/docs/INTEGRATION/ALITH_SDK_INTEGRATION_ROADMAP.md)
-- [LAZAI Integration](./hyperkit-agent/docs/INTEGRATION/LAZAI_INTEGRATION_GUIDE.md)
 - [Wallet Security](./hyperkit-agent/docs/INTEGRATION/WALLET_SECURITY_EXTENSIONS.md)
 
 ### 📊 Current Status & Reports
@@ -878,8 +872,8 @@ View timestamped milestone reports in [`ACCOMPLISHED/`](./ACCOMPLISHED/):
 
 | Milestone | Status | Target Date |
 |-----------|--------|-------------|
-| Alith SDK full integration | 🚧 In Progress | Q1 2025 |
-| LazAI network support | 🚧 In Progress | Q1 2025 |
+| Alith SDK full integration | ✅ Production | v0.12.0 | Real implementation with OpenAI |
+| Template library expansion | 🚧 In Progress | Ongoing | Additional DeFi/NFT templates |
 | Advanced AI features | 📋 Planned | Q1 2025 |
 | Performance optimization | 📋 Planned | Q1 2025 |
 | Community building | 📋 Planned | Q2 2025 |
@@ -910,8 +904,8 @@ View timestamped milestone reports in [`ACCOMPLISHED/`](./ACCOMPLISHED/):
 | **Documentation Quality** | ✅ Excellent | Comprehensive docs, examples, guides |
 | **Code Quality** | ✅ High | Linting, testing, code review enforced |
 | **Community Support** | ✅ Active | Issue templates, contribution guides |
-| **Deployment Capabilities** | ✅ Proven | 10/10 tests passing, 3 networks supported |
-| **Scalability** | ✅ Ready | Batch processing, multi-chain, CI/CD |
+| **Deployment Capabilities** | ✅ Proven | 10/10 tests passing, Hyperion testnet supported |
+| **Scalability** | ✅ Ready | Batch processing, CI/CD automation |
 | **Transparency** | ✅ Honest | Limitations documented, status clear |
 
 ---
@@ -930,17 +924,17 @@ View timestamped milestone reports in [`ACCOMPLISHED/`](./ACCOMPLISHED/):
 ### Demo Commands:
 
 ```bash
-# Quick Demo: Deploy a token in 60 seconds
-hyperagent workflow run "Create ERC20 token" --network hyperion
+# Quick Demo: Deploy a token in 60 seconds (Hyperion automatic)
+hyperagent workflow run "Create ERC20 token"
 
 # Feature Tour: Complete workflow
-hyperagent workflow run "Create gaming token with staking" --network hyperion
+hyperagent workflow run "Create gaming token with staking"
 
 # Deep Dive: Show security pipeline
 hyperagent audit batch --directory ./contracts --recursive --output ./demo-reports
 
 # Integration: Custom contract deployment
-hyperagent deploy --contract YourContract.sol --network metis --verify
+hyperagent deploy --contract YourContract.sol --verify
 ```
 
 ---
@@ -1023,4 +1017,4 @@ Special thanks to all contributors, security researchers, and community members 
 
 ---
 
-**Last Updated**: 2025-01-29 | **Version**: 1.4.8+ | **Status**: Production Ready 🚀
+**Last Updated**: 2025-01-29 | **Version**: 1.5.3 | **Status**: Production Ready 🚀
