@@ -9,7 +9,6 @@ This directory contains team-related documentation including:
 - **CPOO_DELIVERY_SUMMARY.md**: CPOO integration delivery summary
 - **CPOO_INTEGRATION_GUIDE.md**: CPOO integration guide
 - **DEVELOPER_GUIDE.md**: Developer onboarding and development guide
-- **ENVIRONMENT_SETUP.md**: Development environment setup instructions
 - **FOUNDRY_INTEGRATION_REPORT.md**: Foundry tooling integration report
 - **INTEGRATION_REPORT.md**: General integration status and reports
 - **ISSUE_ASSESSMENT_AND_FIXES.md**: Issue tracking and fix documentation
@@ -25,11 +24,21 @@ This directory contains all team processes, coding standards, onboarding materia
 
 Start with:
 1. **DEVELOPER_GUIDE.md** - Overview of the development process
-2. **ENVIRONMENT_SETUP.md** - Set up your development environment
+2. **[Environment Setup](../GUIDE/ENVIRONMENT_SETUP.md)** - Set up your development environment
 3. **TEAM_COORDINATION_GUIDE.md** - Learn how the team collaborates
 
 ---
 
-**Last Updated**: October 27, 2025  
+## 🔗 **Connect With Us**
+
+- 🌐 **Website**: [Hyperionkit.xyz](http://hyperionkit.xyz/)
+- 📚 **Documentation**: [GitHub Docs](https://github.com/Hyperionkit/Hyperkit-Agent)
+- 💬 **Discord**: [Join Community](https://discord.com/invite/MDh7jY8vWe)
+- 🐦 **Twitter**: [@HyperKit](https://x.com/HyperionKit)
+- 📧 **Contact**: [Hyperkitdev@gmail.com](mailto:Hyperkitdev@gmail.com) (for security issues)
+- 💰 **Bug Bounty**: See [SECURITY.md](../../../SECURITY.md)
+
+**Last Updated**: 2025-01-29  
+**Version**: 1.5.1  
 **Maintained By**: Core Team
 
