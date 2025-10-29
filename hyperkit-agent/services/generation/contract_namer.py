@@ -185,3 +185,31 @@ class ContractNamer:
             Category like: "tokens", "defi", "nft", "governance"
         """
         return self._infer_category(prompt)
+    
+    def _infer_category_from_code(self, code: str) -> str:
+        """Infer category from contract code content"""
+        code_lower = code.lower()
+        
+        # Check for NFT patterns
+        if any(pattern in code_lower for pattern in ['erc721', 'erc1155', 'nft', 'marketplace', 'nonfungible']):
+            return "nft"
+        # Check for gaming patterns
+        elif any(pattern in code_lower for pattern in ['gaming', 'game', 'p2e', 'play', 'player']):
+            return "gaming"
+        # Check for governance patterns
+        elif any(pattern in code_lower for pattern in ['dao', 'governance', 'voting', 'proposal']):
+            return "governance"
+        # Check for bridge patterns
+        elif any(pattern in code_lower for pattern in ['bridge', 'crosschain', 'multichain', 'chain']):
+            return "bridge"
+        # Check for DeFi patterns
+        elif any(pattern in code_lower for pattern in ['dex', 'amm', 'swap', 'liquidity', 'pool', 'staking', 'yield', 'farm', 'vault']):
+            return "defi"
+        # Check for launchpad patterns
+        elif any(pattern in code_lower for pattern in ['presale', 'ico', 'ido', 'launchpad']):
+            return "launchpad"
+        # Check for token patterns (but not other categories)
+        elif any(pattern in code_lower for pattern in ['erc20', 'token', 'mint', 'burn']):
+            return "tokens"
+        else:
+            return "other"
