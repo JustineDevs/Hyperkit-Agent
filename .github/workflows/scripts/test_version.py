@@ -2,6 +2,9 @@
 """
 Test script for version update automation
 Run this to test the versioning system without making actual changes
+
+⚠️ NOTE: This script tests the legacy version_update.py script.
+For production, use the canonical scripts from hyperkit-agent/scripts/ci/
 """
 
 import os
@@ -11,7 +14,13 @@ from pathlib import Path
 # Add the scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from version_update import get_current_version, bump_version, validate_environment
+# Try to import from legacy script (for backward compatibility)
+try:
+    from version_update import get_current_version, bump_version, validate_environment
+except ImportError:
+    print("⚠️  Legacy version_update.py not available")
+    print("   Use canonical scripts from hyperkit-agent/scripts/ci/ instead")
+    sys.exit(1)
 
 def test_version_system():
     """Test the version system without making changes."""
@@ -52,12 +61,14 @@ def test_version_system():
                 return False
         
         print("\n🎉 All tests passed!")
-        print("\n📋 Ready to run version update:")
+        print("\n📋 Ready to run version update (use canonical scripts):")
+        print("   npm run version:patch      # Recommended")
+        print("   npm run version:minor      # Recommended")
+        print("   npm run version:major      # Recommended")
+        print("\n   Or directly:")
+        print("   python hyperkit-agent/scripts/ci/version_bump.py patch")
+        print("\n⚠️  Legacy script (not recommended):")
         print("   python .github/workflows/scripts/version_update.py")
-        print("   npm run version:update")
-        print("   npm run version:patch")
-        print("   npm run version:minor")
-        print("   npm run version:major")
         
         return True
         
