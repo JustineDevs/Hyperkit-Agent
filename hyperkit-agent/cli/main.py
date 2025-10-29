@@ -41,17 +41,27 @@ def cli(ctx, verbose, debug):
     HyperAgent combines AI-powered contract generation, comprehensive auditing,
     and seamless deployment for the Hyperion ecosystem.
     
+    ⚠️  STATUS WARNING: Development Mode - NOT Production Ready
+    Many CLI commands are partial or broken. Run 'hyperagent limitations' for details.
+    
     PRODUCTION MODE vs SAFE MODE:
     - PRODUCTION MODE: All dependencies available, full functionality
     - SAFE MODE: Missing dependencies, operations blocked with clear errors
     
     Check your mode: hyperagent status
+    Check limitations: hyperagent limitations
+    Honest status: See docs/HONEST_STATUS.md
     
     For detailed documentation: https://github.com/JustineDevs/HyperAgent
     """
     ctx.ensure_object(dict)
     ctx.obj['verbose'] = verbose
     ctx.obj['debug'] = debug
+    
+    # Show warning on first run (non-verbose, non-help)
+    if not verbose and not debug and ctx.invoked_subcommand not in [None, 'limitations']:
+        # Only show warning once, can be disabled with --no-warn if needed
+        pass  # Warning will be shown per-command instead
     
     if verbose:
         console.print("Verbose mode enabled", style="blue")
