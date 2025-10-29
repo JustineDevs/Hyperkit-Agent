@@ -39,6 +39,9 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 - 🌐 **Hyperion-Focused**: Deploy to Hyperion testnet (exclusive deployment target)
 - ✅ **Auto-Verification**: Automatic contract verification on block explorers
 - 🚀 **5-Stage Workflow**: Generate → Audit → Deploy → Verify → Test
+- 🔧 **Self-Healing**: Automatic dependency installation, error recovery, and retry logic
+- 📦 **Zero-Config Setup**: No manual dependency installation required - agent handles everything
+- 🛡️ **Auto-Recovery**: Detects and fixes common issues (missing imports, compilation errors) automatically
 
 ---
 
@@ -236,6 +239,104 @@ python -c "from services.core.rag_template_fetcher import get_template_fetcher; 
 # Get template statistics
 python -c "from services.core.rag_template_fetcher import get_template_fetcher; fetcher = get_template_fetcher(); print(fetcher.get_template_statistics())"
 ```
+
+---
+
+## 🔧 Self-Healing Agent System
+
+> ✅ **ZERO MANUAL DEPENDENCY MANAGEMENT**  
+> HyperAgent automatically detects, installs, and manages all dependencies. No manual `forge install` or `npm install` required!
+
+### **What Gets Auto-Handled**
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Dependency Detection** | Automatically parses contracts for imports (Solidity, npm, Python) | ✅ Active |
+| **Dependency Installation** | Auto-installs OpenZeppelin, npm packages, Python packages | ✅ Active |
+| **Preflight Checks** | Verifies all system tools (forge, npm, python) at startup | ✅ Active |
+| **Error Detection** | Parses errors to detect automatable issues | ✅ Active |
+| **Auto-Fix Logic** | Attempts to fix missing dependencies, import errors automatically | ✅ Active |
+| **Retry Mechanism** | Retries failed operations with dependency re-installation (up to 3 attempts) | ✅ Active |
+| **Context Persistence** | Saves workflow state across all stages for debugging and recovery | ✅ Active |
+| **Diagnostic Bundles** | Generates comprehensive diagnostics on failure (system info, tool versions, logs) | ✅ Active |
+| **Isolated Environments** | Creates temp directories per workflow (auto-cleaned on success, preserved on failure) | ✅ Active |
+
+### **How It Works**
+
+1. **Preflight (Stage 0)**: Agent verifies forge, npm, python availability at startup
+2. **Generation (Stage 2)**: AI generates contract code from natural language
+3. **Dependency Resolution (Stage 3)**: 
+   - Agent parses contract for all imports (`@openzeppelin/...`, `lib/...`, etc.)
+   - Detects missing dependencies
+   - Automatically runs `forge install`, `npm install`, or `pip install`
+   - Verifies installation before proceeding
+4. **Compilation (Stage 4)**:
+   - If compilation fails, agent parses error message
+   - Detects if error is auto-fixable (missing import, etc.)
+   - Attempts auto-fix (reinstall dependency, retry)
+   - Retries up to 3 times with auto-fixes
+5. **Context Tracking**: All stages, errors, fixes, and retries are logged to persistent context
+6. **Error Recovery**: On failure, generates diagnostic bundle with:
+   - System information
+   - Tool versions
+   - All logs and errors
+   - Dependency installation history
+   - Full workflow context
+
+### **Example: Zero-Config Workflow**
+
+```bash
+# No manual setup required - agent handles everything!
+hyperagent workflow run "Create an ERC20 token with OpenZeppelin"
+
+# Agent automatically:
+# ✓ Stage 0: Checks forge/npm/python availability
+# ✓ Stage 2: Generates contract code with OpenZeppelin imports
+# ✓ Stage 3: Detects OpenZeppelin import needed
+#            Runs: forge install OpenZeppelin/openzeppelin-contracts
+#            Verifies installation (checks lib/openzeppelin-contracts/contracts/)
+# ✓ Stage 4: Compiles contract (auto-retries on errors with fixes)
+# ✓ Stage 5: Tests contract
+# ✓ Stage 6: Audits contract
+# ✓ Stage 7: Deploys to Hyperion
+# ✓ Stage 8: Verifies on explorer
+# ✓ Stage 9: Saves context and diagnostics
+```
+
+### **Troubleshooting & Diagnostics**
+
+```bash
+# View workflow contexts
+hyperagent context                    # List all recent workflows
+hyperagent context --workflow-id abc # View specific workflow with full details
+
+# Diagnostic bundles are auto-generated on failure
+# Located in: .workflow_contexts/{workflow_id}_diagnostics.json
+# Contains: system info, tool versions, all logs, dependencies, errors
+```
+
+### **Auto-Fix Examples**
+
+| Error Type | Auto-Fix Action |
+|------------|----------------|
+| `Source "lib/openzeppelin-contracts/..." not found` | Auto-runs `forge install OpenZeppelin/openzeppelin-contracts` |
+| `Import "@openzeppelin/contracts/security/ReentrancyGuard"` (v5 path) | Auto-fixes to `@openzeppelin/contracts/utils/ReentrancyGuard` |
+| `No arguments passed to Ownable()` (v5 constructor) | Auto-adds `Ownable(owner)` to constructor |
+| `Module 'package' not found` (Python) | Auto-runs `pip install package` |
+| `Cannot find module 'package'` (npm) | Auto-runs `npm install package` |
+
+### **Minimum System Requirements**
+
+Only these system-level tools need manual installation (one-time setup):
+
+| Tool | Purpose | Installation |
+|------|---------|--------------|
+| **Python 3.10-3.12** | Runtime environment | [python.org](https://python.org/downloads/) |
+| **Node.js 18+** | Package management | [nodejs.org](https://nodejs.org/) |
+| **Foundry** | Solidity compilation | `curl -L https://foundry.paradigm.xyz \| bash` |
+| **Git** | Version control | [git-scm.com](https://git-scm.com/) |
+
+**Everything else is auto-handled by the agent!**
 
 ---
 
@@ -676,12 +777,15 @@ npm run reports:status         # Generate status report
 
 ### Prerequisites
 
-| Requirement | Version | Installation |
-|-------------|---------|--------------|
-| Python | 3.10-3.12 | https://python.org |
-| Node.js | 18+ | https://nodejs.org |
-| Foundry | Latest | `curl -L https://foundry.paradigm.xyz \| bash && foundryup` |
-| Git | Latest | https://git-scm.com |
+| Requirement | Version | Installation | Auto-Handled |
+|-------------|---------|--------------|--------------|
+| Python | 3.10-3.12 | https://python.org | ❌ System-level required |
+| Node.js | 18+ | https://nodejs.org | ❌ System-level required |
+| Foundry | Latest | `curl -L https://foundry.paradigm.xyz \| bash && foundryup` | ❌ System-level required |
+| Git | Latest | https://git-scm.com | ❌ System-level required |
+| **OpenZeppelin** | v5.4.0+ | - | ✅ **Auto-installed** |
+| **npm packages** | Latest | - | ✅ **Auto-installed** |
+| **Python packages** | Latest | - | ✅ **Auto-installed** |
 
 ### Installation Steps
 
@@ -697,19 +801,19 @@ pip install -e .
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
 
-# 4. Install OpenZeppelin contracts
-forge install OpenZeppelin/openzeppelin-contracts
-
-# 5. Configure environment
+# 4. Configure environment
 cp env.example .env
 # Edit .env with your API keys and configuration
 
-# 6. Verify installation
+# 5. Verify installation
 hyperagent --help
 hyperagent version
-hyperagent monitor system
+hyperagent status
 
-# 7. Verify npm scripts
+# NOTE: First workflow run will automatically install all dependencies
+# (OpenZeppelin, npm packages, Python packages) - no manual installation needed!
+
+# 6. Verify npm scripts
 npm run version:check          # Check version consistency
 npm run hyperagent:status      # Check system status
 npm run hyperagent:test        # Run E2E tests
