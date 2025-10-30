@@ -1,0 +1,62 @@
+{
+  "verified": [
+    {
+      "component": "CLI->Agent",
+      "check": "Parameter flow verified",
+      "params": [
+        "test_only",
+        "upload_scope",
+        "allow_insecure",
+        "rag_scope"
+      ]
+    },
+    {
+      "component": "Agent->Orchestrator",
+      "check": "Parameter flow verified",
+      "params": [
+        "test_only",
+        "upload_scope",
+        "allow_insecure",
+        "rag_scope"
+      ]
+    },
+    {
+      "component": "Orchestrator Stages",
+      "check": "_stage_input_parsing accepts rag_scope"
+    },
+    {
+      "component": "Orchestrator Stages",
+      "check": "_stage_generation accepts rag_scope"
+    },
+    {
+      "component": "Orchestrator Stages",
+      "check": "_stage_output accepts upload_scope"
+    },
+    {
+      "component": "RAG System",
+      "check": "retrieve() accepts rag_scope parameter"
+    },
+    {
+      "component": "Dependency Manager",
+      "check": "_update_remappings method exists"
+    },
+    {
+      "component": "Deployer",
+      "check": "Uses ConstructorArgumentParser"
+    },
+    {
+      "component": "Pinata Integration",
+      "check": "Uses PinataScopeClient"
+    },
+    {
+      "component": "Pinata Integration",
+      "check": "Integrated with CommunityModeration"
+    },
+    {
+      "component": "Pinata Integration",
+      "check": "Integrated with CommunityAnalytics"
+    }
+  ],
+  "issues": [],
+  "all_passed": true
+}
