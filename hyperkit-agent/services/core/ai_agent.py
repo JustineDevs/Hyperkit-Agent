@@ -501,7 +501,13 @@ CRITICAL: OpenZeppelin v5.4.0 Compatibility Requirements:
 4. Ownable constructor is REQUIRED in v5:
    - ❌ WRONG: constructor() {{ ... }} (will fail - Ownable has no default constructor in v5)
    - ✅ CORRECT: constructor(address _owner) Ownable(_owner) {{ ... }}
-   - ✅ CORRECT: constructor(address[3] memory _owners) Ownable(_owners[0]) {{ ... }}
+   - ✅ CORRECT: constructor(address[3] memory _owners) Ownable(_owners[0])
+
+5. CRITICAL: Avoid variable shadowing in Solidity:
+   - ❌ DO NOT name constructor parameters the same as public/external functions
+   - ❌ WRONG: function cap() public view returns (uint256) {{ ... }} with constructor(..., uint256 cap)
+   - ✅ CORRECT: Use constructor(..., uint256 _cap) or constructor(..., uint256 maxCap) to avoid shadowing
+   - ✅ Constructor parameters should use _ prefix or descriptive names that don't match function names {{ ... }}
    - If contract uses Ownable, constructor MUST accept owner address and pass it to Ownable()
 
 5. Function overriding rules in v5:
