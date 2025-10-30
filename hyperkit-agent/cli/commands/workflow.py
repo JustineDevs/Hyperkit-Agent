@@ -26,8 +26,10 @@ def workflow_group():
 @click.option('--test-only', is_flag=True, help='Generate and audit only (no deployment)')
 @click.option('--allow-insecure', is_flag=True, help='Deploy even with high-severity audit issues')
 @click.option('--use-rag/--no-use-rag', default=True, help='Use RAG templates for enhanced workflow context')
+@click.option('--upload-scope', type=click.Choice(['team', 'community']), default=None, help='Auto-upload artifacts to Pinata IPFS (team=official, community=user-generated)')
+@click.option('--rag-scope', type=click.Choice(['official-only', 'opt-in-community']), default='official-only', help='RAG fetch scope (official-only=Team only, opt-in-community=include Community artifacts)')
 @click.pass_context
-def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_insecure, use_rag):
+def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_insecure, use_rag, upload_scope, rag_scope):
     """
     Run complete AI-powered smart contract workflow with RAG template integration
     
@@ -59,34 +61,6 @@ def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_ins
     verbose = ctx.obj.get('verbose', False)
     debug = ctx.obj.get('debug', False)
     
-    # Load RAG templates for enhanced workflow context
-    rag_context = {}
-    if use_rag:
-        console.print("Loading RAG templates for enhanced workflow context...", style="blue")
-        try:
-            # Load generation prompt
-            generation_prompt = asyncio.run(get_template('contract-generation-prompt'))
-            if generation_prompt:
-                rag_context['generation_prompt'] = generation_prompt
-                console.print("Generation prompt loaded", style="green")
-            
-            # Load security checklist
-            security_checklist = asyncio.run(get_template('security-checklist'))
-            if security_checklist:
-                rag_context['security_checklist'] = security_checklist
-                console.print("Security checklist loaded", style="green")
-            
-            # Load deployment template
-            deployment_template = asyncio.run(get_template('hardhat-deploy'))
-            if deployment_template:
-                rag_context['deployment_template'] = deployment_template
-                console.print("Deployment template loaded", style="green")
-            
-            if not rag_context:
-                console.print("No RAG templates available, using default workflow", style="yellow")
-        except Exception as rag_error:
-            console.print(f"RAG fetch failed: {rag_error}", style="yellow")
-    
     # Display configuration
     config_panel = Panel.fit(
         f"[cyan]HyperAgent Workflow[/cyan]\n"
@@ -94,7 +68,8 @@ def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_ins
         f"[white]Network:[/white] {network}\n"
         f"[white]Mode:[/white] {'Test Only' if test_only else 'Full Deployment'}\n"
         f"[white]Security:[/white] {'Skip Audit' if no_audit else 'Full Audit'}\n"
-        f"[white]RAG Context:[/white] {'Enabled' if rag_context else 'Disabled'}",
+        f"[white]RAG Scope:[/white] {rag_scope}\n"
+        f"[white]Upload Scope:[/white] {upload_scope or 'None'}",
         title="[bold green]Workflow Configuration[/bold green]",
         border_style="green"
     )
@@ -109,28 +84,8 @@ def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_ins
         if verbose:
             console.print("[dim]Agent configuration loaded successfully[/dim]")
         
-        # Enhance prompt with RAG context if available
+        # Use original prompt - RAG will be handled by orchestrator
         enhanced_prompt = prompt
-        if rag_context:
-            console.print("\n[cyan]Enhancing prompt with RAG context...[/cyan]")
-            
-            # Compose enhanced prompt with RAG templates
-            rag_sections = []
-            if 'generation_prompt' in rag_context:
-                rag_sections.append(f"Generation Guidelines:\n{rag_context['generation_prompt']}")
-            
-            if 'security_checklist' in rag_context:
-                rag_sections.append(f"Security Requirements:\n{rag_context['security_checklist']}")
-            
-            if 'deployment_template' in rag_context:
-                rag_sections.append(f"Deployment Best Practices:\n{rag_context['deployment_template']}")
-            
-            if rag_sections:
-                enhanced_prompt = f"""{prompt}
-
-RAG Context for Enhanced Workflow:
-{chr(10).join(rag_sections)}"""
-                console.print("Prompt enhanced with RAG context", style="green")
         
         # Hardcode Hyperion - no network selection
         network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
@@ -147,7 +102,9 @@ RAG Context for Enhanced Workflow:
             network="hyperion",  # Hardcoded - Hyperion only
             auto_verification=not no_verify,
             test_only=test_only,
-            allow_insecure=allow_insecure
+            allow_insecure=allow_insecure,
+            upload_scope=upload_scope,
+            rag_scope=rag_scope
         ))
         
         # FIXED: Process results with explicit validation
@@ -306,8 +263,8 @@ def _display_success_results(result: dict, network: str, test_only: bool, verbos
     if gen and gen.get('path'):
         console.print(f"[bold cyan]Contract File:[/bold cyan] [white]{gen.get('path')}[/white]")
     
-    # Only show success if we actually succeeded
-    console.print(f"\n[green bold]🎉 All stages completed successfully![/green bold]")
+    # Only show success if we actually succeeded (avoid unicode emojis for Windows cp1252)
+    console.print(f"\n[green bold]All stages completed successfully![/green bold]")
     return True
 
 def _display_error_results(result: dict):
