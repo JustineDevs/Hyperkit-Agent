@@ -1,6 +1,6 @@
 # Quick Start Guide - v1.5.0
 
-**Version**: 1.5.6  
+**Version**: 1.5.7  
 **Last Updated**: 2025-10-28
 
 ---
@@ -185,4 +185,4 @@ LAZAI_RPC_URL=https://rpc.lazai.network/testnet
 - 💰 **Bug Bounty**: See [SECURITY.md](../../../SECURITY.md)
 
 **Last Updated**: 2025-01-29  
-**Version**: 1.5.6
+**Version**: 1.5.7
