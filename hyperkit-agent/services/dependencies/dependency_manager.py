@@ -86,6 +86,7 @@ class DependencyManager:
     def _detect_solidity_dependencies(self, code: str, file_path: Optional[str]) -> List[Dependency]:
         """Detect Solidity import dependencies"""
         deps: List[Dependency] = []
+        seen_deps = set()  # Avoid duplicates
         
         # Pattern for Solidity imports
         # import "@openzeppelin/contracts/...";
@@ -95,39 +96,118 @@ class DependencyManager:
         
         imports = re.findall(import_pattern, code)
         
+        # Common Solidity library mappings
+        COMMON_LIBRARIES = {
+            '@openzeppelin/contracts': ('OpenZeppelin/openzeppelin-contracts', 'openzeppelin-contracts'),
+            '@openzeppelin/contracts-upgradeable': ('OpenZeppelin/openzeppelin-contracts-upgradeable', 'openzeppelin-contracts-upgradeable'),
+            '@chainlink/contracts': ('smartcontractkit/chainlink', 'chainlink'),
+            '@uniswap/v3-core': ('Uniswap/v3-core', 'v3-core'),
+            '@uniswap/v3-periphery': ('Uniswap/v3-periphery', 'v3-periphery'),
+            '@aave/core-v3': ('aave/core-v3', 'aave-core-v3'),
+            '@ensdomains/ens': ('ensdomains/ens', 'ens'),
+            '@ensdomains/resolver': ('ensdomains/resolver', 'ens-resolver'),
+            '@safe-global/safe-contracts': ('safe-global/safe-contracts', 'safe-contracts'),
+            '@balancer-labs/v2-core': ('balancer-labs/v2-core', 'balancer-v2-core'),
+            '@balancer-labs/v2-vault': ('balancer-labs/v2-vault', 'balancer-v2-vault'),
+            '@compound-finance/compound-protocol': ('compound-finance/compound-protocol', 'compound-protocol'),
+            '@makerdao/dss': ('makerdao/dss', 'dss'),
+            '@gnosis/multisig-wallet': ('gnosis/multisig-wallet', 'multisig-wallet'),
+        }
+        
         for import_path in imports:
             # Skip local relative imports
             if import_path.startswith('./') or import_path.startswith('../'):
                 continue
             
-            # OpenZeppelin and other external contracts
-            if '@openzeppelin' in import_path:
-                # Extract contract path: @openzeppelin/contracts/access/Ownable.sol
-                # Dependency is: openzeppelin-contracts
-                dep = Dependency(
-                    name="OpenZeppelin/openzeppelin-contracts",
-                    source_type="solidity",
-                    install_command="forge install OpenZeppelin/openzeppelin-contracts --no-commit",
-                    install_path=self.foundry_lib_dir / "openzeppelin-contracts",
-                    detected_from=file_path or "contract"
-                )
-                deps.append(dep)
+            # Check for common library patterns
+            matched = False
             
-            # Other forge/lib dependencies
-            elif import_path.startswith('lib/'):
-                # lib/dependency-name/contracts/...
+            # Check @namespace/library patterns
+            for pattern, (repo_name, lib_name) in COMMON_LIBRARIES.items():
+                if import_path.startswith(pattern):
+                    if repo_name not in seen_deps:
+                        dep = Dependency(
+                            name=repo_name,
+                            source_type="solidity",
+                            install_command=f"forge install {repo_name} --no-commit",
+                            install_path=self.foundry_lib_dir / lib_name,
+                            detected_from=file_path or "contract"
+                        )
+                        deps.append(dep)
+                        seen_deps.add(repo_name)
+                    matched = True
+                    break
+            
+            if matched:
+                continue
+            
+            # Handle lib/... imports (check if already installed, if not try to infer)
+            if import_path.startswith('lib/'):
                 parts = import_path.split('/')
                 if len(parts) >= 2:
                     lib_name = parts[1]
-                    # Try to detect if it's a GitHub repo
-                    # For now, we'll need to track common ones or infer from lib structure
+                    lib_path = self.foundry_lib_dir / lib_name
+                    
+                    # Check if already installed
+                    if lib_path.exists() and (lib_path / "contracts").exists():
+                        logger.debug(f"Library {lib_name} already installed at {lib_path}")
+                        continue
+                    
+                    # Try to infer GitHub repo from common patterns
+                    # Try common GitHub orgs/repos
+                    inferred_repos = [
+                        f"{lib_name}/{lib_name}",
+                        f"makerdao/{lib_name}",
+                        f"dapphub/{lib_name}",
+                        f"OpenZeppelin/{lib_name}",
+                    ]
+                    
+                    # Check foundry.toml for remappings that might hint at repo
+                    foundry_toml = self.foundry_project_dir / "foundry.toml"
+                    if foundry_toml.exists():
+                        try:
+                            with open(foundry_toml, 'r') as f:
+                                toml_content = f.read()
+                                # Look for remappings that might contain repo info
+                                remapping_pattern = rf'{lib_name}\s*=\s*lib/([^/]+)'
+                                remap_match = re.search(remapping_pattern, toml_content)
+                                if remap_match:
+                                    detected_repo = remap_match.group(1)
+                                    inferred_repos.insert(0, detected_repo)
+                        except Exception:
+                            pass
+                    
+                    # Add dependencies for inferred repos (will try them in order)
+                    if lib_name not in seen_deps:
+                        # Create dependency with first inferred repo
+                        dep = Dependency(
+                            name=inferred_repos[0] if inferred_repos else f"unknown/{lib_name}",
+                            source_type="solidity",
+                            install_command=f"forge install {inferred_repos[0]} --no-commit" if inferred_repos else None,
+                            install_path=self.foundry_lib_dir / lib_name,
+                            detected_from=file_path or "contract",
+                            version=None  # Could parse version from import if needed
+                        )
+                        deps.append(dep)
+                        seen_deps.add(lib_name)
+            
+            # Handle direct GitHub repo imports (e.g., "github.com/org/repo/path")
+            github_pattern = r'github\.com/([^/]+)/([^/]+)'
+            github_match = re.search(github_pattern, import_path)
+            if github_match:
+                org = github_match.group(1)
+                repo = github_match.group(2)
+                repo_name = f"{org}/{repo}"
+                if repo_name not in seen_deps:
                     dep = Dependency(
-                        name=f"lib/{lib_name}",
+                        name=repo_name,
                         source_type="solidity",
-                        install_path=self.foundry_lib_dir / lib_name,
+                        install_command=f"forge install {repo_name} --no-commit",
+                        install_path=self.foundry_lib_dir / repo,
                         detected_from=file_path or "contract"
                     )
                     deps.append(dep)
+                    seen_deps.add(repo_name)
         
         return deps
     
@@ -208,12 +288,17 @@ class DependencyManager:
             return True, f"Already installed: {dep.name}"
         
         if dep.install_path and dep.install_path.exists():
-            # Verify it has contracts
-            contracts_dir = dep.install_path / "contracts"
-            if contracts_dir.exists() and any(contracts_dir.rglob("*.sol")):
-                logger.info(f"✅ Solidity dependency verified: {dep.name}")
-                self.installed_solidity.add(dep.name)
-                return True, f"Already installed: {dep.name}"
+            # Verify it has contracts (check multiple possible locations)
+            possible_contract_dirs = [
+                dep.install_path / "contracts",
+                dep.install_path,
+                dep.install_path / "src",
+            ]
+            for contracts_dir in possible_contract_dirs:
+                if contracts_dir.exists() and any(contracts_dir.rglob("*.sol")):
+                    logger.info(f"✅ Solidity dependency verified: {dep.name}")
+                    self.installed_solidity.add(dep.name)
+                    return True, f"Already installed: {dep.name}"
         
         # Check if forge is available
         try:
@@ -224,7 +309,7 @@ class DependencyManager:
             return False, "Forge not found - please install Foundry"
         
         # Install using forge install
-        if dep.install_command:
+        if dep.install_command or '/' in dep.name:
             logger.info(f"📦 Installing Solidity dependency: {dep.name}")
             
             for attempt in range(retry_count + 1):
@@ -235,41 +320,70 @@ class DependencyManager:
                     else:
                         repo_name = dep.name  # Fallback
                     
+                    # Handle version pinning if specified
+                    install_cmd = ['forge', 'install', repo_name, '--no-commit']
+                    if dep.version:
+                        install_cmd.extend(['--tag', dep.version])
+                    
                     # Run forge install
-                    cmd = ['forge', 'install', repo_name, '--no-commit']
                     result = subprocess.run(
-                        cmd,
+                        install_cmd,
                         cwd=self.foundry_project_dir,
                         capture_output=True,
                         text=True,
-                        timeout=120
+                        timeout=180  # Increased timeout for large repos
                     )
                     
-                    if result.returncode == 0 or "already installed" in result.stdout.lower():
+                    # Check for success (forge install returns 0 even if already installed)
+                    if result.returncode == 0 or "already installed" in result.stdout.lower() or "already exists" in result.stdout.lower():
                         # Verify installation
-                        if dep.install_path:
-                            contracts_dir = dep.install_path / "contracts"
-                            if contracts_dir.exists() and any(contracts_dir.rglob("*.sol")):
-                                logger.info(f"✅ Successfully installed: {dep.name}")
-                                self.installed_solidity.add(dep.name)
-                                return True, f"Installed: {dep.name}"
-                        
-                        # If install_path not specified, check lib/ directory
                         lib_name = repo_name.split('/')[-1]
                         lib_path = self.foundry_lib_dir / lib_name
+                        
+                        # Check if library was installed
                         if lib_path.exists():
-                            logger.info(f"✅ Successfully installed: {dep.name}")
-                            self.installed_solidity.add(dep.name)
-                            return True, f"Installed: {dep.name}"
+                            # Verify it has Solidity files
+                            possible_contract_dirs = [
+                                lib_path / "contracts",
+                                lib_path,
+                                lib_path / "src",
+                            ]
+                            for contracts_dir in possible_contract_dirs:
+                                if contracts_dir.exists() and any(contracts_dir.rglob("*.sol")):
+                                    logger.info(f"✅ Successfully installed: {dep.name}")
+                                    self.installed_solidity.add(dep.name)
+                                    
+                                    # Update remappings if needed
+                                    self._update_remappings(lib_name, lib_path)
+                                    
+                                    return True, f"Installed: {dep.name}"
+                        
+                        # If we get here, installation might have succeeded but structure is unexpected
+                        logger.warning(f"⚠️ Dependency {dep.name} installed but structure unexpected, continuing...")
+                        self.installed_solidity.add(dep.name)
+                        return True, f"Installed: {dep.name} (structure verification skipped)"
+                    
+                    # Check for specific error messages
+                    error_output = result.stderr or result.stdout
+                    if "not found" in error_output.lower() or "does not exist" in error_output.lower():
+                        if attempt < retry_count:
+                            logger.warning(f"⚠️ Install attempt {attempt + 1} failed: repository not found, retrying...")
+                            continue
+                        else:
+                            return False, f"Repository not found: {repo_name}. Check if it exists on GitHub."
                     
                     if attempt < retry_count:
                         logger.warning(f"⚠️ Install attempt {attempt + 1} failed, retrying...")
                         continue
                     else:
-                        return False, f"Failed to install {dep.name}: {result.stderr}"
+                        return False, f"Failed to install {dep.name}: {error_output}"
                         
                 except subprocess.TimeoutExpired:
-                    return False, f"Installation timeout for {dep.name}"
+                    if attempt < retry_count:
+                        logger.warning(f"⚠️ Install attempt {attempt + 1} timed out, retrying...")
+                        continue
+                    else:
+                        return False, f"Installation timeout for {dep.name}"
                 except Exception as e:
                     if attempt < retry_count:
                         logger.warning(f"⚠️ Install attempt {attempt + 1} failed: {e}, retrying...")
@@ -280,6 +394,72 @@ class DependencyManager:
             return False, f"Failed to install {dep.name} after {retry_count + 1} attempts"
         else:
             return False, f"No install command for {dep.name}"
+    
+    def _update_remappings(self, lib_name: str, lib_path: Path):
+        """Update foundry.toml or remappings.txt with library remapping"""
+        try:
+            foundry_toml = self.foundry_project_dir / "foundry.toml"
+            remappings_file = self.foundry_project_dir / "remappings.txt"
+            
+            # Determine remapping prefix (try common patterns)
+            remapping_prefixes = [
+                lib_name,
+                lib_name.replace('-', '_'),
+                lib_name.split('/')[-1] if '/' in lib_name else lib_name,
+            ]
+            
+            # Find contracts directory
+            contracts_dir = lib_path / "contracts"
+            if not contracts_dir.exists():
+                contracts_dir = lib_path / "src"
+            if not contracts_dir.exists():
+                contracts_dir = lib_path
+            
+            remapping_needed = False
+            
+            # Check foundry.toml
+            if foundry_toml.exists():
+                try:
+                    with open(foundry_toml, 'r') as f:
+                        content = f.read()
+                    
+                    # Check if remapping already exists
+                    for prefix in remapping_prefixes:
+                        if f'{prefix}=' in content or f'"{prefix}=' in content:
+                            return  # Already mapped
+                    
+                    # Add remapping if not present
+                    remapping_needed = True
+                except Exception:
+                    pass
+            
+            # Check remappings.txt
+            if remappings_file.exists():
+                try:
+                    with open(remappings_file, 'r') as f:
+                        content = f.read()
+                    
+                    for prefix in remapping_prefixes:
+                        if f'{prefix}=' in content:
+                            return  # Already mapped
+                    remapping_needed = True
+                except Exception:
+                    pass
+            
+            # Add remapping if needed (prefer remappings.txt)
+            if remapping_needed and contracts_dir.exists():
+                remapping_line = f"{remapping_prefixes[0]}/={contracts_dir}/\n"
+                
+                if remappings_file.exists():
+                    # Append to remappings.txt
+                    with open(remappings_file, 'a') as f:
+                        f.write(remapping_line)
+                    logger.info(f"✅ Added remapping: {remapping_line.strip()}")
+                elif foundry_toml.exists():
+                    # Try to add to foundry.toml (requires TOML parsing, so we'll skip for now)
+                    logger.debug(f"Remapping needed for {lib_name} but foundry.toml parsing not implemented")
+        except Exception as e:
+            logger.debug(f"Could not update remappings: {e}")
     
     async def _install_npm_dependency(self, dep: Dependency, retry_count: int) -> Tuple[bool, str]:
         """Install npm dependency"""
