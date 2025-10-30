@@ -74,15 +74,23 @@ class IPFSRAG:
         except Exception as e:
             logger.warning(f"Could not load CID registry: {e}")
     
-    async def retrieve(self, query: str, max_results: int = 5) -> str:
+    async def retrieve(
+        self, 
+        query: str, 
+        max_results: int = 5,
+        rag_scope: str = 'official-only'  # 'official-only' or 'opt-in-community'
+    ) -> str:
         """
         Retrieve relevant context from IPFS based on query.
         
         Requires Pinata API keys to be configured for production operation.
+        Prefers Team uploads for canonical contracts, enables Community querying
+        based on rag_scope setting.
         
         Args:
             query: Search query
             max_results: Maximum number of results to return
+            rag_scope: RAG fetch scope ('official-only' or 'opt-in-community')
             
         Returns:
             Combined context string from relevant IPFS documents
@@ -100,37 +108,145 @@ class IPFSRAG:
             )
         
         try:
-            # Search CID registry for relevant templates
-            results = []
+            # Load dual-scope registries
+            from services.storage.dual_scope_pinata import UploadScope
             
+            team_results = []
+            community_results = []
+            
+            # 1. Search Team registry (official, canonical contracts)
+            team_registry = self._load_scope_registry(UploadScope.TEAM)
+            for artifact_id, entry in team_registry.items():
+                if self._is_relevant(query, entry.get('metadata', {})):
+                    try:
+                        content = await self._fetch_from_ipfs(entry.get('cid'))
+                        if content:
+                            team_results.append({
+                                'name': artifact_id,
+                                'content': content,
+                                'cid': entry.get('cid'),
+                                'scope': 'team',
+                                'relevance': self._calculate_relevance(query, content),
+                                'quality_score': self._calculate_quality_score(entry)
+                            })
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch Team artifact {artifact_id}: {e}")
+            
+            # 2. Search Community registry if opt-in enabled
+            if rag_scope == 'opt-in-community':
+                community_registry = self._load_scope_registry(UploadScope.COMMUNITY)
+                for artifact_id, entry in community_registry.items():
+                    # Apply quality filtering for Community artifacts
+                    quality_score = self._calculate_quality_score(entry)
+                    if quality_score >= 0.5:  # Only include higher quality Community artifacts
+                        if self._is_relevant(query, entry.get('metadata', {})):
+                            try:
+                                content = await self._fetch_from_ipfs(entry.get('cid'))
+                                if content:
+                                    community_results.append({
+                                        'name': artifact_id,
+                                        'content': content,
+                                        'cid': entry.get('cid'),
+                                        'scope': 'community',
+                                        'relevance': self._calculate_relevance(query, content),
+                                        'quality_score': quality_score
+                                    })
+                            except Exception as e:
+                                logger.warning(f"Failed to fetch Community artifact {artifact_id}: {e}")
+            
+            # 3. Also search legacy CID registry (for backward compatibility)
+            legacy_results = []
             for name, metadata in self.cid_registry.items():
                 if self._is_relevant(query, metadata):
                     try:
                         content = await self._fetch_from_ipfs(metadata.get('cid'))
                         if content:
-                            results.append({
+                            legacy_results.append({
                                 'name': name,
                                 'content': content,
                                 'cid': metadata.get('cid'),
-                                'relevance': self._calculate_relevance(query, content)
+                                'scope': 'legacy',
+                                'relevance': self._calculate_relevance(query, content),
+                                'quality_score': 1.0  # Legacy templates are considered high quality
                             })
                     except Exception as e:
-                        logger.warning(f"Failed to fetch {name}: {e}")
+                        logger.warning(f"Failed to fetch legacy template {name}: {e}")
             
-            # Sort by relevance
-            results.sort(key=lambda x: x['relevance'], reverse=True)
+            # 4. Combine and rank all results
+            # Prefer Team > Legacy > Community (with quality filtering)
+            all_results = team_results + legacy_results + community_results
             
-            # Combine top results
+            # Sort by: scope priority (team > legacy > community), then relevance, then quality
+            def sort_key(r):
+                scope_priority = {'team': 3, 'legacy': 2, 'community': 1}.get(r.get('scope', ''), 0)
+                return (scope_priority, r.get('relevance', 0), r.get('quality_score', 0))
+            
+            all_results.sort(key=sort_key, reverse=True)
+            
+            # 5. Combine top results
             combined_context = "\n\n".join([
-                f"## {r['name']}\n{r['content']}" 
-                for r in results[:max_results]
+                f"## {r['name']} ({r.get('scope', 'unknown')})\n{r['content']}" 
+                for r in all_results[:max_results]
             ])
+            
+            logger.info(f"RAG retrieval: {len(team_results)} Team, {len(community_results)} Community, {len(legacy_results)} Legacy")
             
             return combined_context
             
         except Exception as e:
             logger.error(f"RAG retrieval failed: {e}")
             return ""
+    
+    def _load_scope_registry(self, scope) -> Dict[str, Any]:
+        """Load registry for specific scope"""
+        try:
+            from services.storage.dual_scope_pinata import UploadScope
+            from pathlib import Path
+            
+            registry_dir = Path("data/ipfs_registries")
+            if scope == UploadScope.TEAM:
+                registry_path = registry_dir / 'cid-registry-team.json'
+            else:
+                registry_path = registry_dir / 'cid-registry-community.json'
+            
+            if registry_path.exists():
+                with open(registry_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            return {}
+        except Exception as e:
+            logger.warning(f"Could not load {scope.value} registry: {e}")
+            return {}
+    
+    def _calculate_quality_score(self, entry: Dict[str, Any]) -> float:
+        """
+        Calculate quality score for Community artifacts.
+        Higher score = higher quality, more trustworthy.
+        """
+        score = 0.5  # Base score
+        
+        # Factors that increase quality:
+        # - Compilation success
+        if entry.get('metadata', {}).get('keyvalues', {}).get('compilation_success') == 'True':
+            score += 0.2
+        
+        # - Audit passed (low severity)
+        audit_severity = entry.get('metadata', {}).get('keyvalues', {}).get('audit_severity', 'unknown')
+        if audit_severity == 'low':
+            score += 0.2
+        elif audit_severity == 'medium':
+            score += 0.1
+        
+        # - Has reputation/upvotes (if implemented)
+        upvotes = entry.get('metadata', {}).get('keyvalues', {}).get('upvotes', 0)
+        if isinstance(upvotes, (int, float)) and upvotes > 0:
+            score += min(0.1 * upvotes, 0.1)  # Max 0.1 for upvotes
+        
+        # - Not flagged
+        flagged = entry.get('metadata', {}).get('keyvalues', {}).get('flagged', False)
+        if flagged:
+            score -= 0.5  # Heavy penalty for flagged content
+        
+        return max(0.0, min(1.0, score))  # Clamp between 0 and 1
     
     async def upload_template(self, name: str, content: str, metadata: Dict[str, Any] = None) -> str:
         """
