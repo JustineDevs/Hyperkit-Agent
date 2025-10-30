@@ -1,6 +1,6 @@
 {
   "name": "hyperkit",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "description": "Web3 Development Platform with AI Generation and Cross-Chain DeFi Primitives",
   "main": "hyperkit-agent/cli/main.py",
   "scripts": {
@@ -63,7 +63,8 @@
     "reports:todo": "cd hyperkit-agent && python scripts/maintenance/focused_todo_to_issues_conversion.py",
     "reports:compliance": "echo See hyperkit-agent/REPORTS/COMPLIANCE/ for compliance reports",
     "reports:quality": "echo See hyperkit-agent/REPORTS/QUALITY/ for quality reports",
-    "reports:infrastructure": "echo See hyperkit-agent/REPORTS/STATUS/ for status reports"
+    "reports:infrastructure": "echo See hyperkit-agent/REPORTS/STATUS/ for status reports",
+    "diagnostics:cli": "cd hyperkit-agent && python scripts/diagnostics/cli_diagnostics.py"
   },
   "bin": {
     "hyperagent": "./hyperkit-agent/cli/main.py"
