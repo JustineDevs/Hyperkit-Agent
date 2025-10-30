@@ -193,5 +193,5 @@ If you encounter any issues:
 - 💰 **Bug Bounty**: See [SECURITY.md](../../../SECURITY.md)
 
 **Last Updated**: 2025-01-29  
-**Version**: 1.5.7
+**Version**: 1.5.8
 
