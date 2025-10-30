@@ -307,6 +307,12 @@ class HyperKitAgent:
                         except Exception as e:
                             logger.warning(f"⚠️ Could not save to foundry directory (non-fatal): {e}")
                             # Don't raise - organized location is primary
+                        # RAG sanitization: ensure import paths and overrides are consistent
+                        try:
+                            from services.core.ai_agent import HyperKitAIAgent  # reuse fix helpers if needed
+                            # No-op here; generation step already applies sanitization in AI agent
+                        except Exception:
+                            pass
                         
                         return {
                             "status": "success",
