@@ -229,22 +229,42 @@ class SelfHealingErrorHandler:
         """Auto-fix compilation errors including override issues"""
         contract_code = context.get("contract_code")
         error_message = parsed_error.original_message.lower()
-        
+
+        # Ensure OpenZeppelin deps when imports present or error mentions them
+        try:
+            if (contract_code and "@openzeppelin/" in contract_code) or "openzeppelin" in error_message:
+                from services.dependencies.dependency_manager import DependencyManager
+                workspace = context.get("workspace_dir")
+                if workspace:
+                    dep_manager = DependencyManager(workspace)
+                    deps = dep_manager.detect_dependencies(contract_code or "", "AutoFix.sol")
+                    if deps:
+                        result = await dep_manager.install_all_dependencies(deps)
+                        if all(success for success, _ in result.values()):
+                            return True, "Installed OpenZeppelin dependencies"
+        except Exception as e:
+            logger.warning(f"Dependency auto-fix skipped: {e}")
+
+        # Missing import/remapping style errors -> allow retry after deps
+        if (
+            "file import callback not supported" in error_message
+            or "source not found" in error_message
+            or ("import" in error_message and "not found" in error_message)
+        ):
+            return True, "Retry after ensuring remappings and dependencies"
+
         # Fix override errors for ERC20 _beforeTokenTransfer
-        if "override" in error_message and "_beforeTokenTransfer" in error_message and "ERC20" in error_message:
+        if "override" in error_message and "_beforetokentransfer" in error_message and "erc20" in error_message:
             if contract_code:
-                # Remove invalid override - ERC20Pausable handles _beforeTokenTransfer internally
                 import re
                 pattern = r'function _beforeTokenTransfer\([^)]+\)\s+internal\s+virtual\s+override\([^)]+\)\s*\{[^}]*super\._beforeTokenTransfer[^}]*\}'
                 if re.search(pattern, contract_code, re.MULTILINE | re.DOTALL):
-                    fixed_code = re.sub(pattern, '', contract_code, flags=re.MULTILINE | re.DOTALL)
-                    fixed_code = fixed_code.strip()
-                    # Update context with fixed code
+                    fixed_code = re.sub(pattern, '', contract_code, flags=re.MULTILINE | re.DOTALL).strip()
                     context["contract_code"] = fixed_code
                     logger.info("🔧 Fixed _beforeTokenTransfer override issue")
                     return True, "Removed invalid _beforeTokenTransfer override"
-        
-        # Try installing dependencies first
+
+        # As a general fallback, try dependency detection and re-run
         if contract_code:
             from services.dependencies.dependency_manager import DependencyManager
             workspace = context.get("workspace_dir")
@@ -253,7 +273,7 @@ class SelfHealingErrorHandler:
                 deps = dep_manager.detect_dependencies(contract_code, "contract.sol")
                 if deps:
                     await dep_manager.install_all_dependencies(deps)
-        
+
         return True, "Retried compilation after dependency check"
     
     async def _auto_fix_network(self, parsed_error: ParsedError, context: Dict[str, Any]) -> Tuple[bool, str]:
