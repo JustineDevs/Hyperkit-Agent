@@ -92,9 +92,9 @@ Each TODO has been converted to a GitHub issue with:
 # TODO Implementation Progress Report
 
 <!-- VERSION_PLACEHOLDER -->
-**Version**: 1.5.7
+**Version**: 1.5.8
 **Last Updated**: 2025-10-30
-**Commit**: 6267d06
+**Commit**: 23c6032
 <!-- /VERSION_PLACEHOLDER -->
 
 ## Implementation Summary
