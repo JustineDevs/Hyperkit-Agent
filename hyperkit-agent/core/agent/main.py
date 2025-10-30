@@ -1021,7 +1021,9 @@ class HyperKitAgent:
         auto_verification: bool = True,
         test_only: bool = False,
         allow_insecure: bool = False,
-        use_orchestrator: bool = True
+        use_orchestrator: bool = True,
+        upload_scope: Optional[str] = None,  # 'team' or 'community'
+        rag_scope: str = 'official-only'  # 'official-only' or 'opt-in-community'
     ) -> Dict[str, Any]:
         """
         Execute the complete self-healing workflow with dependency management and auto-recovery.
@@ -1053,7 +1055,9 @@ class HyperKitAgent:
                     network=network,
                     auto_verification=auto_verification,
                     test_only=test_only,
-                    allow_insecure=allow_insecure
+                    allow_insecure=allow_insecure,
+                    upload_scope=upload_scope,
+                    rag_scope=rag_scope
                 )
             except ImportError as e:
                 logger.warning(f"Orchestrator not available, falling back to legacy workflow: {e}")
@@ -1067,7 +1071,8 @@ class HyperKitAgent:
             context = ""
             if self.rag:
                 try:
-                    context = await self.rag.retrieve(user_prompt)
+                    # Use default official-only scope for legacy workflow
+                    context = await self.rag.retrieve(user_prompt, rag_scope='official-only')
                 except Exception as e:
                     logger.warning(f"RAG context retrieval failed: {e}")
                     context = ""
@@ -1585,7 +1590,7 @@ Generate only the Solidity contract code, no explanations or markdown formatting
             context = ""
             if self.rag:
                 try:
-                    context = await self.rag.retrieve(user_prompt)
+                    context = await self.rag.retrieve(user_prompt, rag_scope='official-only')
                     logger.info(f"RAG context retrieved: {len(context)} characters")
                 except Exception as e:
                     logger.warning(f"RAG context retrieval failed: {e}")
