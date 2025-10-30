@@ -1,6 +1,6 @@
 <!-- AUDIT_BADGE_START -->
 **Implementation Status**: ✅ Verified  
-**Version**: 1.5.7  
+**Version**: 1.5.8  
 **Last Verified**: 2025-10-29  
 **Commit**: `aac4687`  
 **Branch**: `main`  
@@ -472,5 +472,5 @@ If you encounter issues:
 - 💰 **Bug Bounty**: See [SECURITY.md](../../../SECURITY.md)
 
 **Last Updated**: 2025-01-29  
-**Version**: 1.5.7  
+**Version**: 1.5.8  
 **Author**: HyperKit Development Team
