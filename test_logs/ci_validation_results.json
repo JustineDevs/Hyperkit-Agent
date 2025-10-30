@@ -1,0 +1,69 @@
+{
+  "timestamp": "2025-10-30T06:01:49.465095",
+  "workspace": "C:\\Users\\JustineDevs\\Downloads\\HyperAgent",
+  "checks": {
+    "directories_exist": {
+      "name": "directories_exist",
+      "passed": false,
+      "details": {
+        "contexts_dir": {
+          "exists": false,
+          "path": "C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\.workflow_contexts",
+          "error": "Directory does not exist"
+        },
+        "temp_envs_dir": {
+          "exists": false,
+          "path": "C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\.temp_envs"
+        }
+      }
+    },
+    "context_files_valid": {
+      "name": "context_files_valid",
+      "passed": false,
+      "details": {
+        "valid": 0,
+        "invalid": 0,
+        "errors": []
+      },
+      "error": "Contexts directory does not exist"
+    },
+    "diagnostic_bundles_complete": {
+      "name": "diagnostic_bundles_complete",
+      "passed": false,
+      "details": {
+        "complete": 0,
+        "incomplete": 0,
+        "missing": 0,
+        "errors": []
+      },
+      "error": "Contexts directory does not exist"
+    },
+    "no_empty_contexts": {
+      "name": "no_empty_contexts",
+      "passed": false,
+      "details": {
+        "non_empty": 0,
+        "empty": 0,
+        "errors": []
+      },
+      "error": "Contexts directory does not exist"
+    },
+    "temp_envs_cleanup": {
+      "name": "temp_envs_cleanup",
+      "passed": true,
+      "details": {
+        "total": 0,
+        "preserved": 0,
+        "cleaned": 0,
+        "message": "No temp environments directory (no workflows run)"
+      }
+    }
+  },
+  "errors": [
+    "Contexts directory missing: C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\.workflow_contexts"
+  ],
+  "warnings": [
+    "Temp environments directory missing: C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\.temp_envs (may be normal if no workflows run)"
+  ],
+  "passed": false
+}
