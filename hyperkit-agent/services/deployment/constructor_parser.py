@@ -341,6 +341,20 @@ class ConstructorArgumentParser:
                     logger.info(f"Extracted supply for {param_name}: {total_supply}")
                     return total_supply
             
+            # CRITICAL: Handle cap/maxSupply parameters - must be > 0
+            if 'cap' in param_name.lower() or 'maxsupply' in param_name.lower():
+                # Use a reasonable default cap (1 billion tokens with 18 decimals)
+                default_cap = 1_000_000_000 * (10 ** 18)
+                logger.info(f"Using default cap for {param_name}: {default_cap}")
+                return default_cap
+            
+            # For other uint parameters, check if they're used in require() statements
+            # If they have a require > 0, use a safe default > 0
+            require_pattern = rf'require\s*\(\s*{param_name}\s*>\s*0'
+            if re.search(require_pattern, contract_code, re.IGNORECASE):
+                logger.info(f"Parameter {param_name} requires > 0, using default value 1000000")
+                return 1000000
+            
             # Default to 0 for other uint parameters
             logger.info(f"Using 0 for {param_name}: {param_type}")
             return 0
@@ -357,10 +371,21 @@ class ConstructorArgumentParser:
             return deployer_address
         
         elif param_type == 'string':
-            # Try to extract from ERC20/ERC721 constructor
+            # Try to extract from ERC20/ERC721 constructor (hardcoded strings)
             name, symbol = ConstructorArgumentParser.extract_erc20_name_symbol(contract_code)
             if not name:
                 name, symbol = ConstructorArgumentParser.extract_erc721_name_symbol(contract_code)
+            
+            # If ERC20 constructor uses variables (e.g., ERC20(name, symbol)), extract from contract name
+            if not name and 'erc20' in contract_code.lower() and 'is erc20' in contract_code.lower():
+                # Try to extract contract name to use as token name
+                contract_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]*)', contract_code)
+                if contract_match:
+                    contract_name = contract_match.group(1)
+                    # Use contract name as token name, generate symbol from it
+                    name = contract_name.replace('Token', '').replace('ERC20', '')
+                    symbol = name[:5].upper() if len(name) > 5 else name.upper()
+                    logger.info(f"Generated token name/symbol from contract name: {name} ({symbol})")
             
             if name and 'name' in param_name.lower():
                 logger.info(f"Extracted name for {param_name}: {name}")
@@ -369,8 +394,16 @@ class ConstructorArgumentParser:
                 logger.info(f"Extracted symbol for {param_name}: {symbol}")
                 return symbol
             else:
-                logger.info(f"Using empty string for {param_name}")
-                return ""
+                # Default values based on parameter name
+                if 'name' in param_name.lower():
+                    logger.info(f"Using default token name for {param_name}")
+                    return "TestToken"
+                elif 'symbol' in param_name.lower():
+                    logger.info(f"Using default token symbol for {param_name}")
+                    return "TEST"
+                else:
+                    logger.info(f"Using empty string for {param_name}")
+                    return ""
         
         elif param_type == 'bool':
             logger.info(f"Using false for {param_name}")
