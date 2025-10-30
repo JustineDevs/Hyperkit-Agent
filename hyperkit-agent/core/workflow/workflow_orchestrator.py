@@ -742,6 +742,7 @@ class WorkflowOrchestrator:
             
             verification_result = await self.agent.verify_contract(
                 context.deployment_address,
+                context.contract_code,
                 network
             )
             
