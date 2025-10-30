@@ -1,6 +1,6 @@
 # HyperAgent Development Roadmap
 
-**Version**: 1.5.7  
+**Version**: 1.5.8  
 **Last Updated**: 2025-10-28  
 **Status**: Hyperion-Only Mode Active
 
