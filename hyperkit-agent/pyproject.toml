@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hyperkit-agent"
-version = "1.5.8"
+version = "1.5.9"
 description = "HyperKit AI Agent - Production-ready smart contract development platform with security extensions and Alith SDK integration"
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
@@ -124,7 +124,7 @@ line_length = 88
 known_first_party = ["core", "services"]
 
 [tool.mypy]
-python_version = "1.5.8"
+python_version = "1.5.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
