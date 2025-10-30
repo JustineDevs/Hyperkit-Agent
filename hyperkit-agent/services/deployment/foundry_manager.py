@@ -18,6 +18,10 @@ class FoundryManager:
     def __init__(self):
         self.is_windows = platform.system() == "Windows"
         self.forge_path = self._find_forge_path()
+        # Pinned version substring (lightweight drift detection)
+        # Prefer exact version pinning via config when available
+        self.pinned_version_hint = os.getenv("HYPERAGENT_FORGE_VERSION", "forge 1.4.")
+        self.version_mismatch: bool = False
     
     def _find_forge_path(self):
         """Find forge executable on system"""
@@ -100,6 +104,22 @@ class FoundryManager:
         """Ensure Foundry is installed"""
         if self.is_installed():
             logger.info(f"✅ Foundry found at: {self.forge_path}")
+            # Drift detection
+            try:
+                current = self.get_version()
+                if isinstance(current, str) and self.pinned_version_hint and self.pinned_version_hint not in current:
+                    self.version_mismatch = True
+                    logger.warning(
+                        "⚠️ Foundry version drift detected: current='%s' does not match expected hint '%s'",
+                        current,
+                        self.pinned_version_hint,
+                    )
+                    logger.warning(
+                        "To pin a specific version, set HYPERAGENT_FORGE_VERSION or install the recommended Foundry release."
+                    )
+            except Exception:
+                # Non-fatal; continue
+                pass
             return True
         
         logger.warning("❌ Foundry not found")
