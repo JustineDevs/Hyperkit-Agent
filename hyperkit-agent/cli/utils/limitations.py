@@ -53,12 +53,12 @@ def show_limitations():
     
     # Show recently fixed issues
     console.print("\n[bold green]RECENTLY FIXED (2025-01-29):[/bold green]")
-    console.print("1. ✅ [green]Deploy command constructor bug[/green] - Fixed with source code parsing")
-    console.print("2. ✅ [green]Workflow fake success[/green] - Fixed with proper validation")
-    console.print("3. ✅ [green]Verify command[/green] - Implemented Hyperion Explorer API")
-    console.print("4. ✅ [green]Monitor command[/green] - Implemented system metrics")
-    console.print("5. ✅ [green]Config command[/green] - Implemented full file management")
-    console.print("6. ✅ [green]Version command[/green] - Made fully dynamic")
+    console.print("1. [green]Deploy command constructor bug[/green] - Fixed with source code parsing")
+    console.print("2. [green]Workflow fake success[/green] - Fixed with proper validation")
+    console.print("3. [green]Verify command[/green] - Implemented Hyperion Explorer API")
+    console.print("4. [green]Monitor command[/green] - Implemented system metrics")
+    console.print("5. [green]Config command[/green] - Implemented full file management")
+    console.print("6. [green]Version command[/green] - Made fully dynamic")
     
     # Show what actually works
     console.print("\n[bold green]FULLY FUNCTIONAL COMMANDS:[/bold green]")
