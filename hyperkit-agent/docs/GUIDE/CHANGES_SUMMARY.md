@@ -91,6 +91,15 @@ The `alith>=0.12.0` package is **already included** in `hyperkit-agent/pyproject
 
 ### How to Install Now
 
+**What `pip install -e .` Installs:**
+- ✅ **ALL Python packages** from `pyproject.toml`:
+  - Alith SDK (>=0.12.0)
+  - Web3 libraries (web3, eth-account, eth-utils, etc.)
+  - AI providers (OpenAI, Anthropic, Google Generative AI)
+  - IPFS client (ipfshttpclient)
+  - All utility libraries (click, rich, pydantic, etc.)
+- ❌ **Does NOT install**: Foundry (system-level tool), OpenZeppelin contracts (auto-installed by agent), scripts (included in repo)
+
 **From Root Directory:**
 ```bash
 npm run install:root
@@ -114,6 +123,13 @@ cd hyperkit-agent && pip install -e ".[dev]"
 npm run install:all
 # Or directly:
 cd hyperkit-agent && pip install -e ".[dev,security]"
+```
+
+**After Python Installation:**
+```bash
+# OpenZeppelin contracts are auto-installed by agent
+# Or run Doctor to pre-install:
+hyperagent doctor
 ```
 
 ## Verification
