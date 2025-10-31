@@ -24,8 +24,14 @@ def monitor_group():
     pass
 
 @monitor_group.command()
-def health():
+@click.pass_context
+def health(ctx):
     """Check system health status"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
+    
+    if verbose:
+        console.print("[dim]Verbose mode: Detailed health check enabled[/dim]")
     console.print("System Health Check")
     
     try:
@@ -68,8 +74,14 @@ def health():
         console.print(f"💡 This command requires production validator")
 
 @monitor_group.command()
-def metrics():
+@click.pass_context
+def metrics(ctx):
     """Display system metrics"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
+    
+    if verbose:
+        console.print("[dim]Verbose mode: Detailed metrics enabled[/dim]")
     console.print("System Metrics")
     
     try:
@@ -113,11 +125,20 @@ def metrics():
     except Exception as e:
         console.print(f"Metrics error: {e}", style="red")
         console.print(f"💡 This command requires system access")
+        if debug:
+            import traceback
+            console.print(traceback.format_exc())
 
 @monitor_group.command()
 @click.option('--watch', '-w', is_flag=True, help='Watch mode (continuous monitoring)')
-def status(watch):
+@click.pass_context
+def status(ctx, watch):
     """Show system status"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
+    
+    if verbose:
+        console.print("[dim]Verbose mode: Detailed status enabled[/dim]")
     console.print("System Status")
     
     try:
@@ -164,10 +185,19 @@ def status(watch):
     except Exception as e:
         console.print(f"Status error: {e}", style="red")
         console.print(f"💡 This command requires production validator")
+        if debug:
+            import traceback
+            console.print(traceback.format_exc())
 
 @monitor_group.command()
-def logs():
+@click.pass_context
+def logs(ctx):
     """View system logs"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
+    
+    if verbose:
+        console.print("[dim]Verbose mode: Detailed log view enabled[/dim]")
     console.print("📝 System Logs")
     
     try:
@@ -212,3 +242,6 @@ def logs():
     except Exception as e:
         console.print(f"Logs error: {e}", style="red")
         console.print(f"💡 This command requires file system access")
+        if debug:
+            import traceback
+            console.print(traceback.format_exc())
