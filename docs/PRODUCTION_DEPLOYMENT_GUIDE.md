@@ -71,7 +71,24 @@ OBSIDIAN_API_URL=http://127.0.0.1:27123
 OBSIDIAN_VAULT_PATH=/path/to/vault
 ```
 
-### 3. Verify Installation
+### 3. Run Doctor Preflight
+
+```bash
+# Validate environment and auto-fix issues
+hyperagent doctor
+
+# Or manually:
+cd hyperkit-agent
+python scripts/doctor.py
+```
+
+**What Doctor Validates:**
+- ✅ All required tools (forge, python, node, npm)
+- ✅ OpenZeppelin installation and version compatibility
+- ✅ Foundry/solc version configuration
+- ✅ Git submodule configuration (auto-fixes broken entries)
+
+### 4. Verify Installation
 
 ```bash
 # Check system status
@@ -360,6 +377,21 @@ foundryup
 
 # Verify installation
 forge --version
+
+# Or run Doctor for comprehensive check
+hyperagent doctor
+```
+
+#### 1b. OpenZeppelin Installation Issues
+```bash
+# Run Doctor to auto-fix
+hyperagent doctor
+
+# Doctor will automatically:
+# - Detect missing OpenZeppelin contracts
+# - Install via forge install or direct git clone
+# - Fix broken git submodule references
+# - Clean up .gitignore entries if needed
 ```
 
 #### 2. Configuration Errors
