@@ -5,6 +5,8 @@ Self-healing: No manual dependency installation required.
 """
 
 import re
+import os
+import sys
 import subprocess
 import logging
 from pathlib import Path
@@ -832,6 +834,43 @@ class DependencyManager:
         }
         
         for tool_name, cmd in tools.items():
+            # On Windows, check common Foundry installation locations
+            if tool_name == "forge" and sys.platform == "win32":
+                # Check common Windows Foundry locations
+                possible_paths = [
+                    Path.home() / ".foundry" / "bin" / "forge.exe",
+                    Path(f"C:/Users/{os.getenv('USERNAME', '')}/.foundry/bin/forge.exe"),
+                    Path("C:/Program Files/foundry/forge.exe"),
+                    Path("C:/Program Files/foundry/bin/forge.exe"),
+                ]
+                
+                found_forge = False
+                for forge_path in possible_paths:
+                    if forge_path.exists():
+                        try:
+                            result = subprocess.run(
+                                [str(forge_path), "--version"],
+                                capture_output=True,
+                                text=True,
+                                timeout=10,
+                                check=False
+                            )
+                            if result.returncode == 0:
+                                version_str = result.stdout.strip().split('\n')[0] if result.stdout else "installed"
+                                checks[tool_name] = {
+                                    "available": True,
+                                    "version": version_str,
+                                    "path": str(forge_path)
+                                }
+                                found_forge = True
+                                break
+                        except Exception:
+                            continue
+                
+                if found_forge:
+                    continue
+            
+            # Standard PATH check for all tools
             try:
                 result = subprocess.run(
                     cmd,
