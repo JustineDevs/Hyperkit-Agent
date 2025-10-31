@@ -8,7 +8,7 @@ import re
 import subprocess
 import logging
 from pathlib import Path
-from typing import Dict, List, Set, Optional, Tuple
+from typing import Dict, List, Set, Optional, Tuple, Any
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -271,6 +271,9 @@ class DependencyManager:
         Returns:
             Tuple of (success, message)
         """
+        # CRITICAL: Ensure lib directory exists before installation
+        self.foundry_lib_dir.mkdir(parents=True, exist_ok=True)
+        logger.debug(f"Ensured lib directory exists: {self.foundry_lib_dir}")
         if dep.source_type == "solidity":
             return await self._install_solidity_dependency(dep, retry_count)
         elif dep.source_type == "npm":
@@ -282,6 +285,10 @@ class DependencyManager:
     
     async def _install_solidity_dependency(self, dep: Dependency, retry_count: int) -> Tuple[bool, str]:
         """Install Solidity dependency using forge install"""
+        # CRITICAL: Ensure lib directory exists
+        self.foundry_lib_dir.mkdir(parents=True, exist_ok=True)
+        logger.debug(f"Ensured lib directory exists: {self.foundry_lib_dir}")
+        
         # Check if already installed
         if dep.name in self.installed_solidity:
             logger.info(f"✅ Solidity dependency already installed: {dep.name}")
@@ -320,8 +327,170 @@ class DependencyManager:
                     else:
                         repo_name = dep.name  # Fallback
                     
+                    # Handle broken git submodules first (common issue) - robust handling
+                    if 'openzeppelin' in repo_name.lower():
+                        lib_name = repo_name.split('/')[-1]
+                        lib_path = self.foundry_lib_dir / lib_name
+                        
+                        # Clean up broken submodule if exists (fail-loud with fixes)
+                        try:
+                            import shutil
+                            
+                            # 1. Remove broken submodule reference in .git/modules
+                            git_modules_file = self.foundry_project_dir / ".git" / "modules" / f"lib/{lib_name}"
+                            if git_modules_file.exists():
+                                shutil.rmtree(str(git_modules_file), ignore_errors=True)
+                                logger.info(f"🧹 Cleaned up broken git submodule cache: {lib_name}")
+                            
+                            # 2. Check root repo .gitmodules for broken entries - delete if exists (simplest fix)
+                            root_repo_dir = self.foundry_project_dir.parent  # Go up one level to root
+                            root_gitmodules = root_repo_dir / ".gitmodules"
+                            if root_gitmodules.exists():
+                                try:
+                                    gitmodules_content = root_gitmodules.read_text(encoding="utf-8")
+                                    # Check if there's a broken entry for hyperkit-agent/lib/openzeppelin-contracts
+                                    broken_pattern = f"hyperkit-agent/lib/{lib_name}"
+                                    if broken_pattern in gitmodules_content:
+                                        logger.warning(f"⚠️  Found broken submodule entry in root .gitmodules for {broken_pattern}")
+                                        logger.info(f"🗑️  Deleting root .gitmodules (simplest fix)")
+                                        root_gitmodules.unlink()
+                                        logger.info(f"✅ Deleted root .gitmodules to fix submodule conflict")
+                                except Exception as e:
+                                    logger.warning(f"⚠️  Could not clean root .gitmodules: {e}")
+                            
+                            # 2b. Also check and clean .gitignore if it has submodule entries (WRONG LOCATION)
+                            root_gitignore = root_repo_dir / ".gitignore"
+                            if root_gitignore.exists():
+                                try:
+                                    gitignore_content = root_gitignore.read_text(encoding="utf-8")
+                                    if "[submodule" in gitignore_content and lib_name in gitignore_content:
+                                        logger.warning(f"⚠️  Found submodule entries in root .gitignore (WRONG LOCATION)")
+                                        logger.info(f"🗑️  Removing submodule entries from .gitignore")
+                                        # Remove submodule block from .gitignore
+                                        lines = gitignore_content.split('\n')
+                                        new_lines = []
+                                        skip_submodule = False
+                                        for line in lines:
+                                            if line.strip().startswith("[submodule"):
+                                                skip_submodule = True
+                                                continue
+                                            if skip_submodule and (line.strip().startswith("#") or (line.strip() and not line.startswith("\t") and not line.startswith(" "))):
+                                                skip_submodule = False
+                                                if not line.strip().startswith("#"):
+                                                    new_lines.append(line)
+                                            elif not skip_submodule:
+                                                new_lines.append(line)
+                                        root_gitignore.write_text('\n'.join(new_lines), encoding="utf-8")
+                                        logger.info(f"✅ Removed submodule entries from root .gitignore")
+                                except Exception as e:
+                                    logger.warning(f"⚠️  Could not clean root .gitignore: {e}")
+                            
+                            # 2b. Also clean .git/config if it has broken submodule entry
+                            root_git_config = root_repo_dir / ".git" / "config"
+                            if root_git_config.exists():
+                                try:
+                                    config_content = root_git_config.read_text(encoding="utf-8")
+                                    broken_pattern = f"hyperkit-agent/lib/{lib_name}"
+                                    if broken_pattern in config_content:
+                                        logger.warning(f"⚠️  Found broken submodule entry in root .git/config for {broken_pattern}")
+                                        # Remove the submodule section from config
+                                        lines = config_content.split('\n')
+                                        new_lines = []
+                                        skip_section = False
+                                        for line in lines:
+                                            if f'[submodule "{broken_pattern}"]' in line:
+                                                skip_section = True
+                                                continue
+                                            if skip_section and (line.strip().startswith('[') or (line.strip() and not line.strip().startswith('\t') and not line.strip().startswith(' '))):
+                                                # Next section starts
+                                                if line.strip().startswith('['):
+                                                    skip_section = False
+                                                    new_lines.append(line)
+                                                elif line.strip() and not line.strip()[0] in ['\t', ' ']:
+                                                    # Non-indented line, new section
+                                                    skip_section = False
+                                                    new_lines.append(line)
+                                                else:
+                                                    # Still in submodule section, skip
+                                                    continue
+                                            if not skip_section:
+                                                new_lines.append(line)
+                                        
+                                        root_git_config.write_text('\n'.join(new_lines), encoding="utf-8")
+                                        logger.info(f"✅ Removed broken submodule entry from root .git/config")
+                                except Exception as e:
+                                    logger.warning(f"⚠️  Could not clean root .git/config: {e}")
+                            
+                            # 2c. Clean .git/modules entries from both root and project
+                            root_git_modules = root_repo_dir / ".git" / "modules" / f"hyperkit-agent/lib/{lib_name}"
+                            if root_git_modules.exists():
+                                try:
+                                    shutil.rmtree(str(root_git_modules), ignore_errors=True)
+                                    logger.info(f"🧹 Cleaned up root .git/modules entry: {lib_name}")
+                                except Exception as e:
+                                    logger.warning(f"⚠️  Could not clean root .git/modules: {e}")
+                            
+                            # 3. Remove lib directory if it's broken or empty
+                            if lib_path.exists():
+                                try:
+                                    # Check if it's a valid git repo with contracts
+                                    contracts_dir = lib_path / "contracts"
+                                    has_valid_contracts = contracts_dir.exists() and any(contracts_dir.rglob("*.sol"))
+                                    
+                                    # Try to verify if it's actually broken via git submodule
+                                    test_result = subprocess.run(
+                                        ['git', 'submodule', 'status', f'lib/{lib_name}'],
+                                        cwd=self.foundry_project_dir,
+                                        capture_output=True,
+                                        text=True,
+                                        timeout=5
+                                    )
+                                    is_broken_submodule = test_result.returncode != 0 or 'fatal' in test_result.stderr.lower()
+                                    
+                                    if is_broken_submodule or not has_valid_contracts:
+                                        logger.warning(f"⚠️  Removing broken/empty submodule directory: {lib_name}")
+                                        shutil.rmtree(str(lib_path), ignore_errors=True)
+                                except Exception:
+                                    # If git command fails, remove the directory anyway
+                                    logger.warning(f"⚠️  Removing potentially broken directory: {lib_name}")
+                                    shutil.rmtree(str(lib_path), ignore_errors=True)
+                            else:
+                                # Even if lib_path doesn't exist, still try deinit to clean git references
+                                logger.info(f"🧹 lib/{lib_name} doesn't exist, but cleaning git references anyway")
+                            
+                            # 4. Also try git submodule deinit from root repo (where .gitmodules is)
+                            try:
+                                # Try from hyperkit-agent first
+                                deinit_result = subprocess.run(
+                                    ['git', 'submodule', 'deinit', '-f', f'lib/{lib_name}'],
+                                    cwd=self.foundry_project_dir,
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=5
+                                )
+                                # Also try from root repo with full path
+                                if deinit_result.returncode != 0:
+                                    root_repo_dir = self.foundry_project_dir.parent
+                                    root_deinit_result = subprocess.run(
+                                        ['git', 'submodule', 'deinit', '-f', f'hyperkit-agent/lib/{lib_name}'],
+                                        cwd=root_repo_dir,
+                                        capture_output=True,
+                                        text=True,
+                                        timeout=5
+                                    )
+                                    if root_deinit_result.returncode == 0:
+                                        logger.info(f"🧹 Ran git submodule deinit from root for {lib_name}")
+                                else:
+                                    logger.info(f"🧹 Ran git submodule deinit for {lib_name}")
+                            except Exception as e:
+                                logger.debug(f"git submodule deinit failed (non-fatal): {e}")
+                                
+                        except Exception as e:
+                            logger.warning(f"⚠️  Could not clean up broken submodule: {e}")
+                    
                     # Handle version pinning if specified
-                    install_cmd = ['forge', 'install', repo_name, '--no-commit']
+                    # Note: --no-commit was removed in Foundry 1.4.3, using --commit flag instead if needed
+                    install_cmd = ['forge', 'install', repo_name]
                     if dep.version:
                         install_cmd.extend(['--tag', dep.version])
                     
@@ -333,6 +502,58 @@ class DependencyManager:
                         text=True,
                         timeout=180  # Increased timeout for large repos
                     )
+                    
+                    # If forge install fails due to submodule error, try direct git clone as fallback
+                    error_output = result.stderr or result.stdout
+                    is_submodule_error = (
+                        result.returncode != 0 and 
+                        ("submodule" in error_output.lower() or "no submodule mapping" in error_output.lower())
+                    )
+                    
+                    if is_submodule_error:
+                        logger.warning(f"⚠️  Forge install failed due to submodule error, trying direct git clone fallback...")
+                        try:
+                            import shutil
+                            # Ensure lib directory exists and is empty
+                            if lib_path.exists():
+                                logger.info(f"🧹 Removing {lib_path} before direct clone...")
+                                shutil.rmtree(str(lib_path), ignore_errors=True)
+                            self.foundry_lib_dir.mkdir(parents=True, exist_ok=True)
+                            
+                            # Direct git clone instead of submodule
+                            clone_cmd = ['git', 'clone', f'https://github.com/{repo_name}.git', str(lib_path)]
+                            logger.info(f"📦 Cloning {repo_name} directly (bypassing git submodule)...")
+                            clone_result = subprocess.run(
+                                clone_cmd,
+                                cwd=str(self.foundry_project_dir),
+                                capture_output=True,
+                                text=True,
+                                timeout=180
+                            )
+                            
+                            if clone_result.returncode == 0:
+                                logger.info(f"✅ Successfully cloned {repo_name} directly (bypassing submodule)")
+                                # Verify installation
+                                contracts_dir = lib_path / "contracts"
+                                has_contracts = False
+                                if contracts_dir.exists():
+                                    has_contracts = any(contracts_dir.rglob("*.sol"))
+                                elif lib_path.exists():
+                                    has_contracts = any(lib_path.rglob("*.sol"))
+                                
+                                if has_contracts:
+                                    logger.info(f"✅ Verified: {lib_name} has Solidity contracts")
+                                    self.installed_solidity.add(dep.name)
+                                    self._update_remappings(lib_name, lib_path)
+                                    return True, f"Installed via direct clone: {dep.name}"
+                                else:
+                                    logger.warning(f"⚠️  Cloned but no contracts found in {lib_path}")
+                            else:
+                                logger.error(f"❌ Direct clone also failed: {clone_result.stderr[:300]}")
+                        except Exception as e:
+                            logger.error(f"❌ Fallback clone failed: {e}")
+                            import traceback
+                            logger.debug(traceback.format_exc())
                     
                     # Check for success (forge install returns 0 even if already installed)
                     if result.returncode == 0 or "already installed" in result.stdout.lower() or "already exists" in result.stdout.lower():
@@ -359,12 +580,27 @@ class DependencyManager:
                                     return True, f"Installed: {dep.name}"
                         
                         # If we get here, installation might have succeeded but structure is unexpected
-                        logger.warning(f"⚠️ Dependency {dep.name} installed but structure unexpected, continuing...")
-                        self.installed_solidity.add(dep.name)
-                        return True, f"Installed: {dep.name} (structure verification skipped)"
+                        logger.warning(f"⚠️ Dependency {dep.name} reported as installed but structure unexpected")
+                        # Don't mark as installed - return False so it can try fallback
+                        return False, f"Installation reported success but verification failed for {dep.name}"
                     
                     # Check for specific error messages
                     error_output = result.stderr or result.stdout
+                    
+                    # If submodule error, the fallback clone should have already run above
+                    # But if it didn't work, return False to allow retry
+                    if "submodule" in error_output.lower() or "no submodule mapping" in error_output.lower():
+                        logger.error(f"❌ Submodule error persists after cleanup and fallback: {error_output[:300]}")
+                        if attempt < retry_count:
+                            logger.warning(f"⚠️ Install attempt {attempt + 1} failed due to submodule error, retrying with more aggressive cleanup...")
+                            # More aggressive cleanup on retry
+                            if lib_path.exists():
+                                import shutil
+                                shutil.rmtree(str(lib_path), ignore_errors=True)
+                            continue
+                        else:
+                            return False, f"Submodule error could not be resolved: {error_output[:200]}"
+                    
                     if "not found" in error_output.lower() or "does not exist" in error_output.lower():
                         if attempt < retry_count:
                             logger.warning(f"⚠️ Install attempt {attempt + 1} failed: repository not found, retrying...")
@@ -577,14 +813,15 @@ class DependencyManager:
         
         return results
     
-    def preflight_check(self) -> Dict[str, bool]:
+    def preflight_check(self) -> Dict[str, Any]:
         """
-        Perform preflight checks for required system tools.
+        Perform preflight checks for required system tools per ideal workflow.
+        Validates Foundry version, Solidity compiler, and environment tools.
         
         Returns:
-            Dictionary mapping tool names to availability status
+            Dictionary mapping tool names to availability status and version info
         """
-        checks: Dict[str, bool] = {}
+        checks: Dict[str, Any] = {}
         
         tools = {
             "forge": ["forge", "--version"],
@@ -605,11 +842,17 @@ class DependencyManager:
             except (subprocess.TimeoutExpired, FileNotFoundError):
                 checks[tool_name] = False
         
-        missing = [name for name, available in checks.items() if not available]
+        missing = [name for name, available in checks.items() if isinstance(available, bool) and not available]
         if missing:
             logger.warning(f"⚠️ Missing tools: {', '.join(missing)}")
         else:
             logger.info("✅ All required tools available")
+        
+        # Per ideal workflow: Log version summary
+        if "forge_version" in checks:
+            version_info = checks["forge_version"]
+            if version_info.get("is_nightly"):
+                logger.warning(f"⚠️ Foundry nightly build detected: {version_info.get('version')}")
         
         return checks
 
