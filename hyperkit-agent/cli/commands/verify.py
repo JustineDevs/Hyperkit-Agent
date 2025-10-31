@@ -30,6 +30,8 @@ def contract(ctx, address, network, source, constructor_args):
     Supports contract verification, status checking, and deployment info.
     See docs/HONEST_STATUS.md for details.
     """
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
     from cli.utils.warnings import show_command_warning
     show_command_warning('verify')
     # Hardcode Hyperion - no network selection
@@ -83,12 +85,18 @@ def contract(ctx, address, network, source, constructor_args):
     except Exception as e:
         console.print(f"Verification error: {e}", style="red")
         console.print(f"This command requires real explorer integration")
+        if debug:
+            import traceback
+            console.print(traceback.format_exc())
 
 @verify_group.command()
 @click.option('--address', '-a', required=True, help='Contract address')
 @click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
-def status(address, network):
+@click.pass_context
+def status(ctx, address, network):
     """Check verification status"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
     # Hardcode Hyperion - no network selection
     network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
     
@@ -117,12 +125,18 @@ def status(address, network):
     except Exception as e:
         console.print(f"Status check error: {e}", style="red")
         console.print(f"This command requires real explorer integration")
+        if debug:
+            import traceback
+            console.print(traceback.format_exc())
 
 @verify_group.command()
 @click.option('--address', '-a', required=True, help='Contract address')
 @click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
-def deployment(address, network):
+@click.pass_context
+def deployment(ctx, address, network):
     """Verify deployment details"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
     # Hardcode Hyperion - no network selection
     network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
     
@@ -152,6 +166,9 @@ def deployment(address, network):
     except Exception as e:
         console.print(f"Deployment check error: {e}", style="red")
         console.print(f"This command requires real explorer integration")
+        if debug:
+            import traceback
+            console.print(traceback.format_exc())
 
 @verify_group.command()
 @click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
