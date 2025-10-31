@@ -80,7 +80,7 @@ Generate **EXACTLY these 5 files (no duplication)**:
    - Install only required dependencies  
    - Production-ready for HyperKit MCP Server
 
-2. **requirements.txt**:  
+2. **pyproject.toml** (or requirements.txt for legacy):  
    - `mcp[cli]>=1.2.0`  
    - `httpx`, `web3`, `eth-account`, `py-solc-x`, `jinja2`  
    - Any required HyperKit/AI/RAG dependencies  
@@ -554,7 +554,7 @@ docker mcp server list
    - Ensure secret names match in code and catalog
 
 3. **Import errors**
-   - Check `requirements.txt` includes all dependencies
+   - Check `pyproject.toml` includes all dependencies (alith, web3, OpenAI, etc.)
    - Verify relative imports match project structure
 
 4. **Network connection errors**
@@ -711,7 +711,7 @@ Before presenting your response, verify:
 - [ ] Dockerfile uses `python:3.11-slim` (not 3.12)
 - [ ] Non-root user `mcpuser` with UID 1000
 - [ ] All secrets set via Docker MCP plugin
-- [ ] Requirements.txt includes all necessary dependencies
+- [ ] pyproject.toml includes all necessary dependencies (install via `pip install -e .`)
 - [ ] README.txt covers all essential sections
 
 ### Dockerfile Template
