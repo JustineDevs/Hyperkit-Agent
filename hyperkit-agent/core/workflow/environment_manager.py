@@ -41,17 +41,78 @@ class EnvironmentManager:
         
         Returns:
             Path to temporary directory
+            
+        Raises:
+            RuntimeError: If temp directory cannot be created or accessed
         """
         # Create temp directory with workflow ID
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         temp_name = f"workflow_{self.workflow_id}_{timestamp}"
         
-        self.temp_dir = self.workspace_dir / ".temp_envs" / temp_name
-        self.temp_dir.mkdir(parents=True, exist_ok=True)
+        # Ensure .temp_envs directory exists first
+        temp_envs_base = self.workspace_dir / ".temp_envs"
+        try:
+            temp_envs_base.mkdir(parents=True, exist_ok=True)
+            
+            # Validate base directory was created
+            if not temp_envs_base.exists():
+                raise RuntimeError(
+                    f"Failed to create temp envs base directory: {temp_envs_base}\n"
+                    f"Fix: mkdir -p {temp_envs_base} && chmod +w {temp_envs_base}"
+                )
+            
+            # Check write permissions on base directory
+            import os
+            if not os.access(temp_envs_base, os.W_OK):
+                raise RuntimeError(
+                    f"No write permission for temp envs base directory: {temp_envs_base}\n"
+                    f"Fix: chmod +w {temp_envs_base}"
+                )
+        except (OSError, PermissionError) as e:
+            error_msg = (
+                f"CRITICAL: Cannot create or access temp envs directory: {temp_envs_base}\n"
+                f"Error: {str(e)}\n"
+                f"Fix steps:\n"
+                f"  1. mkdir -p {temp_envs_base}\n"
+                f"  2. chmod +w {temp_envs_base}\n"
+                f"  3. Check parent directory permissions: {temp_envs_base.parent}"
+            )
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
+        
+        self.temp_dir = temp_envs_base / temp_name
+        try:
+            self.temp_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Validate temp directory was created
+            if not self.temp_dir.exists():
+                raise RuntimeError(
+                    f"Failed to create temp directory: {self.temp_dir}\n"
+                    f"Fix: mkdir -p {self.temp_dir} && chmod +w {self.temp_dir}"
+                )
+        except (OSError, PermissionError) as e:
+            error_msg = (
+                f"CRITICAL: Cannot create temp directory: {self.temp_dir}\n"
+                f"Error: {str(e)}\n"
+                f"Fix: mkdir -p {self.temp_dir} && chmod +w {self.temp_dir}"
+            )
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
         
         # Create subdirectories
         self.build_dir = self.temp_dir / "build"
-        self.build_dir.mkdir(exist_ok=True)
+        try:
+            self.build_dir.mkdir(exist_ok=True)
+            if not self.build_dir.exists():
+                raise RuntimeError(f"Failed to create build directory: {self.build_dir}")
+        except (OSError, PermissionError) as e:
+            error_msg = (
+                f"CRITICAL: Cannot create build directory: {self.build_dir}\n"
+                f"Error: {str(e)}\n"
+                f"Fix: mkdir -p {self.build_dir} && chmod +w {self.build_dir}"
+            )
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
         
         self.created_at = timestamp
         
