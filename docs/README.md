@@ -107,6 +107,7 @@
 - **Security-First**: Comprehensive auditing with Slither, Mythril, and AI
 - **IPFS RAG**: Decentralized vector storage (production-ready)
 - **Complete CLI**: Full command-line interface for all operations
+- **Doctor Preflight**: Production-grade environment validation with auto-fix (`hyperagent doctor`)
 
 ---
 
