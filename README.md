@@ -40,7 +40,7 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 - ✅ **Auto-Verification**: Automatic contract verification on block explorers
 - 🚀 **5-Stage Workflow**: Generate → Audit → Deploy → Verify → Test
 - 🔧 **Self-Healing**: Automatic dependency installation, error recovery, and retry logic
-- 📦 **Zero-Config Setup**: No manual dependency installation required - agent handles everything
+- 📦 **Zero-Config Setup**: Python packages via `pip install -e .`; OpenZeppelin auto-installed by agent
 - 🛡️ **Auto-Recovery**: Detects and fixes common issues (missing imports, compilation errors) automatically
 - 🔬 **Doctor System**: Production-grade preflight validation with auto-fix for dependencies, versions, and git submodule issues
 
@@ -117,7 +117,7 @@ Navigate quickly to any section of the documentation:
 | **Python** | 3.10-3.12 | Core runtime environment | ✅ Required |
 | **Node.js** | 18+ | Package management and versioning | ✅ Required |
 | **Git** | Latest | Version control | ✅ Required |
-| **OpenZeppelin** | v5.0+ | Smart contract libraries | ✅ Installed |
+| **OpenZeppelin** | v5.0+ | Smart contract libraries | ✅ Auto-installed by agent (creates `lib/` directory) |
 | **Slither** | Latest | Static analysis | ✅ Required |
 | **Mythril** | Latest | Security analysis | ✅ Required |
 
@@ -247,14 +247,17 @@ python -c "from services.core.rag_template_fetcher import get_template_fetcher; 
 ## 🔧 Self-Healing Agent System
 
 > ✅ **ZERO MANUAL DEPENDENCY MANAGEMENT**  
-> HyperAgent automatically detects, installs, and manages all dependencies. No manual `forge install` or `npm install` required!
+> HyperAgent automatically detects and installs Solidity dependencies (OpenZeppelin).  
+> **Python packages**: Install once via `pip install -e .` (from `hyperkit-agent/` directory) - includes alith, web3, OpenAI, Anthropic, Google AI, and all other dependencies from `pyproject.toml`.  
+> **OpenZeppelin contracts**: Auto-installed by agent during first workflow run or via `hyperagent doctor` (creates `lib/` directory).  
+> **npm packages**: Auto-installed only if contracts use Node.js dependencies.
 
 ### **What Gets Auto-Handled**
 
 | Feature | Description | Status |
 |---------|-------------|--------|
 | **Dependency Detection** | Automatically parses contracts for imports (Solidity, npm, Python) | ✅ Active |
-| **Dependency Installation** | Auto-installs OpenZeppelin, npm packages, Python packages | ✅ Active |
+| **Dependency Installation** | Auto-installs OpenZeppelin contracts; Python packages installed via `pip install -e .` | ✅ Active |
 | **Preflight Checks** | Verifies all system tools (forge, npm, python) at startup | ✅ Active |
 | **Doctor System** | Comprehensive environment validation and auto-repair (OpenZeppelin, solc version, git submodules) | ✅ Active |
 | **Error Detection** | Parses errors to detect automatable issues | ✅ Active |
@@ -277,7 +280,9 @@ python -c "from services.core.rag_template_fetcher import get_template_fetcher; 
 3. **Dependency Resolution (Stage 3)**: 
    - Agent parses contract for all imports (`@openzeppelin/...`, `lib/...`, etc.)
    - Detects missing dependencies
-   - Automatically runs `forge install`, `npm install`, or `pip install`
+   - For OpenZeppelin: Automatically runs `forge install` or direct `git clone` (creates `lib/openzeppelin-contracts/`)
+   - For npm packages: Automatically runs `npm install` (if contract uses Node.js dependencies)
+   - Python packages: Already installed via `pip install -e .` (not re-installed by agent)
    - Verifies installation before proceeding
 4. **Compilation (Stage 4)**:
    - If compilation fails, agent parses error message
@@ -295,15 +300,21 @@ python -c "from services.core.rag_template_fetcher import get_template_fetcher; 
 ### **Example: Zero-Config Workflow**
 
 ```bash
-# No manual setup required - agent handles everything!
+# After running: pip install -e . (from hyperkit-agent directory)
+# Agent handles OpenZeppelin installation automatically!
 hyperagent workflow run "Create an ERC20 token with OpenZeppelin"
 
 # Agent automatically:
-# ✓ Stage 0: Checks forge/npm/python availability
+# ✓ Stage 0: Doctor system validates environment
+#            - Checks forge/npm/python availability
+#            - Validates OpenZeppelin installation
+#            - Auto-installs missing OpenZeppelin if needed (creates lib/ directory)
 # ✓ Stage 2: Generates contract code with OpenZeppelin imports
-# ✓ Stage 3: Detects OpenZeppelin import needed
-#            Runs: forge install OpenZeppelin/openzeppelin-contracts
-#            Verifies installation (checks lib/openzeppelin-contracts/contracts/)
+# ✓ Stage 3: Detects OpenZeppelin import needed (if not already installed)
+#            - Runs: forge install OpenZeppelin/openzeppelin-contracts
+#            - Or: direct git clone (fallback)
+#            - Creates: lib/openzeppelin-contracts/
+#            - Verifies: checks lib/openzeppelin-contracts/contracts/ERC20.sol exists
 # ✓ Stage 4: Compiles contract (auto-retries on errors with fixes)
 # ✓ Stage 5: Tests contract
 # ✓ Stage 6: Audits contract
@@ -328,11 +339,11 @@ hyperagent context --workflow-id abc # View specific workflow with full details
 
 | Error Type | Auto-Fix Action |
 |------------|----------------|
-| `Source "lib/openzeppelin-contracts/..." not found` | Auto-runs `forge install OpenZeppelin/openzeppelin-contracts` |
+| `Source "lib/openzeppelin-contracts/..." not found` | Auto-runs `forge install OpenZeppelin/openzeppelin-contracts` or `git clone` fallback (creates `lib/` directory) |
 | `Import "@openzeppelin/contracts/security/ReentrancyGuard"` (v5 path) | Auto-fixes to `@openzeppelin/contracts/utils/ReentrancyGuard` |
 | `No arguments passed to Ownable()` (v5 constructor) | Auto-adds `Ownable(owner)` to constructor |
-| `Module 'package' not found` (Python) | Auto-runs `pip install package` |
-| `Cannot find module 'package'` (npm) | Auto-runs `npm install package` |
+| `Module 'package' not found` (Python) | ⚠️ **Note**: Python packages should be installed via `pip install -e .` - agent does not auto-install Python packages |
+| `Cannot find module 'package'` (npm) | Auto-runs `npm install package` (if contract uses Node.js dependencies) |
 
 ### **Minimum System Requirements**
 
@@ -346,6 +357,12 @@ Only these system-level tools need manual installation (one-time setup):
 | **Git** | Version control | [git-scm.com](https://git-scm.com/) |
 
 **Everything else is auto-handled by the agent!**
+
+**Important Notes:**
+- **Python packages**: Must be installed via `pip install -e .` before running workflows (not auto-installed by agent)
+- **OpenZeppelin contracts**: Auto-installed by agent during first workflow or via `hyperagent doctor`
+- **lib/ directory**: Auto-created when OpenZeppelin is installed
+- **Scripts**: Already included in repository (no installation needed)
 
 ---
 
@@ -866,9 +883,9 @@ npm run reports:status         # Generate status report
 | Node.js | 18+ | https://nodejs.org | ❌ System-level required |
 | Foundry | Latest | `curl -L https://foundry.paradigm.xyz \| bash && foundryup` | ❌ System-level required |
 | Git | Latest | https://git-scm.com | ❌ System-level required |
-| **OpenZeppelin** | v5.4.0+ | - | ✅ **Auto-installed** |
-| **npm packages** | Latest | - | ✅ **Auto-installed** |
-| **Python packages** | Latest | - | ✅ **Auto-installed** |
+| **OpenZeppelin** | v5.4.0+ | - | ✅ **Auto-installed by agent** (creates `lib/` directory) |
+| **npm packages** | Latest | - | ✅ **Auto-installed** (only if contracts use Node.js dependencies) |
+| **Python packages** | Latest | - | ✅ **Installed via `pip install -e .`** (from `hyperkit-agent/` directory) |
 
 ### Installation Steps
 
@@ -877,30 +894,37 @@ npm run reports:status         # Generate status report
 git clone https://github.com/JustineDevs/Hyperkit-Agent.git
 cd Hyperkit-Agent/hyperkit-agent
 
-# 2. Install Python dependencies
+# 2. Install Python dependencies (installs all packages from pyproject.toml)
+cd hyperkit-agent
 pip install -e .
+# This installs: alith, web3, OpenAI, Anthropic, Google AI, and all other Python dependencies
 
-# 3. Install Foundry
+# 3. Install Foundry (system-level requirement)
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
+# Foundry is required for Solidity compilation - cannot be installed via pip
 
 # 4. Configure environment
 cp env.example .env
 # Edit .env with your API keys and configuration
 
-# 5. Run Doctor preflight check (recommended)
+# 5. Run Doctor preflight check (recommended - auto-installs OpenZeppelin)
 hyperagent doctor
 # Or manually:
 python hyperkit-agent/scripts/doctor.py
+# Doctor will auto-install OpenZeppelin contracts to lib/openzeppelin-contracts/
 
 # 6. Verify installation
 hyperagent --help
 hyperagent version
 hyperagent status
 
-# NOTE: First workflow run will automatically install all dependencies
-# (OpenZeppelin, npm packages, Python packages) - no manual installation needed!
-# The Doctor system runs automatically during workflow preflight to ensure everything is ready.
+# NOTE: What gets installed when?
+# - pip install -e . → Installs ALL Python packages (from pyproject.toml)
+# - Foundry → Must be installed separately (system-level tool)
+# - OpenZeppelin → Auto-installed by Doctor or first workflow run
+# - Scripts → Already included in repository (no installation needed)
+# - lib/ directory → Auto-created when OpenZeppelin installs
 
 # 7. Verify npm scripts
 npm run version:check          # Check version consistency
@@ -952,8 +976,10 @@ LOG_LEVEL=INFO
 | **Networks** | ✅ Configured | `config.yaml` | Hyperion testnet (exclusive) |
 | **Private Keys** | ⚠️ Required | `.env` | Set `DEFAULT_PRIVATE_KEY` |
 | **Foundry** | ✅ Installed | System | Run `forge --version` to verify |
-| **OpenZeppelin** | ✅ Installed | `lib/` | Run `forge install OpenZeppelin/openzeppelin-contracts` |
-| **Dependencies** | ✅ Installed | `venv/` | Run `pip install -e .` |
+| **OpenZeppelin** | ✅ Auto-installed | `lib/` | Auto-installed by `hyperagent doctor` or first workflow |
+| **Python Dependencies** | ✅ Installed | `venv/` | Run `pip install -e .` (from hyperkit-agent directory) |
+| **Scripts** | ✅ Included | `scripts/` | Already in repository (no installation needed) |
+| **Foundry Config** | ✅ Included | `foundry.toml` | Already in repository |
 
 ---
 
