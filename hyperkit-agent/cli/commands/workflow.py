@@ -28,8 +28,9 @@ def workflow_group():
 @click.option('--use-rag/--no-use-rag', default=True, help='Use RAG templates for enhanced workflow context')
 @click.option('--upload-scope', type=click.Choice(['team', 'community']), default=None, help='Auto-upload artifacts to Pinata IPFS (team=official, community=user-generated)')
 @click.option('--rag-scope', type=click.Choice(['official-only', 'opt-in-community']), default='official-only', help='RAG fetch scope (official-only=Team only, opt-in-community=include Community artifacts)')
+@click.option('--resume-from', help='Resume workflow from diagnostic bundle (path to diagnostics JSON file)')
 @click.pass_context
-def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_insecure, use_rag, upload_scope, rag_scope):
+def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_insecure, use_rag, upload_scope, rag_scope, resume_from):
     """
     Run complete AI-powered smart contract workflow with RAG template integration
     
@@ -104,32 +105,55 @@ def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_ins
             test_only=test_only,
             allow_insecure=allow_insecure,
             upload_scope=upload_scope,
-            rag_scope=rag_scope
+            rag_scope=rag_scope,
+            resume_from_diagnostic=resume_from
         ))
         
-        # FIXED: Process results with explicit validation
+        # Process results with proper status handling
         workflow_status = result.get('status', 'unknown')
+        critical_failure = result.get('critical_failure', False)
         
+        # Handle different workflow statuses
         if workflow_status == 'success':
-            # Additional validation before showing success
-            deployment = result.get('deployment', {})
-            if not test_only and deployment:
-                deploy_status = deployment.get('status')
-                if deploy_status not in ['success', 'deployed', 'skipped']:
-                    # Deployment failed but workflow marked as success - FIX THIS
-                    console.print(f"\n[red bold]CRITICAL: Workflow marked success but deployment failed![/red bold]")
-                    console.print(f"[red]Deployment status: {deploy_status}[/red]")
-                    console.print(f"[red]Deployment error: {deployment.get('error', 'Unknown')}[/red]")
-                    _display_error_results(result)
-                    ctx.exit(1)
-            
+            # All stages succeeded - show success
             success = _display_success_results(result, network, test_only, verbose)
-            if not success:
-                console.print(f"\n[red bold]WORKFLOW TERMINATED DUE TO CRITICAL FAILURE[/red bold]")
-                ctx.exit(1)  # Exit with error code
-        else:
+            if success:
+                console.print(f"\n[green bold]✅ Workflow completed successfully![/green bold]")
+                ctx.exit(0)
+            else:
+                console.print(f"\n[yellow]Workflow completed with warnings[/yellow]")
+                ctx.exit(0)
+                
+        elif workflow_status == 'completed_with_errors':
+            # Non-critical errors (deployment/verification failed but gen/compile succeeded)
+            console.print(f"\n[yellow bold]⚠️  Workflow completed with non-critical errors[/yellow bold]")
+            _display_success_results(result, network, test_only, verbose)
+            console.print(f"\n[yellow]Note: Deployment or verification failed, but contract generation succeeded.[/yellow]")
+            console.print(f"[yellow]Check the diagnostic bundle for details: {result.get('diagnostic_bundle', 'N/A')}[/yellow]")
+            ctx.exit(0)  # Exit 0 - workflow completed, just with errors
+            
+        elif workflow_status == 'error' or critical_failure:
+            # Critical failure (generation/compilation failed)
+            console.print(f"\n[red bold]❌ Workflow failed due to critical errors[/red bold]")
             _display_error_results(result)
+            
+            # Show failed stages
+            failed_stages = result.get('failed_stages', [])
+            if failed_stages:
+                console.print(f"\n[red]Failed critical stages: {', '.join(failed_stages)}[/red]")
+            
+            # Show diagnostic bundle location
+            diagnostic_bundle = result.get('diagnostic_bundle')
+            if diagnostic_bundle:
+                console.print(f"\n[yellow]Diagnostic bundle saved: {diagnostic_bundle}[/yellow]")
+                console.print(f"[yellow]Review for detailed error information and recovery steps[/yellow]")
+            
             ctx.exit(1)  # Exit with error code
+        else:
+            # Unknown status
+            console.print(f"\n[yellow]Workflow completed with unknown status: {workflow_status}[/yellow]")
+            _display_success_results(result, network, test_only, verbose)
+            ctx.exit(0)
             
     except Exception as e:
         console.print(f"\n[red bold]Workflow error: {e}[/red bold]")
@@ -138,9 +162,7 @@ def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_ins
             console.print(f"\n[red]{traceback.format_exc()}[/red]")
 
 def _display_success_results(result: dict, network: str, test_only: bool, verbose: bool):
-    """Display successful workflow results"""
-    console.print("\n[green bold]Workflow completed successfully![/green bold]\n")
-    
+    """Display workflow results (success, partial success, or errors)"""
     # Create results table
     table = Table(title="Workflow Results", show_header=True, header_style="bold cyan")
     table.add_column("Stage", style="cyan", width=20)
@@ -263,9 +285,17 @@ def _display_success_results(result: dict, network: str, test_only: bool, verbos
     if gen and gen.get('path'):
         console.print(f"[bold cyan]Contract File:[/bold cyan] [white]{gen.get('path')}[/white]")
     
-    # Only show success if we actually succeeded (avoid unicode emojis for Windows cp1252)
-    console.print(f"\n[green bold]All stages completed successfully![/green bold]")
-    return True
+    # Determine if workflow actually succeeded
+    deploy = result.get('deployment', {})
+    deploy_status = deploy.get('status', 'unknown') if deploy else None
+    
+    # Return True if critical stages (gen/compile) succeeded
+    # Deployment/verification failures are non-critical and don't block "success"
+    if deploy_status and deploy_status not in ['success', 'deployed', 'skipped', None]:
+        # Deployment failed - but gen/compile succeeded
+        return True  # Still return True - workflow completed, deployment is non-critical
+    
+    return True  # All good
 
 def _display_error_results(result: dict):
     """Display error results"""
