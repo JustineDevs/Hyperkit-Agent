@@ -19,6 +19,7 @@
 - **CI/CD Infrastructure**: Test suites, linting, automation scripts exist
 - **Status Command**: Actually works (`hyperagent status`)
 - **RAG Testing**: Actually works (`hyperagent test-rag`)
+- **Doctor Preflight**: Production-grade environment validation with auto-fix (`hyperagent doctor`)
 
 ### What's Working/Improved ✅ / What's Partial ❌
 
