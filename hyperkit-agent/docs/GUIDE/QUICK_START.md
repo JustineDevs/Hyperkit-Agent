@@ -10,13 +10,22 @@
 ### Step 1: Install Dependencies
 
 ```bash
-# Install Python dependencies
+# Install Python dependencies (from hyperkit-agent directory)
 cd hyperkit-agent
-pip install -r requirements.txt  # Includes Alith SDK and IPFS features
+pip install -e .
+# Installs ALL packages from pyproject.toml:
+# - Alith SDK (>=0.12.0) - AI agent framework for Web3
+# - Web3 libraries (web3, eth-account, etc.)
+# - AI providers (OpenAI, Anthropic, Google Generative AI)
+# - IPFS client (ipfshttpclient) - for RAG template storage
+# - All other dependencies listed in pyproject.toml
 
-# Install Foundry (for contract compilation)
+# Install Foundry (for contract compilation - system-level tool)
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
+# Foundry cannot be installed via pip - it's a system-level tool
+
+# OpenZeppelin contracts will be auto-installed by Doctor or first workflow run
 ```
 
 ### Step 2: Configure Environment
