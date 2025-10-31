@@ -777,7 +777,7 @@ test -d .changeset && echo "✅ .changeset directory exists" || echo "❌ .chang
 
 ```bash
 # Navigate to your repository
-cd /c/Users/JustineDevs/Downloads/HyperAgent
+cd /c/Users/USERNAME/Downloads/HyperAgent
 
 # Step 1: Copy requirements.txt
 cp requirements.txt hyperkit-agent/requirements.txt
@@ -1100,7 +1100,7 @@ Optional Secrets:
 
 ```bash
 # 1. Navigate to project
-cd /c/Users/JustineDevs/Downloads/HyperAgent/hyperkit-agent
+cd /c/Users/USERNAME/Downloads/HyperAgent/hyperkit-agent
 
 # 2. Install dependencies
 pip install -r requirements.txt
@@ -1118,7 +1118,7 @@ pytest tests/ -v
 
 ```bash
 # From repository root
-cd /c/Users/JustineDevs/Downloads/HyperAgent
+cd /c/Users/USERNAME/Downloads/HyperAgent
 
 # Stage all changes
 git add .
