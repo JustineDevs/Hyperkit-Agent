@@ -96,6 +96,38 @@ HyperAgent/
 └── docs/              # Documentation
 ```
 
+## Doctor Preflight System
+
+Before running your first workflow, it's recommended to run the **Doctor** preflight system to validate your environment:
+
+```bash
+# Run Doctor check (auto-fixes common issues)
+hyperagent doctor
+
+# Or run manually with auto-fix
+cd hyperkit-agent
+python scripts/doctor.py
+
+# Report only (no fixes)
+python scripts/doctor.py --no-fix
+```
+
+**What Doctor Checks:**
+- ✅ Required tools (forge, python, node, npm)
+- ✅ OpenZeppelin installation and version compatibility
+- ✅ Foundry configuration (solc version)
+- ✅ Git submodule issues (auto-fixes broken entries)
+
+**Auto-Fix Capabilities:**
+- Installs missing OpenZeppelin contracts
+- Fixes version mismatches in `foundry.toml`
+- Cleans broken git submodule entries
+- Removes submodule entries from `.gitignore` (wrong location)
+
+See [`hyperkit-agent/docs/GUIDE/DOCTOR_PREFLIGHT.md`](../hyperkit-agent/docs/GUIDE/DOCTOR_PREFLIGHT.md) for detailed documentation.
+
+---
+
 ## Troubleshooting
 
 ### Issue: "alith not found"
@@ -124,6 +156,21 @@ pip install -e .
 ```bash
 npm run install:all
 ```
+
+### Issue: "OpenZeppelin not found" or "git submodule errors"
+**Solution**: Run the Doctor system to auto-fix:
+```bash
+hyperagent doctor
+# Or manually:
+cd hyperkit-agent
+python scripts/doctor.py
+```
+
+The Doctor system will:
+- Detect missing OpenZeppelin contracts
+- Auto-install via `forge install` or direct `git clone`
+- Fix broken git submodule references
+- Clean up `.gitignore` entries if needed
 
 ## Development Setup
 
