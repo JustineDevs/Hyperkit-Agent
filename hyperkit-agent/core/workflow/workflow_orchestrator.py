@@ -12,9 +12,15 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
 
+# CRITICAL: PipelineStage MUST be imported at module level only - never locally
+# This enum is used throughout the orchestrator and must always be in module scope
 from core.workflow.context_manager import (
     ContextManager, WorkflowContext, PipelineStage, StageResult
 )
+
+# Defensive check: Ensure PipelineStage is properly imported at module level
+if not hasattr(PipelineStage, "GENERATION"):
+    raise ImportError("PipelineStage not properly imported at module level - check imports")
 from core.workflow.error_handler import SelfHealingErrorHandler, handle_error_with_retry
 from core.workflow.environment_manager import EnvironmentManager
 from services.dependencies.dependency_manager import DependencyManager
@@ -55,7 +61,8 @@ class WorkflowOrchestrator:
         test_only: bool = False,
         allow_insecure: bool = False,
         upload_scope: Optional[str] = None,  # 'team' or 'community'
-        rag_scope: str = 'official-only'  # 'official-only' or 'opt-in-community'
+        rag_scope: str = 'official-only',  # 'official-only' or 'opt-in-community'
+        resume_from_diagnostic: Optional[str] = None  # Path to diagnostic bundle for recovery
     ) -> Dict[str, Any]:
         """
         Execute complete self-healing workflow with all automation.
@@ -82,8 +89,75 @@ class WorkflowOrchestrator:
         Returns:
             Complete workflow results with diagnostics
         """
-        workflow_id = str(uuid.uuid4())[:8]
-        context = self.context_manager.create_context(workflow_id, user_prompt, self.workspace_dir)
+        # Check if resuming from diagnostic bundle
+        if resume_from_diagnostic:
+            logger.info(f"🔄 Resuming workflow from diagnostic bundle: {resume_from_diagnostic}")
+            try:
+                diagnostic_path = Path(resume_from_diagnostic)
+                if not diagnostic_path.exists():
+                    logger.error(f"Diagnostic bundle not found: {resume_from_diagnostic}")
+                    return {
+                        "status": "error",
+                        "error": f"Diagnostic bundle not found: {resume_from_diagnostic}",
+                        "suggestions": ["Verify the diagnostic bundle path is correct"]
+                    }
+                
+                # Load diagnostic bundle
+                with open(diagnostic_path, 'r') as f:
+                    diagnostic_data = json.load(f)
+                
+                # Extract workflow_id and recreate context
+                workflow_id = diagnostic_data.get('workflow_id', str(uuid.uuid4())[:8])
+                context = self.context_manager.create_context(workflow_id, diagnostic_data.get('user_prompt', user_prompt), self.workspace_dir)
+                
+                # Restore context state from diagnostic bundle
+                if 'stages' in diagnostic_data:
+                    context.stages = []
+                    for stage_data in diagnostic_data['stages']:
+                        # PipelineStage and StageResult are available from module-level import (line 16)
+                        # Do NOT re-import - this creates local scope that shadows module-level import
+                        stage_result = StageResult(
+                            stage=PipelineStage(stage_data['stage']),
+                            status=stage_data['status'],
+                            output=stage_data.get('output', {}),
+                            error=stage_data.get('error'),
+                            error_type=stage_data.get('error_type'),
+                            timestamp=stage_data.get('timestamp', datetime.utcnow().isoformat()),
+                            duration_ms=stage_data.get('duration_ms')
+                        )
+                        context.stages.append(stage_result)
+                
+                # Restore contract info if available
+                if 'contract_info' in diagnostic_data:
+                    contract_info = diagnostic_data['contract_info']
+                    context.contract_name = contract_info.get('name')
+                    context.contract_path = contract_info.get('path')
+                    context.contract_category = contract_info.get('category')
+                
+                # Restore compilation info
+                if 'compilation' in diagnostic_data:
+                    context.compilation_success = diagnostic_data['compilation'].get('success', False)
+                    context.compilation_artifact_path = diagnostic_data['compilation'].get('artifact_path')
+                
+                # Restore deployment info
+                if 'deployment' in diagnostic_data:
+                    deployment_info = diagnostic_data['deployment']
+                    context.deployment_address = deployment_info.get('address')
+                    context.deployment_tx_hash = deployment_info.get('tx_hash')
+                    context.deployment_network = deployment_info.get('network')
+                
+                logger.info(f"✅ Loaded diagnostic bundle - resuming from stage: {context.get_last_successful_stage()}")
+                
+            except Exception as e:
+                logger.error(f"Failed to load diagnostic bundle: {e}")
+                return {
+                    "status": "error",
+                    "error": f"Failed to load diagnostic bundle: {str(e)}",
+                    "suggestions": ["Check diagnostic bundle format", "Verify bundle is valid JSON"]
+                }
+        else:
+            workflow_id = str(uuid.uuid4())[:8]
+            context = self.context_manager.create_context(workflow_id, user_prompt, self.workspace_dir)
         
         # Create isolated environment
         self.env_manager = EnvironmentManager(self.workspace_dir, workflow_id)
@@ -96,86 +170,211 @@ class WorkflowOrchestrator:
         logger.info(f"📁 Isolated environment: {temp_dir}")
         
         had_errors = False
+        
+        # Determine resume point if resuming from diagnostic bundle
+        last_successful_stage = context.get_last_successful_stage() if resume_from_diagnostic else None
+        
         try:
-            # Stage 0: Preflight checks
-            await self._stage_preflight(context)
+            # Resume from last successful stage if resuming from diagnostic bundle
+            if resume_from_diagnostic and last_successful_stage:
+                logger.info(f"🔄 Resuming workflow from stage: {last_successful_stage.value}")
+                
+                # Skip stages that already succeeded
+                if last_successful_stage.value in ['input_parsing', 'generation']:
+                    logger.info("Skipping preflight, input parsing, and generation (already completed)")
+                elif last_successful_stage.value == 'dependency_resolution':
+                    logger.info("Skipping preflight through dependency resolution (already completed)")
+                elif last_successful_stage.value == 'compilation':
+                    logger.info("Skipping preflight through compilation (already completed)")
+                elif last_successful_stage.value == 'testing':
+                    logger.info("Skipping preflight through testing (already completed)")
+                elif last_successful_stage.value == 'auditing':
+                    logger.info("Skipping preflight through auditing (already completed)")
+                elif last_successful_stage.value == 'deployment':
+                    logger.info("Skipping preflight through deployment (already completed)")
             
-            # Stage 1: Input parsing & RAG context
-            await self._stage_input_parsing(context, user_prompt, rag_scope)
+            # Stage 0: Preflight checks (skip if resuming past generation)
+            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value == 'input_parsing':
+                await self._stage_preflight(context)
             
-            # Stage 2: Contract generation
-            await self._stage_generation(context, user_prompt, rag_scope)
+            # Stage 1: Input parsing & RAG context (skip if resuming past this)
+            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value == 'input_parsing':
+                await self._stage_input_parsing(context, user_prompt, rag_scope)
             
-            # Stage 3: Dependency resolution
-            await self._stage_dependency_resolution(context)
+            # Stage 2: Contract generation (skip if resuming past this)
+            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['generation', 'input_parsing']:
+                await self._stage_generation(context, user_prompt, rag_scope)
             
-            # Stage 4: Compilation
-            await self._stage_compilation(context)
+            # Stage 3: Dependency resolution (skip if resuming past this)
+            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['dependency_resolution', 'generation', 'input_parsing']:
+                await self._stage_dependency_resolution(context)
             
-            # Stage 5: Testing (per ideal workflow: e2e and edge-case tests)
-            # Run tests BEFORE deployment to catch issues early
+            # Stage 4: Compilation (skip if resuming past this)
+            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['compilation', 'dependency_resolution', 'generation', 'input_parsing']:
+                await self._stage_compilation(context)
+            
+            # Stage 5: Testing (skip if resuming past this)
             if not test_only:
-                await self._stage_testing(context)
+                if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
+                    await self._stage_testing(context)
             
-            # Stage 6: Auditing (per ideal workflow: security analysis before deployment)
-            await self._stage_auditing(context)
+            # Stage 6: Auditing (skip if resuming past this)
+            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['auditing', 'testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
+                await self._stage_auditing(context)
             
-            # Stage 7: Deployment (per ideal workflow: only if audit passes or allow_insecure)
+            # Stage 7: Deployment (skip if resuming past this)
+            deployment_success = False
             if not test_only:
-                await self._stage_deployment(context, network, allow_insecure)
+                if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['deployment', 'auditing', 'testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
+                    try:
+                        await self._stage_deployment(context, network, allow_insecure)
+                        # Check if deployment actually succeeded
+                        if context.deployment_address:
+                            deployment_success = True
+                    except Exception as deploy_error:
+                        # Deployment failed - log but don't crash workflow
+                        logger.error(f"❌ Deployment stage failed: {deploy_error}")
+                        logger.info("💡 Workflow continuing - deployment failure is logged in context")
+                        # Deployment stage result already added in _stage_deployment
+                        deployment_success = False
             
-            # Stage 8: Verification & Artifact Storage (per ideal workflow: verify on explorer + store artifacts)
-            if not test_only and auto_verification and context.deployment_address:
-                await self._stage_verification(context, network)
+            # Stage 8: Verification & Artifact Storage (only if deployment succeeded)
+            if not test_only and auto_verification and deployment_success and context.deployment_address:
+                if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['verification', 'deployment', 'auditing', 'testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
+                    try:
+                        await self._stage_verification(context, network)
+                    except Exception as verify_error:
+                        # Verification failed - log but don't crash workflow
+                        logger.warning(f"⚠️ Verification stage failed: {verify_error}")
+                        logger.info("💡 Workflow continuing - verification failure is logged")
+                        # Verification stage result already added in _stage_verification
+            elif not test_only and auto_verification and not deployment_success:
+                # Skip verification if deployment failed
+                logger.info("⏭️ Skipping verification - deployment did not succeed")
+                context.add_stage_result(
+                    PipelineStage.VERIFICATION,
+                    "skipped",
+                    output={"reason": "Deployment failed - no contract address to verify"},
+                    duration_ms=0
+                )
             
-            # Stage 9: Output & diagnostics
+            # Stage 9: Output & diagnostics (always runs)
             result = await self._stage_output(context, upload_scope)
             
-            # Save context
+            # Determine final workflow status based on critical stages
+            # Critical: generation, compilation (these must succeed)
+            # Non-critical: deployment, verification (can fail but workflow completes)
+            critical_stages = [PipelineStage.GENERATION, PipelineStage.COMPILATION]
+            critical_failures = [
+                s for s in context.stages 
+                if s.stage in critical_stages and s.status == "error"
+            ]
+            
+            if critical_failures:
+                # Critical stage failed - workflow status is error
+                result["status"] = "error"
+                result["critical_failure"] = True
+                result["failed_stages"] = [s.stage.value for s in critical_failures]
+                logger.error("❌ Workflow failed due to critical stage failure")
+            elif context.has_error():
+                # Non-critical errors (deployment/verification) - workflow completed with warnings
+                result["status"] = "completed_with_errors"
+                result["critical_failure"] = False
+                logger.warning("⚠️ Workflow completed with non-critical errors (deployment/verification)")
+            else:
+                # All stages succeeded
+                result["status"] = "success"
+                result["critical_failure"] = False
+                logger.info("✅ Workflow completed successfully")
+            
+            # Save context (always save, even on failure)
             self.context_manager.save_context(context)
             
-            # Auto-upload artifacts to Pinata if upload_scope is specified
-            if upload_scope and upload_scope in ['team', 'community'] and not context.has_error():
-                await self._auto_upload_artifacts(context, upload_scope)
+            # Auto-upload artifacts to Pinata if upload_scope is specified (only if no critical errors)
+            if upload_scope and upload_scope in ['team', 'community'] and not critical_failures:
+                try:
+                    await self._auto_upload_artifacts(context, upload_scope)
+                except Exception as upload_error:
+                    logger.warning(f"⚠️ Artifact upload failed: {upload_error}")
+                    # Non-fatal - continue
             
-            # Clean up environment on success
+            # Clean up environment (preserve on critical errors, cleanup on success/warnings)
             if self.env_manager:
-                self.env_manager.cleanup(preserve_on_error=False, had_errors=False)
+                had_errors = critical_failures or context.has_error()
+                self.env_manager.cleanup(preserve_on_error=bool(critical_failures), had_errors=had_errors)
             
-            logger.info(f"✅ Workflow completed successfully: {workflow_id}")
+            logger.info(f"📊 Workflow completed: {result['status']} (workflow_id: {workflow_id})")
             return result
             
         except Exception as e:
+            # CRITICAL: PipelineStage is already imported at module level (line 16)
+            # Do NOT re-import - re-importing creates local scope that conflicts with module-level import
             had_errors = True
-            # Save context even on failure for debugging
-            context.add_stage_result(
-                PipelineStage.OUTPUT,
-                "error",
-                error=str(e),
-                error_type="workflow_exception"
-            )
-            self.context_manager.save_context(context)
+            diagnostic_path = None
             
-            # Generate diagnostic bundle
-            diagnostic_path = self.context_manager.save_diagnostic_bundle(context)
+            # Only save context if it exists (might not exist if exception occurs very early)
+            if 'context' in locals() and context is not None:
+                try:
+                    # PipelineStage is available from module-level import (no re-import needed)
+                    context.add_stage_result(
+                        PipelineStage.OUTPUT,
+                        "error",
+                        error=str(e),
+                        error_type="workflow_exception"
+                    )
+                    self.context_manager.save_context(context)
+                    
+                    # Generate diagnostic bundle
+                    try:
+                        diagnostic_path = self.context_manager.save_diagnostic_bundle(context)
+                    except Exception as diag_error:
+                        logger.error(f"Failed to save diagnostic bundle: {diag_error}")
+                        diagnostic_path = None
+                except Exception as context_error:
+                    logger.error(f"Failed to save context on workflow error: {context_error}")
+            else:
+                logger.warning("⚠️ No context available for error handling - exception occurred very early")
             
             # Preserve environment for debugging
             if self.env_manager:
-                self.env_manager.preserve_for_debugging()
-                self.env_manager.cleanup(preserve_on_error=True, had_errors=True)
+                try:
+                    self.env_manager.preserve_for_debugging()
+                    self.env_manager.cleanup(preserve_on_error=True, had_errors=True)
+                except Exception as env_error:
+                    logger.error(f"Failed to cleanup environment: {env_error}")
             
             logger.error(f"❌ Workflow failed: {e}")
-            logger.info(f"📋 Diagnostic bundle saved: {diagnostic_path}")
-            logger.info(f"📁 Temp environment preserved: {self.env_manager.temp_dir if self.env_manager else 'N/A'}")
+            if diagnostic_path:
+                logger.info(f"📋 Diagnostic bundle saved: {diagnostic_path}")
+            if self.env_manager and hasattr(self.env_manager, 'temp_dir') and self.env_manager.temp_dir:
+                logger.info(f"📁 Temp environment preserved: {self.env_manager.temp_dir}")
             
-            return {
+            # Build error result safely
+            error_result = {
                 "status": "error",
                 "error": str(e),
-                "workflow_id": workflow_id,
-                "diagnostic_bundle": str(diagnostic_path),
-                "temp_dir": str(self.env_manager.temp_dir) if self.env_manager else None,
-                "context": context.to_dict()
+                "workflow_id": workflow_id if 'workflow_id' in locals() else "unknown"
             }
+            
+            if diagnostic_path:
+                error_result["diagnostic_bundle"] = str(diagnostic_path)
+            
+            if self.env_manager and hasattr(self.env_manager, 'temp_dir') and self.env_manager.temp_dir:
+                error_result["temp_dir"] = str(self.env_manager.temp_dir)
+            
+            if 'context' in locals() and context is not None:
+                try:
+                    error_result["context"] = context.to_dict() if hasattr(context, 'to_dict') else str(context)
+                except Exception:
+                    error_result["context"] = f"Context available but serialization failed (workflow_id: {context.workflow_id if hasattr(context, 'workflow_id') else 'unknown'})"
+            
+            error_result["suggestions"] = [
+                "Review diagnostic bundle for detailed error information" if diagnostic_path else "Exception occurred too early - no diagnostic bundle available",
+                "Check error messages above for actionable fixes",
+                f"Review workflow context if available"
+            ]
+            
+            return error_result
     
     async def _stage_preflight(self, context: WorkflowContext):
         """Stage 0: Preflight checks (hardened validation)"""
@@ -846,6 +1045,39 @@ class WorkflowOrchestrator:
                 )
                 logger.info("🔧 Updated pragma solidity to ^0.8.24 for OpenZeppelin v5 compatibility")
         
+        # 0.3. PROACTIVELY fix OpenZeppelin v5 Ownable constructor requirement
+        # OpenZeppelin v5 Ownable REQUIRES constructor(address initialOwner) or Ownable(msg.sender) in constructor
+        if 'is Ownable' in fixed or 'Ownable' in fixed:
+            # Check if contract inherits Ownable
+            ownable_inheritance = re.search(r'contract\s+\w+\s+is\s+[^{]*Ownable', fixed)
+            if ownable_inheritance:
+                # Check if constructor exists
+                constructor_match = re.search(r'constructor\s*\(([^)]*)\)\s*([^{]*)\{', fixed)
+                if constructor_match:
+                    constructor_params = constructor_match.group(1).strip()
+                    constructor_calls = constructor_match.group(2).strip()
+                    
+                    # Check if Ownable constructor is NOT already called
+                    if 'Ownable(' not in constructor_calls:
+                        # Add Ownable(msg.sender) to constructor calls
+                        # Pattern: constructor(...) ERC20(...) { -> constructor(...) ERC20(...) Ownable(msg.sender) {
+                        fixed = re.sub(
+                            r'(constructor\s*\([^)]*\)\s*)([^{]*?)(\{)',
+                            lambda m: m.group(1) + m.group(2).rstrip() + ' Ownable(msg.sender) ' + m.group(3),
+                            fixed,
+                            count=1
+                        )
+                        logger.info("🔧 Added Ownable(msg.sender) to constructor for OpenZeppelin v5 compatibility")
+                    elif 'Ownable(' in constructor_calls and 'msg.sender' not in constructor_calls and 'initialOwner' not in constructor_calls:
+                        # Ownable() with no args - needs fixing
+                        fixed = re.sub(
+                            r'Ownable\(\)',
+                            'Ownable(msg.sender)',
+                            fixed,
+                            count=1
+                        )
+                        logger.info("🔧 Fixed Ownable() to Ownable(msg.sender) for OpenZeppelin v5 compatibility")
+        
         # 0.5. PROACTIVELY remove Counters.sol (deprecated in OZ v5) before compilation
         # This prevents the error from happening in the first place
         if 'Counters.sol' in fixed or 'using Counters' in fixed or 'Counters.Counter' in fixed:
@@ -976,7 +1208,10 @@ class WorkflowOrchestrator:
                 context.contract_name
             )
             
-            if deployment_result.get("status") in ["success", "deployed"]:
+            # Check deployment result status
+            deployment_status = deployment_result.get("status", "unknown")
+            
+            if deployment_status in ["success", "deployed"]:
                 context.deployment_address = deployment_result.get("contract_address")
                 context.deployment_tx_hash = deployment_result.get("tx_hash")
                 context.deployment_network = network
@@ -989,19 +1224,84 @@ class WorkflowOrchestrator:
                     duration_ms=duration
                 )
                 logger.info("✅ Deployment successful")
+                logger.info(f"   Contract Address: {context.deployment_address}")
+                logger.info(f"   Transaction Hash: {context.deployment_tx_hash}")
                 return deployment_result
             else:
-                raise Exception(deployment_result.get("error", "Deployment failed"))
+                # Deployment failed - provide detailed error information
+                error_msg = deployment_result.get("error", "Deployment failed")
+                error_details = deployment_result.get("error_details", {})
+                suggestions = deployment_result.get("suggestions", [])
+                
+                duration = (time.time() - stage_start) * 1000
+                context.add_stage_result(
+                    PipelineStage.DEPLOYMENT,
+                    "error",
+                    error=error_msg,
+                    error_type=error_details.get("error_type", "deployment_failure"),
+                    duration_ms=duration,
+                    output={
+                        "error": error_msg,
+                        "error_details": error_details,
+                        "suggestions": suggestions
+                    }
+                )
+                
+                # Log detailed failure information
+                logger.error(f"❌ Deployment failed: {error_msg}")
+                if error_details:
+                    logger.error(f"   Error Type: {error_details.get('error_type', 'Unknown')}")
+                    logger.error(f"   Contract: {error_details.get('contract_name', 'Unknown')}")
+                    if error_details.get('rpc_url'):
+                        logger.error(f"   RPC URL: {error_details.get('rpc_url')}")
+                
+                if suggestions:
+                    logger.info("💡 Recovery suggestions:")
+                    for suggestion in suggestions:
+                        logger.info(f"   • {suggestion}")
+                
+                # Don't raise - allow workflow to continue and complete with error status
+                logger.info("⚠️ Deployment stage failed - workflow will continue to output stage")
+                return deployment_result
                 
         except Exception as e:
             duration = (time.time() - stage_start) * 1000
+            error_type = type(e).__name__
+            
             context.add_stage_result(
                 PipelineStage.DEPLOYMENT,
                 "error",
                 error=str(e),
-                duration_ms=duration
+                error_type=error_type,
+                duration_ms=duration,
+                output={
+                    "error": str(e),
+                    "error_type": error_type,
+                    "suggestions": [
+                        "Check network connectivity",
+                        "Verify RPC endpoint is accessible",
+                        "Check account balance for gas fees",
+                        "Review contract code for compilation issues"
+                    ]
+                }
             )
-            raise
+            
+            # Log detailed exception information
+            logger.error(f"❌ Deployment exception: {error_type}: {str(e)}")
+            logger.info("💡 Recovery suggestions:")
+            logger.info("   • Check network connectivity and RPC endpoint")
+            logger.info("   • Verify account has sufficient balance for gas")
+            logger.info("   • Review contract compilation artifacts")
+            logger.info("   • Check diagnostic bundle for detailed error trace")
+            
+            # Don't raise - allow workflow to complete gracefully
+            logger.info("⚠️ Deployment stage exception - workflow will continue to output stage")
+            return {
+                "status": "error",
+                "error": str(e),
+                "error_type": error_type,
+                "stage": "deployment"
+            }
     
     async def _stage_verification(self, context: WorkflowContext, network: str):
         """Stage 8: Verification & Artifact Storage per ideal workflow"""
@@ -1040,30 +1340,57 @@ class WorkflowOrchestrator:
                 "verification_status": verification_result.get("status")
             }
             
-            # Step 3: Generate artifact paths for local storage
+            # Step 3: Generate artifact paths for local storage (robust path handling)
             from pathlib import Path
-            artifacts_dir = Path(__file__).parent.parent.parent / "artifacts" / "deploy" / network
-            artifacts_dir.mkdir(parents=True, exist_ok=True)
+            from core.config.paths import PathManager
             
-            # Save ABI if available
-            abi_path = None
-            if verification_result.get("abi"):
-                abi_file = artifacts_dir / f"{context.contract_name}.abi.json"
-                import json
-                abi_file.write_text(json.dumps(verification_result["abi"], indent=2), encoding="utf-8")
-                artifacts_metadata["abi_path"] = str(abi_file)
-                abi_path = str(abi_file)
-                logger.info(f"💾 Saved ABI to: {abi_file}")
-            
-            # Save deployment metadata
-            metadata_file = artifacts_dir / f"{context.contract_name}.metadata.json"
-            import json
-            metadata_file.write_text(json.dumps(artifacts_metadata, indent=2), encoding="utf-8")
-            context.metadata["metadata_path"] = str(metadata_file)
-            if abi_path:
-                context.metadata["abi_path"] = abi_path
-            context.metadata["artifacts_stored"] = True
-            logger.info(f"💾 Saved deployment metadata to: {metadata_file}")
+            try:
+                # Use PathManager for robust path resolution
+                path_manager = PathManager(command_type="verify")
+                artifacts_dir = path_manager.get_artifacts_dir() / "deploy" / network
+                artifacts_dir.mkdir(parents=True, exist_ok=True)
+                
+                # Validate artifacts directory was created
+                if not artifacts_dir.exists():
+                    raise OSError(f"Failed to create artifacts directory: {artifacts_dir}")
+                
+                logger.debug(f"Artifacts directory: {artifacts_dir}")
+                
+                # Save ABI if available
+                abi_path = None
+                if verification_result.get("abi"):
+                    abi_file = artifacts_dir / f"{context.contract_name}.abi.json"
+                    try:
+                        import json
+                        abi_file.write_text(json.dumps(verification_result["abi"], indent=2), encoding="utf-8")
+                        artifacts_metadata["abi_path"] = str(abi_file.resolve())  # Use absolute path
+                        abi_path = str(abi_file.resolve())
+                        logger.info(f"💾 Saved ABI to: {abi_file}")
+                    except (OSError, IOError) as e:
+                        logger.error(f"❌ Failed to save ABI file: {e}")
+                        # Continue without ABI path - non-critical
+                
+                # Save deployment metadata
+                metadata_file = artifacts_dir / f"{context.contract_name}.metadata.json"
+                try:
+                    import json
+                    metadata_file.write_text(json.dumps(artifacts_metadata, indent=2), encoding="utf-8")
+                    context.metadata["metadata_path"] = str(metadata_file.resolve())  # Use absolute path
+                    if abi_path:
+                        context.metadata["abi_path"] = abi_path
+                    context.metadata["artifacts_stored"] = True
+                    logger.info(f"💾 Saved deployment metadata to: {metadata_file}")
+                except (OSError, IOError) as e:
+                    logger.error(f"❌ Failed to save metadata file: {e}")
+                    # Mark as stored with warning
+                    context.metadata["artifacts_stored"] = False
+                    context.metadata["artifact_storage_error"] = str(e)
+                    
+            except Exception as e:
+                logger.error(f"❌ Artifact path handling failed: {e}")
+                # Continue without artifact storage - non-critical for verification
+                context.metadata["artifacts_stored"] = False
+                context.metadata["artifact_storage_error"] = str(e)
             
             duration = (time.time() - stage_start) * 1000
             context.add_stage_result(
@@ -1103,12 +1430,25 @@ class WorkflowOrchestrator:
         stage_start = time.time()
         logger.info("📊 Stage 9: Output & Diagnostics")
         
+        # CRITICAL: PipelineStage is available from module-level import (line 16)
+        # No local imports or re-definitions allowed - always use module-level enum
+        # Defensive check already done at module load (line 23-24)
+        
         # Generate final result per ideal workflow (comprehensive output)
+        # Note: Status will be overridden by caller based on critical vs non-critical failures
         result = {
-            "status": "success" if not context.has_error() else "error",
+            "status": "success",  # Will be set by caller
             "workflow_id": context.workflow_id,
             "contract_name": context.contract_name,
             "contract_path": context.contract_path,
+            "generation": {
+                "status": next(
+                    (s.status for s in context.stages if s.stage == PipelineStage.GENERATION),
+                    "unknown"
+                ),
+                "contract_name": context.contract_name,
+                "contract_path": context.contract_path
+            },
             "compilation": {
                 "success": context.compilation_success,
                 "artifact_path": context.compilation_artifact_path
@@ -1128,12 +1468,35 @@ class WorkflowOrchestrator:
                 "address": context.deployment_address,
                 "tx_hash": context.deployment_tx_hash,
                 "network": context.deployment_network,
-                "explorer_url": f"https://explorer.{context.deployment_network}.io/address/{context.deployment_address}" if context.deployment_address else None
+                "status": next(
+                    (s.status for s in context.stages if s.stage == PipelineStage.DEPLOYMENT),
+                    "skipped"
+                ),
+                "explorer_url": f"https://explorer.{context.deployment_network}.io/address/{context.deployment_address}" if context.deployment_address else None,
+                "error": next(
+                    (s.error for s in context.stages if s.stage == PipelineStage.DEPLOYMENT and s.error),
+                    None
+                ),
+                "error_details": next(
+                    (s.output.get("error_details") for s in context.stages if s.stage == PipelineStage.DEPLOYMENT and s.output and s.output.get("error_details")),
+                    None
+                ),
+                "suggestions": next(
+                    (s.output.get("suggestions", []) for s in context.stages if s.stage == PipelineStage.DEPLOYMENT and s.output and s.output.get("suggestions")),
+                    []
+                )
             },
             "verification": {
-                "status": context.verification_status,
+                "status": context.verification_status or next(
+                    (s.status for s in context.stages if s.stage == PipelineStage.VERIFICATION),
+                    "skipped"
+                ),
                 "url": context.verification_url,
-                "artifacts_stored": context.metadata.get("artifacts_stored", False)
+                "artifacts_stored": context.metadata.get("artifacts_stored", False),
+                "error": next(
+                    (s.error for s in context.stages if s.stage == PipelineStage.VERIFICATION and s.error),
+                    None
+                )
             },
             "artifacts": {
                 "ipfs_uploads": context.metadata.get("ipfs_uploads", []),
@@ -1334,4 +1697,6 @@ class WorkflowOrchestrator:
             logger.debug("Pinata client not available - skipping auto-upload")
         except Exception as e:
             logger.warning(f"⚠️ Auto-upload failed: {e}")
+
+
 
