@@ -63,9 +63,13 @@ cd HyperAgent
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
+# Install dependencies (from hyperkit-agent directory)
+cd hyperkit-agent
+pip install -e ".[dev]"
+# Installs all packages from pyproject.toml including dev extras:
+# - All core dependencies (alith, web3, OpenAI, Anthropic, Google AI, etc.)
+# - Development tools (pytest, black, flake8, mypy, isort, pre-commit, etc.)
+# No need to run separate pip install commands
 
 # Setup pre-commit hooks
 pre-commit install
@@ -222,7 +226,8 @@ PYTHONPATH=. python -m hyperkit_agent.cli.main --debug
 ### **Production Deployment**
 ```bash
 # Install production dependencies
-pip install -r requirements.txt
+pip install -e .
+# From hyperkit-agent directory - installs all packages from pyproject.toml
 
 # Run production server
 python -m hyperkit_agent.cli.main
