@@ -39,6 +39,6 @@ Start with:
 - 💰 **Bug Bounty**: See [SECURITY.md](../../../SECURITY.md)
 
 **Last Updated**: 2025-01-29  
-**Version**: 1.5.8  
+**Version**: 1.5.10  
 **Maintained By**: Core Team
 
