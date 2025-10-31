@@ -61,6 +61,10 @@ class PathManager:
         """Get test command directory"""
         return self.artifacts_dir / "test"
     
+    def get_artifacts_dir(self) -> Path:
+        """Get base artifacts directory"""
+        return self.artifacts_dir
+    
     def get_category_dir(self, category: str) -> Path:
         """Get directory for specific category"""
         return self.contracts_dir / category / "generated"
