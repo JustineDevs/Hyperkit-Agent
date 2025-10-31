@@ -20,7 +20,7 @@
 
 ```bash
 # Navigate to project directory
-cd C:/Users/JustineDevs/Downloads/HyperAgent/hyperkit-agent
+cd C:/Users/USERNAME/Downloads/HyperAgent/hyperkit-agent
 ```
 
 **Task List**:
