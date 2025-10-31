@@ -28,8 +28,11 @@ def config_group():
 @config_group.command()
 @click.option('--key', '-k', help='Configuration key')
 @click.option('--value', '-v', help='Configuration value')
-def set(key, value):
+@click.pass_context
+def set(ctx, key, value):
     """Set configuration value"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
     if key and value:
         console.print(f"Setting {key} = {value}")
         
@@ -57,6 +60,9 @@ def set(key, value):
             console.print(f"PyYAML not available - install with: pip install pyyaml")
         except Exception as e:
             console.print(f"Config error: {e}", style="red")
+            if ctx.obj.get('debug', False) if ctx.obj else False:
+                import traceback
+                console.print(traceback.format_exc())
     else:
         console.print("Please provide both key and value")
         console.print("Usage: hyperagent config set --key <key> --value <value>")
@@ -175,8 +181,11 @@ def foundry_check():
 
 @config_group.command()
 @click.argument('key', required=False)
-def get(key):
+@click.pass_context
+def get(ctx, key):
     """Get configuration value"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
     try:
         config_file = Path("config.yaml")
         
@@ -210,8 +219,11 @@ def get(key):
         console.print(f"Config error: {e}", style="red")
 
 @config_group.command()
-def list():
+@click.pass_context
+def list(ctx):
     """List all configuration values"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
     try:
         config_file = Path("config.yaml")
         
@@ -237,8 +249,11 @@ def list():
         console.print(f"Config error: {e}", style="red")
 
 @config_group.command()
-def reset():
+@click.pass_context
+def reset(ctx):
     """Reset configuration to defaults"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
     console.print("Resetting configuration to defaults")
     
     try:
@@ -290,8 +305,11 @@ def reset():
 
 @config_group.command()
 @click.option('--file', '-f', help='Configuration file path')
-def load(file):
+@click.pass_context
+def load(ctx, file):
     """Load configuration from file"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
     if not file:
         console.print("Please provide a file path")
         console.print("Usage: hyperagent config load --file <path>")
@@ -324,8 +342,11 @@ def load(file):
 
 @config_group.command()
 @click.option('--file', '-f', help='Configuration file path')
-def save(file):
+@click.pass_context
+def save(ctx, file):
     """Save configuration to file"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
     if not file:
         console.print("Please provide a file path")
         console.print("Usage: hyperagent config save --file <path>")
