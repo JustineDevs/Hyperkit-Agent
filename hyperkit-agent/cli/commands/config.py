@@ -61,6 +61,118 @@ def set(key, value):
         console.print("Please provide both key and value")
         console.print("Usage: hyperagent config set --key <key> --value <value>")
 
+@config_group.command(name='foundry-check')
+def foundry_check():
+    """Check Foundry version status and diagnose issues"""
+    try:
+        from services.deployment.foundry_manager import FoundryManager
+        from rich.table import Table
+        
+        console.print("[bold cyan]Foundry Version Diagnostic[/bold cyan]\n")
+        
+        fm = FoundryManager()
+        status = fm.get_version_status()
+        
+        # Create diagnostic table
+        table = Table(title="Foundry Version Status", show_header=True, header_style="bold magenta")
+        table.add_column("Property", style="cyan")
+        table.add_column("Value", style="yellow")
+        table.add_column("Status", style="green")
+        
+        # Installation status
+        table.add_row(
+            "Installed",
+            "Yes" if status["installed"] else "No",
+            "✅" if status["installed"] else "❌"
+        )
+        
+        # Current version
+        table.add_row(
+            "Current Version",
+            status["current_version"] or "Unknown",
+            "⚠️" if status["is_nightly"] else "✅"
+        )
+        
+        # Expected version
+        table.add_row(
+            "Expected Version Hint",
+            status["expected_version_hint"],
+            "✅" if not status["version_mismatch"] else "⚠️"
+        )
+        
+        # Nightly build
+        table.add_row(
+            "Is Nightly Build",
+            "Yes" if status["is_nightly"] else "No",
+            "❌" if status["is_nightly"] else "✅"
+        )
+        
+        # Version mismatch
+        table.add_row(
+            "Version Mismatch",
+            "Yes" if status["version_mismatch"] else "No",
+            "⚠️" if status["version_mismatch"] else "✅"
+        )
+        
+        # Strict mode
+        table.add_row(
+            "Strict Mode Enabled",
+            "Yes" if status["strict_mode"] else "No",
+            "⚠️" if status["strict_mode"] and (status["is_nightly"] or status["version_mismatch"]) else "✅"
+        )
+        
+        # Would refuse deploy
+        table.add_row(
+            "Would Refuse Deploy",
+            "Yes" if status["should_refuse"] else "No",
+            "❌" if status["should_refuse"] else "✅"
+        )
+        
+        # Forge path
+        table.add_row(
+            "Forge Path",
+            status["forge_path"] or "Not found",
+            "✅" if status["forge_path"] else "❌"
+        )
+        
+        console.print(table)
+        
+        # Provide recommendations
+        console.print("\n[bold yellow]Recommendations:[/bold yellow]\n")
+        
+        if not status["installed"]:
+            console.print("[red]❌ Foundry is not installed or not in PATH[/red]")
+            console.print("  → Install Foundry: curl -L https://foundry.paradigm.xyz | bash")
+            console.print("  → Run: foundryup")
+        elif status["is_nightly"]:
+            console.print("[yellow]⚠️  Nightly build detected - unstable for production[/yellow]")
+            console.print("  → Install stable version:")
+            console.print("    1. Find all forge binaries: which -a forge")
+            console.print("    2. Remove nightly: rm -f ~/.foundry/bin/forge (if in that path)")
+            console.print("    3. Install stable: foundryup")
+            console.print("    4. Verify: forge --version")
+            console.print("  → On Windows: Download stable from https://github.com/foundry-rs/foundry/releases")
+        elif status["version_mismatch"]:
+            console.print("[yellow]⚠️  Version mismatch detected[/yellow]")
+            console.print(f"  → Current: {status['current_version']}")
+            console.print(f"  → Expected hint: {status['expected_version_hint']}")
+            console.print("  → Fix by:")
+            console.print("    1. Check PATH: which -a forge")
+            console.print("    2. Install matching version: foundryup")
+            console.print("    3. Or update HYPERAGENT_FORGE_VERSION env var")
+        elif status["should_refuse"]:
+            console.print("[red]❌ Deployment would be refused in strict mode[/red]")
+            console.print("  → Either fix Foundry version OR disable strict mode:")
+            console.print("     export HYPERAGENT_STRICT_FORGE=0  # Not recommended")
+        else:
+            console.print("[green]✅ Foundry version looks good![/green]")
+            console.print("  → No issues detected - ready for deployment")
+    except Exception as e:
+        console.print(f"[red]Error checking Foundry version: {e}[/red]")
+        import traceback
+        if os.getenv("DEBUG"):
+            console.print(traceback.format_exc())
+
 @config_group.command()
 @click.argument('key', required=False)
 def get(key):
