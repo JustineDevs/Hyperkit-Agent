@@ -72,6 +72,56 @@ def run_cmd(cmd: List[str], cwd: Optional[Path] = None, capture_output: bool = T
 
 def check_tool(tool: str, version_flag: str = "--version") -> Tuple[bool, Optional[str]]:
     """Check if a tool is available and get its version"""
+    # On Windows, check common installation locations for tools not in PATH
+    if sys.platform == "win32":
+        possible_paths = []
+        
+        if tool == "forge":
+            # Check common Windows Foundry locations
+            possible_paths = [
+                Path.home() / ".foundry" / "bin" / "forge.exe",
+                Path("C:/Users") / os.getenv("USERNAME", "") / ".foundry" / "bin" / "forge.exe",
+                Path("C:/Program Files/foundry/forge.exe"),
+                Path("C:/Program Files/foundry/bin/forge.exe"),
+            ]
+        elif tool == "npm":
+            # Check common Windows npm locations (npm usually comes with Node.js)
+            # npm.cmd is the Windows wrapper
+            node_paths = [
+                Path(os.getenv("PROGRAMFILES", "C:/Program Files")) / "nodejs" / "npm.cmd",
+                Path(os.getenv("PROGRAMFILES(X86)", "C:/Program Files (x86)")) / "nodejs" / "npm.cmd",
+                Path.home() / "AppData" / "Roaming" / "npm" / "npm.cmd",
+            ]
+            # Also check if node is found, npm might be in same directory
+            try:
+                node_result = subprocess.run(["node", "--version"], capture_output=True, text=True, timeout=5, check=False)
+                if node_result.returncode == 0:
+                    # npm is usually in same dir as node or in PATH
+                    possible_paths.append("npm.cmd")  # Try npm.cmd in PATH
+                    possible_paths.append("npm")  # Try npm in PATH
+            except:
+                pass
+            possible_paths.extend(node_paths)
+        
+        # Try all possible paths
+        for tool_path in possible_paths:
+            if isinstance(tool_path, str):
+                # Try as-is (might be in PATH)
+                cmd = [tool_path, version_flag]
+            else:
+                if not tool_path.exists():
+                    continue
+                cmd = [str(tool_path), version_flag]
+            
+            try:
+                result = run_cmd(cmd, check=False)
+                if result.returncode == 0:
+                    version = result.stdout.strip().split('\n')[0] if result.stdout else "installed"
+                    return True, version
+            except Exception:
+                continue
+    
+    # Standard PATH check for all tools
     try:
         result = run_cmd([tool, version_flag], check=False)
         if result.returncode == 0:
@@ -105,11 +155,19 @@ def check_required_tools() -> Dict[str, Tuple[bool, Optional[str]]]:
             print_error(f"{tool}: NOT FOUND")
             all_present = False
     
-    if not all_present:
+    # Required tools: forge, python, node, npm (all required for full functionality)
+    required_tools = ["forge", "python", "node", "npm"]
+    missing_required = [tool for tool in required_tools if tool in results and not results[tool][0]]
+    
+    if missing_required:
         print_error("\n❌ Missing required tools. Please install:")
-        print_info("  - Forge: curl -L https://foundry.paradigm.xyz | bash && foundryup")
-        print_info("  - Python: https://www.python.org/downloads/")
-        print_info("  - Node.js: https://nodejs.org/")
+        if "forge" in missing_required:
+            print_info("  - Forge: curl -L https://foundry.paradigm.xyz | bash && foundryup")
+        if "python" in missing_required:
+            print_info("  - Python: https://www.python.org/downloads/")
+        if "node" in missing_required or "npm" in missing_required:
+            print_info("  - Node.js (includes npm): https://nodejs.org/")
+            print_info("  - If Node.js is installed, ensure it's in PATH")
         sys.exit(1)
     
     return results
@@ -365,9 +423,12 @@ def doctor(workspace_dir: Optional[Path] = None, auto_fix: bool = True) -> bool:
     all_checks_passed = True
     
     try:
-        # Step 1: Required tools
+        # Step 1: Required tools (all must be present)
         tools_status = check_required_tools()
-        if not all(tool[0] for tool in tools_status.values()):
+        # All tools (forge, python, node, npm) are required
+        required_tools = ["forge", "python", "node", "npm"]
+        missing_required = [tool for tool in required_tools if tool in tools_status and not tools_status[tool][0]]
+        if missing_required:
             return False
         
         # Step 2: OpenZeppelin installation
