@@ -24,7 +24,8 @@ def batch_audit_group():
               default='json', 
               help='Output format')
 @click.option('--batch-name', '-n', help='Name for this batch audit')
-def audit_contracts(files: tuple, directory: str, output: str, format: str, batch_name: str):
+@click.pass_context
+def audit_contracts(ctx, files: tuple, directory: str, output: str, format: str, batch_name: str):
     """
     Audit multiple contracts in batch.
     
@@ -36,6 +37,11 @@ def audit_contracts(files: tuple, directory: str, output: str, format: str, batc
         hyperagent batch-audit contracts -d contracts/ --format all
         hyperagent batch-audit contracts -f *.sol --format excel -n "Q4 Audit"
     """
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
+    
+    if verbose:
+        click.echo("Verbose mode: Detailed batch audit enabled")
     from cli.utils.warnings import show_command_warning
     show_command_warning('batch-audit')
     try:
@@ -133,6 +139,9 @@ def audit_contracts(files: tuple, directory: str, output: str, format: str, batc
     except Exception as e:
         logger.error(f"Batch audit failed: {str(e)}", exc_info=True)
         click.echo(f"Batch audit failed: {str(e)}", err=True)
+        if ctx.obj.get('debug', False) if ctx.obj else False:
+            import traceback
+            click.echo(traceback.format_exc(), err=True)
 
 
 def _resolve_contract_files(file_patterns: tuple) -> List[Path]:
