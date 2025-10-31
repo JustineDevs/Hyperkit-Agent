@@ -55,11 +55,24 @@ class HyperKitAIAgent:
             logging.warning("  3. Set ALITH_ENABLED=true in .env")
     
     def _check_alith_config(self) -> bool:
-        """Check if Alith SDK is properly configured"""
+        """Check if Alith SDK is properly configured
+        
+        NOTE: Gemini is now PRIMARY. Alith SDK is only used as fallback if Gemini unavailable.
+        """
         if not ALITH_AVAILABLE:
             return False
         
-        # Alith SDK requires OpenAI API key (based on LLM router)
+        # PRIORITY: Check for Gemini first (primary model)
+        google_key = self.config.get('GOOGLE_API_KEY') or self.config.get('google', {}).get('api_key')
+        has_gemini = google_key and google_key.strip() and google_key != 'your_google_api_key_here'
+        
+        # If Gemini is available, disable Alith SDK (don't use OpenAI)
+        # Only enable Alith SDK if Gemini is NOT available
+        if has_gemini:
+            log_info(LogCategory.AI_AGENT, "Gemini detected - Alith SDK (OpenAI) disabled in favor of Gemini")
+            return False  # Don't use Alith SDK when Gemini is available
+        
+        # Fallback: Check for OpenAI only if Gemini unavailable
         openai_key = self.config.get('OPENAI_API_KEY') or self.config.get('openai', {}).get('api_key')
         if not openai_key or openai_key.strip() == '' or openai_key == 'your_openai_api_key_here':
             return False
@@ -72,26 +85,39 @@ class HyperKitAIAgent:
         return bool(alith_enabled)
     
     def _initialize_alith(self):
-        """Initialize Alith SDK agent - uses OpenAI API key (Alith requirement)"""
+        """Initialize Alith SDK agent - FALLBACK ONLY when Gemini unavailable
+        
+        NOTE: This is only called when Gemini is NOT available. Gemini is PRIMARY model.
+        """
         try:
-            # Alith SDK uses OpenAI API key (not LazAI key - LazAI is network only)
+            # Alith SDK fallback - only used if Gemini unavailable
+            # Check Gemini first - if available, don't initialize Alith SDK
+            google_key = self.config.get('GOOGLE_API_KEY') or self.config.get('google', {}).get('api_key')
+            if google_key and google_key.strip() and google_key != 'your_google_api_key_here':
+                log_info(LogCategory.AI_AGENT, "Gemini available - skipping Alith SDK (OpenAI) initialization")
+                self.alith_agent = None
+                self.alith_configured = False
+                return
+            
+            # Fallback: Use OpenAI only if Gemini unavailable
             openai_key = self.config.get('OPENAI_API_KEY') or self.config.get('openai', {}).get('api_key')
             if not openai_key:
-                raise ValueError("OpenAI API key required for Alith SDK")
+                raise ValueError("Neither Gemini nor OpenAI API key available for Alith SDK fallback")
             
             # Get model from config or use default (Alith SDK requires a model)
             alith_config = self.config.get('alith', {})
             model = alith_config.get('model') or self.config.get('ALITH_MODEL') or 'gpt-4o-mini'
             name = alith_config.get('name') or 'HyperKit Agent'
             
-            # Initialize Alith Agent with OpenAI key and model (model is required!)
+            # Initialize Alith Agent with OpenAI key and model (FALLBACK ONLY)
             try:
                 self.alith_agent = Agent(
                     api_key=openai_key,
                     model=model,
                     name=name
                 )
-                log_info(LogCategory.AI_AGENT, f"Alith SDK Agent initialized with OpenAI key and model: {model}")
+                log_warning(LogCategory.AI_AGENT, f"Alith SDK Agent initialized with OpenAI (FALLBACK) - Gemini unavailable. Model: {model}")
+                logging.warning("⚠️ Using OpenAI via Alith SDK as fallback - Gemini should be configured as PRIMARY")
             except (AttributeError, TypeError) as e:
                 log_error(LogCategory.AI_AGENT, f"Alith SDK Agent initialization failed: {e}", e)
                 raise ValueError(f"Alith SDK Agent failed to initialize: {e}")
