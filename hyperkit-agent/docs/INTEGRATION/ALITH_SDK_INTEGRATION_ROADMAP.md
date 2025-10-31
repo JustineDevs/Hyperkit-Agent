@@ -4,7 +4,7 @@
 **Last Updated**: October 28, 2025  
 **Current State**: Alith SDK moved to optional dependencies (CI/CD compatibility issues)  
 **Partnership**: LazAI Network / Metis Ecosystem  
-**Installation**: `pip install -r requirements-optional.txt` (may fail due to dstack-sdk dependency)  
+**Installation**: `cd hyperkit-agent && pip install -e .` (installs all packages from pyproject.toml including alith)  
 
 ---
 
@@ -134,7 +134,8 @@ With Alith: Results anchored on LazAI/Metis blockchain
 **Commands**:
 ```bash
 # Install Alith SDK
-python3 -m pip install alith -U
+cd hyperkit-agent && python3 -m pip install -e .
+# Installs all packages from pyproject.toml including alith
 
 # Verify installation
 python3 -c "from alith import Agent; print('✅ Alith SDK installed')"
@@ -768,7 +769,7 @@ ai_providers:
 
 ### This Week
 1. ✅ Review this integration roadmap
-2. 🔄 Install Alith SDK: `pip install alith`
+2. 🔄 Install all dependencies: `cd hyperkit-agent && pip install -e .` (includes alith)
 3. 🔄 Test basic agent functionality
 4. 🔄 Schedule Week 1 kickoff meeting
 
