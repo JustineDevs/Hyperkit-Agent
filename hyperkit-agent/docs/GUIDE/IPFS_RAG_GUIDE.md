@@ -90,10 +90,14 @@ hyperagent setup_rag_vectors
 ```bash
 # 1. Clone repo (lightweight, no vectors)
 git clone https://github.com/YourOrg/HyperKit-Agent
-cd HyperKit-Agent
+cd HyperKit-Agent/hyperkit-agent
 
-# 2. Install dependencies
-pip install -r requirements.txt
+# 2. Install dependencies (from hyperkit-agent directory)
+pip install -e .
+# Installs ALL packages from pyproject.toml:
+# - Alith SDK (>=0.12.0), web3, OpenAI, Anthropic, Google AI
+# - IPFS client (ipfshttpclient) for RAG template storage
+# - All utility libraries and dependencies
 
 # 3. Fetch pre-built vectors from IPFS (< 1 minute)
 hyperagent setup_rag_vectors --fetch-cid QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -345,10 +349,14 @@ hyperagent setup_rag_vectors  # Create local store first
 ```bash
 # Clone the repo
 git clone https://github.com/YourOrg/HyperKit-Agent
-cd HyperKit-Agent
+cd HyperKit-Agent/hyperkit-agent
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (from hyperkit-agent directory)
+pip install -e .
+# Installs ALL packages from pyproject.toml:
+# - Alith SDK (>=0.12.0), web3, OpenAI, Anthropic, Google AI
+# - IPFS client (ipfshttpclient) for RAG template storage
+# - All utility libraries and dependencies
 
 # Fetch latest vector store
 hyperagent setup_rag_vectors --fetch-cid QmABC123...
