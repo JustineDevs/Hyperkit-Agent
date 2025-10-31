@@ -12,11 +12,12 @@ import sys
 import os
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 TEMPLATES = [
     'create ERC20 token',
+    'create pausable ERC20 token',
     'create staking contract with rewards',
 ]
 
@@ -37,9 +38,10 @@ def main():
     failures = []
     can_deploy = bool(os.getenv('DEFAULT_PRIVATE_KEY') or os.getenv('PRIVATE_KEY'))
 
+    cli_entry = ROOT / "hyperkit-agent" / "cli" / "main.py"
     for prompt in TEMPLATES:
         # Generate + audit (test-only)
-        cmd = f"python -m hyperkit-agent.cli.main workflow run \"{prompt}\" --test-only"
+        cmd = f"python {cli_entry} workflow run \"{prompt}\" --test-only"
         code, out, err = run(cmd)
         if code != 0 or 'success' not in (out.lower() + err.lower()):
             failures.append((f"workflow test-only: {prompt}", code, err or out))
@@ -47,7 +49,7 @@ def main():
 
         # Deploy + verify when possible
         if can_deploy:
-            cmd = f"python -m hyperkit-agent.cli.main workflow run \"{prompt}\""
+            cmd = f"python {cli_entry} workflow run \"{prompt}\""
             code, out, err = run(cmd, timeout=900)
             if code != 0:
                 failures.append((f"workflow deploy: {prompt}", code, err or out))
