@@ -144,10 +144,10 @@ class HyperKitAgent:
         validator = ConfigValidator(self.config)
         validator.fail_if_invalid()  # Raises SystemExit if critical errors
 
-        # Initialize free LLM router
+        # Initialize intelligent LLM router with model selection (prefers Gemini for cost)
         from core.llm.router import HybridLLMRouter
 
-        self.llm_router = HybridLLMRouter()
+        self.llm_router = HybridLLMRouter(config=self.config)
 
         # Initialize Intent Router
         self.intent_router = IntentRouter()
@@ -220,8 +220,8 @@ class HyperKitAgent:
     async def generate_contract(self, prompt: str, context: str = "") -> Dict[str, Any]:
         """
         Generate a smart contract based on natural language prompt.
-        ENFORCES PRODUCTION MODE - no silent fallbacks to mock implementations.
-        Uses Alith SDK ONLY - fails hard if Alith unavailable (no fallback).
+        Uses intelligent model selection (prefers Gemini Flash-Lite for cost efficiency).
+        Falls back to Alith SDK if router unavailable.
 
         Args:
             prompt: Natural language description of the contract
@@ -234,10 +234,54 @@ class HyperKitAgent:
         enforce_production_mode("Contract Generation")
         
         try:
-            # Try Alith SDK AI generation (if configured)
+            # PRIORITY 1: Use intelligent model selector (Gemini Flash-Lite preferred)
+            # This optimizes for cost and uses cheaper Gemini models when available
+            if self.llm_router and self.llm_router.gemini_available:
+                try:
+                    logger.info("🌐 Using intelligent model selector (prefers Gemini Flash-Lite)")
+                    # Create full prompt with context
+                    full_prompt = f"{context}\n\nUser Request: {prompt}" if context else prompt
+                    
+                    # Estimate output length for contracts (typically 1500-3000 chars)
+                    expected_output_length = 2500
+                    
+                    # Route with intelligent selection - will prefer Gemini Flash-Lite
+                    # Note: router.route is synchronous, so we need to run it in executor if needed
+                    import asyncio
+                    loop = asyncio.get_event_loop()
+                    if asyncio.iscoroutinefunction(self.llm_router.route):
+                        result = await self.llm_router.route(
+                            prompt=full_prompt,
+                            task_type="code",  # Contract generation is code task
+                            expected_output_length=expected_output_length
+                        )
+                    else:
+                        # Run synchronous route in executor to avoid blocking
+                        result = await loop.run_in_executor(
+                            None,
+                            lambda: self.llm_router.route(
+                                prompt=full_prompt,
+                                task_type="code",
+                                expected_output_length=expected_output_length
+                            )
+                        )
+                    
+                    if result and len(result.strip()) > 100:  # Valid contract generated
+                        logger.info("✅ Generated contract using intelligent model selector (Gemini preferred)")
+                        # Process result same way as Alith path
+                        return await self._process_generated_contract(result, prompt, method="intelligent_router", provider="Gemini/ModelSelector")
+                    else:
+                        logger.warning("⚠️ Router returned invalid/empty result, falling back to Alith SDK")
+                        # Fall through to Alith SDK
+                except Exception as router_error:
+                    logger.warning(f"⚠️ Intelligent model selector failed: {router_error}, falling back to Alith SDK")
+                    # Fall through to Alith SDK fallback
+            
+            # PRIORITY 2: Fallback to Alith SDK ONLY if router unavailable or failed
+            # NOTE: Alith SDK is disabled when Gemini is available (to avoid OpenAI usage)
             if self.ai_agent and self.ai_agent.alith_configured:
                 try:
-                    logger.info("Using Alith SDK for contract generation")
+                    logger.warning("🤖 Using Alith SDK (OpenAI) for contract generation (fallback - Gemini unavailable)")
                     requirements = {
                         "prompt": prompt,
                         "context": context,
@@ -246,107 +290,28 @@ class HyperKitAgent:
                     }
                     result = await self.ai_agent.generate_contract(requirements)
                     if result:
-                        # Extract contract name and determine category - MUST extract AFTER cleaning
-                        from core.tools.utils import extract_contract_info
-                        from services.generation.contract_namer import ContractNamer
-                        from core.config.paths import PathManager
-                        import re
-                        
-                        # Extract contract name with validation
-                        contract_info = extract_contract_info(result)
-                        contract_name = contract_info.get("contract_name")
-                        
-                        # Validate contract name - ensure it's a valid identifier and not from comments
-                        if not contract_name or len(contract_name) < 3 or not re.match(r'^[A-Z][a-zA-Z0-9_]*$', contract_name):
-                            # Try more robust extraction
-                            contract_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]+)', result)
-                            if contract_match:
-                                contract_name = contract_match.group(1)
-                            else:
-                                # Last resort: use default
-                                contract_name = "Contract"
-                                logger.warning(f"Could not extract valid contract name, using default: {contract_name}")
-                        
-                        logger.info(f"📝 Extracted contract name: {contract_name}")
-                        
-                        # Determine category from prompt or contract code
-                        namer = ContractNamer()
-                        category = namer.get_category(prompt)  # Get category from prompt
-                        
-                        # If category couldn't be determined from prompt, infer from contract code
-                        if category == "other":
-                            category = namer._infer_category_from_code(result)
-                        
-                        logger.info(f"📁 Determined category: {category}")
-                        
-                        # Use PathManager for proper organization
-                        path_manager = PathManager(command_type="workflow")
-                        workflow_dir = path_manager.get_workflow_dir()
-                        category_dir = workflow_dir / category
-                        category_dir.mkdir(parents=True, exist_ok=True)
-                        
-                        # PRIMARY: Save to organized location: artifacts/workflows/{category}/
-                        organized_file = category_dir / f"{contract_name}.sol"
-                        try:
-                            organized_file.write_text(result, encoding="utf-8")
-                            logger.info(f"✅ Contract saved to organized location: {organized_file}")
-                        except Exception as e:
-                            logger.error(f"❌ Failed to save to organized location: {e}")
-                            raise
-                        
-                        # SECONDARY: ALSO save to foundry contracts/ directory for compilation
-                        from pathlib import Path
-                        foundry_project_dir = Path(__file__).parent.parent.parent
-                        foundry_contracts_dir = foundry_project_dir / "contracts"
-                        foundry_contracts_dir.mkdir(exist_ok=True)
-                        
-                        foundry_contract_file = foundry_contracts_dir / f"{contract_name}.sol"
-                        try:
-                            foundry_contract_file.write_text(result, encoding="utf-8")
-                            logger.info(f"✅ Contract also saved for Foundry compilation: {foundry_contract_file}")
-                        except Exception as e:
-                            logger.warning(f"⚠️ Could not save to foundry directory (non-fatal): {e}")
-                            # Don't raise - organized location is primary
-                        # RAG sanitization: ensure import paths and overrides are consistent
-                        try:
-                            from services.core.ai_agent import HyperKitAIAgent  # reuse fix helpers if needed
-                            # No-op here; generation step already applies sanitization in AI agent
-                        except Exception:
-                            pass
-                        
-                        return {
-                            "status": "success",
-                            "contract_code": result,
-                            "contract_name": contract_name,
-                            "category": category,
-                            "path": str(organized_file),  # Primary path (organized)
-                            "foundry_path": str(foundry_contract_file),  # Foundry compilation path
-                            "method": "alith",
-                            "provider": "Alith SDK",
-                            "metadata": {
-                                "ai_powered": True,
-                                "alith_integration": True,
-                                "category": category
-                            }
-                        }
+                        # Process result using shared processing method
+                        return await self._process_generated_contract(result, prompt, method="alith", provider="Alith SDK")
                 except Exception as e:
-                    logger.error(f"CRITICAL: Alith SDK generation failed: {e}")
-                    # HARD FAIL - NO FALLBACK: Alith SDK is the ONLY AI agent
+                    logger.error(f"Alith SDK generation failed: {e}")
+                    # Alith SDK failed, but intelligent router may have already been tried
+                    # If we got here, it means router also failed, so this is a real error
                     raise RuntimeError(
-                        f"CRITICAL: Contract generation failed - Alith SDK unavailable\n"
-                        f"  Error: {e}\n"
-                        f"  Required: Alith SDK with OpenAI API key\n"
-                        f"  Fix: Install alith>=0.12.0 and configure OPENAI_API_KEY\n"
-                        f"  NO FALLBACK MODE: System will not silently switch to other providers"
+                        f"Contract generation failed - all AI providers unavailable\n"
+                        f"  Router error: (see logs above)\n"
+                        f"  Alith SDK error: {e}\n"
+                        f"  Required: Configure GOOGLE_API_KEY (preferred) or OPENAI_API_KEY with alith>=0.12.0"
                     )
 
-            # HARD FAIL - No fallback LLM allowed
-            logger.error("CRITICAL: Alith SDK not configured and no fallback allowed")
+            # CRITICAL: Neither Gemini (router) nor Alith SDK available
+            logger.error("CRITICAL: No AI generation method available")
             raise RuntimeError(
-                "CRITICAL: Alith SDK is the ONLY AI agent and is not configured\n"
-                "  Required: Install alith>=0.12.0 and configure OPENAI_API_KEY\n"
-                "  NO FALLBACK: System fails hard if Alith SDK unavailable\n"
-                "  Fix: Set ALITH_ENABLED=true and OPENAI_API_KEY in .env"
+                "CRITICAL: Contract generation failed - no AI providers available\n"
+                "  PRIMARY (REQUIRED): Google Gemini - Set GOOGLE_API_KEY in .env\n"
+                "    Gemini Flash-Lite is preferred for cost efficiency\n"
+                "  FALLBACK ONLY: Alith SDK with OpenAI - Set OPENAI_API_KEY and install alith>=0.12.0\n"
+                "    NOTE: Alith SDK is DISABLED when Gemini is available (to avoid OpenAI usage)\n"
+                "  Recommendation: Configure GOOGLE_API_KEY as PRIMARY model"
             )
 
         except RuntimeError:
@@ -358,11 +323,160 @@ class HyperKitAgent:
             error_handler = ErrorHandler()
             return error_handler.handle_error(e, f"Contract generation failed: {e}")
 
+    async def _process_generated_contract(self, result: str, prompt: str, method: str = "intelligent_router", provider: str = "Gemini") -> Dict[str, Any]:
+        """Process generated contract code (extract name, save files, etc.)"""
+        from core.tools.utils import extract_contract_info
+        from services.generation.contract_namer import ContractNamer
+        from core.config.paths import PathManager
+        import re
+        from pathlib import Path
+        
+        # CRITICAL: Clean markdown formatting from AI-generated code
+        # AI models often wrap code in markdown code blocks (```solidity ... ```)
+        # Use the same robust cleaning logic as ai_agent.py
+        contract_code = result.strip()
+        
+        # Method 1: Check for ```solidity blocks first (most specific)
+        if "```solidity" in contract_code:
+            # Extract code between ```solidity and ```
+            start = contract_code.find("```solidity")
+            end = contract_code.find("```", start + 10)
+            if end != -1:
+                contract_code = contract_code[start + 10:end].strip()
+        elif "```" in contract_code:
+            # Extract code between ``` and ``` (generic code block)
+            start = contract_code.find("```")
+            # Find the closing ```
+            # Look for the next ``` after skipping the opening one
+            next_start = start + 3
+            # Skip language identifier if present (e.g., ```sol, ```, etc.)
+            # Find newline after opening fence
+            nl_pos = contract_code.find('\n', start)
+            if nl_pos != -1:
+                next_start = nl_pos + 1
+            end = contract_code.find("```", next_start)
+            if end != -1:
+                contract_code = contract_code[next_start:end].strip()
+        
+        # Method 2: Remove any leading/trailing explanation text before code block
+        # Common pattern: "Below is..." followed by code block
+        solidity_start = contract_code.find("pragma solidity")
+        if solidity_start > 0:
+            contract_code = contract_code[solidity_start:]
+        
+        # Method 3: Final cleanup - remove any remaining markdown artifacts
+        # Remove leading markdown fences
+        contract_code = re.sub(r'^```[\w]*\s*\n?', '', contract_code, flags=re.MULTILINE)
+        # Remove trailing markdown fences
+        contract_code = re.sub(r'\n?\s*```\s*$', '', contract_code, flags=re.MULTILINE)
+        # Remove any standalone ``` lines
+        contract_code = re.sub(r'^```[\w]*$', '', contract_code, flags=re.MULTILINE)
+        contract_code = contract_code.strip()
+        
+        # Validate we have actual Solidity code
+        if not contract_code or len(contract_code) < 50:
+            raise ValueError("Contract code is too short or empty after cleaning markdown formatting")
+        
+        # Ensure code starts with pragma or SPDX license
+        if not (contract_code.startswith("pragma") or contract_code.startswith("// SPDX")):
+            # Try to find pragma in the code
+            pragma_pos = contract_code.find("pragma")
+            if pragma_pos != -1 and pragma_pos < 100:  # Within first 100 chars
+                contract_code = contract_code[pragma_pos:]
+            else:
+                raise ValueError("Contract code does not contain valid Solidity pragma directive")
+        
+        logger.info(f"📝 Cleaned contract code: {len(contract_code)} characters (removed markdown formatting)")
+        
+        # Extract contract name with validation (use cleaned code)
+        contract_info = extract_contract_info(contract_code)
+        contract_name = contract_info.get("contract_name")
+        
+        # Validate contract name - ensure it's a valid identifier and not from comments
+        if not contract_name or len(contract_name) < 3 or not re.match(r'^[A-Z][a-zA-Z0-9_]*$', contract_name):
+            # Try more robust extraction
+            contract_match = re.search(r'contract\s+([A-Z][a-zA-Z0-9_]+)', contract_code)
+            if contract_match:
+                contract_name = contract_match.group(1)
+            else:
+                # Last resort: use default
+                contract_name = "Contract"
+                logger.warning(f"Could not extract valid contract name, using default: {contract_name}")
+        
+        logger.info(f"📝 Extracted contract name: {contract_name}")
+        
+        # Determine category from prompt or contract code
+        namer = ContractNamer()
+        category = namer.get_category(prompt)  # Get category from prompt
+        
+        # If category couldn't be determined from prompt, infer from contract code
+        if category == "other":
+            category = namer._infer_category_from_code(contract_code)
+        
+        logger.info(f"📁 Determined category: {category}")
+        
+        # Use PathManager for proper organization
+        path_manager = PathManager(command_type="workflow")
+        workflow_dir = path_manager.get_workflow_dir()
+        category_dir = workflow_dir / category
+        category_dir.mkdir(parents=True, exist_ok=True)
+        
+        # PRIMARY: Save to organized location: artifacts/workflows/{category}/
+        organized_file = category_dir / f"{contract_name}.sol"
+        try:
+            organized_file.write_text(contract_code, encoding="utf-8")
+            logger.info(f"✅ Contract saved to organized location: {organized_file}")
+        except Exception as e:
+            logger.error(f"❌ Failed to save to organized location: {e}")
+            raise
+        
+        # SECONDARY: ALSO save to foundry contracts/ directory for compilation
+        foundry_contract_file = None
+        try:
+            # Robust path resolution
+            foundry_project_dir = Path(__file__).parent.parent.parent
+            foundry_contracts_dir = foundry_project_dir / "contracts"
+            
+            # Create directory if it doesn't exist
+            foundry_contracts_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Validate directory was created
+            if not foundry_contracts_dir.exists():
+                raise OSError(f"Failed to create contracts directory: {foundry_contracts_dir}")
+            
+            foundry_contract_file = foundry_contracts_dir / f"{contract_name}.sol"
+            foundry_contract_file.write_text(contract_code, encoding="utf-8")
+            logger.info(f"✅ Contract also saved for Foundry compilation: {foundry_contract_file.resolve()}")
+        except (OSError, IOError) as e:
+            logger.warning(f"⚠️ Could not save to foundry directory (non-fatal): {e}")
+            # Don't raise - organized location is primary
+        except Exception as e:
+            logger.warning(f"⚠️ Unexpected error saving to foundry directory (non-fatal): {e}")
+            # Don't raise - organized location is primary
+        
+        return {
+            "status": "success",
+            "contract_code": contract_code,
+            "contract_name": contract_name,
+            "category": category,
+            "path": str(organized_file),  # Primary path (organized)
+            "foundry_path": str(foundry_contract_file) if foundry_contract_file else None,  # Foundry compilation path
+            "method": method,
+            "provider": provider,
+            "metadata": {
+                "ai_powered": True,
+                "intelligent_model_selection": method == "intelligent_router",
+                "alith_integration": method == "alith",
+                "category": category
+            }
+        }
+
     @safe_operation("audit_contract")
     async def audit_contract(self, contract_code: str) -> Dict[str, Any]:
         """
         Audit a smart contract using AI-powered analysis.
-        Uses Alith SDK for AI auditing - falls back to static analysis tools only.
+        Uses intelligent model selector (Gemini Flash-Lite preferred) for cost efficiency.
+        Falls back to Alith SDK (OpenAI) only if router unavailable.
 
         Args:
             contract_code: Solidity contract code to audit
@@ -371,10 +485,106 @@ class HyperKitAgent:
             Dictionary containing audit results and severity level
         """
         try:
-            # Try Alith SDK AI-powered audit (if configured)
+            # PRIORITY 1: Use intelligent model selector (Gemini Flash-Lite preferred)
+            # This optimizes for cost and uses cheaper Gemini models when available
+            if self.llm_router and self.llm_router.gemini_available:
+                try:
+                    logger.info("🌐 Using intelligent model selector for AI audit (prefers Gemini Flash-Lite)")
+                    
+                    # Create audit prompt
+                    audit_prompt = f"""Audit this smart contract for security vulnerabilities and provide detailed analysis in JSON format:
+{contract_code}
+
+Please analyze:
+1. Security vulnerabilities (reentrancy, overflow, access control, etc.)
+2. Best practice violations
+3. Gas optimization opportunities
+4. Code quality issues
+
+Return JSON with structure:
+{{
+    "severity": "low|medium|high|critical",
+    "security_score": 0-100,
+    "vulnerabilities": [
+        {{
+            "type": "vulnerability type",
+            "severity": "low|medium|high|critical",
+            "description": "detailed description",
+            "location": "line number or function name",
+            "recommendation": "how to fix"
+        }}
+    ],
+    "recommendations": ["general recommendations"]
+}}"""
+                    
+                    # Route with intelligent selection - will prefer Gemini Flash-Lite
+                    import asyncio
+                    loop = asyncio.get_event_loop()
+                    if asyncio.iscoroutinefunction(self.llm_router.route):
+                        audit_response = await self.llm_router.route(
+                            prompt=audit_prompt,
+                            task_type="analysis",  # Audit is analysis task
+                            expected_output_length=2000  # Audit reports are typically longer
+                        )
+                    else:
+                        # Run synchronous route in executor to avoid blocking
+                        audit_response = await loop.run_in_executor(
+                            None,
+                            lambda: self.llm_router.route(
+                                prompt=audit_prompt,
+                                task_type="analysis",
+                                expected_output_length=2000
+                            )
+                        )
+                    
+                    if audit_response and len(audit_response.strip()) > 50:
+                        # Parse JSON response
+                        import json
+                        try:
+                            # Try to extract JSON from markdown if present
+                            cleaned_response = audit_response.strip()
+                            if "```json" in cleaned_response:
+                                start = cleaned_response.find("```json")
+                                end = cleaned_response.find("```", start + 7)
+                                if end != -1:
+                                    cleaned_response = cleaned_response[start + 7:end].strip()
+                            elif "```" in cleaned_response:
+                                start = cleaned_response.find("```")
+                                end = cleaned_response.find("```", start + 3)
+                                if end != -1:
+                                    cleaned_response = cleaned_response[start + 3:end].strip()
+                            
+                            audit_data = json.loads(cleaned_response)
+                            logger.info("✅ Generated audit using intelligent model selector (Gemini preferred)")
+                            
+                            return {
+                                "status": "success",
+                                "results": audit_data,
+                                "severity": audit_data.get("severity", "unknown"),
+                                "security_score": audit_data.get("security_score", 0),
+                                "method": "intelligent_router",
+                                "provider": "Gemini/ModelSelector",
+                                "metadata": {
+                                    "ai_powered": True,
+                                    "intelligent_model_selection": True,
+                                    "vulnerability_count": len(audit_data.get("vulnerabilities", []))
+                                }
+                            }
+                        except json.JSONDecodeError as je:
+                            logger.warning(f"⚠️ Failed to parse audit JSON from router: {je}, falling back to Alith SDK")
+                            # Fall through to Alith SDK
+                    else:
+                        logger.warning("⚠️ Router returned invalid/empty audit result, falling back to Alith SDK")
+                        # Fall through to Alith SDK
+                except Exception as router_error:
+                    logger.warning(f"⚠️ Intelligent model selector audit failed: {router_error}, falling back to Alith SDK")
+                    # Fall through to Alith SDK fallback
+            
+            # PRIORITY 2: Fallback to Alith SDK ONLY if router unavailable or failed
+            # NOTE: Alith SDK is disabled when Gemini is available (to avoid OpenAI usage)
             if self.ai_agent and self.ai_agent.alith_configured:
                 try:
-                    logger.info("Using Alith SDK for AI-powered contract audit")
+                    logger.warning("🤖 Using Alith SDK (OpenAI) for contract audit (fallback - Gemini unavailable)")
                     result = await self.ai_agent.audit_contract(contract_code)
                     if result:
                         return {
@@ -391,8 +601,8 @@ class HyperKitAgent:
                 except Exception as e:
                     logger.warning(f"Alith SDK audit failed, falling back to static analysis: {e}")
 
-            # Fallback to existing static analysis implementation
-            logger.info("🔍 Using static analysis tools for contract audit")
+            # PRIORITY 3: Final fallback to static analysis tools
+            logger.info("🔍 Using static analysis tools for contract audit (final fallback)")
             from services.audit.auditor import SmartContractAuditor
 
             auditor = SmartContractAuditor()
@@ -413,6 +623,29 @@ class HyperKitAgent:
             logger.error(f"Contract audit failed: {e}")
             return {"status": "error", "error": str(e), "severity": "critical"}
 
+    def _find_forge_executable(self) -> list:
+        """Find forge executable path (Windows-aware)"""
+        import os
+        import sys
+        import subprocess
+        from pathlib import Path
+        
+        # On Windows, check common installation locations
+        if sys.platform == "win32":
+            possible_paths = [
+                Path.home() / ".foundry" / "bin" / "forge.exe",
+                Path(f"C:/Users/{os.getenv('USERNAME', '')}/.foundry/bin/forge.exe"),
+                Path("C:/Program Files/foundry/forge.exe"),
+                Path("C:/Program Files/foundry/bin/forge.exe"),
+            ]
+            
+            for forge_path in possible_paths:
+                if forge_path.exists():
+                    return [str(forge_path)]
+        
+        # Try PATH
+        return ["forge"]
+    
     async def _compile_contract(self, contract_name: str, contract_code: str) -> Dict[str, Any]:
         """
         Compile contract with Foundry before deployment.
@@ -426,6 +659,7 @@ class HyperKitAgent:
         """
         try:
             import subprocess
+            import sys
             from pathlib import Path
             
             # Determine correct paths: foundry.toml is in hyperkit-agent/, not root
@@ -565,8 +799,9 @@ class HyperKitAgent:
                     
                     # Verify Foundry is installed and accessible
                     try:
+                        forge_cmd = self._find_forge_executable()
                         forge_check = subprocess.run(
-                            ["forge", "--version"],
+                            forge_cmd + ["--version"],
                             capture_output=True,
                             text=True,
                             timeout=5
@@ -600,8 +835,9 @@ class HyperKitAgent:
                     # Ensure lib directory exists
                     lib_dir.mkdir(exist_ok=True)
                     
+                    forge_cmd = self._find_forge_executable()
                     install_result = subprocess.run(
-                        ["forge", "install", "OpenZeppelin/openzeppelin-contracts", "--no-commit"],
+                        forge_cmd + ["install", "OpenZeppelin/openzeppelin-contracts", "--no-commit"],
                         cwd=str(foundry_project_dir),
                         capture_output=True,
                         text=True,
@@ -641,8 +877,9 @@ class HyperKitAgent:
                                         logger.warning(f"⚠️  Could not remove broken directory: {e}")
                                 
                                 # Reinstall without --no-commit (removed in Foundry 1.4.3)
+                                forge_cmd = self._find_forge_executable()
                                 force_result = subprocess.run(
-                                    ["forge", "install", "OpenZeppelin/openzeppelin-contracts"],
+                                    forge_cmd + ["install", "OpenZeppelin/openzeppelin-contracts"],
                                     cwd=str(foundry_project_dir),
                                     capture_output=True,
                                     text=True,
@@ -748,8 +985,9 @@ class HyperKitAgent:
                 else:
                     logger.debug(f"   Using foundry.toml remappings (remappings.txt not found)")
             
+            forge_cmd = self._find_forge_executable()
             result = subprocess.run(
-                ["forge", "build"],
+                forge_cmd + ["build"],
                 cwd=str(foundry_project_dir),
                 capture_output=True,
                 text=True,
@@ -1084,15 +1322,16 @@ class HyperKitAgent:
 
     @safe_operation("run_workflow")
     async def run_workflow(
-        self, 
-        user_prompt: str, 
+        self,
+        user_prompt: str,
         network: str = "hyperion",
         auto_verification: bool = True,
         test_only: bool = False,
         allow_insecure: bool = False,
         use_orchestrator: bool = True,
         upload_scope: Optional[str] = None,  # 'team' or 'community'
-        rag_scope: str = 'official-only'  # 'official-only' or 'opt-in-community'
+        rag_scope: str = 'official-only',  # 'official-only' or 'opt-in-community'
+        resume_from_diagnostic: Optional[str] = None  # Path to diagnostic bundle for recovery
     ) -> Dict[str, Any]:
         """
         Execute the complete self-healing workflow with dependency management and auto-recovery.
@@ -1126,7 +1365,8 @@ class HyperKitAgent:
                     test_only=test_only,
                     allow_insecure=allow_insecure,
                     upload_scope=upload_scope,
-                    rag_scope=rag_scope
+                    rag_scope=rag_scope,
+                    resume_from_diagnostic=resume_from_diagnostic
                 )
             except ImportError as e:
                 logger.warning(f"Orchestrator not available, falling back to legacy workflow: {e}")
@@ -2114,6 +2354,34 @@ Generate only the Solidity contract code, no explanations or markdown formatting
                 "network": network
             }
 
+
+# Example usage and testing
+async def main():
+    """Example usage of the HyperKit Agent."""
+    # HYPERION-ONLY configuration
+    config = {
+        "openai_api_key": "your-api-key-here",  # Required for Alith SDK
+        "networks": {
+            "hyperion": {
+                "rpc_url": "https://hyperion-testnet.metisdevops.link",
+                "chain_id": 133717,
+                "explorer_url": "https://hyperion-testnet-explorer.metisdevops.link"
+            }
+            # Future network support (LazAI, Metis) documented in ROADMAP.md only
+        },
+    }
+
+    agent = HyperKitAgent(config)
+
+    # Test workflow
+    prompt = "Create a simple ERC20 token contract with minting functionality"
+    result = await agent.run_workflow(prompt)
+
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 
 # Example usage and testing
 async def main():
