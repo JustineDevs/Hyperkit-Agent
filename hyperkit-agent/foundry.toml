@@ -2,7 +2,7 @@
 src = "contracts"
 out = "out"
 libs = ["lib"]
-solc = "0.8.20"
+solc = "0.8.24"  # Updated for OpenZeppelin v5 compatibility (requires ^0.8.24)
 optimizer = true
 optimizer_runs = 200
 via_ir = false
