@@ -12,12 +12,17 @@
 
 ### **1. Install Dependencies**
 ```bash
-# Install Python dependencies
-pip install -r requirements.txt
+# Install Python dependencies (from hyperkit-agent directory)
+cd hyperkit-agent
+pip install -e .
+# Installs all packages from pyproject.toml: alith, web3, OpenAI, Anthropic, Google AI, etc.
 
-# Install Foundry (for smart contract compilation)
+# Install Foundry (for smart contract compilation - system-level tool)
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
+# Foundry cannot be installed via pip - it's a system-level tool
+
+# OpenZeppelin contracts will be auto-installed by Doctor or first workflow run
 ```
 
 ### **2. Configure Environment**
