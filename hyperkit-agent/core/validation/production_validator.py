@@ -170,11 +170,33 @@ class ProductionModeValidator:
     
     def _test_foundry(self) -> Dict[str, Any]:
         """Test Foundry installation and functionality"""
+        # On Windows, check common installation locations
+        forge_cmd = ['forge']
+        if sys.platform == "win32":
+            # Check common Windows Foundry locations
+            possible_paths = [
+                Path.home() / ".foundry" / "bin" / "forge.exe",
+                Path(f"C:/Users/{os.getenv('USERNAME', '')}/.foundry/bin/forge.exe"),
+                Path("C:/Program Files/foundry/forge.exe"),
+                Path("C:/Program Files/foundry/bin/forge.exe"),
+            ]
+            
+            found_forge = False
+            for forge_path in possible_paths:
+                if forge_path.exists():
+                    forge_cmd = [str(forge_path)]
+                    found_forge = True
+                    break
+            
+            # If not found in common paths, try PATH
+            if not found_forge:
+                forge_cmd = ['forge']
+        
         try:
-            result = subprocess.run(['forge', '--version'], 
+            result = subprocess.run(forge_cmd + ['--version'], 
                                   capture_output=True, text=True, timeout=10)
             if result.returncode == 0:
-                version = result.stdout.strip()
+                version = result.stdout.strip().split('\n')[0] if result.stdout else "installed"
                 return {
                     'status': 'success',
                     'message': f'Foundry {version} available'
@@ -336,6 +358,28 @@ _production_validator = None
 
 def get_production_validator() -> ProductionModeValidator:
     """Get global production validator instance"""
+    global _production_validator
+    if _production_validator is None:
+        _production_validator = ProductionModeValidator()
+    return _production_validator
+
+def validate_production_mode() -> Dict[str, Any]:
+    """Validate production mode and return results"""
+    validator = get_production_validator()
+    return validator.validate_production_mode()
+
+def enforce_production_mode(operation: str) -> None:
+    """Enforce production mode for critical operations"""
+    validator = get_production_validator()
+    # Always run validation to ensure we have the latest state
+    validator.validate_production_mode()
+    validator.enforce_production_mode(operation)
+
+def is_production_mode() -> bool:
+    """Check if system is in production mode"""
+    validator = get_production_validator()
+    return validator.production_mode
+
     global _production_validator
     if _production_validator is None:
         _production_validator = ProductionModeValidator()
