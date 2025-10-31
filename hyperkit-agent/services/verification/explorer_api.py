@@ -229,11 +229,39 @@ class ExplorerAPI:
                     "explorer_url": f"{self.explorer_config['explorer_url']}/address/{contract_address}"
                 }
                     
-        except Exception as e:
+        except requests.exceptions.Timeout:
+            logger.error(f"Verification request timed out for {contract_address}")
             return {
                 "status": "error",
-                "error": str(e),
-                "verification_method": "blockscout_api"
+                "error": "Request timeout - explorer may be slow or unreachable",
+                "verification_method": "blockscout_api",
+                "explorer_url": f"{self.explorer_config.get('explorer_url', '')}/address/{contract_address}",
+                "suggestions": [
+                    "Check network connectivity",
+                    "Try again later - explorer may be under heavy load",
+                    "Check explorer status page"
+                ]
+            }
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Connection error during verification: {e}")
+            return {
+                "status": "error",
+                "error": f"Connection error: {str(e)}",
+                "verification_method": "blockscout_api",
+                "explorer_url": f"{self.explorer_config.get('explorer_url', '')}/address/{contract_address}",
+                "suggestions": [
+                    "Check internet connection",
+                    "Verify explorer URL is correct",
+                    "Check if explorer is online"
+                ]
+            }
+        except Exception as e:
+            logger.error(f"Unexpected error during verification: {e}", exc_info=True)
+            return {
+                "status": "error",
+                "error": f"Unexpected error: {str(e)}",
+                "verification_method": "blockscout_api",
+                "explorer_url": f"{self.explorer_config.get('explorer_url', '')}/address/{contract_address}"
             }
     
     async def _verify_with_api(
@@ -259,7 +287,8 @@ class ExplorerAPI:
         }
         
         if constructor_args:
-            verification_data['constructorArguements'] = constructor_args
+            verification_data['constructorArguements'] = constructor_args  # Note: Etherscan API uses misspelled key
+            verification_data['constructorArguments'] = constructor_args  # Some explorers use correct spelling
         
         # Submit verification request
         response = requests.post(
@@ -287,12 +316,32 @@ class ExplorerAPI:
                     "result": result,
                     "verification_method": "explorer_api"
                 }
-        else:
-            return {
-                "status": "failed",
-                "error": f"HTTP {response.status_code}: {response.text}",
-                "verification_method": "explorer_api"
-            }
+            elif response.status_code == 429:
+                # Rate limit error
+                return {
+                    "status": "rate_limited",
+                    "error": "Rate limit exceeded - please wait before retrying",
+                    "verification_method": "explorer_api",
+                    "explorer_url": f"{self.explorer_config.get('explorer_url', '')}/address/{contract_address}",
+                    "suggestions": [
+                        "Wait a few minutes before retrying",
+                        "Check API key rate limits",
+                        "Consider using a different API key"
+                    ]
+                }
+            else:
+                error_text = response.text[:500] if response.text else "No response"
+                return {
+                    "status": "failed",
+                    "error": f"HTTP {response.status_code}: {error_text}",
+                    "verification_method": "explorer_api",
+                    "explorer_url": f"{self.explorer_config.get('explorer_url', '')}/address/{contract_address}",
+                    "suggestions": [
+                        "Check API key is valid",
+                        "Verify contract address is correct",
+                        "Check source code format is valid"
+                    ]
+                }
     
     def get_verification_status(self, contract_address: str) -> Dict[str, Any]:
         """
