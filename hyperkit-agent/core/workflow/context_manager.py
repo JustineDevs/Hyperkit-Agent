@@ -289,12 +289,45 @@ class ContextManager:
         
         Args:
             workspace_dir: Base workspace directory
+            
+        Raises:
+            RuntimeError: If contexts directory cannot be created or accessed
         """
-        self.workspace_dir = Path(workspace_dir)
+        self.workspace_dir = Path(workspace_dir).resolve()
         self.contexts_dir = self.workspace_dir / ".workflow_contexts"
-        self.contexts_dir.mkdir(exist_ok=True, parents=True)
         
-        logger.info(f"ContextManager initialized - contexts dir: {self.contexts_dir}")
+        # Robust directory creation with loud failures
+        try:
+            self.contexts_dir.mkdir(exist_ok=True, parents=True)
+            
+            # Validate directory was created and is accessible
+            if not self.contexts_dir.exists():
+                raise RuntimeError(
+                    f"Failed to create contexts directory: {self.contexts_dir}\n"
+                    f"Fix: mkdir -p {self.contexts_dir} && chmod +w {self.contexts_dir}"
+                )
+            
+            # Check write permissions
+            import os
+            if not os.access(self.contexts_dir, os.W_OK):
+                raise RuntimeError(
+                    f"No write permission for contexts directory: {self.contexts_dir}\n"
+                    f"Fix: chmod +w {self.contexts_dir}"
+                )
+            
+            logger.info(f"ContextManager initialized - contexts dir: {self.contexts_dir}")
+            
+        except (OSError, PermissionError) as e:
+            error_msg = (
+                f"CRITICAL: Cannot create or access contexts directory: {self.contexts_dir}\n"
+                f"Error: {str(e)}\n"
+                f"Fix steps:\n"
+                f"  1. mkdir -p {self.contexts_dir}\n"
+                f"  2. chmod +w {self.contexts_dir}\n"
+                f"  3. Check parent directory permissions: {self.contexts_dir.parent}"
+            )
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
     
     def create_context(self, workflow_id: str, user_prompt: str, 
                       workspace_dir: Optional[Path] = None) -> WorkflowContext:
@@ -327,4 +360,8 @@ class ContextManager:
             json.dump(bundle, f, indent=2)
         logger.info(f"📋 Diagnostic bundle saved: {file_path}")
         return file_path
+    
+    def get_context_path(self, workflow_id: str) -> Path:
+        """Get path to context file for a workflow"""
+        return self.contexts_dir / f"{workflow_id}.json"
 
