@@ -30,7 +30,7 @@ Demonstrate that HyperAgent can:
 
 ```bash
 # 1. Navigate to project directory
-cd C:/Users/JustineDevs/Downloads/HyperAgent/hyperkit-agent
+cd C:/Users/USERNAME/Downloads/HyperAgent/hyperkit-agent
 
 # 2. Set UTF-8 encoding for Windows console
 export PYTHONIOENCODING=utf-8
