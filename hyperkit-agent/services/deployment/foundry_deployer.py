@@ -137,7 +137,7 @@ class FoundryDeployer:
                     "suggestions": ["Run 'forge build' in project root", "Check if contracts directory exists"]
                 }
             
-            # Find the specific contract artifact
+            # Find the specific contract artifact (robust path handling)
             artifact_file = None
             potential_paths = [
                 out_dir / f"{contract_name}.sol" / f"{contract_name}.json",
@@ -145,40 +145,81 @@ class FoundryDeployer:
                 out_dir / "GamingToken.sol" / "GameToken.json",  # Fallback for legacy
             ]
             
+            # Try to resolve paths and check existence
             for path in potential_paths:
-                if path.exists():
-                    artifact_file = path
-                    break
+                try:
+                    resolved_path = path.resolve()
+                    if resolved_path.exists() and resolved_path.is_file():
+                        artifact_file = resolved_path
+                        logger.debug(f"Found artifact at: {artifact_file}")
+                        break
+                except (OSError, RuntimeError) as e:
+                    logger.debug(f"Path resolution failed for {path}: {e}")
+                    continue
             
             # If not found, look for any JSON files in the out directory
             if not artifact_file:
-                for json_file in out_dir.rglob("*.json"):
-                    try:
-                        with open(json_file) as f:
-                            artifact_data = json.load(f)
-                            if "bytecode" in artifact_data and "abi" in artifact_data:
-                                # Check if this has the right constructor signature
-                                for item in artifact_data['abi']:
-                                    if item.get('type') == 'constructor':
-                                        if len(item.get('inputs', [])) == 5:  # GamingToken has 5 inputs
-                                            artifact_file = json_file
-                                            logger.info(f"✅ Found artifact with 5 constructor inputs: {artifact_file}")
+                try:
+                    for json_file in out_dir.rglob("*.json"):
+                        try:
+                            resolved_json = json_file.resolve()
+                            if not resolved_json.is_file():
+                                continue
+                            
+                            with open(resolved_json, 'r', encoding='utf-8') as f:
+                                artifact_data = json.load(f)
+                                if "bytecode" in artifact_data and "abi" in artifact_data:
+                                    # Check if this has the right constructor signature
+                                    for item in artifact_data['abi']:
+                                        if item.get('type') == 'constructor':
+                                            if len(item.get('inputs', [])) == 5:  # GamingToken has 5 inputs
+                                                artifact_file = resolved_json
+                                                logger.info(f"✅ Found artifact with 5 constructor inputs: {artifact_file}")
+                                                break
                                             break
+                                    if artifact_file:
                                         break
-                                if artifact_file:
-                                    break
-                    except:
-                        continue
+                        except (json.JSONDecodeError, OSError, IOError) as e:
+                            logger.debug(f"Skipping invalid artifact file {json_file}: {e}")
+                            continue
+                except (OSError, PermissionError) as e:
+                    logger.warning(f"Failed to search for artifacts in {out_dir}: {e}")
             
             if not artifact_file or not artifact_file.exists():
+                # List available artifacts for debugging
+                available_artifacts = []
+                try:
+                    for json_file in out_dir.rglob("*.json"):
+                        available_artifacts.append(str(json_file.relative_to(out_dir)))
+                except:
+                    pass
+                
                 return {
                     "success": False,
-                    "error": f"Artifact not found in {out_dir}",
-                    "suggestions": ["Run 'forge build' in project root", "Check contract name"]
+                    "error": f"Artifact not found in {out_dir.resolve()}",
+                    "available_artifacts": available_artifacts[:10] if available_artifacts else [],
+                    "suggestions": [
+                        "Run 'forge build' in project root",
+                        f"Check contract name matches: {contract_name}",
+                        f"Check artifacts directory exists: {out_dir}",
+                        "Verify contract was compiled successfully"
+                    ]
                 }
             
-            with open(artifact_file) as f:
-                artifact = json.load(f)
+            # Read artifact with proper error handling
+            try:
+                with open(artifact_file, 'r', encoding='utf-8') as f:
+                    artifact = json.load(f)
+            except (json.JSONDecodeError, OSError, IOError) as e:
+                return {
+                    "success": False,
+                    "error": f"Failed to read artifact file {artifact_file}: {e}",
+                    "suggestions": [
+                        "Artifact file may be corrupted",
+                        "Check file permissions",
+                        "Re-run 'forge build' to regenerate artifacts"
+                    ]
+                }
             
             bytecode = artifact["bytecode"]["object"]
             abi = artifact["abi"]
@@ -290,10 +331,19 @@ class FoundryDeployer:
                         f"Using source code params (more reliable)."
                     )
                 
-                # Use source code args if available, fallback to ABI
+                # Validate generated args against both source and ABI before using
                 if source_args:
+                    # Validate against source code signature
+                    validation = parser.validate_constructor_args(contract_source_code, source_args)
+                    if not validation.get('success'):
+                        logger.error(f"Constructor args validation failed: {validation.get('error')}")
+                        logger.error(f"Expected signature: {validation.get('signature', [])}")
+                        raise ValueError(
+                            f"Generated constructor args don't match contract signature: {validation.get('error')}"
+                        )
+                    
                     final_args = source_args
-                    logger.info(f"Using source-code-extracted constructor args: {final_args}")
+                    logger.info(f"✅ Using validated source-code-extracted constructor args: {final_args}")
                 elif constructor_abi and constructor_abi.get('inputs'):
                     # Fallback to ABI-based generation
                     logger.warning("Falling back to ABI-based arg generation (less reliable)")
@@ -348,6 +398,13 @@ class FoundryDeployer:
                     
                     final_args = abi_args
                     logger.info(f"Using ABI-based constructor args: {final_args}")
+                    
+                    # Validate ABI-based args against source code if available
+                    if contract_source_code:
+                        validation = parser.validate_constructor_args(contract_source_code, final_args)
+                        if not validation.get('success'):
+                            logger.warning(f"ABI-based args validation failed: {validation.get('error')}")
+                            logger.warning("Proceeding with ABI-based args anyway (may fail at deployment)")
                 else:
                     # No constructor or no inputs - deploy without arguments
                     logger.info("No constructor inputs found, deploying without arguments")
@@ -356,13 +413,41 @@ class FoundryDeployer:
                 # Build transaction with validated args
                 try:
                     if final_args:
-                        tx = contract_factory.constructor(*final_args).build_transaction({
-                            'from': account.address,
-                            'nonce': w3.eth.get_transaction_count(account.address),
-                            'gas': 3000000,
-                            'gasPrice': w3.eth.gas_price,
-                            'chainId': chain_id
-                        })
+                        # Final validation: try building transaction to catch type mismatches early
+                        try:
+                            # Test build transaction first to catch any ABI mismatches
+                            test_tx = contract_factory.constructor(*final_args).build_transaction({
+                                'from': account.address,
+                                'nonce': w3.eth.get_transaction_count(account.address),
+                                'gas': 3000000,
+                                'gasPrice': w3.eth.gas_price,
+                                'chainId': chain_id
+                            })
+                            tx = test_tx
+                        except Exception as build_error:
+                            # If build fails, provide detailed error message
+                            constructor_abi = None
+                            for item in abi:
+                                if item.get('type') == 'constructor':
+                                    constructor_abi = item
+                                    break
+                            
+                            expected_params = []
+                            if constructor_abi and constructor_abi.get('inputs'):
+                                expected_params = [f"{inp.get('type')} {inp.get('name', '')}" for inp in constructor_abi.get('inputs', [])]
+                            
+                            error_msg = (
+                                f"Constructor arguments type mismatch during transaction build: {str(build_error)}\n"
+                                f"Expected parameters (from ABI): {expected_params}\n"
+                                f"Provided arguments: {final_args}\n"
+                                f"Argument types: {[type(a).__name__ for a in final_args]}\n"
+                                f"Tip: Check that argument types match ABI exactly (address strings must be checksummed, ints must match size)"
+                            )
+                            logger.error(error_msg)
+                            raise ValueError(error_msg) from build_error
+                        
+                        # Use the validated transaction
+                        tx = test_tx
                     else:
                         tx = contract_factory.constructor().build_transaction({
                             'from': account.address,
