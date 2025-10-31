@@ -28,7 +28,7 @@ This document provides an honest assessment of what **works**, what **doesn't wo
 - **Status**: ❌ NOT WORKING
 - **Issue**: SDK packages not installed (`alith>=0.12.0`)
 - **Impact**: AI-powered auditing is theoretical
-- **Evidence**: Terminal shows "Alith SDK not available - Install with: pip install alith>=0.12.0"
+- **Evidence**: Terminal shows "Alith SDK not available - Install with: `pip install -e .` (from hyperkit-agent directory)"
 - **Workaround**: Falls back to Slither (static analysis)
 - **Fix Required**: Install SDK + configure API key
 
