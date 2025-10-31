@@ -72,6 +72,8 @@ class SelfHealingErrorHandler:
                 re.compile(r"invalid solc version", re.IGNORECASE),
                 re.compile(r"no solc version exists.*0\.8\.\d+", re.IGNORECASE),
                 re.compile(r"version requirement.*0\.8\.\d+", re.IGNORECASE),
+                re.compile(r"No arguments passed to the base constructor", re.IGNORECASE),
+                re.compile(r"Base constructor parameters", re.IGNORECASE),
             ],
             ErrorType.NETWORK_ERROR: [
                 re.compile(r"network error", re.IGNORECASE),
@@ -334,6 +336,41 @@ class SelfHealingErrorHandler:
                             return True, "Installed OpenZeppelin dependencies"
         except Exception as e:
             logger.warning(f"Dependency auto-fix skipped: {e}")
+
+        # OpenZeppelin v5 Ownable constructor fix - add Ownable(msg.sender) if missing
+        if "No arguments passed to the base constructor" in error_message and "Ownable" in error_message:
+            if contract_code:
+                import re
+                fixed = contract_code
+                # Check if contract inherits Ownable
+                if 'is Ownable' in fixed or re.search(r'contract\s+\w+\s+is\s+[^{]*Ownable', fixed):
+                    # Check if constructor exists
+                    constructor_match = re.search(r'constructor\s*\(([^)]*)\)\s*([^{]*)\{', fixed)
+                    if constructor_match:
+                        constructor_calls = constructor_match.group(2).strip()
+                        # Check if Ownable constructor is NOT already called
+                        if 'Ownable(' not in constructor_calls:
+                            # Add Ownable(msg.sender) to constructor calls
+                            fixed = re.sub(
+                                r'(constructor\s*\([^)]*\)\s*)([^{]*?)(\{)',
+                                lambda m: m.group(1) + m.group(2).rstrip() + ' Ownable(msg.sender) ' + m.group(3),
+                                fixed,
+                                count=1
+                            )
+                            logger.info("🔧 Auto-fixed: Added Ownable(msg.sender) to constructor for OpenZeppelin v5")
+                            context["contract_code"] = fixed
+                            return True, "Added Ownable(msg.sender) to constructor and retrying compilation"
+                        elif 'Ownable()' in constructor_calls:
+                            # Ownable() with no args - needs fixing
+                            fixed = re.sub(
+                                r'Ownable\(\)',
+                                'Ownable(msg.sender)',
+                                fixed,
+                                count=1
+                            )
+                            logger.info("🔧 Auto-fixed: Changed Ownable() to Ownable(msg.sender) for OpenZeppelin v5")
+                            context["contract_code"] = fixed
+                            return True, "Fixed Ownable constructor call and retrying compilation"
 
         # Parameter shadowing errors - rename parameters with underscore prefix
         if "shadows an existing declaration" in error_message or "declaration shadows" in error_message:
