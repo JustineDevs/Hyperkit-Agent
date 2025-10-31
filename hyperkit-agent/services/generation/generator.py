@@ -22,16 +22,18 @@ class ContractGenerator:
     Supports multiple AI providers and template integration.
     """
 
-    def __init__(self, api_key: str, provider: str = "openai"):
+    def __init__(self, api_key: str, provider: str = "openai", config: Optional[Dict] = None):
         """
-        Initialize the contract generator.
+        Initialize the contract generator with intelligent model selection.
 
         Args:
-            api_key: API key for the AI provider
+            api_key: API key for the AI provider (used for router initialization)
             provider: AI provider to use (openai, anthropic, google)
+            config: Configuration dictionary (optional)
         """
         self.api_key = api_key
         self.provider = provider
+        self.config = config or {}
         self.client = None
         self.templates = self._load_templates()
         
@@ -40,10 +42,15 @@ class ContractGenerator:
         self.parser = PromptParser()
         self.path_manager = PathManager()
 
-        # Initialize AI client based on provider
+        # Initialize intelligent LLM router with model selection
+        from core.llm.router import HybridLLMRouter
+        self.router = HybridLLMRouter(config=self.config)
+        self.use_intelligent_selection = True  # Use model selector by default
+
+        # Fallback: Initialize legacy AI client (for backward compatibility)
         self._initialize_client()
 
-        logger.info(f"ContractGenerator initialized with {provider}")
+        logger.info(f"ContractGenerator initialized with {provider} (intelligent model selection enabled)")
 
     def _initialize_client(self):
         """Initialize the AI client based on the provider."""
@@ -551,17 +558,40 @@ contract {CONTRACT_NAME} is Ownable, ReentrancyGuard, Pausable {{
             # Create system prompt with extracted specifications
             system_prompt = self._create_system_prompt(contract_type, context, spec)
 
-            # Generate contract using AI
-            if self.provider in ["openai", "deepseek", "xai", "gpt-oss"]:
-                contract_code = await self._generate_with_openai(system_prompt, prompt)
-            elif self.provider == "anthropic":
-                contract_code = await self._generate_with_anthropic(
-                    system_prompt, prompt
-                )
-            elif self.provider == "google":
-                contract_code = await self._generate_with_google(system_prompt, prompt)
+            # Generate contract using AI with intelligent model selection
+            if self.use_intelligent_selection:
+                try:
+                    # Use router with automatic model selection
+                    full_prompt = f"{system_prompt}\n\nUser Request: {prompt}"
+                    # Estimate output length for contracts (typically 1500-3000 chars)
+                    expected_output_length = 2000
+                    contract_code = self.router.route(
+                        prompt=full_prompt,
+                        task_type="code",  # Contract generation is code task
+                        expected_output_length=expected_output_length
+                    )
+                    logger.info("✅ Generated contract using intelligent model selection")
+                except Exception as e:
+                    logger.warning(f"Intelligent model selection failed: {e}, falling back to direct API calls")
+                    # Fallback to direct API calls
+                    if self.provider in ["openai", "deepseek", "xai", "gpt-oss"]:
+                        contract_code = await self._generate_with_openai(system_prompt, prompt)
+                    elif self.provider == "anthropic":
+                        contract_code = await self._generate_with_anthropic(system_prompt, prompt)
+                    elif self.provider == "google":
+                        contract_code = await self._generate_with_google(system_prompt, prompt)
+                    else:
+                        raise ValueError(f"Unsupported provider: {self.provider}")
             else:
-                raise ValueError(f"Unsupported provider: {self.provider}")
+                # Legacy direct API calls (if intelligent selection disabled)
+                if self.provider in ["openai", "deepseek", "xai", "gpt-oss"]:
+                    contract_code = await self._generate_with_openai(system_prompt, prompt)
+                elif self.provider == "anthropic":
+                    contract_code = await self._generate_with_anthropic(system_prompt, prompt)
+                elif self.provider == "google":
+                    contract_code = await self._generate_with_google(system_prompt, prompt)
+                else:
+                    raise ValueError(f"Unsupported provider: {self.provider}")
 
             # Validate and fix the generated code to match specifications
             contract_code = self.parser.validate_and_fix_contract(contract_code, spec)
