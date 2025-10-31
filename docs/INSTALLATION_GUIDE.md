@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-Install HyperKit Agent with all dependencies (including `alith>=0.12.0`) in one command:
+Install HyperKit Agent with all Python dependencies (including `alith>=0.12.0`) in one command. OpenZeppelin contracts and other Solidity dependencies are auto-installed by the agent.
 
 ### Option 1: From Root Directory (Recommended)
 ```bash
@@ -31,15 +31,80 @@ cd hyperkit-agent && pip install -e ".[dev,security]"
 
 ## What Gets Installed
 
-When you run `pip install -e .` from the `hyperkit-agent` directory, **all packages listed in `pyproject.toml` are automatically installed**, including:
+### Python Dependencies (via `pip install -e .`)
+
+When you run `pip install -e .` from the `hyperkit-agent` directory, **all Python packages listed in `pyproject.toml` are automatically installed**, including:
 
 - ✅ `alith>=0.12.0` (AI agent framework for Web3)
-- ✅ All Web3 dependencies (web3, eth-account, etc.)
-- ✅ All LLM providers (OpenAI, Anthropic, Google)
-- ✅ All core dependencies
-- ✅ Configuration and utilities
+- ✅ All Web3 dependencies (web3, eth-account, eth-utils, eth-keys, eth-typing)
+- ✅ All LLM providers (OpenAI, Anthropic, Google Generative AI)
+- ✅ All core dependencies (click, rich, pydantic, python-dotenv, etc.)
+- ✅ All utility libraries (ipfshttpclient, pyyaml, jsonschema, requests, httpx, aiohttp, etc.)
+- ✅ Logging and monitoring (structlog, python-json-logger, loguru)
+- ✅ Testing tools (if using `[dev]` extras: pytest, black, flake8, mypy, etc.)
+- ✅ Security tools (if using `[security]` extras: slither-analyzer, mythril, bandit, safety)
 
 **You do NOT need to run `pip install alith>=0.12.0` separately.**
+
+### Non-Python Dependencies (Auto-Handled by Agent)
+
+The following are **NOT** installed via `pip install -e .` but are automatically handled by the agent system:
+
+#### Foundry & Solidity Tooling
+- **Foundry**: Must be installed separately (system-level requirement)
+  ```bash
+  curl -L https://foundry.paradigm.xyz | bash
+  foundryup
+  ```
+- **Foundry configuration**: `foundry.toml` is included in the repository
+- **Solidity compiler**: Auto-installed/managed by Foundry
+
+#### OpenZeppelin Contracts
+- **Installation**: Automatically installed during first workflow run
+- **Location**: `lib/openzeppelin-contracts/` (created automatically)
+- **Method**: Uses `forge install` or direct `git clone` as fallback
+- **Verification**: Doctor system validates installation
+
+#### Scripts & Utilities
+- **Doctor scripts**: `scripts/doctor.py` and `scripts/doctor.sh` (included in repo)
+- **Dependency installer**: `scripts/dependency_install.sh` (included in repo)
+- **CI/CD scripts**: `scripts/ci/` directory (included in repo)
+- **All scripts**: Available immediately after cloning repository
+
+#### Directory Structure
+- **lib/**: Created automatically when OpenZeppelin is installed
+- **contracts/**: Included in repository
+- **artifacts/**: Created automatically during workflow execution
+- **logs/**: Created automatically during runtime
+
+### Summary: What Requires Manual Installation?
+
+| Component | Installation Method | Notes |
+|-----------|---------------------|-------|
+| **Python packages** | `pip install -e .` | ✅ All from pyproject.toml |
+| **Foundry** | System installation | ⚠️ Required before workflows |
+| **OpenZeppelin** | Auto-installed by agent | ✅ First workflow run or `hyperagent doctor` |
+| **Scripts** | Included in repo | ✅ Available after clone |
+| **lib/ directory** | Auto-created | ✅ When OpenZeppelin installs |
+
+### Complete Installation Flow
+
+```bash
+# 1. Install Python dependencies
+cd hyperkit-agent
+pip install -e .
+
+# 2. Install Foundry (system-level, one-time)
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+
+# 3. Run Doctor to validate and auto-install OpenZeppelin
+hyperagent doctor
+# Or let it install automatically on first workflow run
+
+# 4. Verify everything is ready
+hyperagent status
+```
 
 ## Available npm Scripts
 
@@ -206,31 +271,51 @@ npm run build
 npm run hyperagent
 ```
 
-## Dependencies Included
+## Complete Dependency Overview
 
-The package includes all dependencies from `hyperkit-agent/pyproject.toml`:
+### What `pip install -e .` Installs
 
-### Core Dependencies (Always Installed)
+The `pip install -e .` command installs **only Python packages** from `hyperkit-agent/pyproject.toml`:
+
+#### Core Python Dependencies (Always Installed)
 - **Web3 & Blockchain**: web3, eth-account, eth-utils, eth-keys, eth-typing
 - **AI/LLM**: OpenAI, Anthropic, Google Generative AI
 - **Alith SDK**: alith>=0.12.0 (AI agent framework for Web3)
+- **IPFS**: ipfshttpclient (for RAG template storage)
 - **Configuration**: pyyaml, jsonschema, python-dotenv
 - **HTTP**: requests, httpx, aiohttp
 - **Logging**: structlog, python-json-logger, loguru
 - **Utilities**: click, rich, pydantic, tenacity, ratelimit, cachetools
+- **Vector DB**: chromadb (for local vector storage)
+- **Reporting**: reportlab, openpyxl (for PDF/Excel export)
 
 ### Optional Extras
 - `dev`: Testing and development tools (pytest, black, flake8, mypy, etc.)
 - `security`: Security analysis tools (slither, mythril, bandit, safety)
 - `docs`: Documentation tools (sphinx, sphinx-rtd-theme)
 
-## Notes
+## Important Notes
 
-- All commands now properly navigate to the `hyperkit-agent` directory
-- The `pip install -e .` command from `hyperkit-agent` includes all packages
-- No need to install `alith` separately - it's already in `pyproject.toml`
-- The package.json scripts have been updated to reference correct paths
-- Version management scripts work from the root directory
+### What `pip install -e .` Does
+- ✅ Installs **ALL Python packages** from `pyproject.toml` (alith, web3, OpenAI, Anthropic, Google AI, etc.)
+- ✅ Installs CLI command (`hyperagent`) globally or in virtual environment
+- ❌ **Does NOT install**: Foundry (system-level tool), OpenZeppelin contracts (auto-installed by agent), scripts (included in repo)
+
+### What Gets Auto-Installed by Agent
+- ✅ **OpenZeppelin contracts**: Auto-installed during first workflow run or via `hyperagent doctor` (creates `lib/openzeppelin-contracts/`)
+- ✅ **lib/ directory**: Auto-created when OpenZeppelin is installed
+- ✅ **npm packages**: Auto-installed if contracts use Node.js dependencies
+
+### What Requires Manual Installation
+- ⚠️ **Foundry**: Must install separately via `curl -L https://foundry.paradigm.xyz | bash && foundryup`
+- ⚠️ **Python**: Must be Python 3.10-3.12 (system-level requirement)
+- ⚠️ **Node.js**: Must be Node.js 18+ (system-level requirement)
+- ⚠️ **Git**: Must be installed (system-level requirement)
+
+### What's Already Included
+- ✅ **All scripts**: `scripts/doctor.py`, `scripts/dependency_install.sh`, `scripts/ci/`, etc. (included in repository)
+- ✅ **Foundry config**: `foundry.toml` (included in repository)
+- ✅ **Contract templates**: `contracts/` directory (included in repository)
 
 ## Support
 
