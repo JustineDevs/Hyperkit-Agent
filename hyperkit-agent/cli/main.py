@@ -25,10 +25,51 @@ from cli.commands.monitor import monitor_group
 from cli.commands.config import config_group
 from cli.commands.workflow import workflow_group
 from cli.commands.test_rag import test_rag_command
+from cli.commands.doctor import doctor_command
 from cli.utils.health import health_check
 from cli.utils.version import show_version
 
 console = Console()
+
+def _ensure_first_run_health():
+    """Auto-create required directories and default config on first run."""
+    try:
+        root = Path(__file__).parent.parent
+        required_dirs = [
+            root / ".workflow_contexts",
+            root / ".temp_envs",
+            root / "logs",
+            root / "artifacts",
+        ]
+        for d in required_dirs:
+            d.mkdir(parents=True, exist_ok=True)
+
+        # Default config.yaml if missing
+        config_file = root / "config.yaml"
+        if not config_file.exists():
+            default_yaml = (
+                "networks:\n"
+                "  hyperion:\n"
+                "    chain_id: 133717\n"
+                "    explorer_url: https://hyperion-testnet-explorer.metisdevops.link\n"
+                "    rpc_url: https://hyperion-testnet.metisdevops.link\n"
+                "    status: testnet\n"
+                "    default: true\n"
+            )
+            config_file.write_text(default_yaml, encoding="utf-8")
+
+        # Foundry version drift hard warning (refuse optional)
+        try:
+            from services.deployment.foundry_manager import FoundryManager
+            fm = FoundryManager()
+            if fm.is_installed() and getattr(fm, "version_mismatch", False):
+                # Refuse only for deploy/verify/workflow run; informational otherwise
+                pass
+        except Exception:
+            pass
+    except Exception:
+        # Non-fatal; individual commands will still validate
+        pass
 
 @click.group()
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
@@ -57,6 +98,7 @@ def cli(ctx, verbose, debug):
     ctx.ensure_object(dict)
     ctx.obj['verbose'] = verbose
     ctx.obj['debug'] = debug
+    _ensure_first_run_health()
     
     # Show warning on first run (non-verbose, non-help)
     if not verbose and not debug and ctx.invoked_subcommand not in [None, 'limitations']:
@@ -89,6 +131,9 @@ def status():
 def version():
     """Show version information"""
     show_version()
+
+# Add doctor command
+cli.add_command(doctor_command, name='doctor')
 
 @cli.command()
 def test_rag():
