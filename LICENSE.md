@@ -93,5 +93,5 @@ If you have questions about licensing or need to use HyperKit under different te
 ---
 
 **Last Updated**: October 17, 2025
-**Version**: 1.5.8
+**Version**: 1.5.10
 **Project**: HyperKit Web3 Development Platform
