@@ -41,7 +41,7 @@
 ```
 ============================================= test session starts ==============================================
 platform win32 -- Python 3.12.10, pytest-8.4.1, pluggy-1.6.0
-rootdir: C:\Users\JustineDevs\Downloads\HyperAgent\hyperkit-agent
+rootdir: C:\Users\USERNAME\Downloads\HyperAgent\hyperkit-agent
 configfile: pytest.ini
 plugins: anyio-4.10.0, langsmith-0.4.37, asyncio-1.1.0, benchmark-5.1.0, cov-6.2.1, mock-3.15.1, xdist-3.8.0
 
