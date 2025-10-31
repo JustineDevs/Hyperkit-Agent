@@ -630,8 +630,19 @@ class HyperKitAgent:
                                 logger.warning("⚠️  Forge says installed but files not found - may need git submodule update")
                                 # Try to force reinstall
                                 logger.info("   Attempting forced reinstall...")
+                                # Remove broken submodule first
+                                import shutil
+                                broken_lib = foundry_project_dir / "lib" / "openzeppelin-contracts"
+                                if broken_lib.exists():
+                                    try:
+                                        shutil.rmtree(str(broken_lib), ignore_errors=True)
+                                        logger.info("🧹 Removed broken OpenZeppelin directory before reinstall")
+                                    except Exception as e:
+                                        logger.warning(f"⚠️  Could not remove broken directory: {e}")
+                                
+                                # Reinstall without --no-commit (removed in Foundry 1.4.3)
                                 force_result = subprocess.run(
-                                    ["forge", "install", "OpenZeppelin/openzeppelin-contracts", "--force", "--no-commit"],
+                                    ["forge", "install", "OpenZeppelin/openzeppelin-contracts"],
                                     cwd=str(foundry_project_dir),
                                     capture_output=True,
                                     text=True,
@@ -648,8 +659,8 @@ class HyperKitAgent:
                                 "success": False,
                                 "error": f"Failed to install OpenZeppelin dependencies: {error_msg[:300]}",
                                 "suggestions": [
-                                    f"Run manually: cd {foundry_project_dir} && forge install OpenZeppelin/openzeppelin-contracts --no-commit",
-                                    f"If already installed, try: cd {foundry_project_dir} && forge install OpenZeppelin/openzeppelin-contracts --force",
+                                    f"Run manually: cd {foundry_project_dir} && forge install OpenZeppelin/openzeppelin-contracts",
+                                    f"If already installed, try: cd {foundry_project_dir} && rm -rf lib/openzeppelin-contracts && forge install OpenZeppelin/openzeppelin-contracts",
                                     f"Check foundry.toml configuration at: {foundry_toml}",
                                     "Verify Foundry is installed: forge --version",
                                     "Check network connectivity for GitHub access",
@@ -702,6 +713,28 @@ class HyperKitAgent:
                     logger.debug(f"   Contracts available at: {contracts_dir_check}")
             
             # Contract is already in foundry project directory (contracts/)
+            # CRITICAL: Clean stale contracts before compilation to avoid conflicts
+            # Keep only the current contract file to ensure compilation succeeds
+            if contract_file and contract_file.exists():
+                import shutil
+                # Backup and remove other .sol files (except the current one)
+                for old_file in foundry_contracts_dir.glob("*.sol"):
+                    if old_file != contract_file:
+                        # Create backup in artifacts/cleanup/ before removing
+                        backup_dir = foundry_project_dir / "artifacts" / "cleanup"
+                        backup_dir.mkdir(parents=True, exist_ok=True)
+                        try:
+                            shutil.move(str(old_file), str(backup_dir / old_file.name))
+                            logger.info(f"🧹 Moved stale contract to cleanup: {old_file.name}")
+                        except Exception as e:
+                            logger.warning(f"⚠️ Could not move stale contract {old_file.name}: {e}")
+                            # If move fails, try delete as fallback
+                            try:
+                                old_file.unlink()
+                                logger.info(f"🗑️ Deleted stale contract: {old_file.name}")
+                            except Exception:
+                                pass
+            
             # Run forge build from foundry project directory
             logger.info(f"Building contract with Foundry from {foundry_project_dir}...")
             logger.debug(f"   Contract file: {contract_file}")
@@ -892,6 +925,36 @@ class HyperKitAgent:
             from web3 import Web3
             
             # Initialize deployer (handles Foundry check internally)
+            # Refuse deployment if strict Foundry drift or nightly detected
+            fm = FoundryManager()
+            if fm.should_refuse_deploy():
+                current_version = fm.get_version()
+                expected_hint = getattr(fm, "pinned_version_hint", "forge 1.4.")
+                is_nightly = fm.is_nightly()
+                error_msg = (
+                    "Foundry version issue detected in strict mode. "
+                    f"Current: '{current_version}', Expected hint: '{expected_hint}'. "
+                    f"{'Nightly build detected.' if is_nightly else 'Version mismatch.'} "
+                    "Refusing to deploy."
+                )
+                return {
+                    "status": "error",
+                    "error": error_msg,
+                    "details": {
+                        "current": current_version,
+                        "expected": expected_hint,
+                        "is_nightly": is_nightly,
+                        "version_mismatch": getattr(fm, "version_mismatch", False)
+                    },
+                    "recovery_suggestions": [
+                        "Run 'hyperagent config foundry-check' for detailed diagnostics",
+                        "Install stable Foundry: foundryup (or download from GitHub releases)",
+                        "Remove nightly build from PATH: which -a forge",
+                        "Set HYPERAGENT_FORGE_VERSION to match your stable version",
+                        "Or disable strict mode: export HYPERAGENT_STRICT_FORGE=0 (not recommended)"
+                    ]
+                }
+
             deployer = MultiChainDeployer(self.config)
             
             # Get deployer address for constructor args
