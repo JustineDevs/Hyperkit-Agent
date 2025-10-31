@@ -66,6 +66,12 @@ class SelfHealingErrorHandler:
                 re.compile(r"type error", re.IGNORECASE),
                 re.compile(r"function has override specified but does not override", re.IGNORECASE),
                 re.compile(r"override.*does not override anything", re.IGNORECASE),
+                re.compile(r"shadows an existing declaration", re.IGNORECASE),
+                re.compile(r"declaration shadows", re.IGNORECASE),
+                re.compile(r"Counters\.sol.*not found", re.IGNORECASE),
+                re.compile(r"invalid solc version", re.IGNORECASE),
+                re.compile(r"no solc version exists.*0\.8\.\d+", re.IGNORECASE),
+                re.compile(r"version requirement.*0\.8\.\d+", re.IGNORECASE),
             ],
             ErrorType.NETWORK_ERROR: [
                 re.compile(r"network error", re.IGNORECASE),
@@ -228,7 +234,72 @@ class SelfHealingErrorHandler:
     async def _auto_fix_compilation(self, parsed_error: ParsedError, context: Dict[str, Any]) -> Tuple[bool, str]:
         """Auto-fix compilation errors including override issues"""
         contract_code = context.get("contract_code")
-        error_message = parsed_error.original_message.lower()
+        error_message = parsed_error.original_message  # Keep original case for pattern matching
+        error_message_lower = error_message.lower()
+
+        # Missing 'override' specifier for functions/modifiers – attempt auto-insert
+        if "missing 'override' specifier" in error_message or "is missing override specifier" in error_message:
+            if contract_code:
+                import re
+                fixed = contract_code
+                # Add override to function definitions lacking it
+                # Matches: function name(...) <visibility> [virtual]? [returns ...] { ... }
+                func_pattern = re.compile(r"(function\s+[A-Za-z_][A-Za-z0-9_]*\s*\([^)]*\)\s+)(?!.*\boverride\b)([a-zA-Z\s]*)(\{)")
+                def add_override_to_func(m):
+                    head, attrs, brace = m.groups()
+                    attrs_clean = attrs.strip()
+                    if attrs_clean:
+                        attrs_clean = attrs_clean + " override "
+                    else:
+                        attrs_clean = "override "
+                    return f"{head}{attrs_clean}{brace}"
+                fixed = func_pattern.sub(add_override_to_func, fixed)
+
+                # Add override to modifier definitions lacking it (Solidity >=0.8.8)
+                mod_pattern = re.compile(r"(modifier\s+[A-Za-z_][A-Za-z0-9_]*\s*\([^)]*\)\s*)(?!.*\boverride\b)(\{)")
+                fixed = mod_pattern.sub(lambda m: f"{m.group(1)}override {m.group(2)}", fixed)
+
+                if fixed != contract_code:
+                    context["contract_code"] = fixed
+                    logger.info("🔧 Inserted missing 'override' specifiers into functions/modifiers")
+                    return True, "Inserted missing 'override' specifiers and retrying"
+
+        # Has override but base doesn't define it (common OZ v5 hook changes)
+        if "does not override anything" in error_message:
+            if contract_code:
+                import re
+                fixed = contract_code
+                # Extract function name from error if possible
+                func_match = re.search(r"Function\s+(\w+)\s+has override", error_message, re.IGNORECASE)
+                func_name = func_match.group(1) if func_match else None
+                
+                # Remove problematic hook functions (_beforeTokenTransfer, _afterTokenTransfer)
+                problematic_hooks = ["_beforeTokenTransfer", "_afterTokenTransfer"]
+                if func_name in problematic_hooks or not func_name:
+                    # Improved regex: handles multiline, comments, nested braces
+                    hook_name = func_name or "_beforeTokenTransfer"
+                    patterns = [
+                        rf"function\s+{re.escape(hook_name)}\s*\([^)]*\)\s*internal[\s\S]*?override[\s\S]*?\{{[^{{}}]*(?:\{{[^{{}}]*\}}[^{{}}]*)*\}}",
+                        rf"function\s+{re.escape(hook_name)}\s*\([^)]*\)\s*internal\s+virtual\s+override[\s\S]*?\{{[^{{}}]*(?:\{{[^{{}}]*\}}[^{{}}]*)*\}}",
+                        rf"function\s+{re.escape(hook_name)}\s*\([^)]*\)\s*internal[\s\S]*?\{{[\s\S]*?\}}",
+                    ]
+                    for pat in patterns:
+                        if re.search(pat, fixed, re.MULTILINE | re.DOTALL):
+                            fixed = re.sub(pat, "", fixed, flags=re.MULTILINE | re.DOTALL)
+                            logger.info(f"🔧 Removed invalid {hook_name} override (OZ v5 hook change)")
+                            break
+                else:
+                    # For other functions, try removing just the override keyword
+                    func_pattern = rf"function\s+{func_name}\s*\([^)]*\)\s*([\s\S]*?)\{{"
+                    match = re.search(func_pattern, fixed, re.MULTILINE | re.DOTALL)
+                    if match and "override" in match.group(1):
+                        # Remove override keyword
+                        fixed = re.sub(rf"(\s+){func_name}(\s*\([^)]*\)\s*)([\s\S]*?)(\s+override\s+)", r"\1\2\3", fixed)
+                        logger.info(f"🔧 Removed override keyword from {func_name}")
+                
+                if fixed != contract_code:
+                    context["contract_code"] = fixed
+                    return True, f"Removed invalid override from {func_name or 'hook function'} and retrying"
 
         # Ensure OpenZeppelin deps when imports present or error mentions them
         try:
@@ -236,6 +307,25 @@ class SelfHealingErrorHandler:
                 from services.dependencies.dependency_manager import DependencyManager
                 workspace = context.get("workspace_dir")
                 if workspace:
+                    # Fix common OZ v5 import path changes (security -> utils)
+                    try:
+                        import re as _re
+                        fixed_code = contract_code
+                        # Comprehensive OZ v5 path mapping
+                        oz_v5_path_fixes = {
+                            "@openzeppelin/contracts/security/Pausable.sol": "@openzeppelin/contracts/utils/Pausable.sol",
+                            "@openzeppelin/contracts/security/ReentrancyGuard.sol": "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+                            "@openzeppelin/contracts/utils/security/Pausable.sol": "@openzeppelin/contracts/utils/Pausable.sol",
+                        }
+                        for old_path, new_path in oz_v5_path_fixes.items():
+                            if old_path in fixed_code:
+                                fixed_code = fixed_code.replace(old_path, new_path)
+                        if fixed_code != contract_code:
+                            context["contract_code"] = fixed_code
+                            contract_code = fixed_code
+                            logger.info("🔧 Rewrote OZ import paths for v5 compatibility")
+                    except Exception:
+                        pass
                     dep_manager = DependencyManager(workspace)
                     deps = dep_manager.detect_dependencies(contract_code or "", "AutoFix.sol")
                     if deps:
@@ -245,6 +335,119 @@ class SelfHealingErrorHandler:
         except Exception as e:
             logger.warning(f"Dependency auto-fix skipped: {e}")
 
+        # Parameter shadowing errors - rename parameters with underscore prefix
+        if "shadows an existing declaration" in error_message or "declaration shadows" in error_message:
+            if contract_code:
+                import re
+                fixed = contract_code
+                # Extract parameter name from error: "contracts/X.sol:18:59: parameter _initialSupply shadows..."
+                shadow_match = re.search(r"parameter\s+(\w+)\s+shadows|(\w+)\s+shadows an existing", error_message, re.IGNORECASE)
+                if shadow_match:
+                    param_name = shadow_match.group(1) or shadow_match.group(2)
+                    # Rename parameter in constructor signature
+                    # Pattern: constructor(... param_name) or constructor(... param_name, ...)
+                    constructor_pattern = rf"constructor\s*\(([^)]+)\)"
+                    constructor_match = re.search(constructor_pattern, fixed)
+                    if constructor_match:
+                        params_str = constructor_match.group(1)
+                        # Find and rename the parameter
+                        # Match: type memory/calldata param_name or type param_name
+                        param_pattern = rf"(\w+(?:\s+\w+)?\s+)({re.escape(param_name)})(\s*,|\s*\))"
+                        if re.search(param_pattern, params_str):
+                            new_param_name = f"_{param_name}" if not param_name.startswith("_") else f"{param_name}_renamed"
+                            params_fixed = re.sub(
+                                rf"(\w+(?:\s+\w+)?\s+)({re.escape(param_name)})(\s*,|\s*\)|$)",
+                                rf"\1{new_param_name}\3",
+                                params_str
+                            )
+                            # Update constructor signature
+                            fixed = fixed.replace(f"constructor({params_str})", f"constructor({params_fixed})")
+                            # Update references in constructor body
+                            constructor_body_pattern = rf"constructor\s*\([^)]+\)\s*{{([^}}]+)}}"
+                            body_match = re.search(constructor_body_pattern, fixed, re.DOTALL)
+                            if body_match:
+                                body = body_match.group(1)
+                                body_fixed = re.sub(rf"\b{re.escape(param_name)}\b", new_param_name, body)
+                                fixed = fixed.replace(body, body_fixed)
+                            logger.info(f"🔧 Renamed shadowing parameter '{param_name}' to '{new_param_name}'")
+                            if fixed != contract_code:
+                                context["contract_code"] = fixed
+                                return True, f"Renamed shadowing parameter and retrying"
+
+        # Counters.sol not found (deprecated in OZ v5) - replace with manual counter
+        # Check multiple error message formats (case-insensitive check)
+        counters_error_patterns = [
+            "counters.sol" in error_message_lower,
+            ("counters" in error_message_lower and ("not found" in error_message_lower or "file not found" in error_message_lower)),
+            "Source.*Counters" in error_message and "not found" in error_message_lower
+        ]
+        
+        if any(counters_error_patterns):
+            if contract_code:
+                import re
+                fixed = contract_code
+                logger.info("🔧 Detected Counters.sol error - applying auto-fix...")
+                
+                # Step 1: Remove Counters import statement (handle various quote styles)
+                import_pattern = r"import\s+['\"]@openzeppelin/contracts/utils/Counters\.sol['\"];?\s*\n?"
+                fixed = re.sub(import_pattern, "", fixed, flags=re.IGNORECASE | re.MULTILINE)
+                
+                # Step 2: Remove "using Counters for Counters.Counter;" statement
+                using_pattern = r"using\s+Counters\s+for\s+Counters\.Counter;?\s*\n?"
+                fixed = re.sub(using_pattern, "", fixed, flags=re.IGNORECASE | re.MULTILINE)
+                
+                # Step 3: Replace "Counters.Counter private _tokenIdCounter;" with "uint256 private _tokenIdCounter;"
+                counter_decl_pattern = r"Counters\.Counter\s+(private|internal|public)?\s*(\w+);"
+                fixed = re.sub(counter_decl_pattern, r"uint256 \1 \2;", fixed, flags=re.IGNORECASE)
+                # Also handle without visibility modifier
+                fixed = re.sub(r"Counters\.Counter\s+(\w+);", r"uint256 private \1;", fixed, flags=re.IGNORECASE)
+                
+                # Step 4: Replace Counters method calls with direct operations
+                # _tokenIdCounter.current() -> _tokenIdCounter (just the variable)
+                fixed = re.sub(r"(\w+TokenIdCounter|\w+Counter)\.current\(\)", r"\1", fixed)
+                
+                # _tokenIdCounter.increment() -> _tokenIdCounter++
+                fixed = re.sub(r"(\w+TokenIdCounter|\w+Counter)\.increment\(\)", r"\1++", fixed)
+                
+                # Step 5: Initialize counter in constructor if needed
+                if "_tokenIdCounter" in fixed or "Counter" in fixed:
+                    constructor_match = re.search(r"constructor\s*\([^)]*\)\s*\{([^}]+)\}", fixed, re.DOTALL)
+                    if constructor_match:
+                        constructor_body = constructor_match.group(1)
+                        # Check if _tokenIdCounter exists and isn't initialized
+                        if "uint256 private _tokenIdCounter" in fixed or "uint256 private tokenIdCounter" in fixed:
+                            counter_var = "_tokenIdCounter" if "_tokenIdCounter" in fixed else "tokenIdCounter"
+                            if f"{counter_var} = " not in constructor_body and f"{counter_var}++" not in constructor_body:
+                                # Insert initialization at the end of constructor body (before closing brace)
+                                # Find the closing brace position
+                                brace_pos = fixed.find(constructor_match.group(0)) + len(constructor_match.group(0)) - 1
+                                indent = "        "  # 8 spaces
+                                init_line = f"\n{indent}{counter_var} = 0;"
+                                # Insert before the closing brace
+                                fixed = fixed[:brace_pos] + init_line + fixed[brace_pos:]
+                                logger.info(f"🔧 Added {counter_var} = 0; initialization in constructor")
+                
+                if fixed != contract_code:
+                    context["contract_code"] = fixed
+                    logger.info("✅ Replaced deprecated Counters.sol with manual counter")
+                    # CRITICAL: Also write back to file immediately
+                    try:
+                        from pathlib import Path
+                        workspace = context.get("workspace_dir")
+                        if workspace:
+                            contract_name = context.get("contract_name", "Contract")
+                            contracts_dir = Path(workspace) / "contracts"
+                            contracts_dir.mkdir(parents=True, exist_ok=True)
+                            contract_file = contracts_dir / f"{contract_name}.sol"
+                            contract_file.write_text(fixed, encoding="utf-8")
+                            logger.info(f"✅ Wrote fixed contract to: {contract_file}")
+                    except Exception as write_err:
+                        logger.warning(f"⚠️ Could not write fixed contract to file: {write_err}")
+                    
+                    return True, "Replaced deprecated Counters with manual counter and retrying"
+                else:
+                    logger.warning("⚠️ Counters fix detected but no changes made to contract code")
+        
         # Missing import/remapping style errors -> allow retry after deps
         if (
             "file import callback not supported" in error_message
@@ -252,7 +455,7 @@ class SelfHealingErrorHandler:
             or ("import" in error_message and "not found" in error_message)
         ):
             return True, "Retry after ensuring remappings and dependencies"
-
+        
         # Fix override errors for ERC20 _beforeTokenTransfer
         if "override" in error_message and "_beforetokentransfer" in error_message and "erc20" in error_message:
             if contract_code:
@@ -263,7 +466,65 @@ class SelfHealingErrorHandler:
                     context["contract_code"] = fixed_code
                     logger.info("🔧 Fixed _beforeTokenTransfer override issue")
                     return True, "Removed invalid _beforeTokenTransfer override"
-
+        
+        # Solidity version mismatch - update foundry.toml and contract pragma
+        if "invalid solc version" in error_message.lower() or "no solc version exists" in error_message.lower():
+            # Extract required version from error message
+            version_match = re.search(r'0\.8\.(\d+)', error_message)
+            if version_match:
+                required_minor = int(version_match.group(1))
+                required_version = f"0.8.{required_minor}"
+                
+                # Update foundry.toml
+                try:
+                    from pathlib import Path
+                    foundry_project_dir = context.get("workspace_dir") or Path(__file__).parent.parent.parent
+                    foundry_toml = foundry_project_dir / "foundry.toml"
+                    
+                    if foundry_toml.exists():
+                        toml_content = foundry_toml.read_text(encoding="utf-8")
+                        # Update solc version
+                        updated = re.sub(
+                            r'solc\s*=\s*["\']0\.8\.\d+["\']',
+                            f'solc = "{required_version}"',
+                            toml_content
+                        )
+                        if updated != toml_content:
+                            foundry_toml.write_text(updated, encoding="utf-8")
+                            logger.info(f"✅ Updated foundry.toml: solc = {required_version}")
+                except Exception as e:
+                    logger.warning(f"⚠️  Could not update foundry.toml: {e}")
+                
+                # Update contract pragma if needed
+                if contract_code:
+                    # Update pragma solidity to match
+                    updated_code = re.sub(
+                        r'pragma solidity\s+[^;]+;',
+                        f'pragma solidity ^{required_version};',
+                        contract_code,
+                        count=1
+                    )
+                    if updated_code != contract_code:
+                        context["contract_code"] = updated_code
+                        logger.info(f"✅ Updated contract pragma: ^0.8.{required_minor}")
+                
+                # Clear Foundry cache after version update
+                try:
+                    import subprocess
+                    from pathlib import Path
+                    foundry_project_dir = context.get("workspace_dir") or Path(__file__).parent.parent.parent
+                    subprocess.run(
+                        ["forge", "clean"],
+                        cwd=foundry_project_dir,
+                        capture_output=True,
+                        timeout=30
+                    )
+                    logger.info("🧹 Cleared Foundry cache after Solidity version update")
+                except Exception as e:
+                    logger.warning(f"⚠️  Could not clear Foundry cache: {e}")
+                
+                return True, f"Updated Solidity version to {required_version} and retrying"
+        
         # As a general fallback, try dependency detection and re-run
         if contract_code:
             from services.dependencies.dependency_manager import DependencyManager
@@ -273,7 +534,7 @@ class SelfHealingErrorHandler:
                 deps = dep_manager.detect_dependencies(contract_code, "contract.sol")
                 if deps:
                     await dep_manager.install_all_dependencies(deps)
-
+        
         return True, "Retried compilation after dependency check"
     
     async def _auto_fix_network(self, parsed_error: ParsedError, context: Dict[str, Any]) -> Tuple[bool, str]:
