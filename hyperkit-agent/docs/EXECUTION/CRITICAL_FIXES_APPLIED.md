@@ -73,7 +73,7 @@ class AlithClient:
 This is NOT a real Alith SDK integration. This is a placeholder for testing.
 
 TO USE REAL ALITH SDK:
-1. Install: pip install alith>=0.12.0
+1. Install: `cd hyperkit-agent && pip install -e .` (installs all packages including alith>=0.12.0)
 2. Get API keys from LazAI Network: https://lazai.network
 3. Configure in config.yaml
 4. Remove this mock and use: from alith import Agent
