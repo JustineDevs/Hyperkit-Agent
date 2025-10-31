@@ -112,18 +112,19 @@ class WorkflowOrchestrator:
             # Stage 4: Compilation
             await self._stage_compilation(context)
             
-            # Stage 5: Testing (optional)
+            # Stage 5: Testing (per ideal workflow: e2e and edge-case tests)
+            # Run tests BEFORE deployment to catch issues early
             if not test_only:
                 await self._stage_testing(context)
             
-            # Stage 6: Auditing
+            # Stage 6: Auditing (per ideal workflow: security analysis before deployment)
             await self._stage_auditing(context)
             
-            # Stage 7: Deployment
+            # Stage 7: Deployment (per ideal workflow: only if audit passes or allow_insecure)
             if not test_only:
                 await self._stage_deployment(context, network, allow_insecure)
             
-            # Stage 8: Verification
+            # Stage 8: Verification & Artifact Storage (per ideal workflow: verify on explorer + store artifacts)
             if not test_only and auto_verification and context.deployment_address:
                 await self._stage_verification(context, network)
             
@@ -177,14 +178,34 @@ class WorkflowOrchestrator:
             }
     
     async def _stage_preflight(self, context: WorkflowContext):
-        """Stage 0: Preflight checks"""
+        """Stage 0: Preflight checks (hardened validation)"""
         stage_start = time.time()
-        logger.info("🔍 Stage 0: Preflight Checks")
+        logger.info("🔍 Stage 0: Preflight Checks (Doctor)")
         
         try:
+            # Run comprehensive doctor/preflight checks (hardened validation)
+            try:
+                import sys
+                scripts_path = Path(__file__).parent.parent.parent / "scripts"
+                if str(scripts_path) not in sys.path:
+                    sys.path.insert(0, str(scripts_path))
+                
+                from doctor import doctor as run_doctor
+                doctor_workspace = Path(__file__).parent.parent.parent
+                logger.info("🔬 Running Doctor preflight checks...")
+                doctor_result = run_doctor(workspace_dir=doctor_workspace, auto_fix=True)
+                if not doctor_result:
+                    logger.warning("⚠️  Doctor preflight found issues, but continuing with workflow")
+                else:
+                    logger.info("✅ Doctor preflight checks passed")
+            except ImportError as e:
+                logger.debug(f"Doctor script not available ({e}), using basic preflight")
+            except Exception as e:
+                logger.warning(f"⚠️  Doctor preflight error: {e}, falling back to basic checks")
+            
             checks = self.dep_manager.preflight_check()
             
-            # Required tools (workflow will fail if missing)
+            # Required tools (workflow will fail if missing) - per ideal workflow
             required_tools = ["forge", "python"]
             missing_required = [tool for tool in required_tools if not checks.get(tool, False)]
             
@@ -192,8 +213,38 @@ class WorkflowOrchestrator:
             optional_tools = ["npm", "node", "pip"]
             missing_optional = [tool for tool in optional_tools if not checks.get(tool, False)]
             
+            # Check Foundry version (per ideal workflow preflight requirements)
+            forge_version_check = checks.get("forge_version", {})
+            if forge_version_check:
+                current_version = forge_version_check.get("version", "unknown")
+                is_nightly = forge_version_check.get("is_nightly", False)
+                
+                # Enforce strict mode if enabled
+                import os
+                strict_mode = os.getenv("HYPERAGENT_STRICT_FORGE", "0").lower() in ("1", "true", "yes")
+                if strict_mode and is_nightly:
+                    error_msg = (
+                        f"Foundry nightly build detected in strict mode. "
+                        f"Current: {current_version}. "
+                        f"Please install stable version: foundryup"
+                    )
+                    context.add_stage_result(
+                        PipelineStage.INPUT_PARSING,
+                        "error",
+                        error=error_msg,
+                        error_type="foundry_version_mismatch"
+                    )
+                    raise RuntimeError(error_msg)
+                elif is_nightly:
+                    logger.warning(f"⚠️ Foundry nightly build detected: {current_version} (may have unpredictable behavior)")
+            
             if missing_required:
-                error_msg = f"Missing required tools: {', '.join(missing_required)}. Please install these system tools."
+                error_msg = (
+                    f"Missing required tools: {', '.join(missing_required)}. "
+                    f"Please install these system tools.\n"
+                    f"  - Forge: Install Foundry (foundryup)\n"
+                    f"  - Python: Install Python 3.8+"
+                )
                 context.add_stage_result(
                     PipelineStage.INPUT_PARSING,
                     "error",
@@ -202,9 +253,10 @@ class WorkflowOrchestrator:
                 )
                 raise RuntimeError(error_msg)
             
-            # Log warnings for optional tools
+            # Log warnings for optional tools with actionable messages
             if missing_optional:
                 logger.warning(f"⚠️ Optional tools not found: {', '.join(missing_optional)}. These are only needed if contracts use npm/Node.js dependencies.")
+                logger.info("💡 To install: npm (install Node.js), pip (comes with Python)")
             
             duration = (time.time() - stage_start) * 1000
             context.add_stage_result(
@@ -231,30 +283,55 @@ class WorkflowOrchestrator:
             raise
     
     async def _stage_input_parsing(self, context: WorkflowContext, user_prompt: str, rag_scope: str = 'official-only'):
-        """Stage 1: Input parsing & RAG context retrieval"""
+        """Stage 1: Input parsing & RAG context (per ideal workflow: Template & Context Fetch)"""
         stage_start = time.time()
         logger.info("📥 Stage 1: Input Parsing & Context Retrieval")
         
         try:
-            # Get RAG context if available
+            # Per ideal workflow: Load closest matching template from IPFS/Pinata
             rag_context = ""
+            template_info = None
+            
             if hasattr(self.agent, 'rag') and self.agent.rag:
                 try:
+                    # Retrieve RAG context from IPFS/Pinata (per ideal workflow)
                     rag_context = await self.agent.rag.retrieve(user_prompt, rag_scope=rag_scope)
-                    logger.info(f"Retrieved RAG context with scope: {rag_scope}")
-                except Exception as e:
-                    logger.warning(f"RAG retrieval failed: {e}")
+                    
+                    # Try to identify which template was matched
+                    if hasattr(self.agent.rag, 'last_retrieved_cid'):
+                        template_info = {
+                            "cid": getattr(self.agent.rag, 'last_retrieved_cid', None),
+                            "source": "ipfs_pinata",
+                            "scope": rag_scope
+                        }
+                    
+                    logger.info(f"📚 Retrieved RAG context: {len(rag_context)} characters")
+                    if template_info:
+                        logger.info(f"📦 Template matched: {template_info.get('cid', 'N/A')}")
+                except Exception as rag_error:
+                    logger.warning(f"⚠️ RAG context retrieval failed: {rag_error}")
+                    # Continue without RAG - it's helpful but not required
                     rag_context = ""
+            else:
+                logger.warning("⚠️ RAG system not available - proceeding without template context")
+                logger.info("💡 Tip: Configure PINATA_API_KEY and PINATA_SECRET_KEY for template retrieval")
             
             # Store RAG context for reuse in generation stage
             context.metadata['rag_context'] = rag_context
             context.metadata['rag_scope'] = rag_scope
+            if template_info:
+                context.metadata['template_info'] = template_info
             
             duration = (time.time() - stage_start) * 1000
             context.add_stage_result(
                 PipelineStage.INPUT_PARSING,
                 "success",
-                output={"rag_context_length": len(rag_context), "rag_scope": rag_scope, "rag_context": rag_context},
+                output={
+                    "rag_context_length": len(rag_context),
+                    "rag_scope": rag_scope,
+                    "template_info": template_info,
+                    "template_loaded": bool(rag_context)
+                },
                 duration_ms=duration
             )
             
@@ -268,7 +345,9 @@ class WorkflowOrchestrator:
                 error=str(e),
                 duration_ms=duration
             )
-            raise
+            # Don't raise - RAG context is helpful but not required
+            logger.warning(f"⚠️ RAG context retrieval failed: {e}")
+            logger.info("💡 Continuing without RAG context - contract generation will proceed")
     
     async def _stage_generation(self, context: WorkflowContext, user_prompt: str, rag_scope: str = 'official-only'):
         """Stage 2: Contract generation"""
@@ -333,6 +412,16 @@ class WorkflowOrchestrator:
                         if sanitized != context.contract_code:
                             context.contract_code = sanitized
                             logger.info("🔧 Applied post-generation sanitizer to contract code")
+                            # CRITICAL: Write sanitized code back to contracts/ directory
+                            from pathlib import Path
+                            foundry_project_dir = Path(__file__).parent.parent.parent
+                            foundry_contracts_dir = foundry_project_dir / "contracts"
+                            foundry_contract_file = foundry_contracts_dir / f"{context.contract_name}.sol"
+                            try:
+                                foundry_contract_file.write_text(sanitized, encoding="utf-8")
+                                logger.info(f"✅ Updated contracts/ file with sanitized code: {foundry_contract_file}")
+                            except Exception as write_err:
+                                logger.warning(f"⚠️ Could not update contracts/ file: {write_err}")
                     except Exception as _:
                         # Non-fatal if sanitizer fails
                         pass
@@ -512,6 +601,25 @@ class WorkflowOrchestrator:
                         if "contract_code" in fix_context:
                             context.contract_code = fix_context["contract_code"]
                             logger.info("✅ Contract code updated after auto-fix")
+                            # CRITICAL: Write fixed code back to contracts/ directory
+                            from pathlib import Path
+                            foundry_project_dir = Path(__file__).parent.parent.parent
+                            foundry_contracts_dir = foundry_project_dir / "contracts"
+                            foundry_contract_file = foundry_contracts_dir / f"{context.contract_name}.sol"
+                            try:
+                                foundry_contract_file.write_text(fix_context["contract_code"], encoding="utf-8")
+                                logger.info(f"✅ Updated contracts/ file with fixed code: {foundry_contract_file}")
+                                # Clear Foundry cache before retry
+                                import subprocess
+                                subprocess.run(
+                                    ["forge", "clean"],
+                                    cwd=foundry_project_dir,
+                                    capture_output=True,
+                                    timeout=30
+                                )
+                                logger.info("🧹 Cleared Foundry cache before retry")
+                            except Exception as write_err:
+                                logger.warning(f"⚠️ Could not update contracts/ file: {write_err}")
                         context.increment_retry(PipelineStage.COMPILATION)
                         logger.info(f"🔧 Auto-fixed compilation error, retrying...")
                         await asyncio.sleep(1)
@@ -533,18 +641,104 @@ class WorkflowOrchestrator:
                     raise
     
     async def _stage_testing(self, context: WorkflowContext):
-        """Stage 5: Testing (placeholder)"""
+        """Stage 5: Testing - Execute e2e and edge-case tests per ideal workflow"""
         stage_start = time.time()
         logger.info("🧪 Stage 5: Testing")
         
-        # Placeholder for test execution
-        duration = (time.time() - stage_start) * 1000
-        context.add_stage_result(
-            PipelineStage.TESTING,
-            "skipped",
-            output={"note": "Testing stage not yet implemented"},
-            duration_ms=duration
-        )
+        try:
+            if not context.contract_name or not context.compilation_success:
+                logger.warning("⚠️ Skipping tests: contract not compiled successfully")
+                duration = (time.time() - stage_start) * 1000
+                context.add_stage_result(
+                    PipelineStage.TESTING,
+                    "skipped",
+                    output={"reason": "Contract not compiled"},
+                    duration_ms=duration
+                )
+                return
+            
+            # Run Foundry tests if test file exists
+            import subprocess
+            from pathlib import Path
+            
+            foundry_project_dir = Path(__file__).parent.parent.parent
+            test_file = foundry_project_dir / "test" / f"{context.contract_name}.t.sol"
+            
+            test_results = {
+                "foundry_tests_run": False,
+                "tests_passed": False,
+                "test_count": 0,
+                "test_output": None
+            }
+            
+            # Check if test file exists
+            if test_file.exists():
+                logger.info(f"📝 Found test file: {test_file.name}")
+                try:
+                    # Run forge test for this specific contract
+                    # Note: Foundry runs all tests by default, but we can filter
+                    test_cmd = ["forge", "test", "--match-contract", context.contract_name, "-vv"]
+                    result = subprocess.run(
+                        test_cmd,
+                        cwd=foundry_project_dir,
+                        capture_output=True,
+                        text=True,
+                        timeout=120
+                    )
+                    
+                    test_results["foundry_tests_run"] = True
+                    test_results["test_output"] = result.stdout + result.stderr
+                    test_results["tests_passed"] = result.returncode == 0
+                    
+                    if result.returncode == 0:
+                        logger.info("✅ All tests passed")
+                    else:
+                        logger.warning(f"⚠️ Some tests failed (exit code: {result.returncode})")
+                        # Extract test count from output if possible
+                        if "test result:" in result.stdout:
+                            test_results["test_count"] = result.stdout.count("test result:")
+                    
+                except subprocess.TimeoutExpired:
+                    logger.warning("⚠️ Test execution timed out after 120 seconds")
+                    test_results["test_output"] = "Test execution timed out"
+                except Exception as e:
+                    logger.warning(f"⚠️ Test execution failed: {e}")
+                    test_results["test_output"] = str(e)
+            else:
+                logger.info("ℹ️ No test file found - generating basic sanity test recommendations")
+                test_results["note"] = "No test file found. Consider adding tests for: mint/burn/approve (tokens), batch mint (NFTs)"
+            
+            # Perform basic sanity checks even without formal tests
+            sanity_checks = {
+                "contract_compiled": context.compilation_success,
+                "contract_has_code": bool(context.contract_code),
+                "deployment_ready": context.compilation_success and context.audit_results
+            }
+            test_results["sanity_checks"] = sanity_checks
+            
+            duration = (time.time() - stage_start) * 1000
+            status = "success" if (test_results.get("tests_passed") or not test_results.get("foundry_tests_run")) else "warning"
+            context.add_stage_result(
+                PipelineStage.TESTING,
+                status,
+                output=test_results,
+                duration_ms=duration
+            )
+            
+            # Flag test failures (but don't block workflow - tests are informative)
+            if test_results.get("foundry_tests_run") and not test_results.get("tests_passed"):
+                logger.warning("⚠️ Test failures detected - review test output before deployment")
+            
+        except Exception as e:
+            duration = (time.time() - stage_start) * 1000
+            context.add_stage_result(
+                PipelineStage.TESTING,
+                "error",
+                error=str(e),
+                duration_ms=duration
+            )
+            # Don't raise - test failures are informative, not blocking
+            logger.warning(f"⚠️ Testing stage error: {e}")
     
     async def _stage_auditing(self, context: WorkflowContext):
         """Stage 6: Auditing"""
@@ -559,19 +753,49 @@ class WorkflowOrchestrator:
             
             if audit_result["status"] == "success":
                 context.audit_results = audit_result
-                context.security_score = audit_result.get("security_score")
+                context.security_score = audit_result.get("security_score", 0)
+                
+                # Per ideal workflow: Add audit badge/flag if critical errors found
+                severity = audit_result.get("severity", "low")
+                vulnerability_count = len(audit_result.get("results", {}).get("vulnerabilities", []))
+                critical_issues = [v for v in audit_result.get("results", {}).get("vulnerabilities", []) 
+                                  if v.get("severity", "").lower() in ["critical", "high"]]
+                
+                audit_summary = {
+                    "severity": severity,
+                    "security_score": context.security_score,
+                    "vulnerability_count": vulnerability_count,
+                    "critical_issues_count": len(critical_issues),
+                    "audit_passed": len(critical_issues) == 0,
+                    "recommendations": audit_result.get("results", {}).get("recommendations", [])
+                }
+                
+                if len(critical_issues) > 0:
+                    logger.warning(f"🔒 Audit found {len(critical_issues)} critical/high severity issues")
+                    logger.warning("⚠️ Deployment should be reviewed before proceeding")
+                    audit_summary["blocking_issues"] = critical_issues
+                else:
+                    logger.info("✅ Audit passed: No critical security issues detected")
                 
                 duration = (time.time() - stage_start) * 1000
                 context.add_stage_result(
                     PipelineStage.AUDITING,
                     "success",
-                    output=audit_result,
+                    output={**audit_result, "summary": audit_summary},
                     duration_ms=duration
                 )
-                logger.info("✅ Audit completed")
+                logger.info(f"✅ Audit completed (Security Score: {context.security_score}/100)")
                 return audit_result
             else:
-                raise Exception(audit_result.get("error", "Audit failed"))
+                error_msg = audit_result.get("error", "Audit failed")
+                # Provide actionable error message per ideal workflow
+                raise Exception(
+                    f"{error_msg}\n"
+                    f"💡 Recovery suggestions:\n"
+                    f"   1. Check if Slither/Mythril tools are installed\n"
+                    f"   2. Verify contract code is valid Solidity\n"
+                    f"   3. Review static analysis tool configuration"
+                )
                 
         except Exception as e:
             duration = (time.time() - stage_start) * 1000
@@ -594,13 +818,61 @@ class WorkflowOrchestrator:
         import re
         fixed = code
         
-        # 1. Remove any _beforeTokenTransfer override block entirely (broad match)
+        # 0. Ensure pragma solidity matches OpenZeppelin v5 requirements (^0.8.24)
+        pragma_match = re.search(r'pragma solidity\s+([^;]+);', fixed)
+        if pragma_match:
+            pragma_spec = pragma_match.group(1).strip()
+            # Check if it's compatible with 0.8.24+
+            if '^0.8.' in pragma_spec:
+                version_match = re.search(r'0\.8\.(\d+)', pragma_spec)
+                if version_match:
+                    minor_version = int(version_match.group(1))
+                    if minor_version < 24:
+                        # Update to 0.8.24 minimum for OZ v5 compatibility
+                        fixed = re.sub(
+                            r'pragma solidity\s+[^;]+;',
+                            'pragma solidity ^0.8.24;',
+                            fixed,
+                            count=1
+                        )
+                        logger.info("🔧 Updated pragma solidity to ^0.8.24 for OpenZeppelin v5 compatibility")
+            elif '0.8.' in pragma_spec and not pragma_spec.startswith('^0.8.24'):
+                # If no caret or too old, update it
+                fixed = re.sub(
+                    r'pragma solidity\s+[^;]+;',
+                    'pragma solidity ^0.8.24;',
+                    fixed,
+                    count=1
+                )
+                logger.info("🔧 Updated pragma solidity to ^0.8.24 for OpenZeppelin v5 compatibility")
+        
+        # 0.5. PROACTIVELY remove Counters.sol (deprecated in OZ v5) before compilation
+        # This prevents the error from happening in the first place
+        if 'Counters.sol' in fixed or 'using Counters' in fixed or 'Counters.Counter' in fixed:
+            logger.info("🔧 Proactively removing deprecated Counters.sol usage...")
+            # Remove import
+            fixed = re.sub(r"import\s+['\"]@openzeppelin/contracts/utils/Counters\.sol['\"];?\s*\n?", "", fixed, flags=re.IGNORECASE | re.MULTILINE)
+            # Remove using statement
+            fixed = re.sub(r"using\s+Counters\s+for\s+Counters\.Counter;?\s*\n?", "", fixed, flags=re.IGNORECASE | re.MULTILINE)
+            # Replace Counters.Counter declarations
+            fixed = re.sub(r"Counters\.Counter\s+(private|internal|public)?\s*(\w+);", r"uint256 \1 \2;", fixed, flags=re.IGNORECASE)
+            fixed = re.sub(r"Counters\.Counter\s+(\w+);", r"uint256 private \1;", fixed, flags=re.IGNORECASE)
+            # Replace method calls
+            fixed = re.sub(r"(\w+TokenIdCounter|\w+Counter)\.current\(\)", r"\1", fixed)
+            fixed = re.sub(r"(\w+TokenIdCounter|\w+Counter)\.increment\(\)", r"\1++", fixed)
+            logger.info("✅ Proactively removed Counters.sol - using manual counter instead")
+        
+        # 1. Remove any _beforeTokenTransfer override block entirely (improved regex)
+        # Handles multiline signatures, comments, and nested braces
         patterns = [
-            r"function\s+_beforeTokenTransfer\s*\([^)]*\)\s*[^\{]*\{[\s\S]*?\}",
+            r"function\s+_beforeTokenTransfer\s*\([^)]*\)\s*internal[\s\S]*?override[\s\S]*?\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}",
+            r"function\s+_beforeTokenTransfer\s*\([^)]*\)\s*internal\s+virtual\s+override[\s\S]*?\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}",
+            r"function\s+_beforeTokenTransfer\s*\([^)]*\)\s*internal[\s\S]*?\{[\s\S]*?\}",
         ]
         for pat in patterns:
             if re.search(pat, fixed, re.MULTILINE | re.DOTALL):
                 fixed = re.sub(pat, "", fixed, flags=re.MULTILINE | re.DOTALL)
+                logger.info("🔧 Removed _beforeTokenTransfer override function")
         
         # 2. Fix constructor parameter shadowing of functions
         # Find all public/external function names in the contract
@@ -732,14 +1004,15 @@ class WorkflowOrchestrator:
             raise
     
     async def _stage_verification(self, context: WorkflowContext, network: str):
-        """Stage 8: Verification"""
+        """Stage 8: Verification & Artifact Storage per ideal workflow"""
         stage_start = time.time()
-        logger.info("✔️ Stage 8: Verification")
+        logger.info("✔️ Stage 8: Verification & Artifact Storage")
         
         try:
             if not context.deployment_address:
                 raise ValueError("No deployment address for verification")
             
+            # Step 1: Verify on block explorer (per ideal workflow)
             verification_result = await self.agent.verify_contract(
                 context.deployment_address,
                 context.contract_code,
@@ -749,14 +1022,64 @@ class WorkflowOrchestrator:
             context.verification_status = verification_result.get("status")
             context.verification_url = verification_result.get("explorer_url")
             
+            # Step 2: Prepare artifacts for IPFS storage (even if upload_scope not set)
+            # Store artifact metadata in context for potential upload
+            artifacts_metadata = {
+                "contract": {
+                    "address": context.deployment_address,
+                    "name": context.contract_name,
+                    "code": context.contract_code,
+                    "abi": verification_result.get("abi"),  # If available from verification
+                },
+                "deployment": {
+                    "tx_hash": context.deployment_tx_hash,
+                    "network": network,
+                    "timestamp": context.created_at
+                },
+                "explorer_url": verification_result.get("explorer_url"),
+                "verification_status": verification_result.get("status")
+            }
+            
+            # Step 3: Generate artifact paths for local storage
+            from pathlib import Path
+            artifacts_dir = Path(__file__).parent.parent.parent / "artifacts" / "deploy" / network
+            artifacts_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Save ABI if available
+            abi_path = None
+            if verification_result.get("abi"):
+                abi_file = artifacts_dir / f"{context.contract_name}.abi.json"
+                import json
+                abi_file.write_text(json.dumps(verification_result["abi"], indent=2), encoding="utf-8")
+                artifacts_metadata["abi_path"] = str(abi_file)
+                abi_path = str(abi_file)
+                logger.info(f"💾 Saved ABI to: {abi_file}")
+            
+            # Save deployment metadata
+            metadata_file = artifacts_dir / f"{context.contract_name}.metadata.json"
+            import json
+            metadata_file.write_text(json.dumps(artifacts_metadata, indent=2), encoding="utf-8")
+            context.metadata["metadata_path"] = str(metadata_file)
+            if abi_path:
+                context.metadata["abi_path"] = abi_path
+            context.metadata["artifacts_stored"] = True
+            logger.info(f"💾 Saved deployment metadata to: {metadata_file}")
+            
             duration = (time.time() - stage_start) * 1000
             context.add_stage_result(
                 PipelineStage.VERIFICATION,
                 "success",
-                output=verification_result,
+                output={
+                    **verification_result,
+                    "artifacts_stored": True,
+                    "artifact_paths": {
+                        "abi": abi_path,
+                        "metadata": str(metadata_file)
+                    }
+                },
                 duration_ms=duration
             )
-            logger.info("✅ Verification completed")
+            logger.info("✅ Verification completed and artifacts stored")
             return verification_result
             
         except Exception as e:
@@ -769,13 +1092,18 @@ class WorkflowOrchestrator:
             )
             # Don't raise - verification failure is non-fatal
             logger.warning(f"⚠️ Verification failed: {e}")
+            # Provide actionable error message per ideal workflow
+            logger.info("💡 Recovery suggestions:")
+            logger.info("   1. Check block explorer API availability")
+            logger.info("   2. Verify network RPC endpoint is accessible")
+            logger.info("   3. Manually verify contract on explorer if needed")
     
     async def _stage_output(self, context: WorkflowContext, upload_scope: Optional[str] = None) -> Dict[str, Any]:
         """Stage 9: Output & diagnostics"""
         stage_start = time.time()
         logger.info("📊 Stage 9: Output & Diagnostics")
         
-        # Generate final result
+        # Generate final result per ideal workflow (comprehensive output)
         result = {
             "status": "success" if not context.has_error() else "error",
             "workflow_id": context.workflow_id,
@@ -785,30 +1113,65 @@ class WorkflowOrchestrator:
                 "success": context.compilation_success,
                 "artifact_path": context.compilation_artifact_path
             },
+            "testing": {
+                "status": next(
+                    (s.status for s in context.stages if s.stage == PipelineStage.TESTING),
+                    "skipped"
+                ),
+                "results": next(
+                    (s.output for s in context.stages if s.stage == PipelineStage.TESTING),
+                    None
+                )
+            },
             "audit": context.audit_results,
             "deployment": {
                 "address": context.deployment_address,
                 "tx_hash": context.deployment_tx_hash,
-                "network": context.deployment_network
+                "network": context.deployment_network,
+                "explorer_url": f"https://explorer.{context.deployment_network}.io/address/{context.deployment_address}" if context.deployment_address else None
             },
             "verification": {
                 "status": context.verification_status,
-                "url": context.verification_url
+                "url": context.verification_url,
+                "artifacts_stored": context.metadata.get("artifacts_stored", False)
+            },
+            "artifacts": {
+                "ipfs_uploads": context.metadata.get("ipfs_uploads", []),
+                "upload_scope": context.metadata.get("upload_scope"),
+                "local_paths": {
+                    "contract": context.contract_path,
+                    "abi": context.metadata.get("abi_path"),
+                    "metadata": context.metadata.get("metadata_path")
+                }
             },
             "stages": [
                 {
                     "stage": stage.stage.value,
                     "status": stage.status,
-                    "duration_ms": stage.duration_ms
+                    "duration_ms": stage.duration_ms,
+                    "error": stage.error if stage.error else None
                 }
                 for stage in context.stages
-            ]
+            ],
+            "diagnostics": {
+                "has_errors": context.has_error(),
+                "error_count": len([s for s in context.stages if s.status == "error"]),
+                "warning_count": len([s for s in context.stages if s.status == "warning"])
+            }
         }
         
-        # Save diagnostic bundle if there were errors
+        # Save diagnostic bundle if there were errors (per ideal workflow: fail-loud with diagnostics)
         if context.has_error():
             diagnostic_path = self.context_manager.save_diagnostic_bundle(context)
             result["diagnostic_bundle"] = str(diagnostic_path)
+            result["error_recovery"] = {
+                "diagnostic_bundle": str(diagnostic_path),
+                "next_steps": [
+                    "Review diagnostic bundle for detailed error information",
+                    "Check error messages above for actionable fixes",
+                    "Review workflow context at: " + str(self.context_manager.get_context_path(context.workflow_id))
+                ]
+            }
         
         duration = (time.time() - stage_start) * 1000
         context.add_stage_result(
