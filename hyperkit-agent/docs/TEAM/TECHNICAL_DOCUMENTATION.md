@@ -466,16 +466,24 @@ monitoring:
 git clone https://github.com/HyperKit/hyperkit-agent.git
 cd hyperkit-agent
 
-# Install Python dependencies
-pip install -r requirements.txt
-pip install alith>=0.12.0
+# Install Python dependencies (from hyperkit-agent directory)
+cd hyperkit-agent
+pip install -e .
+# Installs ALL packages from pyproject.toml including:
+# - alith>=0.12.0 (AI agent framework for Web3)
+# - web3, eth-account, eth-utils (Web3 libraries)
+# - OpenAI, Anthropic, Google Generative AI (AI providers)
+# - All other dependencies listed in pyproject.toml
+# No need to run 'pip install alith>=0.12.0' separately
 
-# Install Foundry (for contract compilation)
+# Install Foundry (for contract compilation - system-level tool)
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
+# Foundry cannot be installed via pip - it's a system-level tool
 
-# Install Slither (for security analysis)
+# Install Slither (for security analysis - optional, included in [security] extras)
 pip install slither-analyzer
+# Or install with security extras: pip install -e ".[security]"
 
 # Configure environment
 cp env.example .env
@@ -565,12 +573,15 @@ Key performance indicators:
 
 #### 1. Alith SDK Not Available
 ```
-⚠️ WARNING: Alith SDK not available - Install with: pip install alith>=0.12.0
+⚠️ WARNING: Alith SDK not available - Install with: `pip install -e .` (from hyperkit-agent directory)
 ```
 
-**Solution**: Install the Alith SDK:
+**Solution**: Install all Python dependencies (including alith):
 ```bash
-pip install alith>=0.12.0
+cd hyperkit-agent
+pip install -e .
+# Installs all packages from pyproject.toml including alith>=0.12.0
+# No need to install alith separately
 ```
 
 #### 2. IPFS Configuration Missing
@@ -602,6 +613,12 @@ PRIVATE_KEY=your_ethereum_private_key
 
 **Solution**: Install Slither:
 ```bash
+# Option 1: Install with security extras (recommended)
+cd hyperkit-agent
+pip install -e ".[security]"
+# Installs slither-analyzer, mythril, bandit, safety
+
+# Option 2: Install Slither only
 pip install slither-analyzer
 ```
 
