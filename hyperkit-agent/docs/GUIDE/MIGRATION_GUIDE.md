@@ -1,6 +1,6 @@
 # Migration Guide - System Refactor v1.5.0
 
-**Version**: 1.5.8  
+**Version**: 1.5.10  
 **Date**: 2025-10-28  
 **Status**: Production Ready
 
@@ -293,5 +293,5 @@ hyperagent deploy contract MyToken.sol --network hyperion
 - 💰 **Bug Bounty**: See [SECURITY.md](../../../SECURITY.md)
 
 **Last Updated**: 2025-01-29  
-**Version**: 1.5.8
+**Version**: 1.5.10
 
