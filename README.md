@@ -42,6 +42,7 @@ HyperAgent is a cutting-edge AI-powered platform that revolutionizes smart contr
 - 🔧 **Self-Healing**: Automatic dependency installation, error recovery, and retry logic
 - 📦 **Zero-Config Setup**: No manual dependency installation required - agent handles everything
 - 🛡️ **Auto-Recovery**: Detects and fixes common issues (missing imports, compilation errors) automatically
+- 🔬 **Doctor System**: Production-grade preflight validation with auto-fix for dependencies, versions, and git submodule issues
 
 ---
 
@@ -64,6 +65,7 @@ Navigate quickly to any section of the documentation:
 
 **Quick Actions:**
 - 📦 [Setup & Installation](#-quick-start) → Get started in minutes
+- 🔬 [Doctor Preflight](#-doctor-preflight-system) → Validate your environment
 - 🔧 [NPM Scripts](#-npm-scripts--commands) → Access all commands via npm
 - 📊 [System Health](#-system-health-check) → Check your installation
 - 🚀 [Workflow Templates](#-available-workflow-templates) → Copy-paste ready prompts
@@ -254,6 +256,7 @@ python -c "from services.core.rag_template_fetcher import get_template_fetcher; 
 | **Dependency Detection** | Automatically parses contracts for imports (Solidity, npm, Python) | ✅ Active |
 | **Dependency Installation** | Auto-installs OpenZeppelin, npm packages, Python packages | ✅ Active |
 | **Preflight Checks** | Verifies all system tools (forge, npm, python) at startup | ✅ Active |
+| **Doctor System** | Comprehensive environment validation and auto-repair (OpenZeppelin, solc version, git submodules) | ✅ Active |
 | **Error Detection** | Parses errors to detect automatable issues | ✅ Active |
 | **Auto-Fix Logic** | Attempts to fix missing dependencies, import errors automatically | ✅ Active |
 | **Retry Mechanism** | Retries failed operations with dependency re-installation (up to 3 attempts) | ✅ Active |
@@ -263,7 +266,13 @@ python -c "from services.core.rag_template_fetcher import get_template_fetcher; 
 
 ### **How It Works**
 
-1. **Preflight (Stage 0)**: Agent verifies forge, npm, python availability at startup
+1. **Preflight (Stage 0)**: 
+   - Doctor system runs comprehensive environment checks
+   - Verifies forge, npm, python availability
+   - Validates OpenZeppelin installation and version
+   - Checks Foundry/solc version compatibility
+   - Auto-fixes git submodule issues and broken dependencies
+   - Provides actionable error messages if manual fixes needed
 2. **Generation (Stage 2)**: AI generates contract code from natural language
 3. **Dependency Resolution (Stage 3)**: 
    - Agent parses contract for all imports (`@openzeppelin/...`, `lib/...`, etc.)
@@ -461,6 +470,59 @@ hyperagent workflow status
 
 ---
 
+## 🔬 Doctor Preflight System
+
+HyperAgent includes a **production-grade Doctor system** that validates your environment and automatically fixes common issues before running workflows.
+
+### Quick Start
+
+```bash
+# Run Doctor with auto-fix (recommended)
+hyperagent doctor
+
+# Or run manually
+cd hyperkit-agent
+python scripts/doctor.py
+
+# Report only (no fixes)
+python scripts/doctor.py --no-fix
+```
+
+### What Doctor Validates
+
+| Check | Description | Auto-Fix |
+|-------|-------------|----------|
+| **Required Tools** | forge, python, node, npm availability | ❌ Manual install required |
+| **OpenZeppelin** | Installation and version compatibility | ✅ Auto-installs if missing |
+| **Foundry Config** | solc version validation | ✅ Auto-updates `foundry.toml` |
+| **Git Submodules** | Broken submodule entries | ✅ Auto-cleans `.gitmodules` and `.gitignore` |
+
+### Auto-Fix Capabilities
+
+The Doctor system automatically:
+1. **Installs missing OpenZeppelin** via `forge install` or direct `git clone`
+2. **Fixes version mismatches** in `foundry.toml` (updates to 0.8.24)
+3. **Cleans git submodule issues** (removes broken entries from `.gitmodules`, `.gitignore`, `.git/config`)
+4. **Provides actionable errors** when manual fixes are needed
+
+### Integration
+
+The Doctor system **automatically runs** during workflow preflight (`_stage_preflight()`), but you can also run it manually:
+
+```bash
+# Before first workflow
+hyperagent doctor
+
+# Check specific workspace
+python hyperkit-agent/scripts/doctor.py --workspace /path/to/hyperkit-agent
+```
+
+### Documentation
+
+See [`hyperkit-agent/docs/GUIDE/DOCTOR_PREFLIGHT.md`](hyperkit-agent/docs/GUIDE/DOCTOR_PREFLIGHT.md) for complete documentation.
+
+---
+
 ## 🚀 CLI Command System
 
 ### **Generation Commands**
@@ -505,6 +567,26 @@ hyperagent audit batch --file contracts.txt --format markdown
 
 # View audit report
 hyperagent audit report --report reports/MyToken_audit.json
+```
+
+### **System Commands**
+
+| Command | Purpose | Example |
+|---------|---------|---------|
+| `doctor` | Run Doctor preflight validation and auto-fix | `hyperagent doctor` |
+| `status` | Check system health and status | `hyperagent status` |
+| `config` | Manage configuration settings | `hyperagent config list` |
+
+```bash
+# Run Doctor preflight check (recommended before workflows)
+hyperagent doctor
+
+# Check system status
+hyperagent status
+
+# Manage configuration
+hyperagent config list
+hyperagent config get foundry.version
 ```
 
 ### **Deployment Commands**
@@ -697,6 +779,7 @@ HyperAgent provides comprehensive npm scripts for version management, CLI access
 | `hyperagent:verify` | Show verify command help | `npm run hyperagent:verify` |
 | `hyperagent:batch-audit` | Show batch-audit command help | `npm run hyperagent:batch-audit` |
 | `hyperagent:test-rag` | Show test-rag command help | `npm run hyperagent:test-rag` |
+| `hyperagent:doctor` | Run Doctor preflight validation | `npm run hyperagent:doctor` |
 | `hyperagent:limitations` | Show system limitations | `npm run hyperagent:limitations` |
 
 ### **Documentation Management**
@@ -805,15 +888,21 @@ foundryup
 cp env.example .env
 # Edit .env with your API keys and configuration
 
-# 5. Verify installation
+# 5. Run Doctor preflight check (recommended)
+hyperagent doctor
+# Or manually:
+python hyperkit-agent/scripts/doctor.py
+
+# 6. Verify installation
 hyperagent --help
 hyperagent version
 hyperagent status
 
 # NOTE: First workflow run will automatically install all dependencies
 # (OpenZeppelin, npm packages, Python packages) - no manual installation needed!
+# The Doctor system runs automatically during workflow preflight to ensure everything is ready.
 
-# 6. Verify npm scripts
+# 7. Verify npm scripts
 npm run version:check          # Check version consistency
 npm run hyperagent:status      # Check system status
 npm run hyperagent:test        # Run E2E tests
