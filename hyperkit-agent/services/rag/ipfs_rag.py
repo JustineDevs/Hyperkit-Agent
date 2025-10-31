@@ -52,6 +52,9 @@ class IPFSRAG:
         self.cid_registry = {}
         self._load_cid_registry()
         
+        # Track last retrieved CID for template identification (per ideal workflow)
+        self.last_retrieved_cid = None
+        
         if self.pinata_enabled:
             logger.info("IPFS RAG initialized with Pinata integration")
         else:
@@ -119,12 +122,15 @@ class IPFSRAG:
             for artifact_id, entry in team_registry.items():
                 if self._is_relevant(query, entry.get('metadata', {})):
                     try:
-                        content = await self._fetch_from_ipfs(entry.get('cid'))
+                        cid = entry.get('cid')
+                        content = await self._fetch_from_ipfs(cid)
                         if content:
+                            # Track last retrieved CID (per ideal workflow: template identification)
+                            self.last_retrieved_cid = cid
                             team_results.append({
                                 'name': artifact_id,
                                 'content': content,
-                                'cid': entry.get('cid'),
+                                'cid': cid,
                                 'scope': 'team',
                                 'relevance': self._calculate_relevance(query, content),
                                 'quality_score': self._calculate_quality_score(entry)
@@ -141,12 +147,16 @@ class IPFSRAG:
                     if quality_score >= 0.5:  # Only include higher quality Community artifacts
                         if self._is_relevant(query, entry.get('metadata', {})):
                             try:
-                                content = await self._fetch_from_ipfs(entry.get('cid'))
+                                cid = entry.get('cid')
+                                content = await self._fetch_from_ipfs(cid)
                                 if content:
+                                    # Track last retrieved CID (per ideal workflow)
+                                    if not self.last_retrieved_cid:
+                                        self.last_retrieved_cid = cid
                                     community_results.append({
                                         'name': artifact_id,
                                         'content': content,
-                                        'cid': entry.get('cid'),
+                                        'cid': cid,
                                         'scope': 'community',
                                         'relevance': self._calculate_relevance(query, content),
                                         'quality_score': quality_score
