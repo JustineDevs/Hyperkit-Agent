@@ -56,7 +56,7 @@
   - ✅ Security vulnerability detection
   - ✅ Risk scoring and recommendations
 - **Requirements**:
-  1. Install: `pip install alith>=0.12.0`
+  1. Install: `cd hyperkit-agent && pip install -e .` (installs all packages including alith>=0.12.0)
   2. Get API keys from https://lazai.network
   3. Configure in `.env` file
 - **Note**: Real implementation now active and tested
