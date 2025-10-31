@@ -49,10 +49,11 @@ This report tracks the progress of integrating the Alith SDK into HyperKit Agent
 
 ### 🔄 In Progress Tasks
 
-3. 🔄 **Install Alith SDK**
-   - Command: `pip install alith -U`
+3. 🔄 **Install all dependencies**
+   - Command: `cd hyperkit-agent && pip install -e .`
    - Status: READY TO EXECUTE
    - Blocker: None
+   - Note: Installs all packages from pyproject.toml including alith
 
 4. 🔄 **Verify Installation**
    - Test: `python -c "from alith import Agent; print('✅ Alith installed')"`
@@ -151,7 +152,8 @@ HyperKit Agent
 
 **Command**:
 ```bash
-python3 -m pip install alith -U
+cd hyperkit-agent && python3 -m pip install -e .
+# Installs all packages from pyproject.toml including alith
 ```
 
 **Verification**:
@@ -322,9 +324,10 @@ if hasattr(self, 'alith_agent'):
 
 ### Immediate (Today - Oct 25)
 
-1. 🔄 **Install Alith SDK**
+1. 🔄 **Install all dependencies**
    ```bash
-   pip install alith -U
+   cd hyperkit-agent && pip install -e .
+   # Installs all packages from pyproject.toml including alith
    python -c "from alith import Agent; print('✅')"
    ```
 
