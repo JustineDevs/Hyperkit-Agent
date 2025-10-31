@@ -6,6 +6,7 @@ Clean, modular CLI structure for production deployment
 
 import sys
 import os
+import logging
 from pathlib import Path
 from dotenv import load_dotenv
 import click
@@ -32,31 +33,49 @@ from cli.utils.version import show_version
 console = Console()
 
 def _ensure_first_run_health():
-    """Auto-create required directories and default config on first run."""
+    """Auto-create required directories and default config on first run (robust, fail-loud)."""
     try:
         root = Path(__file__).parent.parent
-        required_dirs = [
-            root / ".workflow_contexts",
-            root / ".temp_envs",
-            root / "logs",
-            root / "artifacts",
-        ]
-        for d in required_dirs:
-            d.mkdir(parents=True, exist_ok=True)
+        
+        # Use DirectoryValidator for robust directory creation with loud failures
+        try:
+            from core.utils.directory_validator import ensure_workspace_directories
+            ensure_workspace_directories(root, fail_loud=False)  # Fail softly on CLI startup, but log loudly
+        except ImportError:
+            # Fallback to basic creation if validator not available
+            logger = logging.getLogger(__name__)
+            logger.warning("DirectoryValidator not available, using basic directory creation")
+            required_dirs = [
+                root / ".workflow_contexts",
+                root / ".temp_envs",
+                root / "logs",
+                root / "artifacts",
+            ]
+            for d in required_dirs:
+                try:
+                    d.mkdir(parents=True, exist_ok=True)
+                except (OSError, PermissionError) as e:
+                    logger.error(f"CRITICAL: Failed to create required directory {d}: {e}")
+                    logger.error(f"Fix: mkdir -p {d} && chmod +w {d}")
 
         # Default config.yaml if missing
         config_file = root / "config.yaml"
         if not config_file.exists():
-            default_yaml = (
-                "networks:\n"
-                "  hyperion:\n"
-                "    chain_id: 133717\n"
-                "    explorer_url: https://hyperion-testnet-explorer.metisdevops.link\n"
-                "    rpc_url: https://hyperion-testnet.metisdevops.link\n"
-                "    status: testnet\n"
-                "    default: true\n"
-            )
-            config_file.write_text(default_yaml, encoding="utf-8")
+            try:
+                default_yaml = (
+                    "networks:\n"
+                    "  hyperion:\n"
+                    "    chain_id: 133717\n"
+                    "    explorer_url: https://hyperion-testnet-explorer.metisdevops.link\n"
+                    "    rpc_url: https://hyperion-testnet.metisdevops.link\n"
+                    "    status: testnet\n"
+                    "    default: true\n"
+                )
+                config_file.write_text(default_yaml, encoding="utf-8")
+            except (OSError, PermissionError) as e:
+                logger = logging.getLogger(__name__)
+                logger.error(f"CRITICAL: Failed to create default config.yaml: {e}")
+                logger.error(f"Fix: Create {config_file} manually with network configuration")
 
         # Foundry version drift hard warning (refuse optional)
         try:
@@ -67,9 +86,11 @@ def _ensure_first_run_health():
                 pass
         except Exception:
             pass
-    except Exception:
-        # Non-fatal; individual commands will still validate
-        pass
+    except Exception as e:
+        # Log loudly but don't crash CLI startup
+        logger = logging.getLogger(__name__)
+        logger.error(f"CRITICAL: First-run health check failed: {e}")
+        logger.error("Some CLI commands may fail. Run 'hyperagent doctor' to diagnose issues.")
 
 @click.group()
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
