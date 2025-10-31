@@ -9,6 +9,7 @@ import logging
 import platform
 import shutil
 from pathlib import Path
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +74,14 @@ class FoundryManager:
             return result.stdout.strip()
         except:
             return "unknown"
+
+    def is_nightly(self) -> bool:
+        """Detect nightly builds from version string."""
+        try:
+            v = (self.get_version() or "").lower()
+            return "nightly" in v
+        except Exception:
+            return False
     
     @staticmethod
     def install() -> bool:
@@ -117,6 +126,9 @@ class FoundryManager:
                     logger.warning(
                         "To pin a specific version, set HYPERAGENT_FORGE_VERSION or install the recommended Foundry release."
                     )
+                # Nightly refusal signal (optional strictness)
+                if self.is_nightly():
+                    logger.warning("⚠️ Foundry nightly build detected: '%s'", current)
             except Exception:
                 # Non-fatal; continue
                 pass
@@ -157,3 +169,33 @@ class FoundryManager:
         except Exception as e:
             logger.error(f"Failed to install Foundry: {e}")
             return False
+
+    def should_refuse_deploy(self) -> bool:
+        """Return True if strict mode is enabled and version drift or nightly build detected."""
+        try:
+            strict = os.getenv("HYPERAGENT_STRICT_FORGE", "0").lower() in ("1", "true", "yes")
+            if not strict:
+                return False
+            # Refuse if version mismatch OR nightly build detected
+            return bool(self.version_mismatch) or self.is_nightly()
+        except Exception:
+            return False
+    
+    def get_version_status(self) -> Dict[str, Any]:
+        """Get comprehensive version status for diagnostics."""
+        current_version = self.get_version()
+        expected_hint = self.pinned_version_hint
+        is_nightly_build = self.is_nightly()
+        version_mismatch = self.version_mismatch
+        is_installed = self.is_installed()
+        
+        return {
+            "installed": is_installed,
+            "current_version": current_version,
+            "expected_version_hint": expected_hint,
+            "is_nightly": is_nightly_build,
+            "version_mismatch": version_mismatch,
+            "strict_mode": os.getenv("HYPERAGENT_STRICT_FORGE", "0").lower() in ("1", "true", "yes"),
+            "should_refuse": self.should_refuse_deploy(),
+            "forge_path": str(self.forge_path) if self.forge_path else None,
+        }
