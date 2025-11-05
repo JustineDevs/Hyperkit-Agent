@@ -286,8 +286,10 @@ def main():
         'recommendations': recommendations
     }
     
-    # Write JSON report
-    with open('REPORTS/LEGACY_FILE_INVENTORY.json', 'w') as f:
+    # Write JSON report to JSON_DATA directory
+    json_path = Path('REPORTS/JSON_DATA/legacy_file_inventory.json')
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2)
     
     # Write cleanup script
@@ -309,7 +311,7 @@ def main():
     print(f"Update candidates: {len(recommendations['update_candidates'])}")
     
     print(f"\nReports generated:")
-    print(f"- REPORTS/LEGACY_FILE_INVENTORY.json")
+    print(f"- {json_path}")
     print(f"- scripts/cleanup_legacy_files.sh")
     
     return 0
