@@ -26,7 +26,14 @@ class ScriptLinter:
     """Lint all scripts in the codebase."""
 
     def __init__(self, base_dir: Path = None):
-        self.base_dir = base_dir or Path("hyperkit-agent")
+        # Auto-detect base directory: if hyperkit-agent exists as subdir, use it; otherwise use current dir
+        if base_dir:
+            self.base_dir = Path(base_dir)
+        else:
+            if Path("hyperkit-agent").exists() and Path("hyperkit-agent").is_dir():
+                self.base_dir = Path("hyperkit-agent")
+            else:
+                self.base_dir = Path(".")
         self.scripts_dir = self.base_dir / "scripts"
         self.issues = []
         self.total_files = 0
@@ -252,7 +259,8 @@ def main():
 
     # Generate report
     report = linter.generate_report(results)
-    report_path = Path("hyperkit-agent/REPORTS/SCRIPT_LINTING_REPORT.md")
+    # Save MD report to QUALITY category
+    report_path = Path("REPORTS/QUALITY/script_linting_report.md")
     report_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(report_path, "w", encoding="utf-8") as f:
