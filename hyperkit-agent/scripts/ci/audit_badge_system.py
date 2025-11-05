@@ -300,8 +300,10 @@ def main():
     # Create report
     report = create_badge_report(results, git_info, version)
     
-    # Save report
-    with open('REPORTS/AUDIT_BADGE_REPORT.md', 'w', encoding='utf-8') as f:
+    # Save report to AUDIT category
+    report_path = Path('REPORTS/AUDIT/audit_badge_report.md')
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(report_path, 'w', encoding='utf-8') as f:
         f.write(report)
     
     # Print summary
@@ -312,7 +314,7 @@ def main():
     print(f"Files skipped: {results['files_skipped']}")
     print(f"Errors: {len(results['errors'])}")
     
-    print(f"\nReport saved to: REPORTS/AUDIT_BADGE_REPORT.md")
+    print(f"\nReport saved to: {report_path}")
     
     return 0
 
