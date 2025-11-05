@@ -9,13 +9,13 @@
 > **AI-Powered Smart Contract Development, Security Auditing, and Deployment Platform for Hyperion Testnet**
 
 <!-- VERSION_PLACEHOLDER -->
-**Version**: 1.5.14
-**Last Updated**: 2025-11-05
-**Commit**: e15a742
+**Version**: 1.6.4
+**Last Updated**: 2025-11-06
+**Commit**: Latest
 <!-- /VERSION_PLACEHOLDER -->
 
 > ⚠️ **HONEST STATUS BANNER**  
-> This system is in **active development**. While IPFS RAG features are production-ready, core deployment features have known limitations. See `REPORTS/HONEST_STATUS_ASSESSMENT.md` for full details. **Use for development and partnerships, not unattended production deployments.**
+> This system is in **active development**. While IPFS RAG features are production-ready, core deployment features have known limitations. See [HONEST_STATUS_ASSESSMENT.md](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md) for full details. **Use for development and partnerships, not unattended production deployments.**
 
 [![Coverage](https://codecov.io/gh/JustineDevs/Hyperkit-Agent/branch/main/graph/badge.svg)](https://codecov.io/gh/JustineDevs/Hyperkit-Agent)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -845,12 +845,17 @@ HyperAgent provides comprehensive npm scripts for version management, CLI access
 
 | Script | Purpose | Example |
 |--------|---------|---------|
-| `reports:organize` | Confirm REPORTS directory organization | `npm run reports:organize` |
+| `reports:organize` | Consolidate reports into category directories | `npm run reports:organize` |
 | `reports:status` | Generate CLI command inventory | `npm run reports:status` |
 | `reports:audit` | Run legacy file inventory | `npm run reports:audit` |
 | `reports:todo` | Convert TODOs to GitHub issues | `npm run reports:todo` |
 | `reports:compliance` | Show compliance reports location | `npm run reports:compliance` |
 | `reports:quality` | Show quality reports location | `npm run reports:quality` |
+
+> **📁 Report Organization:**  
+> - **JSON files**: `hyperkit-agent/REPORTS/JSON_DATA/` (all JSON reports)  
+> - **Markdown files**: `hyperkit-agent/REPORTS/{category}/` (organized by category)  
+> - **Reports generated AFTER sync**: Prevents uncommitted changes during branch sync
 
 ### **Versioning & Release** ⭐
 
@@ -890,9 +895,11 @@ HyperAgent provides comprehensive npm scripts for version management, CLI access
 
 > **💡 One-Command Workflow Hygiene**  
 > The `hygiene` command chains together all documentation, reporting, and branch sync workflows:
-> - Runs all formatting, generation, reporting, and audit scripts
+> - Runs all formatting, generation, and audit scripts (non-report-generating)
 > - Automatically stages and commits all updated files
-> - Syncs documentation between `main` and `devlog` branches
+> - Syncs documentation between `main` and `devlog` branches (clean working tree)
+> - **Generates reports AFTER sync** (to avoid uncommitted changes during sync)
+> - Auto-commits generated reports (JSON_DATA files in `hyperkit-agent/REPORTS/JSON_DATA/`)
 > - Ensures OSS branch hygiene and repository size optimization
 > - **Enterprise-grade safety**: Automatic branch restoration, error handling, timeout protection
 >
@@ -959,9 +966,9 @@ npm run reports:status         # Generate status report
 npm run hygiene                # Run complete workflow hygiene
                                 # - Updates README links
                                 # - Runs doc audits and cleanup
-                                # - Generates reports
-                                # - Syncs to devlog branch
-                                # - Commits all changes
+                                # - Syncs to devlog branch (clean tree)
+                                # - Generates reports AFTER sync
+                                # - Auto-commits all changes
 ```
 
 ### **NPM Scripts Benefits**
@@ -1353,4 +1360,4 @@ Special thanks to all contributors, security researchers, and community members 
 
 ---
 
-**Last Updated**: 2025-01-29 | **Version**: 1.5.14 | **Status**: Production Ready 🚀
+**Last Updated**: 2025-11-06 | **Version**: 1.6.4 | **Status**: Production Ready 🚀
