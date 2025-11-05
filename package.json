@@ -1,6 +1,6 @@
 {
   "name": "hyperkit",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "Web3 Development Platform with AI Generation and Cross-Chain DeFi Primitives",
   "main": "hyperkit-agent/cli/main.py",
   "scripts": {
@@ -8,6 +8,9 @@
     "version:patch": "node hyperkit-agent/scripts/release/version-bump.js patch",
     "version:minor": "node hyperkit-agent/scripts/release/version-bump.js minor",
     "version:major": "node hyperkit-agent/scripts/release/version-bump.js major",
+    "version:patch:local": "node hyperkit-agent/scripts/release/version-bump.js patch --skip-remote-check",
+    "version:minor:local": "node hyperkit-agent/scripts/release/version-bump.js minor --skip-remote-check",
+    "version:major:local": "node hyperkit-agent/scripts/release/version-bump.js major --skip-remote-check",
     "version:complete": "npm run reports:organize && npm run version:patch && npm run hygiene",
     "version:complete:minor": "npm run reports:organize && npm run version:minor && npm run hygiene",
     "version:complete:major": "npm run reports:organize && npm run version:major && npm run hygiene",
