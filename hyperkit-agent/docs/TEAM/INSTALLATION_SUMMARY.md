@@ -1,7 +1,7 @@
 # Installation Summary - Complete Dependency Overview
 
 **Last Updated**: 2025-10-31  
-**Version**: 1.5.10
+**Version**: 1.5.14
 
 ## Quick Reference
 

@@ -1,6 +1,6 @@
 <!-- AUDIT_BADGE_START -->
 **Implementation Status**: ✅ Verified  
-**Version**: 1.5.0  
+**Version**: 1.5.14  
 **Last Verified**: 2025-10-28  
 **Commit**: `d5465090`  
 **Branch**: `main`  
@@ -642,7 +642,7 @@ verify_result = await agent.verify_contract(address, network)
 ---
 
 **Last Updated**: October 27, 2025  
-**Version**: 1.5.0  
+**Version**: 1.5.14  
 **Maintained By**: HyperKit Development Team  
 **Location**: `/hyperkit-agent/docs/INTEGRATOR_GUIDE.md`
 

@@ -1,9 +1,9 @@
 # Production Readiness Criteria
 
 <!-- VERSION_PLACEHOLDER -->
-**Version**: 1.5.0
-**Last Updated**: 2025-10-29
-**Commit**: 54620f1
+**Version**: 1.5.14
+**Last Updated**: 2025-11-05
+**Commit**: e15a742
 <!-- /VERSION_PLACEHOLDER -->
 
 ## Overview

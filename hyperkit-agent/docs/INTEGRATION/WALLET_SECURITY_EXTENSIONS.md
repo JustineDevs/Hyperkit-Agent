@@ -1,6 +1,6 @@
 <!-- AUDIT_BADGE_START -->
 **Implementation Status**: ✅ Verified  
-**Version**: 1.5.10  
+**Version**: 1.5.14  
 **Last Verified**: 2025-10-29  
 **Commit**: `aac4687`  
 **Branch**: `main`  
@@ -8,7 +8,7 @@
 
 # Wallet Security Extensions - Complete Guide
 
-**Version**: 1.5.10  
+**Version**: 1.5.14  
 **Date**: October 25, 2024  
 **Status**: Production Ready  
 

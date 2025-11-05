@@ -1,7 +1,7 @@
 # 🔒 Security Extensions Testing Report
 
 **Date**: October 25, 2024  
-**Version**: 1.5.0  
+**Version**: 1.5.14  
 **Status**: ✅ IN PROGRESS  
 
 ---

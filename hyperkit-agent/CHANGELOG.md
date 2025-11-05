@@ -63,7 +63,7 @@
 ## [4.3.1] - 2025-10-28
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-28
 - **Type**: Automated version bump
 
@@ -82,7 +82,7 @@
 ## [4.3.0] - 2025-10-27
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-27
 - **Type**: Automated version bump
 
@@ -101,7 +101,7 @@
 ## [4.2.0] - 2025-10-27
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-27
 - **Type**: Automated version bump
 
@@ -120,7 +120,7 @@
 ## [4.1.10] - 2025-10-27
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-27
 - **Type**: Automated version bump
 
@@ -139,7 +139,7 @@
 ## [4.1.9] - 2025-10-26
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-26
 - **Type**: Automated version bump
 
@@ -158,7 +158,7 @@
 ## [4.1.8] - 2025-10-26
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-26
 - **Type**: Automated version bump
 
@@ -177,7 +177,7 @@
 ## [4.1.7] - 2025-10-26
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-26
 - **Type**: Automated version bump
 
@@ -196,7 +196,7 @@
 ## [4.1.6] - 2025-10-26
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-26
 - **Type**: Automated version bump
 
@@ -215,7 +215,7 @@
 ## [4.1.5] - 2025-10-26
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-26
 - **Type**: Automated version bump
 
@@ -234,7 +234,7 @@
 ## [4.1.4] - 2025-10-26
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-26
 - **Type**: Automated version bump
 
@@ -253,7 +253,7 @@
 ## [4.1.3] - 2025-10-26
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-26
 - **Type**: Automated version bump
 
@@ -272,7 +272,7 @@
 ## [4.1.2] - 2025-10-26
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-26
 - **Type**: Automated version bump
 
@@ -291,7 +291,7 @@
 ## [4.1.1] - 2025-10-26
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-26
 - **Type**: Automated version bump
 
@@ -310,7 +310,7 @@
 ## [4.1.0] - 2025-10-25
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-25
 - **Type**: Automated version bump
 
@@ -329,7 +329,7 @@
 ## [4.0.0] - 2025-10-25
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-25
 - **Type**: Automated version bump
 
@@ -348,7 +348,7 @@
 ## [3.3.0] - 2025-10-25
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-25
 - **Type**: Automated version bump
 
@@ -367,7 +367,7 @@
 ## [3.2.0] - 2025-10-25
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-25
 - **Type**: Automated version bump
 
@@ -386,7 +386,7 @@
 ## [3.1.0] - 2025-10-25
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-25
 - **Type**: Automated version bump
 
@@ -405,7 +405,7 @@
 ## [3.0.5] - 2025-10-25
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-25
 - **Type**: Automated version bump
 
@@ -424,7 +424,7 @@
 ## [3.0.4] - 2025-10-25
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-25
 - **Type**: Automated version bump
 
@@ -443,7 +443,7 @@
 ## [3.0.3] - 2025-10-25
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-25
 - **Type**: Automated version bump
 
@@ -462,7 +462,7 @@
 ## [3.0.2] - 2025-10-25
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-25
 - **Type**: Automated version bump
 
@@ -481,7 +481,7 @@
 ## [3.0.1] - 2025-10-25
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-25
 - **Type**: Automated version bump
 
@@ -500,7 +500,7 @@
 ## [3.0.0] - 2025-10-24
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-24
 - **Type**: Automated version bump
 
@@ -519,7 +519,7 @@
 ## [2.0.6] - 2025-10-24
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-24
 - **Type**: Automated version bump
 
@@ -538,7 +538,7 @@
 ## [2.0.5] - 2025-10-24
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-24
 - **Type**: Automated version bump
 
@@ -557,7 +557,7 @@
 ## [2.0.4] - 2025-10-24
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-24
 - **Type**: Automated version bump
 
@@ -576,7 +576,7 @@
 ## [2.0.3] - 2025-10-24
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-24
 - **Type**: Automated version bump
 
@@ -595,7 +595,7 @@
 ## [2.0.2] - 2025-10-24
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-24
 - **Type**: Automated version bump
 
@@ -614,7 +614,7 @@
 ## [2.0.1] - 2025-10-24
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-24
 - **Type**: Automated version bump
 
@@ -633,7 +633,7 @@
 ## [2.0.0] - 2025-10-24
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-24
 - **Type**: Automated version bump
 
@@ -652,7 +652,7 @@
 ## [1.4.2] - 2025-10-24
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-24
 - **Type**: Automated version bump
 
@@ -671,7 +671,7 @@
 ## [1.4.1] - 2025-10-24
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-24
 - **Type**: Automated version bump
 
@@ -690,7 +690,7 @@
 ## [1.4.0] - 2025-10-24
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-24
 - **Type**: Automated version bump
 
@@ -709,7 +709,7 @@
 ## [1.3.6] - 2025-10-23
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-23
 - **Type**: Automated version bump
 
@@ -728,7 +728,7 @@
 ## [1.3.5] - 2025-10-22
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-22
 - **Type**: Automated version bump
 
@@ -747,7 +747,7 @@
 ## [1.3.4] - 2025-10-22
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-22
 - **Type**: Automated version bump
 
@@ -766,7 +766,7 @@
 ## [1.3.3] - 2025-10-22
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-22
 - **Type**: Automated version bump
 
@@ -785,7 +785,7 @@
 ## [1.3.2] - 2025-10-22
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-22
 - **Type**: Automated version bump
 
@@ -804,7 +804,7 @@
 ## [1.3.1] - 2025-10-22
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-22
 - **Type**: Automated version bump
 
@@ -823,7 +823,7 @@
 ## [1.3.0] - 2025-10-22
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-22
 - **Type**: Automated version bump
 
@@ -842,7 +842,7 @@
 ## [1.2.4] - 2025-10-22
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-22
 - **Type**: Automated version bump
 
@@ -861,7 +861,7 @@
 ## [1.2.3] - 2025-10-22
 
 ### 🚀 Automated Release
-- **Version**: 1.5.0
+- **Version**: 1.5.14
 - **Date**: 2025-10-22
 - **Type**: Automated version bump
 

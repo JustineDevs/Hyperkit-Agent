@@ -742,4 +742,4 @@ Special thanks to all contributors, security researchers, and community members 
 
 ---
 
-**Last Updated**: 2025-10-26 | **Version**: 1.5.0+ | **Status**: Production Ready 🚀
+**Last Updated**: 2025-10-26 | **Version**: 1.5.14+ | **Status**: Production Ready 🚀

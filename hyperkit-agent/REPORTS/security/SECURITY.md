@@ -491,7 +491,7 @@ python -m pytest tests/security/ -v --cov=services/security --cov-report=html
 # 🔒 Security Extensions Testing Report
 
 **Date**: October 25, 2024  
-**Version**: 1.5.10  
+**Version**: 1.5.14  
 **Status**: ✅ IN PROGRESS  
 
 ---
