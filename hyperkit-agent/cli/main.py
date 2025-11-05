@@ -27,6 +27,7 @@ from cli.commands.config import config_group
 from cli.commands.workflow import workflow_group
 from cli.commands.test_rag import test_rag_command
 from cli.commands.doctor import doctor_command
+from cli.commands.docs import docs_group
 from cli.utils.health import health_check
 from cli.utils.version import show_version
 
@@ -140,6 +141,7 @@ cli.add_command(verify_group, name='verify')
 cli.add_command(monitor_group, name='monitor')
 cli.add_command(config_group, name='config')
 cli.add_command(workflow_group, name='workflow')
+cli.add_command(docs_group, name='docs')
 
 # Add utility commands
 @cli.command()

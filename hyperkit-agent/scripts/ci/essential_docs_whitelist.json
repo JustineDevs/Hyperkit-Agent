@@ -1,0 +1,54 @@
+{
+  "description": "Essential documentation files that must remain in main branch",
+  "version": "1.0.0",
+  "files": [
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
+    "VERSION",
+    "package.json",
+    "hyperkit-agent/pyproject.toml",
+    "hyperkit-agent/config.yaml",
+    "hyperkit-agent/docs/GUIDE/QUICK_START.md",
+    "hyperkit-agent/docs/GUIDE/ENVIRONMENT_SETUP.md",
+    "hyperkit-agent/env.example"
+  ],
+  "patterns": [
+    "*.py",
+    "*.sol",
+    "*.js",
+    "*.ts",
+    "*.yaml",
+    "*.yml",
+    "*.toml",
+    "*.json",
+    "!hyperkit-agent/REPORTS/**/*.json",
+    "!hyperkit-agent/REPORTS/**/*.md",
+    "!docs/**/*.md",
+    "!hyperkit-agent/docs/TEAM/**/*.md",
+    "!hyperkit-agent/docs/EXECUTION/**/*.md",
+    "!hyperkit-agent/docs/INTEGRATION/**/*.md"
+  ],
+  "directories_keep_in_main": [
+    "hyperkit-agent/core/",
+    "hyperkit-agent/services/",
+    "hyperkit-agent/cli/",
+    "hyperkit-agent/contracts/",
+    "hyperkit-agent/scripts/",
+    "hyperkit-agent/tests/",
+    "hyperkit-agent/config.yaml",
+    "hyperkit-agent/docs/GUIDE/"
+  ],
+  "directories_move_to_devlog": [
+    "hyperkit-agent/REPORTS/",
+    "docs/",
+    "hyperkit-agent/docs/TEAM/",
+    "hyperkit-agent/docs/EXECUTION/",
+    "hyperkit-agent/docs/INTEGRATION/",
+    "hyperkit-agent/docs/REFERENCE/"
+  ]
+}
+

@@ -411,9 +411,57 @@ def main():
     update_package_json(new_version)
     update_pyproject_toml(new_version)
     
+    # Update README.md links for devlog branch strategy
+    print("\n🔗 Updating README.md links for devlog branch...")
+    try:
+        script_dir = Path(__file__).parent
+        repo_root = script_dir.parent.parent.parent
+        update_links_script = script_dir / "update_readme_links.py"
+        
+        if update_links_script.exists():
+            import subprocess
+            result = subprocess.run(
+                [sys.executable, str(update_links_script)],
+                cwd=repo_root,
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                print("✅ README.md links updated")
+            else:
+                print(f"⚠️  Link update had issues: {result.stderr}")
+        else:
+            print("⚠️  update_readme_links.py not found, skipping link update")
+    except Exception as e:
+        print(f"⚠️  Error updating README links: {e}")
+        print("   Continuing with version bump...")
+    
     # Create git commit
     print("\n🏷️  Creating git commit and tag...")
     create_git_commit(new_version, bump_type)
+    
+    # Sync documentation to devlog branch
+    print("\n📚 Syncing documentation to devlog branch...")
+    try:
+        sync_script = script_dir / "sync_to_devlog.py"
+        if sync_script.exists():
+            import subprocess
+            result = subprocess.run(
+                [sys.executable, str(sync_script)],
+                cwd=repo_root,
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                print("✅ Documentation synced to devlog branch")
+            else:
+                print(f"⚠️  Doc sync had issues: {result.stderr}")
+                print("   You can manually sync later with: python scripts/ci/sync_to_devlog.py")
+        else:
+            print("⚠️  sync_to_devlog.py not found, skipping doc sync")
+    except Exception as e:
+        print(f"⚠️  Error syncing docs: {e}")
+        print("   You can manually sync later with: python scripts/ci/sync_to_devlog.py")
     
     # Success message
     print("\n" + "=" * 50)
@@ -426,6 +474,7 @@ def main():
     print("  1. Review changes: git show HEAD")
     print("  2. Update docs: npm run version:update-docs")
     print("  3. Push to remote: git push origin main --tags")
+    print("  4. Push devlog branch: git push origin devlog")
     print("=" * 50)
 
 if __name__ == "__main__":

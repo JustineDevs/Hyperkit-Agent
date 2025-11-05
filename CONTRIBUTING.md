@@ -96,8 +96,33 @@ Thank you for contributing to HyperAgent! This document provides guidelines and 
 
 ### Making Changes
 
+## 🌿 Branch Strategy & Workflow
+
+### Branch Structure
+
+HyperAgent uses a **dual-branch structure** for optimal organization:
+
+- **`main` branch**: Code + essential documentation (~794 KB)
+  - ✅ All HyperAgent code and functionality
+  - ✅ Essential docs (README, QUICK_START, ENVIRONMENT_SETUP)
+  - ✅ Configuration files
+  
+- **`devlog` branch**: Full documentation (~1.9 MB)
+  - 📚 Complete documentation (all docs/, REPORTS/)
+  - 📊 Audit reports and status assessments
+  - 📖 Team guides and integration docs
+
+- **`ai` branch**: Production-ready (future)
+  - 🚀 Merged from main when stable
+  - 🎯 Production deployment target
+
+### Working with Branches
+
+**For Code Changes:**
 1. **Create feature branch** from `main`
    ```bash
+   git checkout main
+   git pull origin main
    git checkout -b feature/your-feature-name
    ```
 
@@ -109,8 +134,12 @@ Thank you for contributing to HyperAgent! This document provides guidelines and 
    git add src/new_feature.py
    git add tests/test_new_feature.py
    
-   # Update docs in same commit
-   git add docs/new_feature_guide.md
+   # For documentation changes:
+   # - Essential docs (README, QUICK_START, ENVIRONMENT_SETUP) → commit to main
+   # - All other docs (REPORTS/, detailed guides) → commit to devlog branch
+   
+   # If adding essential docs:
+   git add docs/essential_guide.md  # Only if it's essential
    git commit -m "feat: add new feature with docs"
    ```
 
@@ -123,7 +152,12 @@ Thank you for contributing to HyperAgent! This document provides guidelines and 
 5. **Push and create PR**:
    ```bash
    git push origin feature/your-feature-name
-   # Create PR on GitHub
+   # Create PR to main branch on GitHub
+   
+   # If your PR includes documentation that should be in devlog:
+   # 1. After PR is merged to main
+   # 2. Run: python scripts/ci/sync_to_devlog.py
+   # 3. Or manually: git checkout devlog && git merge main && git push origin devlog
    ```
 
 ### PR Approval Criteria
@@ -224,7 +258,15 @@ pytest --cov=hyperkit-agent tests/
 
 ```bash
 # Clone repository
+# Clone main branch (code + essential docs)
 git clone https://github.com/JustineDevs/Hyperkit-Agent.git
+
+# OR clone devlog branch (full documentation)
+git clone -b devlog https://github.com/JustineDevs/Hyperkit-Agent.git
+
+# OR add devlog to existing clone
+git fetch origin devlog:devlog
+git checkout devlog
 cd Hyperkit-Agent
 
 # Install dependencies

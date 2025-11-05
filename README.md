@@ -24,7 +24,41 @@
 [![Contributors](https://img.shields.io/github/contributors/JustineDevs/Hyperkit-Agent)](https://github.com/JustineDevs/Hyperkit-Agent/graphs/contributors)
 [![Issues](https://img.shields.io/github/issues/JustineDevs/Hyperkit-Agent)](https://github.com/JustineDevs/Hyperkit-Agent/issues)
 [![Pull Requests](https://img.shields.io/github/issues-pr/JustineDevs/Hyperkit-Agent)](https://github.com/JustineDevs/Hyperkit-Agent/pulls)
-[![Status](https://img.shields.io/badge/status-active--development-yellow.svg)](REPORTS/HONEST_STATUS_ASSESSMENT.md)
+[![Status](https://img.shields.io/badge/status-active--development-yellow.svg)](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md)
+
+---
+
+## 📚 Documentation Access
+
+> **💡 Branch Information**  
+> This repository uses a **dual-branch structure** for optimal organization:
+> 
+> - **`main` branch** (you are here): Code + essential docs (~794 KB)  
+>   - ✅ All HyperAgent functionality works  
+>   - ✅ Installation and quick start guides  
+>   - ✅ Basic documentation  
+> 
+> - **`devlog` branch**: Full documentation (~1.9 MB)  
+>   - 📚 Complete implementation status  
+>   - 📊 Audit reports and assessments  
+>   - 📖 Detailed guides and team docs  
+> 
+> **Quick Access:**
+> - 📖 View full docs: [devlog branch on GitHub](https://github.com/JustineDevs/Hyperkit-Agent/tree/devlog)
+> - 🔄 Switch to devlog: `git fetch origin devlog:devlog && git checkout devlog`
+> - 📥 Clone full version: `git clone -b devlog <repo-url>`
+> - 💻 Use CLI helper: `hyperagent docs` (if available)
+
+**Essential Documentation Available in Main:**
+- ✅ [Quick Start Guide](./hyperkit-agent/docs/GUIDE/QUICK_START.md)
+- ✅ [Environment Setup](./hyperkit-agent/docs/GUIDE/ENVIRONMENT_SETUP.md)
+- ✅ [This README](./README.md)
+
+**Full Documentation in Devlog:**
+- 📚 [Implementation Status](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md)
+- 📊 [Audit Reports](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/REPORTS/AUDIT/AUDIT.md)
+- 📖 [Developer Guides](https://github.com/JustineDevs/Hyperkit-Agent/tree/devlog/hyperkit-agent/docs/TEAM)
+- 🔍 [Integration Docs](https://github.com/JustineDevs/Hyperkit-Agent/tree/devlog/hyperkit-agent/docs/INTEGRATION)
 
 ---
 
@@ -78,8 +112,8 @@ Navigate quickly to any section of the documentation:
 
 ## 🎯 PROJECT STATUS
 
-> ⚠️ **For detailed honest assessment, see [HONEST_STATUS_ASSESSMENT.md](hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md)**  
-> 🔴 **CTO AUDIT 2025-10-29**: [See Full Audit Report](hyperkit-agent/REPORTS/AUDIT_REPORT_2025-10-29.md)
+> ⚠️ **For detailed honest assessment, see [HONEST_STATUS_ASSESSMENT.md](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md)**  
+> 🔴 **CTO AUDIT 2025-10-29**: [See Full Audit Report](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/REPORTS/AUDIT_REPORT_2025-10-29.md)
 
 | Component | Status | Version | Notes |
 |-----------|--------|---------|-------|
@@ -104,7 +138,7 @@ Navigate quickly to any section of the documentation:
 | **Hyperion Testnet** | 133717 | ✅ **EXCLUSIVE** | https://hyperion-testnet.metisdevops.link | [Explorer](https://hyperion-testnet-explorer.metisdevops.link) | Deploy, Verify, Monitor |
 
 > **🔴 HYPERION-ONLY MODE**: Hyperion is the **EXCLUSIVE** deployment target. All CLI commands are hardcoded to Hyperion.  
-> **Future network support (LazAI, Metis) is DOCUMENTATION ONLY** - see [ROADMAP.md](hyperkit-agent/docs/ROADMAP.md).  
+> **Future network support (LazAI, Metis) is DOCUMENTATION ONLY** - see [ROADMAP.md](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/docs/ROADMAP.md).  
 > **No multi-network code exists** - system will fail clearly if non-Hyperion network is attempted.
 
 ---
@@ -199,7 +233,7 @@ HyperAgent uses Retrieval-Augmented Generation (RAG) to enhance all CLI commands
 |----------|-------------|-----|
 | `hardhat-deploy` | All-in-one template for Hardhat deployment scripts, env config, and best-practice flows | `QmXwNxjvkw9aLZARfvM1bPThKMuP9eqmzD4cevtswKsvvh` |
 
-> **💡 Tip**: All templates are stored on IPFS via Pinata. See [`docs/RAG_TEMPLATES/README.md`](docs/RAG_TEMPLATES/README.md) for upload process and maintenance.
+> **💡 Tip**: All templates are stored on IPFS via Pinata. See [`docs/RAG_TEMPLATES/README.md`](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/docs/RAG_TEMPLATES/README.md) for upload process and maintenance.
 
 ### **RAG Features**
 
@@ -536,7 +570,7 @@ python hyperkit-agent/scripts/doctor.py --workspace /path/to/hyperkit-agent
 
 ### Documentation
 
-See [`hyperkit-agent/docs/GUIDE/DOCTOR_PREFLIGHT.md`](hyperkit-agent/docs/GUIDE/DOCTOR_PREFLIGHT.md) for complete documentation.
+See [`hyperkit-agent/docs/GUIDE/DOCTOR_PREFLIGHT.md`](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/docs/GUIDE/DOCTOR_PREFLIGHT.md) for complete documentation.
 
 ---
 
@@ -1006,35 +1040,35 @@ HyperAgent documentation is organized into clear categories:
 
 | Category | Location | Purpose |
 |----------|----------|---------|
-| **Internal Docs** | [`hyperkit-agent/docs/`](./hyperkit-agent/docs/) | Team processes, execution guides, integrations |
-| **Current Reports** | [`hyperkit-agent/REPORTS/`](./hyperkit-agent/REPORTS/) | Current status reports and assessments |
-| **Historical Archive** | [`ACCOMPLISHED/`](./ACCOMPLISHED/) | Timestamped milestone reports |
-| **User Docs** | [`docs/`](./docs/) | High-level project documentation |
+| **Internal Docs** | [View on devlog](https://github.com/JustineDevs/Hyperkit-Agent/tree/devlog/hyperkit-agent/docs) | Team processes, execution guides, integrations |
+| **Current Reports** | [View on devlog](https://github.com/JustineDevs/Hyperkit-Agent/tree/devlog/hyperkit-agent/REPORTS) | Current status reports and assessments |
+| **Historical Archive** | [View on devlog](https://github.com/JustineDevs/Hyperkit-Agent/tree/devlog/ACCOMPLISHED) | Timestamped milestone reports |
+| **User Docs** | [View on devlog](https://github.com/JustineDevs/Hyperkit-Agent/tree/devlog/docs) | High-level project documentation |
 
 ### 🎯 Quick Links by Role
 
 **For Developers:**
-- [Developer Guide](./hyperkit-agent/docs/TEAM/DEVELOPER_GUIDE.md)
-- [Environment Setup](./hyperkit-agent/docs/TEAM/ENVIRONMENT_SETUP.md)
-- [API Reference](./hyperkit-agent/docs/API_REFERENCE.md)
+- [Developer Guide](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/docs/TEAM/DEVELOPER_GUIDE.md)
+- [Environment Setup](./hyperkit-agent/docs/GUIDE/ENVIRONMENT_SETUP.md) *(in main)*
+- [API Reference](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/docs/API_REFERENCE.md)
 
 **For Operations:**
-- [Disaster Recovery](./hyperkit-agent/docs/EXECUTION/DISASTER_RECOVERY.md)
-- [Pre-Demo Checklist](./hyperkit-agent/docs/EXECUTION/PRE_DEMO_CHECKLIST.md)
-- [Known Limitations](./hyperkit-agent/docs/EXECUTION/KNOWN_LIMITATIONS.md)
+- [Disaster Recovery](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/docs/EXECUTION/DISASTER_RECOVERY.md)
+- [Pre-Demo Checklist](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/docs/EXECUTION/PRE_DEMO_CHECKLIST.md)
+- [Known Limitations](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/docs/EXECUTION/KNOWN_LIMITATIONS.md)
 
 **For Integrators:**
-- [Alith SDK Integration](./hyperkit-agent/docs/INTEGRATION/ALITH_SDK_INTEGRATION_ROADMAP.md)
-- [Wallet Security](./hyperkit-agent/docs/INTEGRATION/WALLET_SECURITY_EXTENSIONS.md)
+- [Alith SDK Integration](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/docs/INTEGRATION/ALITH_SDK_INTEGRATION_ROADMAP.md)
+- [Wallet Security](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/docs/INTEGRATION/WALLET_SECURITY_EXTENSIONS.md)
 
 ### 📊 Current Status & Reports
 
 | Document | Description | Link |
 |----------|-------------|------|
-| **Honest Status Assessment** | Transparent project status | [HONEST_STATUS_ASSESSMENT.md](./hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md) |
-| **Critical Fixes Action Plan** | Priority fixes and roadmap | [CRITICAL_FIXES_ACTION_PLAN.md](./hyperkit-agent/REPORTS/CRITICAL_FIXES_ACTION_PLAN.md) |
-| **IPFS RAG Index** | IPFS RAG documentation hub | [IPFS_RAG_INDEX.md](./hyperkit-agent/REPORTS/IPFS_RAG_INDEX.md) |
-| **Directory Restructure Plan** | Documentation reorganization | [DIRECTORY_RESTRUCTURE_PLAN.md](./hyperkit-agent/REPORTS/DIRECTORY_RESTRUCTURE_PLAN.md) |
+| **Honest Status Assessment** | Transparent project status | [HONEST_STATUS_ASSESSMENT.md](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/REPORTS/HONEST_STATUS_ASSESSMENT.md) |
+| **Critical Fixes Action Plan** | Priority fixes and roadmap | [CRITICAL_FIXES_ACTION_PLAN.md](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/REPORTS/CRITICAL_FIXES_ACTION_PLAN.md) |
+| **IPFS RAG Index** | IPFS RAG documentation hub | [IPFS_RAG_INDEX.md](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/REPORTS/IPFS_RAG_INDEX.md) |
+| **Directory Restructure Plan** | Documentation reorganization | [DIRECTORY_RESTRUCTURE_PLAN.md](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/REPORTS/DIRECTORY_RESTRUCTURE_PLAN.md) |
 
 ### 🗂️ Historical Reports (Dated)
 
@@ -1048,7 +1082,7 @@ View timestamped milestone reports in [`ACCOMPLISHED/`](./ACCOMPLISHED/):
 
 | Document | Description | Link |
 |----------|-------------|------|
-| **Security Setup** | Security tools and configuration | [SECURITY_SETUP.md](./hyperkit-agent/docs/SECURITY_SETUP.md) |
+| **Security Setup** | Security tools and configuration | [SECURITY_SETUP.md](https://github.com/JustineDevs/Hyperkit-Agent/blob/devlog/hyperkit-agent/docs/SECURITY_SETUP.md) |
 | **Contributing Guide** | Contribution guidelines | [CONTRIBUTING.md](./CONTRIBUTING.md) |
 | **Security Policy** | Vulnerability reporting | [SECURITY.md](./SECURITY.md) |
 | **Code of Conduct** | Community standards | [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) |
