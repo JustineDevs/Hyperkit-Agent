@@ -14,7 +14,9 @@ const path = require('path');
 const { execSync } = require('child_process');
 const readline = require('readline');
 
-const ROOT_DIR = path.resolve(__dirname, '../..');
+// ROOT_DIR is the repository root (HyperAgent/)
+// This script is in hyperkit-agent/scripts/release/, so go up 3 levels
+const ROOT_DIR = path.resolve(__dirname, '../../..');
 const WHITELIST_FILE = path.join(ROOT_DIR, 'hyperkit-agent/scripts/ci/essential_docs_whitelist.json');
 
 function loadWhitelist() {
