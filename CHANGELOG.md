@@ -922,3 +922,10 @@ All version bumps, releases, and changes are documented here.
 - Security pattern validation
 - Access control and authentication
 - Secure private key management
+
+## [1.5.18] - 2025-11-05
+
+### Changes
+
+- Version bump to 1.5.18
+
