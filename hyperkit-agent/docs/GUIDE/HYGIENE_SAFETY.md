@@ -201,7 +201,7 @@ git log --oneline origin/devlog -5
    - Never run on uncommitted work
 
 ### **For Maintainers:**
-1. **Monitor workflow execution:**
+1. **Monitor workflow run:**
    - Check logs for patterns
    - Review optional script failures
    - Update patterns as needed

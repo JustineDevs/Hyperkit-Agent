@@ -57,7 +57,7 @@ GitHub repository URLs should **NOT** be replaced:
 ### Relative Paths
 
 Relative paths are already generic:
-- ✅ `./scripts/install.sh`
+- ✅ `hyperagent install`
 - ✅ `../hyperkit-agent/scripts/doctor.py`
 - ✅ `scripts/ci/run_all.py`
 

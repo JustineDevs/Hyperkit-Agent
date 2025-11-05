@@ -174,7 +174,7 @@ All other documentation files are in devlog:
 Run validation to check branch sync:
 
 ```bash
-python scripts/ci/validate_branch_sync.py
+hyperagent ci/validate_branch_sync
 ```
 
 This checks:

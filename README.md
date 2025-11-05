@@ -533,10 +533,10 @@ hyperagent doctor
 
 # Or run manually
 cd hyperkit-agent
-python scripts/doctor.py
+hyperagent doctor
 
 # Report only (no fixes)
-python scripts/doctor.py --no-fix
+hyperagent doctor --no-fix
 ```
 
 ### What Doctor Validates
