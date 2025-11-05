@@ -151,9 +151,9 @@ function main() {
   }
   
   try {
-    // Update changelog
+    // Update changelog (pass new version explicitly)
     console.log('\n📝 Updating CHANGELOG.md...');
-    execSync('node hyperkit-agent/scripts/release/update-changelog.js', {
+    execSync(`node hyperkit-agent/scripts/release/update-changelog.js ${newVersion}`, {
       cwd: ROOT_DIR,
       stdio: 'inherit'
     });

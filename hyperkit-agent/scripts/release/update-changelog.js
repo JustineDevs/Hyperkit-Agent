@@ -10,7 +10,8 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const ROOT_DIR = path.resolve(__dirname, '../..');
+// Script is in hyperkit-agent/scripts/release/, so root is 3 levels up
+const ROOT_DIR = path.resolve(__dirname, '../../..');
 const CHANGELOG_PATH = path.join(ROOT_DIR, 'CHANGELOG.md');
 const VERSION_FILE = path.join(ROOT_DIR, 'VERSION');
 

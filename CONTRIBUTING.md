@@ -96,6 +96,91 @@ Thank you for contributing to HyperAgent! This document provides guidelines and 
 
 ### Making Changes
 
+## 🛠️ Tech Stack Policy
+
+**HyperAgent uses strict language separation for maintainability and clarity:**
+
+### **Python** 🐍
+**USE ONLY for:**
+- ✅ AI/LLM system integration (Alith SDK, Gemini, OpenAI)
+- ✅ Core agent logic and workflow orchestration
+- ✅ Smart contract analysis and security auditing
+- ✅ Code analysis scripts (AI-powered)
+- ✅ CLI interface (`hyperagent` command)
+- ✅ RAG system
+
+**Location:** `hyperkit-agent/core/`, `hyperkit-agent/services/`, `hyperkit-agent/cli/`
+
+### **JavaScript (Node.js)** 📦
+**USE ONLY for:**
+- ✅ All version management (`npm run version:patch`, etc.)
+- ✅ All workflow automation (docs, badges, sync, release)
+- ✅ All branch synchronization
+- ✅ All documentation automation
+- ✅ All file manipulation for automation
+
+**Location:** `hyperkit-agent/scripts/release/`, automation scripts
+
+**Rule:** If it's called via `npm run`, it's JavaScript. Period.
+
+### **Shell (Bash)** 🔧
+**USE ONLY for:**
+- ⚠️ Emergency "break glass" scenarios
+- ⚠️ Manual one-time fixes
+- ⚠️ Critical incident response
+
+**Rule:** Shell scripts are **human-operated only** - never referenced from npm scripts.
+
+### **Solidity** 📜
+**USE ONLY for:**
+- ✅ Generated smart contracts (output from AI agent)
+- ✅ Test contracts and demos
+
+**Rule:** Solidity files are **never edited directly by automation scripts**.
+
+---
+
+**🚫 IMPORTANT:**
+- ❌ **NEVER** create Python scripts for version/workflow automation
+- ❌ **NEVER** create shell scripts for normal development workflows
+- ❌ **NEVER** mix languages in automation - if it's workflow, it's JS
+- ❌ **NEVER** leave duplicate scripts (Python + JS) for the same purpose
+- ✅ **ALWAYS** use JavaScript for all `npm run` commands
+- ✅ **ALWAYS** convert/replace old Python automation scripts with JS
+- ✅ **ALWAYS** delete old scripts immediately after JS conversion is verified
+
+**See:** [`hyperkit-agent/scripts/TECH_STACK_POLICY.md`](hyperkit-agent/scripts/TECH_STACK_POLICY.md) for complete policy.
+
+---
+
+## 📋 Single Source of Truth Policy
+
+**CRITICAL**: Project-level meta files must exist **ONLY in root directory**:
+
+| File | Location | Status |
+|------|----------|--------|
+| `VERSION` | ✅ Root only | ❌ **NEVER** add to `hyperkit-agent/` |
+| `CHANGELOG.md` | ✅ Root only | ❌ **NEVER** add to `hyperkit-agent/` |
+| `SECURITY.md` | ✅ Root only | ❌ **NEVER** add to `hyperkit-agent/` |
+| `LICENSE.md` | ✅ Root only | ❌ **NEVER** add to `hyperkit-agent/` |
+| `CODE_OF_CONDUCT.md` | ✅ Root only | ❌ **NEVER** add to `hyperkit-agent/` |
+| `CONTRIBUTING.md` | ✅ Root only | ❌ **NEVER** add to `hyperkit-agent/` |
+| `README.md` | ✅ Root + package | ✅ Package-specific README is OK |
+| `TODO.md` | ✅ Package only | ✅ Package-specific TODO is OK |
+
+**Automated Enforcement:**
+- ✅ `npm run version:cleanup-dupes` - Removes duplicate meta files
+- ✅ `npm run hygiene` - Automatically runs cleanup
+- ✅ CI/CD checks for duplicates (will fail if found)
+
+**Why This Matters:**
+- Prevents version drift and confusion
+- Ensures single source of truth
+- Makes automation reliable and predictable
+- Professional OSS structure
+
+---
+
 ## 🌿 Branch Strategy & Workflow
 
 ### Branch Structure
@@ -156,7 +241,7 @@ HyperAgent uses a **dual-branch structure** for optimal organization:
    
    # If your PR includes documentation that should be in devlog:
    # 1. After PR is merged to main
-   # 2. Run: python scripts/ci/sync_to_devlog.py
+   # 2. Run: npm run hygiene (or node hyperkit-agent/scripts/release/sync-to-devlog.js)
    # 3. Or manually: git checkout devlog && git merge main && git push origin devlog
    ```
 

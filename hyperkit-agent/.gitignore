@@ -162,8 +162,3 @@ docker-compose.override.yml
 tmp/
 temp/
 diagnostics*
-
-# Workflow runtime files
-.temp_envs/
-.workflow_contexts/
-*.diagnostics.json
