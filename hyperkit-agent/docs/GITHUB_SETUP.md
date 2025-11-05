@@ -214,12 +214,12 @@ docs/EMERGENCY_RESPONSE.md @security-team
 
 Create milestones for tracking:
 
-1. **v1.4.8 - Q1 2025**
+1. **v1.4.7 - Q1 2025**
    - External security audit
    - Public launch
    - Bug bounty activation
 
-2. **v1.4.8 - Q2 2025**
+2. **v1.4.7 - Q2 2025**
    - Mainnet production deployment
    - Security certification
    - Ecosystem partnerships

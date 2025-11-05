@@ -6,7 +6,7 @@
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
-# HyperKit AI Agent - Environment Setup Guide v1.4.8
+# HyperKit AI Agent - Environment Setup Guide v1.4.7
 
 ## 🚀 **QUICK START (5 Minutes)**
 
@@ -194,7 +194,7 @@ PRIVATE_KEY=your_wallet_private_key_here
 
 ## 📝 **CONFIGURATION EXAMPLES**
 
-### **Complete .env File Example (v1.4.8)**
+### **Complete .env File Example (v1.4.7)**
 ```bash
 # ============================================================================
 # AI/LLM PROVIDER CONFIGURATION
@@ -232,7 +232,7 @@ LAZAI_EXPLORER_URL=https://testnet-explorer.lazai.network
 PRIVATE_KEY=your_wallet_private_key_here
 
 # ============================================================================
-# SECURITY EXTENSIONS (v1.4.8)
+# SECURITY EXTENSIONS (v1.4.7)
 # ============================================================================
 SECURITY_EXTENSIONS_ENABLED=true
 SLITHER_ENABLED=true
@@ -240,7 +240,7 @@ MYTHRIL_ENABLED=false
 EDB_ENABLED=false
 
 # ============================================================================
-# ALITH SDK CONFIGURATION (v1.4.8)
+# ALITH SDK CONFIGURATION (v1.4.7)
 # ============================================================================
 ALITH_ENABLED=true
 ALITH_MODEL=gpt-4o-mini
@@ -290,7 +290,7 @@ TEST_MODE=true
 6. **Use test wallets only** for development
 7. **Enable security extensions** for production use
 
-## 🚀 **NEW FEATURES (v1.4.8)**
+## 🚀 **NEW FEATURES (v1.4.7)**
 
 ### **Alith SDK Integration**
 - **AI-Powered Auditing**: Real AI agent for smart contract analysis
@@ -427,7 +427,7 @@ hyperagent --help
 
 ---
 
-**🎉 You're now ready to use HyperKit AI Agent v1.4.8 with full Alith SDK integration and security extensions!**
+**🎉 You're now ready to use HyperKit AI Agent v1.4.7 with full Alith SDK integration and security extensions!**
 
 ---
 

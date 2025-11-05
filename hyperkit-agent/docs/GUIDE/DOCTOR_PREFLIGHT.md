@@ -36,13 +36,13 @@ The **Doctor** system implements style hardened dependency validation and self-h
 
 ```bash
 # Run doctor before workflow
-python scripts/doctor.py
+hyperagent doctor
 
 # Or use bash script
-bash scripts/doctor.sh
+hyperagent doctor
 
 # Disable auto-fix (report only)
-python scripts/doctor.py --no-fix
+hyperagent doctor --no-fix
 ```
 
 ### Integration in Workflow
@@ -86,7 +86,7 @@ success = doctor(workspace_dir=Path("hyperkit-agent"), auto_fix=True)
 
 The doctor automatically fixes:
 1. **Missing OpenZeppelin**: Installs via `forge install` or direct `git clone`
-2. **Wrong OZ Version**: Reinstalls compatible version (v1.4.8 for Counters.sol)
+2. **Wrong OZ Version**: Reinstalls compatible version (v1.4.7 for Counters.sol)
 3. **Solc Version Mismatch**: Updates `foundry.toml` to correct version
 4. **Git Submodule Issues**: Removes broken entries from `.gitmodules` and `.gitignore`
 5. **Broken Dependencies**: Cleans and reinstalls with correct versions
@@ -103,7 +103,7 @@ Example:
 ```
 ❌ OpenZeppelin contracts not found
 💡 Recovery: Run: forge install OpenZeppelin/openzeppelin-contracts
-   Or: bash scripts/dependency_install.sh
+   Or: hyperagent dependency_install
 ```
 
 ## CI/CD Integration
@@ -114,7 +114,7 @@ Example:
 - name: Run Agent Doctor
   run: |
     cd hyperkit-agent
-    python scripts/doctor.py
+    hyperagent doctor
 ```
 
 ### Pre-Commit Hook
@@ -124,7 +124,7 @@ Example:
 # .git/hooks/pre-commit
 
 cd hyperkit-agent
-python scripts/doctor.py --no-fix
+hyperagent doctor --no-fix
 if [ $? -ne 0 ]; then
   echo "❌ Doctor preflight failed. Please fix issues before committing."
   exit 1
@@ -197,7 +197,7 @@ git clone https://github.com/OpenZeppelin/openzeppelin-contracts.git lib/openzep
 **Solution:**
 - This is **expected** in OpenZeppelin v5 (Counters.sol is deprecated)
 - Doctor will auto-remove Counters.sol usage in generated contracts
-- Or install OZ v1.4.8: `forge install OpenZeppelin/openzeppelin-contracts@v1.4.8`
+- Or install OZ v1.4.7: `forge install OpenZeppelin/openzeppelin-contracts@v1.4.7`
 
 ## Related Files
 
@@ -210,7 +210,7 @@ git clone https://github.com/OpenZeppelin/openzeppelin-contracts.git lib/openzep
 ## Summary
 
 The Doctor system ensures **zero-excuse, production-grade onboarding** by:
-- ✅ Validating all dependencies before workflow execution
+- ✅ Validating all dependencies before workflow run
 - ✅ Auto-fixing common issues (OZ installation, version mismatches)
 - ✅ Providing actionable error messages when manual fixes are needed
 - ✅ Enforcing version consistency across all tools and libraries

@@ -627,13 +627,13 @@ verify_result = await agent.verify_contract(address, network)
 
 ## 📝 Changelog
 
-### v1.4.8 (2025-10-27)
+### v1.4.7 (2025-10-27)
 - **Directory restructure completed**: Organized all documentation
 - **IPFS RAG production-ready**: Real Pinata integration working
 - **Status transparency**: Honest assessment of capabilities
 - **Critical fixes identified**: P0-P3 priority system
 
-### v1.4.8 (2025-10-26)
+### v1.4.7 (2025-10-26)
 - Added comprehensive integration documentation
 - Python library examples
 - CLI integration guides

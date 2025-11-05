@@ -6,7 +6,7 @@
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
-# Configuration Guide - v1.4.8
+# Configuration Guide - v1.4.7
 
 **Version**: 1.5.14  
 **Last Updated**: 2025-10-28
@@ -15,7 +15,7 @@
 
 ## 📋 Overview
 
-This guide covers all configuration options for HyperAgent v1.4.8, including the new Alith SDK integration and IPFS Pinata RAG system.
+This guide covers all configuration options for HyperAgent v1.4.7, including the new Alith SDK integration and IPFS Pinata RAG system.
 
 ---
 

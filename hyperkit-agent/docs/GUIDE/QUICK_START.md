@@ -6,7 +6,7 @@
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
-# Quick Start Guide - v1.4.8
+# Quick Start Guide - v1.4.7
 
 **Version**: 1.5.14  
 **Last Updated**: 2025-10-28
@@ -97,12 +97,12 @@ hyperagent deploy contract MyToken.sol
 # Note: --network flag is deprecated/hidden - Hyperion is hardcoded
 
 # Deploy with constructor arguments
-hyperagent deploy contract MyToken.sol --constructor-args '["MyToken", "MTK", 1000000]'
+hyperagent deploy contract MyToken.sol --args '["MyToken", "MTK", 1000000]'
 ```
 
 ### Full Workflow
 ```bash
-# Run complete 5-stage workflow
+# Run complete AI-powered workflow
 hyperagent workflow run "Your contract description"
 
 # Options:
