@@ -923,6 +923,12 @@ All version bumps, releases, and changes are documented here.
 - Access control and authentication
 - Secure private key management
 
+## [1.6.0] - 2025-11-05
+
+### Changes
+
+- Version bump to 1.6.0
+
 ## [1.5.19] - 2025-11-05
 
 ### Changes
