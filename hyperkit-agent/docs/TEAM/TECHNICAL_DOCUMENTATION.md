@@ -1,8 +1,8 @@
 <!-- AUDIT_BADGE_START -->
 **Implementation Status**: ✅ Verified  
-**Version**: 1.4.8  
+**Version**: 1.4.7  
 **Last Verified**: 2025-11-05  
-**Commit**: `3f57a9e`  
+**Commit**: `d755beb`  
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
@@ -285,7 +285,7 @@ await verification.get_verification_status(verification_id: str) -> Dict[str, An
 ./hyperagent verify --address 0x123... --source-file my_contract.sol
 
 # Verify with specific compiler version
-./hyperagent verify --address 0x123... --compiler-version 1.4.8
+./hyperagent verify --address 0x123... --compiler-version 1.4.7
 ```
 
 #### System Monitoring
