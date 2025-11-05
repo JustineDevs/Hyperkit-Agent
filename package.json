@@ -1,6 +1,6 @@
 {
   "name": "hyperkit",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Web3 Development Platform with AI Generation and Cross-Chain DeFi Primitives",
   "main": "hyperkit-agent/cli/main.py",
   "scripts": {
@@ -8,6 +8,9 @@
     "version:patch": "node hyperkit-agent/scripts/release/version-bump.js patch",
     "version:minor": "node hyperkit-agent/scripts/release/version-bump.js minor",
     "version:major": "node hyperkit-agent/scripts/release/version-bump.js major",
+    "version:complete": "npm run reports:organize && npm run version:patch && npm run hygiene",
+    "version:complete:minor": "npm run reports:organize && npm run version:minor && npm run hygiene",
+    "version:complete:major": "npm run reports:organize && npm run version:major && npm run hygiene",
     "version:update-docs": "node hyperkit-agent/scripts/release/update-version-in-docs.js",
     "version:check": "python -c \"import json; pkg=json.load(open('package.json', encoding='utf-8')); ver=open('VERSION', encoding='utf-8').read().strip(); print(f'package.json: {pkg[\\\"version\\\"]}'); print(f'VERSION file: {ver}'); exit(0 if pkg['version']==ver else 1)\"",
     "version:cleanup-dupes": "node hyperkit-agent/scripts/release/cleanup-meta-dupes.js",
