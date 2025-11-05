@@ -1,16 +1,16 @@
 {
   "scan_results": {
-    "scan_date": "2025-11-06T00:13:29.756423",
+    "scan_date": "2025-11-06T00:36:49.397769",
     "legacy_files": [],
     "unimplemented_features": [],
     "future_tense_docs": [],
     "todo_files": [],
     "summary": {
-      "total_files_scanned": 145,
+      "total_files_scanned": 140,
       "legacy_references": 30,
       "unimplemented_features": 1,
       "future_tense_docs": 15,
-      "todo_files": 9
+      "todo_files": 8
     },
     "future_tense": [
       {
@@ -151,10 +151,12 @@
         "file": ".\\hyperkit-agent\\REPORTS\\ACCOMPLISHED\\ACCOMPLISHED.md",
         "pattern": "will be",
         "matches": [
+          "will be",
           "will be"
         ],
         "lines": [
-          3362
+          3362,
+          5197
         ]
       },
       {
@@ -769,23 +771,17 @@
         ]
       },
       {
-        "file": ".\\hyperkit-agent\\REPORTS\\MARKDOWN_FIX_TRUTH_CHECK.md",
-        "pattern": "NOTE:",
-        "matches": [
-          "Note:"
-        ],
-        "lines": [
-          45
-        ]
-      },
-      {
         "file": ".\\hyperkit-agent\\REPORTS\\ACCOMPLISHED\\ACCOMPLISHED.md",
         "pattern": "NOTE:",
         "matches": [
+          "Note:",
+          "Note:",
           "Note:"
         ],
         "lines": [
-          2689
+          2689,
+          4641,
+          4702
         ]
       }
     ],
@@ -917,7 +913,7 @@
       {
         "file": ".\\hyperkit-agent\\REPORTS\\ACCOMPLISHED\\ACCOMPLISHED.md",
         "reason": "Contains future tense language",
-        "instances": 1
+        "instances": 2
       },
       {
         "file": ".\\hyperkit-agent\\REPORTS\\archive\\FIXES_ARCHIVE.md",
