@@ -1,8 +1,8 @@
 <!-- AUDIT_BADGE_START -->
 **Implementation Status**: ✅ Verified  
-**Version**: 1.4.8  
+**Version**: 1.4.7  
 **Last Verified**: 2025-11-05  
-**Commit**: `bef3139`  
+**Commit**: `031d231`  
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
