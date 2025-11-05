@@ -1,1 +1,0 @@
-{"$schema": "https://unpkg.com/@changesets/changelog-github@0.4.4/schema.json", "changelog": ["@changesets/changelog-github", {"repo": "JustineDevs/Hyperkit-Agent"}], "commit": false, "fixed": [], "linked": [], "access": "public", "baseBranch": "main", "updateInternalDependencies": "patch", "ignore": []}
