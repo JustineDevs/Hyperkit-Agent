@@ -381,14 +381,28 @@ Examples:
     args = parser.parse_args()
     
     # Determine REPORTS directory location
-    script_dir = Path(__file__).parent
+    script_dir = Path(__file__).resolve().parent
     # REPORTS directory is at hyperkit-agent/REPORTS/
     # Script is at hyperkit-agent/scripts/reports/, so go up 2 levels
     reports_root = script_dir.parent.parent / 'REPORTS'
     
+    # Fallback: if that doesn't exist, try current working directory
+    if not reports_root.exists():
+        # Try from current working directory
+        cwd_reports = Path.cwd() / 'REPORTS'
+        if cwd_reports.exists():
+            reports_root = cwd_reports
+        else:
+            # Try going up from cwd
+            cwd_parent_reports = Path.cwd().parent / 'REPORTS'
+            if cwd_parent_reports.exists():
+                reports_root = cwd_parent_reports
+    
     if not reports_root.exists():
         print(f"[ERROR] REPORTS directory not found: {reports_root}")
         print(f"        Expected at: {reports_root.absolute()}")
+        print(f"        Script location: {script_dir}")
+        print(f"        Current working directory: {Path.cwd()}")
         sys.exit(1)
     
     if args.directory:
