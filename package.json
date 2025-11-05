@@ -1,6 +1,6 @@
 {
   "name": "hyperkit",
-  "version": "1.5.19",
+  "version": "1.6.0",
   "description": "Web3 Development Platform with AI Generation and Cross-Chain DeFi Primitives",
   "main": "hyperkit-agent/cli/main.py",
   "scripts": {
@@ -59,7 +59,8 @@
     "docs:update": "npm run version:update-docs",
     "docs:audit": "cd hyperkit-agent && python scripts/maintenance/doc_drift_audit.py",
     "docs:cleanup": "cd hyperkit-agent && python scripts/maintenance/doc_drift_cleanup.py",
-    "reports:organize": "echo REPORTS directory is already organized",
+    "reports:organize": "python hyperkit-agent/scripts/reports/merge.py",
+    "reports:organize:dry-run": "python hyperkit-agent/scripts/reports/merge.py --dry-run",
     "reports:status": "cd hyperkit-agent && python scripts/maintenance/cli_command_inventory.py",
     "reports:audit": "cd hyperkit-agent && python scripts/maintenance/legacy_file_inventory.py",
     "reports:todo": "cd hyperkit-agent && python scripts/maintenance/focused_todo_to_issues_conversion.py",
