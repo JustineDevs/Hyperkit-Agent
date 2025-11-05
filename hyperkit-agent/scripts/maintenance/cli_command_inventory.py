@@ -16,7 +16,7 @@ import re
 def get_cli_commands() -> Dict[str, Any]:
     """Discover all CLI commands from the CLI structure"""
     
-    cli_dir = Path("hyperkit-agent/cli/commands")
+    cli_dir = Path("cli/commands")
     commands = {}
     
     # Main commands from cli/main.py
@@ -73,7 +73,7 @@ def check_command_implementation(cmd_file: Path) -> Dict[str, Any]:
 def check_test_coverage(cmd_name: str) -> Dict[str, Any]:
     """Check test coverage for a command"""
     
-    test_dir = Path("hyperkit-agent/tests")
+    test_dir = Path("tests")
     coverage_info = {
         "unit_tests": False,
         "integration_tests": False,
@@ -128,7 +128,7 @@ def generate_inventory() -> Dict[str, Any]:
         inventory["summary"]["with_tests"] += 1
     
     # Inventory command groups
-    cli_dir = Path("hyperkit-agent/cli/commands")
+    cli_dir = Path("cli/commands")
     for group_name, group_info in commands["groups"].items():
         cmd_file = cli_dir / f"{group_name}.py"
         
@@ -171,8 +171,8 @@ def main():
     
     inventory = generate_inventory()
     
-    # Write JSON report
-    output_file = Path("hyperkit-agent/REPORTS/cli_command_inventory.json")
+    # Write JSON report to JSON_DATA directory
+    output_file = Path("REPORTS/JSON_DATA/cli_command_inventory.json")
     output_file.parent.mkdir(parents=True, exist_ok=True)
     output_file.write_text(json.dumps(inventory, indent=2, default=str))
     
