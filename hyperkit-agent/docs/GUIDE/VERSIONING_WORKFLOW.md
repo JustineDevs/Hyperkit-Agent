@@ -266,7 +266,7 @@ REPORTS/
       └── AUDIT_RESULT_Z.md (individual - needs merge)
 
 VERSION: 1.5.18
-CHANGELOG.md: (last version: 1.5.18)
+CHANGELOG.md: (last version: 1.4.7)
 ```
 
 ### **After Workflow:**
