@@ -119,7 +119,13 @@ def main():
     
     # Find all markdown files
     markdown_files = []
-    for pattern in ["**/*.md", "docs/**/*.md", "hyperkit-agent/docs/**/*.md", "hyperkit-agent/REPORTS/**/*.md"]:
+    # Auto-detect patterns: if hyperkit-agent subdir exists, include both; otherwise just current dir
+    patterns = ["**/*.md", "docs/**/*.md"]
+    if Path("hyperkit-agent").exists() and Path("hyperkit-agent").is_dir():
+        patterns.extend(["hyperkit-agent/docs/**/*.md", "hyperkit-agent/REPORTS/**/*.md"])
+    patterns.append("REPORTS/**/*.md")
+    
+    for pattern in patterns:
         markdown_files.extend(glob.glob(pattern, recursive=True))
     
     # Remove duplicates and sort
@@ -212,7 +218,10 @@ These processes are documented but not CLI-integrated:
 *This report is automatically generated and updated with each version sync.*
 """
     
-    with open("hyperkit-agent/REPORTS/IMPLEMENTATION_STATUS.md", "w", encoding="utf-8") as f:
+    # Save to STATUS category (use relative path from hyperkit-agent root)
+    report_path = Path("REPORTS/STATUS/implementation_status.md")
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(report_path, "w", encoding="utf-8") as f:
         f.write(report_content)
     
     print("Created IMPLEMENTATION_STATUS.md report")
