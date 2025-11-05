@@ -98,11 +98,14 @@ You want only the *final* report, changelog, and doc state included in the new v
    - Runs `sync-to-devlog.js`
    - Syncs version changes to `devlog` branch
    - **Auto-commits:** `chore(devlog): sync documentation from main branch`
+   - **Removes non-essential docs from main** (keeps main minimal)
+   - **Auto-commits:** `chore(main): remove docs moved to devlog`
 
 **Result:**
 - ✅ All version-related files committed
 - ✅ Version changes tracked in git
 - ✅ Devlog updated with version changes
+- ✅ **Main branch cleaned (non-essential docs removed)**
 - ✅ No manual git operations needed
 
 ---
@@ -149,12 +152,15 @@ Catches all churn, drift, or accidental file changes from the above steps (or an
    - Merges latest from `main`
    - Stages devlog-specific files
    - **Auto-commits:** `chore(devlog): sync documentation from main branch`
-   - Returns to original branch
+   - Returns to `main` branch
+   - **Removes non-essential docs from main** (keeps main minimal)
+   - **Auto-commits:** `chore(main): remove docs moved to devlog`
 
 **Result:**
 - ✅ All files captured and committed
 - ✅ **No uncommitted changes remain**
 - ✅ Complete migration to devlog
+- ✅ **Main branch minimal (only essential docs remain)**
 - ✅ Clean working tree
 
 ---

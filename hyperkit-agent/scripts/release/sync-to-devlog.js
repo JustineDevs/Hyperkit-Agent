@@ -323,6 +323,115 @@ Generated: ${new Date().toISOString()}`;
       console.log(`[OK] Returned to original branch: ${currentBranch}`);
     }
     
+    // CRITICAL: Remove synced files from main branch to keep it minimal
+    // This ensures main only has essential docs, and devlog has full docs
+    if (currentBranch === 'main' && docFiles.length > 0 && !dryRun) {
+      console.log('\n[REMOVE] Removing documentation files from main branch...');
+      console.log('         (Keeping essential files only - see essential_docs_whitelist.json)');
+      
+      // Get list of files that should be removed from main
+      // (files that were synced to devlog and are not in essential whitelist)
+      const essentialFiles = whitelist.files || [];
+      const essentialDirs = whitelist.directories_keep_in_main || [];
+      
+      const filesToRemove = docFiles.filter(docFile => {
+        // Skip if file is in essential list
+        if (essentialFiles.includes(docFile)) {
+          return false;
+        }
+        
+        // Skip if file is in essential directory
+        const inEssentialDir = essentialDirs.some(dir => {
+          const normalizedDir = dir.replace(/\/$/, '');
+          return docFile.startsWith(normalizedDir + '/') || docFile === normalizedDir;
+        });
+        if (inEssentialDir) {
+          return false;
+        }
+        
+        // File should be removed from main (it's now exclusively in devlog)
+        return true;
+      });
+      
+      if (filesToRemove.length > 0) {
+        console.log(`  Found ${filesToRemove.length} files to remove from main`);
+        
+        // Remove files from main
+        let removedCount = 0;
+        for (const fileToRemove of filesToRemove) {
+          const filePath = path.join(ROOT_DIR, fileToRemove);
+          if (fs.existsSync(filePath)) {
+            try {
+              // Try git rm first (for tracked files)
+              execSync(`git rm "${fileToRemove}"`, { 
+                cwd: ROOT_DIR, 
+                stdio: 'pipe' 
+              });
+              removedCount++;
+              console.log(`  [REMOVED] ${fileToRemove}`);
+            } catch (err) {
+              // File might not be tracked, try regular delete
+              try {
+                fs.unlinkSync(filePath);
+                removedCount++;
+                console.log(`  [DELETED] ${fileToRemove} (was untracked)`);
+              } catch (deleteErr) {
+                console.warn(`  [WARN] Could not remove ${fileToRemove}: ${deleteErr.message}`);
+              }
+            }
+          }
+        }
+        
+        // Commit removal with matching message pattern (avoids triggering version bump)
+        // Check if there are staged changes (git rm) or unstaged changes (deleted files)
+        let hasStagedChanges = false;
+        let hasUnstagedChanges = false;
+        
+        try {
+          execSync('git diff --cached --quiet', { cwd: ROOT_DIR, stdio: 'pipe' });
+        } catch {
+          hasStagedChanges = true;
+        }
+        
+        try {
+          execSync('git diff --quiet', { cwd: ROOT_DIR, stdio: 'pipe' });
+        } catch {
+          hasUnstagedChanges = true;
+        }
+        
+        if (hasStagedChanges || hasUnstagedChanges) {
+          // Stage any unstaged deletions
+          if (hasUnstagedChanges) {
+            try {
+              execSync('git add -u', { cwd: ROOT_DIR, stdio: 'pipe' });
+            } catch (err) {
+              console.warn(`[WARN] Could not stage deletions: ${err.message}`);
+            }
+          }
+          
+          // Commit removal with matching message pattern (avoids triggering version bump)
+          const removeCommitMessage = `chore(main): remove docs moved to devlog
+
+Removed ${removedCount} documentation files from main branch.
+These files are now exclusively in devlog branch.
+Generated: ${new Date().toISOString()}`;
+          
+          execSync(`git commit -m "${removeCommitMessage}"`, {
+            cwd: ROOT_DIR,
+            stdio: 'inherit'
+          });
+          console.log(`[OK] Committed removal of ${removedCount} files from main`);
+        } else {
+          console.log('[INFO] No files staged for removal (already removed or essential)');
+        }
+      } else {
+        console.log('[INFO] No files to remove from main (all are essential)');
+      }
+    } else if (dryRun && currentBranch === 'main' && docFiles.length > 0) {
+      console.log('\n[DRY RUN] Would remove documentation files from main branch');
+      console.log('          (Files synced to devlog that are not essential)');
+    }
+    
     // Restore stash if there was one
     try {
       execSync('git stash pop', { cwd: ROOT_DIR, stdio: 'pipe' });
@@ -331,6 +440,9 @@ Generated: ${new Date().toISOString()}`;
     }
     
     console.log(`\n✅ Successfully synced ${docFiles.length} files to devlog branch`);
+    if (currentBranch === 'main' && !dryRun) {
+      console.log(`✅ Removed non-essential docs from main branch (keeps main minimal)`);
+    }
     originalBranch = null; // Clear tracking after success
     return true;
     
