@@ -12,7 +12,21 @@ const { execSync } = require('child_process');
 
 const ROOT_DIR = path.resolve(__dirname, '../..');
 const CHANGELOG_PATH = path.join(ROOT_DIR, 'CHANGELOG.md');
-const { getCurrentVersion } = require('./update-version-all.js');
+const VERSION_FILE = path.join(ROOT_DIR, 'VERSION');
+
+function getCurrentVersion() {
+  try {
+    if (fs.existsSync(VERSION_FILE)) {
+      return fs.readFileSync(VERSION_FILE, 'utf8').trim();
+    }
+    // Fallback to package.json
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf8'));
+    return pkg.version;
+  } catch (err) {
+    console.error('❌ Could not read current version');
+    process.exit(1);
+  }
+}
 
 // Git operations helper
 function gitAdd(filePath) {
@@ -248,10 +262,13 @@ function main() {
   if (updateChangelog(version, autoCommit)) {
     console.log(`\n✅ CHANGELOG update complete`);
     
-    if (!autoCommit) {
+    if (autoCommit) {
+      console.log(`\n💡 Tip: Run 'npm run hygiene' to sync documentation to devlog branch`);
+    } else {
       console.log(`\n📝 Next steps:`);
       console.log(`   1. Review changes: git diff CHANGELOG.md`);
       console.log(`   2. Commit: git add CHANGELOG.md && git commit -m "chore: update CHANGELOG.md for version ${version}"`);
+      console.log(`   3. Run 'npm run hygiene' to sync documentation to devlog branch`);
     }
   }
   

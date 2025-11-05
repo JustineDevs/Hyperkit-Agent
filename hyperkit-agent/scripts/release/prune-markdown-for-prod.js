@@ -327,10 +327,12 @@ function main() {
       // Commit deletions
       gitCommit(removedFiles, `chore: prune ${removedFiles.length} development-only files for production`);
       console.log(`   💾 Committed: ${removedFiles.length} file(s) removed`);
+      console.log(`\n💡 Tip: Run 'npm run hygiene' to sync documentation to devlog branch`);
     } else if (!autoCommit && removedFiles.length > 0) {
       console.log(`\n📝 Next steps:`);
       console.log(`   1. Review changes: git status`);
       console.log(`   2. Commit: git add -A && git commit -m "chore: prune development-only files for production"`);
+      console.log(`   3. Run 'npm run hygiene' to sync documentation to devlog branch`);
     }
     
     console.log(`   Repository is now clean for production merge\n`);

@@ -155,7 +155,7 @@ def main():
     if check_branch_exists("devlog"):
         print("  [OK] devlog branch exists")
     else:
-        print("  [WARN] devlog branch not found (run sync_to_devlog.py)")
+        print("  [WARN] devlog branch not found (run sync-to-devlog.js or npm run hygiene)")
     
     # Summary
     print("\n" + "=" * 50)

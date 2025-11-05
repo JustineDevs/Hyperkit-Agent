@@ -11,7 +11,21 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const ROOT_DIR = path.resolve(__dirname, '../..');
-const { getCurrentVersion } = require('./update-version-all.js');
+const VERSION_FILE = path.join(ROOT_DIR, 'VERSION');
+
+function getCurrentVersion() {
+  try {
+    if (fs.existsSync(VERSION_FILE)) {
+      return fs.readFileSync(VERSION_FILE, 'utf8').trim();
+    }
+    // Fallback to package.json
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf8'));
+    return pkg.version;
+  } catch (err) {
+    console.error('❌ Could not read current version');
+    process.exit(1);
+  }
+}
 
 // Git operations helper
 function gitAdd(filePath) {
@@ -277,10 +291,12 @@ function main() {
     if (autoCommit && allUpdatedFiles.length > 0) {
       console.log(`\n📝 All files have been committed individually`);
       console.log(`   Use 'git log --oneline -${total}' to see commits`);
+      console.log(`\n💡 Tip: Run 'npm run hygiene' to sync documentation to devlog branch`);
     } else if (!autoCommit) {
       console.log(`\n📝 Next steps:`);
       console.log(`   1. Review changes: git diff`);
       console.log(`   2. Commit: git add docs/ README.md && git commit -m "docs: update audit badges"`);
+      console.log(`   3. Run 'npm run hygiene' to sync documentation to devlog branch`);
     }
   }
   

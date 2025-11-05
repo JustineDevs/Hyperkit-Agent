@@ -187,10 +187,13 @@ function main() {
   
   console.log('\n✅ Reports organization complete');
   
-  if (!autoCommit && reportFiles.length > 0) {
+  if (autoCommit && reportFiles.length > 0) {
+    console.log(`\n💡 Tip: Run 'npm run hygiene' to sync documentation to devlog branch`);
+  } else if (!autoCommit && reportFiles.length > 0) {
     console.log(`\n📝 Next steps:`);
     console.log(`   1. Review changes: git diff REPORTS/`);
     console.log(`   2. Commit: git add REPORTS/ && git commit -m "docs: consolidate reports"`);
+    console.log(`   3. Run 'npm run hygiene' to sync documentation to devlog branch`);
   }
   
   console.log();

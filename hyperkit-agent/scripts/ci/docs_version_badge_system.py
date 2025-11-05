@@ -35,8 +35,11 @@ class DocsVersionBadgeSystem:
 <!-- END_DOCS_VERSION_BADGE -->"""
     
     def _get_version(self) -> str:
-        """Get current version from VERSION file."""
-        version_file = self.root_path / "VERSION"
+        """Get current version from VERSION file.
+        
+        ⚠️ SOURCE OF TRUTH: Reads from root VERSION file only (not hyperkit-agent/VERSION).
+        """
+        version_file = self.root_path / "VERSION"  # ✅ Correct: root VERSION
         if version_file.exists():
             try:
                 return version_file.read_text(encoding='utf-8').strip()

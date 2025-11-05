@@ -28,7 +28,7 @@ CHANGESET_PENDING_DIR = CHANGESET_DIR / "pending"
 
 # Files to update with version numbers
 # ⚠️ LEGACY: This script references old file locations
-# For production, use hyperkit-agent/scripts/ci/version_bump.py instead
+# For production, use hyperkit-agent/scripts/release/version-bump.js instead (JavaScript)
 VERSION_FILES = [
     "package.json",  # ✅ Root package.json (exists)
     # ❌ "hyperkit-agent/package.json" - REMOVED (use root only)

@@ -1,0 +1,27 @@
+{
+  "description": "File patterns for workflow hygiene scripts - defines which files belong to main vs devlog branches",
+  "version": "1.0.0",
+  "main_stage_patterns": [
+    "README.md",
+    "CHANGELOG.md",
+    "hyperkit-agent/docs/GUIDE/",
+    "hyperkit-agent/config.yaml",
+    "hyperkit-agent/pyproject.toml",
+    "package.json",
+    "VERSION"
+  ],
+  "devlog_stage_patterns": [
+    "hyperkit-agent/REPORTS/",
+    "hyperkit-agent/docs/TEAM/",
+    "hyperkit-agent/docs/EXECUTION/",
+    "hyperkit-agent/docs/INTEGRATION/",
+    "hyperkit-agent/docs/REFERENCE/",
+    "docs/"
+  ],
+  "notes": {
+    "main_patterns": "Files that should be committed to main branch (code + essential docs)",
+    "devlog_patterns": "Files that should be committed to devlog branch (full documentation)",
+    "usage": "These patterns are used by sync_workflow.py to determine which files to stage for each branch"
+  }
+}
+
