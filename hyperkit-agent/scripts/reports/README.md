@@ -10,13 +10,13 @@ Scripts for consolidating and organizing markdown reports in the REPORTS/ direct
 **Usage:**
 ```bash
 # Dry run (preview changes)
-python scripts/reports/merge.py --dry-run
+hyperagent reports/merge --dry-run
 
 # Process all directories
-python scripts/reports/merge.py
+hyperagent reports/merge
 
 # Process single directory
-python scripts/reports/merge.py --directory ACCOMPLISHED
+hyperagent reports/merge --directory ACCOMPLISHED
 ```
 
 **What it does:**
@@ -69,13 +69,13 @@ File deletion helper. Functionality integrated into `merge.py` (automatic deleti
 ### Merge Individual Files into Consolidated Files
 ```bash
 # Dry run to see what would happen
-python scripts/reports/merge.py --dry-run
+hyperagent reports/merge --dry-run
 
 # Actually merge and delete files
-python scripts/reports/merge.py
+hyperagent reports/merge
 
 # Process specific directory
-python scripts/reports/merge.py --directory ACCOMPLISHED
+hyperagent reports/merge --directory ACCOMPLISHED
 ```
 
 ---

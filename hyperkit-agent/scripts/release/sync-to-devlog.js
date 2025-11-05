@@ -173,10 +173,42 @@ async function syncToDevlog(dryRun = false) {
   
   // Check for uncommitted changes
   if (!isCleanWorkingTree() && !dryRun) {
-    console.log('[ERROR] Working tree has uncommitted changes');
-    console.log('   Please commit or stash changes before syncing to devlog');
+    console.log('\n❌ [ERROR] Working tree has uncommitted changes');
+    console.log('   Sync-to-devlog requires a clean working tree for safety.');
+    console.log('   Branch switching and merging with uncommitted changes can cause data loss.\n');
+    
+    // Show what files have changes
+    try {
+      const statusOutput = execSync('git status --short', {
+        cwd: ROOT_DIR,
+        encoding: 'utf8'
+      }).trim();
+      
+      if (statusOutput) {
+        const lines = statusOutput.split('\n').slice(0, 10);
+        console.log('   Uncommitted changes detected:');
+        lines.forEach(line => {
+          console.log(`     ${line}`);
+        });
+        if (statusOutput.split('\n').length > 10) {
+          console.log(`     ... and ${statusOutput.split('\n').length - 10} more files`);
+        }
+        console.log('');
+      }
+    } catch (err) {
+      // Ignore errors getting status
+    }
+    
+    console.log('   📋 Next steps:');
+    console.log('   1. Review changes: git status');
+    console.log('   2. Commit changes: git add . && git commit -m "your message"');
+    console.log('      OR stash changes: git stash');
+    console.log('   3. Re-run: npm run hygiene (or npm run version:patch)');
+    console.log('');
+    console.log('   ⚠️  Never bypass this check - it protects your repository integrity!\n');
+    
     originalBranch = null; // Clear tracking
-    return false;
+    process.exit(1);
   }
   
   // Load whitelist

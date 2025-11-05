@@ -181,6 +181,41 @@ Thank you for contributing to HyperAgent! This document provides guidelines and 
 
 ---
 
+## 🚀 **Canonical Versioning Workflow (ENFORCED)**
+
+**CRITICAL:** This is THE canonical workflow for all version bumps. Manual, ad-hoc versioning is **NOT ALLOWED**.
+
+### **Three-Step Workflow:**
+
+1. **Consolidate Reports** → `npm run reports:organize`
+2. **Version Bump** → `npm run version:patch/minor/major`
+3. **Final Hygiene** → `npm run hygiene`
+
+### **One-Command Workflow (Recommended):**
+
+```bash
+# Complete workflow (all three steps)
+npm run version:complete          # Patch version
+npm run version:complete:minor   # Minor version
+npm run version:complete:major    # Major version
+```
+
+**Why This Order?**
+- **Step 1:** Clean reports before versioning (avoids versioning dead files)
+- **Step 2:** Version bump captures all version-related changes
+- **Step 3:** Final hygiene ensures complete capture and migration to devlog
+
+**Result:**
+- ✅ Clean, consolidated reports
+- ✅ All version changes captured
+- ✅ No uncommitted files missed
+- ✅ Complete migration to devlog
+- ✅ Clean working tree
+
+**See:** [`hyperkit-agent/docs/GUIDE/VERSIONING_WORKFLOW.md`](hyperkit-agent/docs/GUIDE/VERSIONING_WORKFLOW.md) for complete documentation.
+
+---
+
 ## 🌿 Branch Strategy & Workflow
 
 ### Branch Structure

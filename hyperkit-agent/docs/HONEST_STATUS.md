@@ -106,7 +106,7 @@ If a new developer clones and tries to use the CLI:
    - **Issue**: Tuples/nested arrays/structs may require manual args
    - **Impact**: MEDIUM - Some deployments need user-provided args
    - **Status**: Partially mitigated with preflight + ABI checks
-   - **Workaround**: Provide `--constructor-args` or `--constructor-file`
+   - **Workaround**: Provide `--args` or `--file`
 
 2. **Workflow Deployment Variability**
    - **Issue**: Deployment success depends on constructor complexity and RPC

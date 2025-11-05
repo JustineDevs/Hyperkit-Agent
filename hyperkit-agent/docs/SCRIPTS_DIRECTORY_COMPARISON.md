@@ -9,7 +9,7 @@ There are **two** script directories in the HyperAgent repository with different
 
 ---
 
-## 📁 `./scripts/` (Root Level)
+## 📁 `hyperagent ` (Root Level)
 
 **Purpose:** Repository/project installation and setup scripts
 
@@ -19,7 +19,7 @@ There are **two** script directories in the HyperAgent repository with different
 
 | File | Purpose |
 |------|---------|
-| `install.sh` | **Main installation script** - Sets up the entire HyperKit AI Agent project:<br>- Creates virtual environment<br>- Installs Python dependencies<br>- Sets up directory structure<br>- Installs Foundry<br>- Configures environment |
+| `install` | **Main installation script** - Sets up the entire HyperKit AI Agent project:<br>- Creates virtual environment<br>- Installs Python dependencies<br>- Sets up directory structure<br>- Installs Foundry<br>- Configures environment |
 | `setup.py` | **Python package setup** - Defines the package metadata for `hyperkit-agent`:<br>- Package name, version, author<br>- Entry points (CLI commands)<br>- Dependencies<br>- Package classifiers |
 | `README.md` | General documentation about script guidelines and usage patterns |
 
@@ -32,8 +32,8 @@ There are **two** script directories in the HyperAgent repository with different
 ### Example Usage:
 ```bash
 # From root directory
-./scripts/install.sh          # Full project installation
-python scripts/setup.py       # Package setup for distribution
+hyperagent install          # Full project installation
+hyperagent setup       # Package setup for distribution
 ```
 
 ---
@@ -67,10 +67,10 @@ python scripts/setup.py       # Package setup for distribution
 ### Example Usage:
 ```bash
 # From hyperkit-agent directory
-python scripts/doctor.py                    # Preflight checks
-python scripts/ci/run_all.py               # Run CI tests
-python scripts/maintenance/deadweight_scan.py  # Cleanup
-bash scripts/emergency/emergency_patch.sh  # Critical fix
+hyperagent doctor                    # Preflight checks
+hyperagent ci/run_all               # Run CI tests
+hyperagent maintenance/deadweight_scan  # Cleanup
+hyperagent emergency/emergency_patch  # Critical fix
 ```
 
 ---
@@ -128,7 +128,7 @@ HyperAgent/
 ```bash
 # From repository root
 cd C:\Users\USERNAME\Downloads\HyperAgent
-./scripts/install.sh          # Install entire project
+hyperagent install          # Install entire project
 ```
 
 ### 2. Daily Development (Use `./hyperkit-agent/scripts/`)
@@ -137,13 +137,13 @@ cd C:\Users\USERNAME\Downloads\HyperAgent
 cd hyperkit-agent
 
 # Preflight check
-python scripts/doctor.py
+hyperagent doctor
 
 # Run CI tests
-python scripts/ci/run_all.py
+hyperagent ci/run_all
 
 # Generate reports
-python scripts/reports/merge.py
+hyperagent reports/merge
 ```
 
 ### 3. Production Operations (Use `./hyperkit-agent/scripts/`)
@@ -155,14 +155,14 @@ cd scripts/release
 node update-changelog.js
 
 # Emergency fixes
-bash scripts/emergency/emergency_patch.sh
+hyperagent emergency/emergency_patch
 ```
 
 ---
 
 ## 💡 Best Practices
 
-1. **Installation**: Use root `./scripts/install.sh` for first-time setup
+1. **Installation**: Use root `hyperagent install` for first-time setup
 2. **Preflight**: Always run `hyperkit-agent/scripts/doctor.py` before workflows
 3. **CI/CD**: Use `hyperkit-agent/scripts/ci/` for continuous integration
 4. **Maintenance**: Use `hyperkit-agent/scripts/maintenance/` for cleanup

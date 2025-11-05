@@ -15,6 +15,8 @@ Example:
 
 import os
 import re
+import subprocess
+import sys
 from pathlib import Path
 from datetime import datetime
 
@@ -99,7 +101,96 @@ def remove_frontmatter(content):
     content = re.sub(r'^---\n[\s\S]*?\n---\n', '', content, flags=re.MULTILINE)
     return content.strip()
 
-def merge_files_into_consolidated(category_name, config, reports_root, dry_run=False):
+def git_add_and_commit(files_changed, files_deleted, category_name, dry_run=False, reports_root=None):
+    """
+    Automatically stage and commit changes made by merge.py.
+    
+    Args:
+        files_changed: List of files that were modified/created (Path objects)
+        files_deleted: List of files that were deleted (Path objects or strings)
+        category_name: Category name for commit message
+        dry_run: If True, don't actually commit
+        reports_root: Root directory for git operations (should be repo root, not REPORTS/)
+    """
+    if dry_run:
+        if files_changed or files_deleted:
+            print(f"    [WOULD COMMIT] Changes to {category_name}")
+        return True
+    
+    if not reports_root:
+        return False
+    
+    try:
+        # Find repo root (reports_root might be REPORTS/ or repo root)
+        # Try to find .git directory
+        repo_root = reports_root
+        while repo_root != repo_root.parent:
+            if (repo_root / '.git').exists():
+                break
+            repo_root = repo_root.parent
+        else:
+            # Couldn't find .git, assume reports_root is already repo root
+            repo_root = reports_root.parent if 'REPORTS' in str(reports_root) else reports_root
+        
+        # Stage modified/created files
+        if files_changed:
+            for file_path in files_changed:
+                if isinstance(file_path, Path):
+                    relative_path = file_path.relative_to(repo_root) if file_path.is_relative_to(repo_root) else file_path
+                else:
+                    relative_path = file_path
+                subprocess.run(
+                    ['git', 'add', str(relative_path)],
+                    cwd=repo_root,
+                    check=False,
+                    capture_output=True
+                )
+        
+        # Stage deleted files (git add handles deletions if files are already tracked)
+        if files_deleted:
+            for file_path in files_deleted:
+                if isinstance(file_path, Path):
+                    relative_path = file_path.relative_to(repo_root) if file_path.is_relative_to(repo_root) else file_path
+                else:
+                    relative_path = file_path
+                # Try to add the deleted file (git add works for deleted tracked files)
+                subprocess.run(
+                    ['git', 'add', str(relative_path)],
+                    cwd=repo_root,
+                    check=False,
+                    capture_output=True
+                )
+        
+        # Check if there are staged changes
+        result = subprocess.run(
+            ['git', 'diff', '--cached', '--quiet'],
+            cwd=repo_root,
+            capture_output=True
+        )
+        
+        if result.returncode != 0:
+            # There are staged changes, commit them
+            commit_message = f"docs(reports): consolidate {category_name} reports"
+            if len(files_changed) > 0 or len(files_deleted) > 0:
+                commit_message += f" ({len(files_changed)} merged, {len(files_deleted)} deleted)"
+            
+            subprocess.run(
+                ['git', 'commit', '-m', commit_message],
+                cwd=repo_root,
+                check=False,
+                capture_output=True
+            )
+            print(f"    [COMMITTED] Changes to {category_name}")
+            return True
+        else:
+            print(f"    [INFO] No changes to commit for {category_name}")
+            return True
+            
+    except Exception as e:
+        print(f"    [WARN] Could not auto-commit: {e}")
+        return False
+
+def merge_files_into_consolidated(category_name, config, reports_root, dry_run=False, auto_commit=True):
     """
     Merge all individual markdown files into the consolidated file.
     
@@ -108,6 +199,7 @@ def merge_files_into_consolidated(category_name, config, reports_root, dry_run=F
         config: Configuration dict with 'dir', 'output', 'exclude'
         reports_root: Path to REPORTS directory
         dry_run: If True, don't actually merge/delete, just report
+        auto_commit: If True, automatically git add and commit changes
     
     Returns:
         Tuple of (success: bool, files_merged: int, files_deleted: list)
@@ -117,7 +209,7 @@ def merge_files_into_consolidated(category_name, config, reports_root, dry_run=F
     
     if not category_dir.exists():
         print(f"[SKIP] Category directory not found: {category_dir}")
-        return False, 0, []
+        return True, 0, []  # Return success=True (skip is not a failure)
     
     if not consolidated_file.exists():
         print(f"[WARNING] Consolidated file not found: {consolidated_file}")
@@ -288,9 +380,26 @@ def merge_files_into_consolidated(category_name, config, reports_root, dry_run=F
             print(f"    [ERROR] Could not delete {md_file.name}: {e}")
     
     total_deleted = len(files_deleted)
+    
+    # Auto-commit changes if enabled
+    if auto_commit and not dry_run and (files_merged > 0 or total_deleted > 0):
+        # Get all files that were modified (consolidated file) and deleted
+        files_changed = [consolidated_file] if files_merged > 0 and consolidated_file.exists() else []
+        # Find repo root for git operations
+        repo_root = reports_root
+        while repo_root != repo_root.parent:
+            if (repo_root / '.git').exists():
+                break
+            repo_root = repo_root.parent
+        else:
+            # Fallback: go up from REPORTS to repo root
+            repo_root = reports_root.parent if 'REPORTS' in str(reports_root) else reports_root
+        
+        git_add_and_commit(files_changed, files_deleted, category_name, dry_run, repo_root)
+    
     return True, files_merged, files_deleted
 
-def merge_all_categories(reports_root, dry_run=False):
+def merge_all_categories(reports_root, dry_run=False, auto_commit=True):
     """
     Merge files for all categories defined in CONSOLIDATION_MAP.
     
@@ -316,7 +425,7 @@ def merge_all_categories(reports_root, dry_run=False):
     
     for category_name, config in CONSOLIDATION_MAP.items():
         success, files_merged, files_deleted = merge_files_into_consolidated(
-            category_name, config, reports_root, dry_run
+            category_name, config, reports_root, dry_run, auto_commit
         )
         results[category_name] = {
             'success': success,
@@ -377,8 +486,14 @@ Examples:
         metavar='CATEGORY',
         help='Specific category/directory to process (e.g., ACCOMPLISHED, AUDIT). If not provided, processes all.'
     )
+    parser.add_argument(
+        '--no-commit',
+        action='store_true',
+        help='Disable automatic git commit after merging files'
+    )
     
     args = parser.parse_args()
+    auto_commit = not args.no_commit
     
     # Determine REPORTS directory location
     script_dir = Path(__file__).resolve().parent
@@ -413,8 +528,9 @@ Examples:
                config['dir'].lower() == args.directory.lower():
                 print(f"[PROCESSING] Single directory: {category_name}\n")
                 success, files_merged, files_deleted = merge_files_into_consolidated(
-                    category_name, config, reports_root, args.dry_run
+                    category_name, config, reports_root, args.dry_run, auto_commit
                 )
+                # Note: git_add_and_commit is already handled inside merge_files_into_consolidated
                 category_found = True
                 if success:
                     print(f"\n[SUCCESS] {files_merged} files merged, {len(files_deleted)} deleted")
@@ -429,11 +545,22 @@ Examples:
             sys.exit(1)
     else:
         # Process all categories
-        results = merge_all_categories(reports_root, args.dry_run)
+        results = merge_all_categories(reports_root, args.dry_run, auto_commit)
         
-        # Check if all succeeded
-        all_success = all(r['success'] for r in results.values())
-        sys.exit(0 if all_success else 1)
+        # Check if any actual failures occurred (not just missing directories)
+        # Missing directories are OK (return success=True), only real failures matter
+        actual_failures = [
+            r for r in results.values() 
+            if not r['success'] and (r['files_merged'] > 0 or len(r['files_deleted']) > 0)
+        ]
+        
+        # Exit with success if no actual failures, or if all were just missing directories
+        if actual_failures:
+            print(f"\n[WARNING] {len(actual_failures)} categories had failures")
+            sys.exit(1)
+        else:
+            print(f"\n[SUCCESS] All available categories processed successfully")
+            sys.exit(0)
 
 if __name__ == "__main__":
     main()

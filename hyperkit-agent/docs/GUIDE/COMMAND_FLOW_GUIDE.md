@@ -7,14 +7,27 @@
 ## 📋 Quick Reference
 
 ### **Version Management**
+
+**⚠️ CRITICAL:** Always use the complete workflow for version bumps:
+
 ```bash
-npm run version:patch          # Bump patch version (1.5.15 → 1.5.16)
-npm run version:minor          # Bump minor version (1.5.15 → 1.6.0)
-npm run version:major          # Bump major version (1.5.15 → 2.0.0)
+# Complete workflow (RECOMMENDED - all three steps)
+npm run version:complete          # Patch version (1.5.15 → 1.5.16)
+npm run version:complete:minor    # Minor version (1.5.15 → 1.6.0)
+npm run version:complete:major    # Major version (1.5.15 → 2.0.0)
+```
+
+**Individual Steps (if needed):**
+```bash
+npm run version:patch          # Bump patch version only
+npm run version:minor          # Bump minor version only
+npm run version:major          # Bump major version only
 npm run version:update-docs    # Sync version across all documentation
 npm run version:check          # Check version consistency
 npm run version:current        # Show current version
 ```
+
+**See:** [`VERSIONING_WORKFLOW.md`](./VERSIONING_WORKFLOW.md) for complete workflow documentation.
 
 ### **Workflow Hygiene**
 ```bash

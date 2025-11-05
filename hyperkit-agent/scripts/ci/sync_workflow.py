@@ -55,6 +55,9 @@ WORKFLOW_SCRIPTS = [
     ("python hyperkit-agent/scripts/maintenance/cli_command_inventory.py", "CLI command inventory", True),
     ("python hyperkit-agent/scripts/maintenance/legacy_file_inventory.py", "Legacy file inventory", True),
     
+    # Reports consolidation (optional - merges individual reports into consolidated files)
+    ("python hyperkit-agent/scripts/reports/merge.py", "Consolidate individual reports", True),
+    
     # Version updates (optional - may not exist) - JavaScript
     ("node hyperkit-agent/scripts/release/update-version-in-docs.js", "Update version in docs", True),
 ]
@@ -204,6 +207,61 @@ def stage_files(patterns: List[str]) -> int:
                 staged_count += len(check.stdout.strip().split('\n'))
     return staged_count
 
+def stage_all_modified_files() -> int:
+    """Stage ALL modified files (not just patterns). Returns number of files staged."""
+    # Get all modified files
+    result = subprocess.run(
+        ['git', 'status', '--porcelain'],
+        capture_output=True, text=True, cwd=REPO_ROOT
+    )
+    
+    if not result.stdout.strip():
+        return 0
+    
+    # Parse status output and stage all modified files
+    staged_count = 0
+    already_staged = set()
+    
+    # First, get list of already staged files
+    staged_result = subprocess.run(
+        ['git', 'diff', '--cached', '--name-only'],
+        capture_output=True, text=True, cwd=REPO_ROOT
+    )
+    if staged_result.stdout.strip():
+        already_staged = set(staged_result.stdout.strip().split('\n'))
+    
+    for line in result.stdout.strip().split('\n'):
+        if not line.strip():
+            continue
+        # Status format: XY filename
+        # X = staged status, Y = working tree status
+        status = line[:2]
+        filename = line[3:].strip()
+        
+        # Remove quotes if present
+        if filename.startswith('"') and filename.endswith('"'):
+            filename = filename[1:-1]
+        
+        # Skip if already staged
+        if filename in already_staged:
+            continue
+        
+        # Stage if file is modified (M), deleted (D), or untracked (?)
+        # Only stage files in working tree (Y != ' ')
+        if status[1] in ['M', 'D', '?']:
+            try:
+                subprocess.run(
+                    ['git', 'add', filename],
+                    capture_output=True,
+                    cwd=REPO_ROOT,
+                    check=False
+                )
+                staged_count += 1
+            except Exception:
+                pass  # Skip files that can't be staged
+    
+    return staged_count
+
 
 def commit_changes(message: str, branch: str) -> bool:
     """Commit staged changes."""
@@ -316,10 +374,34 @@ def run_hygiene_workflow(dry_run: bool = False, push: bool = False) -> bool:
     
     # Check working tree
     if not is_clean_working_tree() and not dry_run:
-        print("[ERROR] Working tree has uncommitted changes")
-        print("   Please commit or stash changes before running hygiene workflow")
+        print("\n❌ [ERROR] Working tree has uncommitted changes")
+        print("   Hygiene workflow requires a clean working tree for safety.")
+        print("   Branch switching and merging with uncommitted changes can cause data loss.\n")
+        
+        # Show what files have changes
+        try:
+            result = subprocess.run(
+                ['git', 'status', '--short'],
+                capture_output=True, text=True, cwd=REPO_ROOT
+            )
+            if result.stdout.strip():
+                lines = result.stdout.strip().split('\n')[:10]
+                print("   Uncommitted changes detected:")
+                for line in lines:
+                    print(f"     {line}")
+                if len(result.stdout.strip().split('\n')) > 10:
+                    print(f"     ... and {len(result.stdout.strip().split('\n')) - 10} more files")
+                print()
+        except:
+            pass
+        
+        print("   📋 Next steps:")
+        print("   1. Review changes: git status")
+        print("   2. Commit changes: git add . && git commit -m 'your message'")
+        print("      OR stash changes: git stash")
+        print("   3. Re-run: npm run hygiene")
         print()
-        print("   Run: git status")
+        print("   ⚠️  Never bypass this check - it protects your repository integrity!\n")
         return False
     
     current_branch = ORIGINAL_BRANCH
@@ -384,10 +466,18 @@ def run_hygiene_workflow(dry_run: bool = False, push: bool = False) -> bool:
         subprocess.run(['git', 'checkout', 'main'], check=True, cwd=REPO_ROOT)
         current_branch = 'main'
     
+    # Stage files matching patterns first
     staged = stage_files(MAIN_STAGE_PATTERNS)
-    if staged > 0:
+    
+    # Also stage ALL other modified files (from scripts that modified files)
+    additional_staged = stage_all_modified_files()
+    total_staged = staged + additional_staged
+    
+    if total_staged > 0:
         if dry_run:
-            print(f"[DRY RUN] Would commit {staged} files to main")
+            print(f"[DRY RUN] Would commit {total_staged} files to main")
+            if staged > 0:
+                print(f"         ({staged} from patterns, {additional_staged} additional modified files)")
         else:
             commit_changes("chore: run workflow scripts, update docs and hygiene", "main")
     else:

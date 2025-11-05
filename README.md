@@ -852,6 +852,34 @@ HyperAgent provides comprehensive npm scripts for version management, CLI access
 | `reports:compliance` | Show compliance reports location | `npm run reports:compliance` |
 | `reports:quality` | Show quality reports location | `npm run reports:quality` |
 
+### **Versioning & Release** ⭐
+
+| Script | Purpose | Example |
+|--------|---------|---------|
+| `version:complete` | **Complete workflow** (patch) - Consolidate reports → Version bump → Hygiene | `npm run version:complete` |
+| `version:complete:minor` | **Complete workflow** (minor) - Consolidate reports → Version bump → Hygiene | `npm run version:complete:minor` |
+| `version:complete:major` | **Complete workflow** (major) - Consolidate reports → Version bump → Hygiene | `npm run version:complete:major` |
+| `version:patch` | Bump patch version only | `npm run version:patch` |
+| `version:minor` | Bump minor version only | `npm run version:minor` |
+| `version:major` | Bump major version only | `npm run version:major` |
+
+> **🚫 CRITICAL: Canonical Versioning Workflow (ENFORCED)**  
+> Always use the complete workflow (`version:complete`) for version bumps. Manual, ad-hoc versioning is **NOT ALLOWED**.
+> 
+> **The Three-Step Workflow:**
+> 1. **Consolidate Reports** → `npm run reports:organize` (clean reports before versioning)
+> 2. **Version Bump** → `npm run version:patch/minor/major` (captures all version changes)
+> 3. **Final Hygiene** → `npm run hygiene` (ensures complete capture and migration to devlog)
+> 
+> **Result:**
+> - ✅ Clean, consolidated reports
+> - ✅ All version changes captured
+> - ✅ No uncommitted files missed
+> - ✅ Complete migration to devlog
+> - ✅ Clean working tree
+> 
+> **See:** [`hyperkit-agent/docs/GUIDE/VERSIONING_WORKFLOW.md`](hyperkit-agent/docs/GUIDE/VERSIONING_WORKFLOW.md) for complete documentation.
+
 ### **Branch & Workflow Hygiene** ⭐
 
 | Script | Purpose | Example |
