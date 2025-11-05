@@ -2,6 +2,10 @@
 """
 Automated Version Injection Script
 Syncs version numbers across all docs, reports, and markdown files
+
+Note: This script updates files in both main and devlog branches.
+Files in devlog-only directories (REPORTS/, docs/TEAM/, etc.) will be
+synced to devlog branch on next sync.
 """
 
 import os
