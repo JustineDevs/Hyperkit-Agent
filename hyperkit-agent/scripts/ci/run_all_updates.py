@@ -18,61 +18,83 @@ from datetime import datetime
 class ParallelScriptRunner:
     """Runs multiple repo maintenance workflows in parallel with validation."""
     
-    def __init__(self, root_path: str = "."):
-        self.root_path = Path(root_path)
+    def __init__(self, root_path: str = None):
+        # Auto-detect root path: if not provided, go up from scripts/ci/ to hyperkit-agent root
+        if root_path is None:
+            # Script is in hyperkit-agent/scripts/ci/, so go up 2 levels to get to hyperkit-agent root
+            script_dir = Path(__file__).parent
+            self.root_path = script_dir.parent.parent  # hyperkit-agent/
+        else:
+            self.root_path = Path(root_path)
         self.results = {}
         self.errors = []
         self.start_time = None
         
-        # Define all maintenance workflows
+        # Define all maintenance workflows with their category directories
         self.workflows = {
             "version_update": {
-                "script": "hyperkit-agent/scripts/update_version_in_docs.py",
+                "script": "scripts/ci/update_version_in_docs.py",
                 "description": "Update version information across all docs",
                 "critical": True,
-                "timeout": 30
+                "timeout": 30,
+                "category": "STATUS",
+                "output_file": "version_update_report.md"
             },
             "doc_drift_audit": {
-                "script": "hyperkit-agent/scripts/doc_drift_audit.py",
+                "script": "scripts/maintenance/doc_drift_audit.py",
                 "description": "Audit documentation for drift",
                 "critical": True,
-                "timeout": 60
+                "timeout": 60,
+                "category": "QUALITY",
+                "output_file": "doc_drift_audit_report.md"
             },
             "deadweight_scan": {
-                "script": "hyperkit-agent/scripts/deadweight_scan.py",
+                "script": "scripts/maintenance/deadweight_scan.py",
                 "description": "Scan for deadweight patterns",
                 "critical": True,
-                "timeout": 120
+                "timeout": 120,
+                "category": "QUALITY",
+                "output_file": "deadweight_scan_report.md"
             },
             "cli_command_validation": {
-                "script": "hyperkit-agent/scripts/cli_command_validation.py",
+                "script": "scripts/maintenance/cli_command_validation.py",
                 "description": "Validate CLI commands",
                 "critical": True,
-                "timeout": 45
+                "timeout": 45,
+                "category": "QUALITY",
+                "output_file": "cli_command_validation_report.md"
             },
             "integration_sdk_audit": {
-                "script": "hyperkit-agent/scripts/integration_sdk_audit.py",
+                "script": "scripts/maintenance/integration_sdk_audit.py",
                 "description": "Audit SDK integrations",
                 "critical": False,
-                "timeout": 30
+                "timeout": 30,
+                "category": "integration",
+                "output_file": "integration_sdk_audit_report.md"
             },
             "legacy_file_inventory": {
-                "script": "hyperkit-agent/scripts/legacy_file_inventory.py",
+                "script": "scripts/maintenance/legacy_file_inventory.py",
                 "description": "Inventory legacy files",
                 "critical": False,
-                "timeout": 60
+                "timeout": 60,
+                "category": "INFRASTRUCTURE",
+                "output_file": "legacy_file_inventory_report.md"
             },
             "audit_badge_system": {
-                "script": "hyperkit-agent/scripts/audit_badge_system.py",
+                "script": "scripts/ci/audit_badge_system.py",
                 "description": "Add audit badges to docs",
                 "critical": False,
-                "timeout": 45
+                "timeout": 45,
+                "category": "AUDIT",
+                "output_file": "audit_badge_system_report.md"
             },
             "todo_to_issues_conversion": {
-                "script": "hyperkit-agent/scripts/focused_todo_to_issues_conversion.py",
+                "script": "scripts/maintenance/focused_todo_to_issues_conversion.py",
                 "description": "Convert TODOs to GitHub issues",
                 "critical": False,
-                "timeout": 90
+                "timeout": 90,
+                "category": "TODO",
+                "output_file": "todo_to_issues_conversion_report.md"
             }
         }
     
@@ -252,10 +274,18 @@ class ParallelScriptRunner:
         return "\n".join(report_lines)
     
     def save_results(self, analysis: Dict[str, Any]):
-        """Save results to files."""
-        # Save JSON results
-        json_path = self.root_path / "hyperkit-agent/REPORTS/JSON_DATA/parallel_runner_results.json"
-        json_path.parent.mkdir(parents=True, exist_ok=True)
+        """Save results to files in their respective category directories.
+        
+        Organization:
+        - All JSON files → REPORTS/JSON_DATA/
+        - All MD files → REPORTS/{category}/
+        """
+        # Ensure JSON_DATA directory exists
+        json_data_dir = self.root_path / "REPORTS" / "JSON_DATA"
+        json_data_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save overall parallel runner JSON results in REPORTS/JSON_DATA/
+        json_path = json_data_dir / "parallel_runner_results.json"
         
         full_results = {
             "analysis": analysis,
@@ -267,15 +297,119 @@ class ParallelScriptRunner:
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(full_results, f, indent=2)
         
-        # Generate and save report
+        # Generate and save overall parallel runner report in REPORTS/SCRIPTS/
         report = self.generate_report(analysis)
-        report_path = self.root_path / "hyperkit-agent/REPORTS/PARALLEL_RUNNER_REPORT.md"
+        report_path = self.root_path / "REPORTS/SCRIPTS/PARALLEL_RUNNER_REPORT.md"
+        report_path.parent.mkdir(parents=True, exist_ok=True)
         
         with open(report_path, 'w', encoding='utf-8') as f:
             f.write(report)
         
-        print(f"Results saved to: {json_path}")
-        print(f"Report saved to: {report_path}")
+        print(f"Overall results saved to: {json_path}")
+        print(f"Overall report saved to: {report_path}")
+        
+        # Save individual workflow results
+        for workflow_name, workflow_config in self.workflows.items():
+            if workflow_name in self.results:
+                result = self.results[workflow_name]
+                category = workflow_config.get("category", "SCRIPTS")
+                output_file = workflow_config.get("output_file", f"{workflow_name}_report.md")
+                
+                # Determine category directory path for MD files
+                category_dir = self.root_path / "REPORTS" / category
+                category_dir.mkdir(parents=True, exist_ok=True)
+                
+                # Save individual workflow report (MD) to category directory
+                workflow_report_path = category_dir / output_file
+                
+                # Generate workflow-specific report content
+                workflow_report = self._generate_workflow_report(workflow_name, workflow_config, result)
+                
+                # Append to existing file or create new one
+                mode = 'a' if workflow_report_path.exists() else 'w'
+                with open(workflow_report_path, mode, encoding='utf-8') as f:
+                    if mode == 'a':
+                        f.write(f"\n\n---\n\n## Update: {datetime.now().isoformat()}\n\n")
+                    f.write(workflow_report)
+                
+                # Save JSON data for this workflow to JSON_DATA directory
+                json_data_path = json_data_dir / f"{workflow_name}_results.json"
+                workflow_json = {
+                    "workflow": workflow_name,
+                    "config": workflow_config,
+                    "result": result,
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+                # Update existing JSON or create new
+                if json_data_path.exists():
+                    try:
+                        with open(json_data_path, 'r', encoding='utf-8') as f:
+                            existing_data = json.load(f)
+                        # If it's a list, append; if dict, update
+                        if isinstance(existing_data, list):
+                            existing_data.append(workflow_json)
+                            workflow_json = existing_data
+                        else:
+                            # Convert to list format
+                            workflow_json = [existing_data, workflow_json]
+                    except (json.JSONDecodeError, ValueError):
+                        # If corrupted, overwrite
+                        workflow_json = [workflow_json]
+                else:
+                    workflow_json = [workflow_json]
+                
+                with open(json_data_path, 'w', encoding='utf-8') as f:
+                    json.dump(workflow_json, f, indent=2)
+                
+                print(f"  ✅ {workflow_name} → MD: {category_dir}/{output_file}, JSON: {json_data_path.name}")
+    
+    def _generate_workflow_report(self, workflow_name: str, workflow_config: Dict[str, Any], result: Dict[str, Any]) -> str:
+        """Generate a report for an individual workflow."""
+        status_icon = "✅" if result.get("status") == "success" else "❌"
+        status_color = "success" if result.get("status") == "success" else "error"
+        
+        report_lines = [
+            f"# {workflow_config.get('description', workflow_name)}",
+            f"",
+            f"**Status**: {status_icon} {result.get('status', 'unknown').upper()}",
+            f"**Workflow**: `{workflow_name}`",
+            f"**Critical**: {'Yes' if workflow_config.get('critical', False) else 'No'}",
+            f"**Timestamp**: {datetime.now().isoformat()}",
+            f""
+        ]
+        
+        if result.get("error"):
+            report_lines.extend([
+                f"## Error",
+                f"```",
+                f"{result['error']}",
+                f"```",
+                f""
+            ])
+        
+        if result.get("stdout"):
+            report_lines.extend([
+                f"## Output",
+                f"```",
+                f"{result['stdout'][:1000]}",  # Limit output size
+                f"```",
+                f""
+            ])
+        
+        if result.get("stderr"):
+            report_lines.extend([
+                f"## Errors",
+                f"```",
+                f"{result['stderr'][:1000]}",  # Limit error output
+                f"```",
+                f""
+            ])
+        
+        if result.get("duration"):
+            report_lines.append(f"**Duration**: {result['duration']}s")
+        
+        return "\n".join(report_lines)
 
 
 def main():
