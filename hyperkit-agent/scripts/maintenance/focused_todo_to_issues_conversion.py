@@ -404,13 +404,17 @@ def main():
         'issue_templates': issue_templates
     }
     
-    # Write JSON report
-    with open('REPORTS/FOCUSED_TODO_TO_ISSUES_CONVERSION.json', 'w', encoding='utf-8') as f:
+    # Write JSON report to JSON_DATA directory
+    json_path = Path('REPORTS/JSON_DATA/focused_todo_to_issues_conversion.json')
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2)
     
-    # Generate summary report
+    # Generate summary report - save to TODO category
     summary = generate_issue_summary(categories)
-    with open('REPORTS/FOCUSED_TODO_TO_ISSUES_SUMMARY.md', 'w', encoding='utf-8') as f:
+    report_path = Path('REPORTS/TODO/focused_todo_to_issues_summary.md')
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(report_path, 'w', encoding='utf-8') as f:
         f.write(summary)
     
     # Print summary
@@ -422,8 +426,8 @@ def main():
             print(f"- {category.replace('_', ' ').title()}: {len(todos_in_category)}")
     
     print(f"\nReports generated:")
-    print(f"- REPORTS/FOCUSED_TODO_TO_ISSUES_CONVERSION.json")
-    print(f"- REPORTS/FOCUSED_TODO_TO_ISSUES_SUMMARY.md")
+    print(f"- {json_path}")
+    print(f"- {report_path}")
     
     print(f"\nNext steps:")
     print(f"1. Review the generated issue templates")
