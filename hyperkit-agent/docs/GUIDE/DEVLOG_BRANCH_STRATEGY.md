@@ -12,12 +12,12 @@ HyperAgent implements a **dual-branch structure** to optimize repository size an
 
 ### Scripts Created
 
-1. **`scripts/ci/update_readme_links.py`**
+1. **`scripts/release/update-readme-links.js`** (JavaScript)
    - Converts relative links to GitHub URLs for devlog branch
    - Automatically runs during version bumps
    - Ensures links work from main branch
 
-2. **`scripts/ci/sync_to_devlog.py`**
+2. **`scripts/release/sync-to-devlog.js`** (JavaScript)
    - Syncs documentation files to devlog branch
    - Automatically runs during version bumps
    - Maintains code synchronization between branches
@@ -76,7 +76,8 @@ git push origin feature/my-feature
 
 ```bash
 # After PR merged to main, sync docs to devlog
-python scripts/ci/sync_to_devlog.py
+npm run hygiene
+# Or: node hyperkit-agent/scripts/release/sync-to-devlog.js
 
 # Or manually
 git checkout devlog
@@ -114,15 +115,29 @@ When running `npm run version:patch|minor|major`:
 
 ### Manual Sync
 
+**Option 1: One-Command Hygiene (Recommended)**
+```bash
+# Run complete workflow hygiene
+npm run hygiene
+
+# This automatically:
+# - Updates README links
+# - Runs doc audits and cleanup
+# - Generates reports
+# - Syncs to devlog branch
+# - Commits all changes
+```
+
+**Option 2: Individual Scripts**
 ```bash
 # Update README links
-python scripts/ci/update_readme_links.py
+node hyperkit-agent/scripts/release/update-readme-links.js
 
 # Sync docs to devlog
-python scripts/ci/sync_to_devlog.py
+node hyperkit-agent/scripts/release/sync-to-devlog.js
 
 # Validate sync
-python scripts/ci/validate_branch_sync.py
+python hyperkit-agent/scripts/ci/validate_branch_sync.py
 ```
 
 ## Essential Files in Main
@@ -179,11 +194,11 @@ This checks:
 
 ### Links Broken in Main
 
-Run: `python scripts/ci/update_readme_links.py`
+Run: `npm run hygiene` or `node hyperkit-agent/scripts/release/update-readme-links.js`
 
 ### Docs Not Synced
 
-Run: `python scripts/ci/sync_to_devlog.py`
+Run: `npm run hygiene` or `node hyperkit-agent/scripts/release/sync-to-devlog.js`
 
 ### Validation Failures
 

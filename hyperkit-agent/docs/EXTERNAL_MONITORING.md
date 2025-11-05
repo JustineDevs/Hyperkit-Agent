@@ -189,7 +189,7 @@ class NetworkHealthMonitor:
 │ Dependencies                                │
 │  Python Packages     ✅ Up to date         │
 │  Security Vulns      ✅ 0 critical         │
-│  Foundry             ✅ v0.2.0             │
+│  Foundry             ✅ v1.4.8             │
 ├─────────────────────────────────────────────┤
 │ AI Providers                                │
 │  Google Gemini       ✅ Available          │

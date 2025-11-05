@@ -6,7 +6,7 @@
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
-# Migration Guide - System Refactor v1.5.0
+# Migration Guide - System Refactor v1.4.8
 
 **Version**: 1.5.14  
 **Date**: 2025-10-28  
@@ -16,7 +16,7 @@
 
 ## 🚨 Breaking Changes Overview
 
-This guide helps you migrate from the previous system architecture to v1.5.0, which includes major changes to AI agent integration and RAG backend.
+This guide helps you migrate from the previous system architecture to v1.4.8, which includes major changes to AI agent integration and RAG backend.
 
 ### What Changed
 

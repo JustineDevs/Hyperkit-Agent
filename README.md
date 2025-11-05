@@ -852,6 +852,38 @@ HyperAgent provides comprehensive npm scripts for version management, CLI access
 | `reports:compliance` | Show compliance reports location | `npm run reports:compliance` |
 | `reports:quality` | Show quality reports location | `npm run reports:quality` |
 
+### **Branch & Workflow Hygiene** ⭐
+
+| Script | Purpose | Example |
+|--------|---------|---------|
+| `hygiene` | Run complete workflow hygiene (docs, reports, sync branches) | `npm run hygiene` |
+| `hygiene:dry-run` | Preview what hygiene workflow would do | `npm run hygiene:dry-run` |
+| `hygiene:push` | Run hygiene workflow and push to remote | `npm run hygiene:push` |
+
+> **💡 One-Command Workflow Hygiene**  
+> The `hygiene` command chains together all documentation, reporting, and branch sync workflows:
+> - Runs all formatting, generation, reporting, and audit scripts
+> - Automatically stages and commits all updated files
+> - Syncs documentation between `main` and `devlog` branches
+> - Ensures OSS branch hygiene and repository size optimization
+> - **Enterprise-grade safety**: Automatic branch restoration, error handling, timeout protection
+>
+> **Safety Features:**
+> - ✅ Automatic branch restoration (even on CTRL+C)
+> - ✅ Working tree validation before operations
+> - ✅ Required vs optional script distinction
+> - ✅ Comprehensive error handling and recovery
+> - ✅ Configuration externalized for easy updates
+>
+> **Usage:**
+> ```bash
+> npm run hygiene:dry-run  # Preview changes (safe, no modifications)
+> npm run hygiene          # Run workflow (commits locally only)
+> npm run hygiene:push     # Run workflow and push to remote
+> ```
+>
+> **See:** [`hyperkit-agent/scripts/HYGIENE_SAFETY.md`](hyperkit-agent/scripts/HYGIENE_SAFETY.md) for complete safety documentation.
+
 ### **Quick Command Examples**
 
 ```bash
@@ -859,6 +891,7 @@ HyperAgent provides comprehensive npm scripts for version management, CLI access
 npm run version:check          # Check consistency
 npm run version:patch          # Bump patch version (auto-commits all changed files)
 npm run version:update-docs    # Sync version in all documentation
+npm run version:cleanup-dupes  # Remove duplicate meta files (enforces single source of truth)
 
 # CLI access
 npm run hyperagent:status      # Check system status
@@ -872,6 +905,11 @@ npm run docs:audit             # Check for drift
 # Reports
 npm run reports:status         # Generate status report
 npm run reports:todo           # Convert TODOs to issues
+
+# Workflow Hygiene (One-Command)
+npm run hygiene:dry-run        # Preview what would be done
+npm run hygiene                # Run complete workflow hygiene
+npm run hygiene:push           # Run workflow and push to remote
 ```
 
 ### **Development Workflow**
@@ -888,6 +926,14 @@ npm run version:patch          # Bump version (auto-commits all changed files)
 npm run version:update-docs    # Update version in all docs
 npm run hyperagent:test:all     # Run full test suite
 npm run reports:status         # Generate status report
+
+# Documentation workflow (after making doc changes)
+npm run hygiene                # Run complete workflow hygiene
+                                # - Updates README links
+                                # - Runs doc audits and cleanup
+                                # - Generates reports
+                                # - Syncs to devlog branch
+                                # - Commits all changes
 ```
 
 ### **NPM Scripts Benefits**
@@ -903,7 +949,16 @@ npm run reports:status         # Generate status report
 
 ---
 
-⚠️ **SOURCE OF TRUTH**: Project-level meta files (`VERSION`, `package.json`, `CHANGELOG.md`, `SECURITY.md`) exist **only in the root directory**. The `hyperkit-agent/` subdirectory contains package-specific logic only. This ensures a clean, professional OSS structure with no duplicate confusion.
+⚠️ **SOURCE OF TRUTH**: Project-level meta files (`VERSION`, `package.json`, `CHANGELOG.md`, `SECURITY.md`, `LICENSE.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`) exist **only in the root directory**. The `hyperkit-agent/` subdirectory contains package-specific logic only. This ensures a clean, professional OSS structure with no duplicate confusion.
+
+**Automated Cleanup:**
+- ✅ `npm run version:cleanup-dupes` - Removes duplicate meta files automatically
+- ✅ `npm run hygiene` - Includes cleanup in workflow hygiene
+- ✅ CI/CD validates single source of truth
+
+**Allowed Package Files:**
+- ✅ `hyperkit-agent/README.md` - Package-specific documentation (OK)
+- ✅ `hyperkit-agent/TODO.md` - Package-specific TODO list (OK)
 
 ---
 

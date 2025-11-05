@@ -10,6 +10,8 @@
     "version:major": "node hyperkit-agent/scripts/release/version-bump.js major",
     "version:update-docs": "node hyperkit-agent/scripts/release/update-version-in-docs.js",
     "version:check": "python -c \"import json; pkg=json.load(open('package.json', encoding='utf-8')); ver=open('VERSION', encoding='utf-8').read().strip(); print(f'package.json: {pkg[\\\"version\\\"]}'); print(f'VERSION file: {ver}'); exit(0 if pkg['version']==ver else 1)\"",
+    "version:cleanup-dupes": "node hyperkit-agent/scripts/release/cleanup-meta-dupes.js",
+    "version:cleanup-dupes:dry-run": "node hyperkit-agent/scripts/release/cleanup-meta-dupes.js --dry-run",
     "changeset": "changeset",
     "changeset:add": "changeset add",
     "changeset:version": "changeset version",

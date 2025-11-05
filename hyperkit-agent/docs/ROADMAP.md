@@ -114,7 +114,7 @@ To ensure production-grade reliability, we've focused exclusively on Hyperion:
 
 ## 🚫 Deprecated/Removed Features
 
-The following features have been **permanently removed** in v1.5.0:
+The following features have been **permanently removed** in v1.4.8:
 
 1. **Docker/MCP Support**
    - Dockerfile.mcp, Dockerfile.worker, docker-compose.yml deleted

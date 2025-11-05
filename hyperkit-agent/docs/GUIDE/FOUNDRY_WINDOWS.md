@@ -29,7 +29,7 @@ After removing the duplicate binary from `~/.foundry/bin/forge`, you still have:
    
    # Verify new version
    forge --version
-   # Should show: forge Version: 1.3.0 (or stable version, NOT nightly)
+   # Should show: forge Version: 1.4.8 (or stable version, NOT nightly)
    ```
 
 3. **Update Environment Variable**:

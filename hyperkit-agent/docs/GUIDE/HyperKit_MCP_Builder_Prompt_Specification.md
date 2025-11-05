@@ -17,7 +17,7 @@ tags: [mcp, builder, specification, ai-agent]
 # HyperKit MCP Builder Prompt Specification
 
 **Project Status**: ✅ **PRODUCTION READY**  
-**Current Version**: v1.2.0  
+**Current Version**: v1.4.8  
 **Last Updated**: October 27, 2025
 
 ***

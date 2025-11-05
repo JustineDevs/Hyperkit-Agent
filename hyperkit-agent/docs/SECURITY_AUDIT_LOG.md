@@ -47,8 +47,8 @@ Each entry follows this structure:
 | **Severity** | High |
 | **Category** | Deployment Failure |
 | **Status** | Fixed |
-| **Affected Versions** | v4.1.7 and earlier |
-| **Fixed Version** | v4.1.11 |
+| **Affected Versions** | v1.4.8 and earlier |
+| **Fixed Version** | v1.4.8 |
 | **Reporter** | Internal Testing |
 | **Description** | Foundry deployer was generating incorrect constructor arguments, causing deployment failures with "Type error: Incorrect argument count" errors. |
 | **Impact** | Users could not deploy contracts successfully, leading to workflow failures and user frustration. |
@@ -68,8 +68,8 @@ Each entry follows this structure:
 | **Severity** | Critical |
 | **Category** | Secrets Exposure |
 | **Status** | Fixed |
-| **Affected Versions** | v4.1.7 (specific commits) |
-| **Fixed Version** | v4.1.8 |
+| **Affected Versions** | v1.4.8 (specific commits) |
+| **Fixed Version** | v1.4.8 |
 | **Reporter** | GitHub Push Protection |
 | **Description** | Actual API keys were committed to config.yaml and pushed to GitHub, triggering GitHub Push Protection. |
 | **Impact** | Exposed API keys could be used by unauthorized parties, leading to service abuse and cost overruns. |
@@ -89,8 +89,8 @@ Each entry follows this structure:
 | **Severity** | Medium |
 | **Category** | Build/Installation Failure |
 | **Status** | Fixed |
-| **Affected Versions** | v4.1.7 |
-| **Fixed Version** | v4.1.8 |
+| **Affected Versions** | v1.4.8 |
+| **Fixed Version** | v1.4.8 |
 | **Reporter** | GitHub Actions CI |
 | **Description** | Incompatible dependency constraints between web3>=7.6.0 and eth-typing>=3.0.0,<4.0 caused installation failures in CI. |
 | **Impact** | CI builds failed, preventing automated testing and deployment validation. |
@@ -110,8 +110,8 @@ Each entry follows this structure:
 | **Severity** | Low |
 | **Category** | User Experience / Misleading Output |
 | **Status** | Fixed |
-| **Affected Versions** | v4.1.7 and earlier |
-| **Fixed Version** | v4.1.11 |
+| **Affected Versions** | v1.4.8 and earlier |
+| **Fixed Version** | v1.4.8 |
 | **Reporter** | User Feedback |
 | **Description** | Several CLI commands (verify, monitor, config) printed "Success" messages despite being TODO stubs with no actual functionality. |
 | **Impact** | Users received misleading feedback, leading to confusion about system capabilities and false confidence in deployments. |

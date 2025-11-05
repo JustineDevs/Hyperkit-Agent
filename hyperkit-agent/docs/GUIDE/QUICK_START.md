@@ -6,7 +6,7 @@
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
-# Quick Start Guide - v1.5.0
+# Quick Start Guide - v1.4.8
 
 **Version**: 1.5.14  
 **Last Updated**: 2025-10-28

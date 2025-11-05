@@ -86,7 +86,7 @@ success = doctor(workspace_dir=Path("hyperkit-agent"), auto_fix=True)
 
 The doctor automatically fixes:
 1. **Missing OpenZeppelin**: Installs via `forge install` or direct `git clone`
-2. **Wrong OZ Version**: Reinstalls compatible version (v4.9.5 for Counters.sol)
+2. **Wrong OZ Version**: Reinstalls compatible version (v1.4.8 for Counters.sol)
 3. **Solc Version Mismatch**: Updates `foundry.toml` to correct version
 4. **Git Submodule Issues**: Removes broken entries from `.gitmodules` and `.gitignore`
 5. **Broken Dependencies**: Cleans and reinstalls with correct versions
@@ -197,7 +197,7 @@ git clone https://github.com/OpenZeppelin/openzeppelin-contracts.git lib/openzep
 **Solution:**
 - This is **expected** in OpenZeppelin v5 (Counters.sol is deprecated)
 - Doctor will auto-remove Counters.sol usage in generated contracts
-- Or install OZ v4.9.5: `forge install OpenZeppelin/openzeppelin-contracts@v4.9.5`
+- Or install OZ v1.4.8: `forge install OpenZeppelin/openzeppelin-contracts@v1.4.8`
 
 ## Related Files
 
