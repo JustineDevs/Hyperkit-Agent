@@ -236,13 +236,22 @@ def main():
     scanner = DeadweightScanner()
     
     print("Scanning for deadweight patterns...")
-    results = scanner.scan_directory(Path("hyperkit-agent"))
+    # Auto-detect scan directory:
+    # - If run from hyperkit-agent/ (by parallel runner): Path("hyperkit-agent") doesn't exist, use "."
+    # - If run from parent directory: Path("hyperkit-agent") exists, use "hyperkit-agent"
+    if Path("hyperkit-agent").exists() and Path("hyperkit-agent").is_dir():
+        # We're in parent directory, scan hyperkit-agent subdirectory
+        scan_dir = Path("hyperkit-agent")
+    else:
+        # We're already in hyperkit-agent root, scan current directory
+        scan_dir = Path(".")
+    results = scanner.scan_directory(scan_dir)
     
     # Generate report
     report = scanner.generate_report(results)
     
-    # Save report
-    report_path = Path("hyperkit-agent/REPORTS/DEADWEIGHT_SCAN_REPORT.md")
+    # Save report to QUALITY category (use relative path from hyperkit-agent root)
+    report_path = Path("REPORTS/QUALITY/deadweight_scan_report.md")
     report_path.parent.mkdir(parents=True, exist_ok=True)
     
     with open(report_path, 'w', encoding='utf-8') as f:
@@ -253,7 +262,7 @@ def main():
     # Generate cleanup script
     cleanup_script = scanner.generate_cleanup_script(results)
     
-    cleanup_path = Path("hyperkit-agent/scripts/maintenance/cleanup_deadweight.sh")
+    cleanup_path = Path("scripts/maintenance/cleanup_deadweight.sh")
     cleanup_path.parent.mkdir(parents=True, exist_ok=True)
     
     with open(cleanup_path, 'w', encoding='utf-8') as f:
@@ -275,8 +284,8 @@ def main():
         for critical in results['critical_files'][:5]:
             print(f"    - {critical['file']}")
     
-    # Save JSON results (comprehensive for IPFS)
-    json_path = Path("hyperkit-agent/REPORTS/JSON_DATA/deadweight_scan_results.json")
+    # Save JSON results to JSON_DATA directory
+    json_path = Path("REPORTS/JSON_DATA/deadweight_scan_results.json")
     json_path.parent.mkdir(parents=True, exist_ok=True)
     
     # Create comprehensive JSON (for IPFS upload)
