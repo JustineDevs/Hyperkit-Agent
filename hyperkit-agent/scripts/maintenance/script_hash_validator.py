@@ -135,15 +135,19 @@ def main():
     
     if command == "scan":
         if len(sys.argv) < 3:
-            directory = Path("hyperkit-agent")
+            # Auto-detect directory: use current dir if we're in hyperkit-agent, otherwise use hyperkit-agent subdir
+            if Path("hyperkit-agent").exists() and Path("hyperkit-agent").is_dir():
+                directory = Path("hyperkit-agent")
+            else:
+                directory = Path(".")
         else:
             directory = Path(sys.argv[2])
         
         print(f"Scanning directory: {directory}")
         results = ScriptMarker.scan_directory(directory)
         
-        # Save results
-        output_file = Path("hyperkit-agent/REPORTS/script_hash_validation.json")
+        # Save JSON results to JSON_DATA directory
+        output_file = Path("REPORTS/JSON_DATA/script_hash_validation.json")
         output_file.parent.mkdir(parents=True, exist_ok=True)
         output_file.write_text(json.dumps(results, indent=2))
         
