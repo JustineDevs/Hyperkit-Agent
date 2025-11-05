@@ -1,6 +1,6 @@
 {
   "name": "hyperkit",
-  "version": "1.5.17",
+  "version": "1.5.18",
   "description": "Web3 Development Platform with AI Generation and Cross-Chain DeFi Primitives",
   "main": "hyperkit-agent/cli/main.py",
   "scripts": {
@@ -90,7 +90,7 @@
     "dashboard"
   ],
   "author": "HyperKit Team",
-  "author_email": "team@hyperionkit.xyz",
+  "author_email": "TraderGOfficial@gmail.com",
   "license": "MIT",
   "homepage": "https://hyperionkit.xyz",
   "repository": {
