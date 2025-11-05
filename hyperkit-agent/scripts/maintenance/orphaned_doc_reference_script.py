@@ -328,8 +328,8 @@ def main():
     # Generate report
     report = validator.generate_report(results)
     
-    # Save report
-    report_path = Path("hyperkit-agent/REPORTS/ORPHANED_DOC_REFERENCE_REPORT.md")
+    # Save MD report to QUALITY category
+    report_path = Path("REPORTS/QUALITY/orphaned_doc_reference_report.md")
     report_path.parent.mkdir(parents=True, exist_ok=True)
     
     with open(report_path, 'w', encoding='utf-8') as f:
@@ -340,7 +340,7 @@ def main():
     # Generate cleanup script
     cleanup_script = validator.generate_cleanup_script(results)
     
-    cleanup_path = Path("hyperkit-agent/scripts/cleanup_orphaned_references.sh")
+    cleanup_path = Path("scripts/cleanup_orphaned_references.sh")
     cleanup_path.parent.mkdir(parents=True, exist_ok=True)
     
     with open(cleanup_path, 'w', encoding='utf-8') as f:
@@ -365,8 +365,8 @@ def main():
         if len(results['orphaned_details']) > 5:
             print(f"  ... and {len(results['orphaned_details']) - 5} more")
     
-    # Save JSON results
-    json_path = Path("hyperkit-agent/REPORTS/JSON_DATA/orphaned_doc_reference_results.json")
+    # Save JSON results to JSON_DATA directory
+    json_path = Path("REPORTS/JSON_DATA/orphaned_doc_reference_results.json")
     json_path.parent.mkdir(parents=True, exist_ok=True)
     
     full_results = {
