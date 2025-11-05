@@ -18,7 +18,11 @@ class DocDriftAuditor:
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.docs_root = project_root / "docs"
-        self.hyperkit_docs_root = project_root / "hyperkit-agent" / "docs"
+        # Auto-detect docs location: if hyperkit-agent subdir exists, use it; otherwise use project_root/docs
+        if (project_root / "hyperkit-agent" / "docs").exists():
+            self.hyperkit_docs_root = project_root / "hyperkit-agent" / "docs"
+        else:
+            self.hyperkit_docs_root = project_root / "docs"
         self.audit_results = {
             "timestamp": datetime.now().isoformat(),
             "drift_detected": [],
@@ -235,7 +239,8 @@ class DocDriftAuditor:
     def save_audit_report(self, output_path: Path = None):
         """Save audit results to file"""
         if output_path is None:
-            output_path = self.project_root / "hyperkit-agent" / "REPORTS" / f"doc_drift_audit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            # Save JSON to JSON_DATA, MD reports go to QUALITY category
+            output_path = self.project_root / "REPORTS" / "JSON_DATA" / f"doc_drift_audit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(self.audit_results, indent=2))
