@@ -38,7 +38,7 @@ REPO_ROOT = SCRIPT_DIR.parent.parent.parent  # From hyperkit-agent/scripts/ci/ t
 ORIGINAL_BRANCH = None
 CLEANUP_REGISTERED = False
 
-# Workflow scripts to run (in order)
+# Workflow scripts to run BEFORE sync (non-report-generating)
 # Format: (command, description, optional)
 # optional=True means script will be skipped if not found (won't fail workflow)
 # NOTE: All automation/workflow scripts are now JavaScript (Node.js)
@@ -50,17 +50,22 @@ WORKFLOW_SCRIPTS = [
     # Documentation updates (required) - JavaScript
     ("node hyperkit-agent/scripts/release/update-readme-links.js", "Update README links", False),
     
-    # Maintenance scripts (optional - may not exist in devlog branch) - Python (AI/analysis)
-    ("python hyperkit-agent/scripts/maintenance/doc_drift_audit.py", "Documentation drift audit", True),
+    # Documentation cleanup (non-report-generating) - Python
     ("python hyperkit-agent/scripts/maintenance/doc_drift_cleanup.py", "Documentation cleanup", True),
-    ("python hyperkit-agent/scripts/maintenance/cli_command_inventory.py", "CLI command inventory", True),
-    ("python hyperkit-agent/scripts/maintenance/legacy_file_inventory.py", "Legacy file inventory", True),
     
     # Reports consolidation (optional - merges individual reports into consolidated files)
     ("python hyperkit-agent/scripts/reports/merge.py", "Consolidate individual reports", True),
     
     # Version updates (optional - may not exist) - JavaScript
     ("node hyperkit-agent/scripts/release/update-version-in-docs.js", "Update version in docs", True),
+]
+
+# Report generation scripts to run AFTER sync (generate JSON_DATA reports)
+# These run after sync-to-devlog to avoid uncommitted changes during sync
+REPORT_GENERATION_SCRIPTS = [
+    ("python hyperkit-agent/scripts/maintenance/doc_drift_audit.py", "Documentation drift audit", True),
+    ("python hyperkit-agent/scripts/maintenance/cli_command_inventory.py", "CLI command inventory", True),
+    ("python hyperkit-agent/scripts/maintenance/legacy_file_inventory.py", "Legacy file inventory", True),
 ]
 
 # Load patterns from config file (if exists), otherwise use defaults
@@ -595,8 +600,82 @@ def run_hygiene_workflow(dry_run: bool = False, push: bool = False) -> bool:
     print("-" * 60)
     print()
     
+    # Generate reports AFTER sync (to avoid uncommitted changes during sync)
+    print("[STEP 4] Generating reports (after sync)...")
+    print("-" * 60)
+    
+    if not dry_run:
+        report_failed_scripts = []
+        report_optional_failed_scripts = []
+        report_successful_scripts = []
+        
+        for script_info in REPORT_GENERATION_SCRIPTS:
+            if len(script_info) == 3:
+                cmd, description, optional = script_info
+            else:
+                cmd, description = script_info
+                optional = False
+            
+            success, output = run_command(cmd, description, optional=optional)
+            if success:
+                report_successful_scripts.append(description)
+            else:
+                if optional:
+                    report_optional_failed_scripts.append(description)
+                    print(f"  [WARN] {description} failed (optional, continuing)")
+                else:
+                    report_failed_scripts.append(description)
+        
+        print()
+        if report_successful_scripts:
+            print(f"  [OK] Successful: {len(report_successful_scripts)} report scripts")
+        if report_optional_failed_scripts:
+            print(f"  [WARN] Optional failed: {len(report_optional_failed_scripts)} report scripts")
+        if report_failed_scripts:
+            print(f"  [ERROR] Required failed: {len(report_failed_scripts)} report scripts")
+        
+        # Commit generated reports
+        if report_successful_scripts:
+            print()
+            print("  [COMMIT] Committing generated reports...")
+            generated_reports_staged = stage_all_modified_files()
+            if generated_reports_staged > 0:
+                commit_message = f"chore: generate reports after sync\n\n" \
+                               f"Auto-generated {generated_reports_staged} report file(s) after sync:\n" \
+                               f"- Documentation drift audit\n" \
+                               f"- CLI command inventory\n" \
+                               f"- Legacy file inventory\n\n" \
+                               f"Generated: {datetime.now().isoformat()}"
+                try:
+                    result = subprocess.run(
+                        ['git', 'diff', '--cached', '--quiet'],
+                        capture_output=True, cwd=REPO_ROOT
+                    )
+                    if result.returncode != 0:
+                        subprocess.run(
+                            ['git', 'commit', '-m', commit_message],
+                            check=True, cwd=REPO_ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                        )
+                        print(f"  ✅ Committed {generated_reports_staged} report file(s)")
+                    else:
+                        print(f"  [INFO] No report files to commit")
+                except subprocess.CalledProcessError as e:
+                    print(f"  ⚠️  Could not commit reports: {e}")
+    else:
+        print(f"  [DRY RUN] Would generate reports after sync")
+        for script_info in REPORT_GENERATION_SCRIPTS:
+            if len(script_info) == 3:
+                cmd, description, optional = script_info
+            else:
+                cmd, description = script_info
+            print(f"    - {description}")
+    
+    print()
+    print("-" * 60)
+    print()
+    
     # Final status
-    print("[STEP 4] Final status...")
+    print("[STEP 5] Final status...")
     print("-" * 60)
     result = subprocess.run(
         ['git', 'status', '--short'], 

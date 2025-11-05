@@ -171,8 +171,11 @@ def main():
     
     inventory = generate_inventory()
     
-    # Write JSON report to JSON_DATA directory
-    output_file = Path("REPORTS/JSON_DATA/cli_command_inventory.json")
+    # Write JSON report to JSON_DATA directory (hyperkit-agent/REPORTS/JSON_DATA/)
+    # Script is in hyperkit-agent/scripts/maintenance/, so go up 2 levels to hyperkit-agent/
+    script_dir = Path(__file__).parent.resolve()
+    hyperkit_agent_root = script_dir.parent.parent
+    output_file = hyperkit_agent_root / "REPORTS" / "JSON_DATA" / "cli_command_inventory.json"
     output_file.parent.mkdir(parents=True, exist_ok=True)
     output_file.write_text(json.dumps(inventory, indent=2, default=str))
     

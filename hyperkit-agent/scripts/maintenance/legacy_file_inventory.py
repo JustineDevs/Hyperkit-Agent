@@ -286,8 +286,11 @@ def main():
         'recommendations': recommendations
     }
     
-    # Write JSON report to JSON_DATA directory
-    json_path = Path('REPORTS/JSON_DATA/legacy_file_inventory.json')
+    # Write JSON report to JSON_DATA directory (hyperkit-agent/REPORTS/JSON_DATA/)
+    # Script is in hyperkit-agent/scripts/maintenance/, so go up 2 levels to hyperkit-agent/
+    script_dir = Path(__file__).parent.resolve()
+    hyperkit_agent_root = script_dir.parent.parent
+    json_path = hyperkit_agent_root / "REPORTS" / "JSON_DATA" / "legacy_file_inventory.json"
     json_path.parent.mkdir(parents=True, exist_ok=True)
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2)
