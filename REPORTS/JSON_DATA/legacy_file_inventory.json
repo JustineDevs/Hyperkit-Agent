@@ -1,0 +1,930 @@
+{
+  "scan_results": {
+    "scan_date": "2025-11-06T00:13:29.756423",
+    "legacy_files": [],
+    "unimplemented_features": [],
+    "future_tense_docs": [],
+    "todo_files": [],
+    "summary": {
+      "total_files_scanned": 145,
+      "legacy_references": 30,
+      "unimplemented_features": 1,
+      "future_tense_docs": 15,
+      "todo_files": 9
+    },
+    "future_tense": [
+      {
+        "file": ".\\CHANGELOG.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          3
+        ]
+      },
+      {
+        "file": ".\\CODE_OF_CONDUCT.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          65
+        ]
+      },
+      {
+        "file": ".\\CONTRIBUTING.md",
+        "pattern": "will be",
+        "matches": [
+          "will be",
+          "Will be",
+          "Will be"
+        ],
+        "lines": [
+          18,
+          285,
+          291
+        ]
+      },
+      {
+        "file": ".\\LICENSE.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          87
+        ]
+      },
+      {
+        "file": ".\\SECURITY.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          359
+        ]
+      },
+      {
+        "file": ".\\.cursor\\rules\\gitguardian.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          357
+        ]
+      },
+      {
+        "file": ".\\docs\\PRODUCTION_DEPLOYMENT_GUIDE.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          45
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\requirements.txt",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          86
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\DEVLOG_SETUP_COMPLETE.md",
+        "pattern": "will be",
+        "matches": [
+          "Will be"
+        ],
+        "lines": [
+          42
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\CONFIGURATION_GUIDE.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          127
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\ENVIRONMENT_SETUP.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          25
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\FOUNDRY_WINDOWS.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          3
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\QUICK_START.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          36
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\REPORTS\\ACCOMPLISHED\\ACCOMPLISHED.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          3362
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\REPORTS\\archive\\FIXES_ARCHIVE.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          2270
+        ]
+      }
+    ],
+    "python_scripts": [
+      {
+        "file": ".\\README.md",
+        "pattern": "\\.py --",
+        "matches": [
+          ".py --"
+        ],
+        "lines": [
+          568
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\HyperKit_MCP_Builder_Prompt_Specification.md",
+        "pattern": "python [a-zA-Z_]+\\.py",
+        "matches": [
+          "python hyperkit_mcp_server.py",
+          "python hyperkit_mcp_server.py",
+          "python hyperkit_mcp_server.py",
+          "python hyperkit_mcp_server.py"
+        ],
+        "lines": [
+          521,
+          524,
+          634,
+          637
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\REPORTS\\ACCOMPLISHED\\ACCOMPLISHED.md",
+        "pattern": "\\.py --",
+        "matches": [
+          ".py --",
+          ".py --",
+          ".py --",
+          ".py --",
+          ".py --"
+        ],
+        "lines": [
+          3353,
+          3584,
+          3637,
+          4063,
+          4064
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\REPORTS\\ACCOMPLISHED\\ACCOMPLISHED.md",
+        "pattern": "python [a-zA-Z_]+\\.py",
+        "matches": [
+          "python merge.py",
+          "python merge.py",
+          "python merge.py"
+        ],
+        "lines": [
+          3581,
+          3584,
+          3637
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\REPORTS\\archive\\FIXES_ARCHIVE.md",
+        "pattern": "python [a-zA-Z_]+\\.py",
+        "matches": [
+          "python test_real_implementations.py"
+        ],
+        "lines": [
+          1453
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\scripts\\README.md",
+        "pattern": "python [a-zA-Z_]+\\.py",
+        "matches": [
+          "python run_all_updates.py",
+          "python deadweight_scan.py",
+          "python doc_drift_audit.py"
+        ],
+        "lines": [
+          48,
+          52,
+          53
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\scripts\\ci\\README.md",
+        "pattern": "python [a-zA-Z_]+\\.py",
+        "matches": [
+          "python version_bump.py",
+          "python update_version_in_docs.py",
+          "python audit_badge_system.py",
+          "python docs_version_badge_system.py",
+          "python command_badge_generator.py",
+          "python run_all_updates.py",
+          "python prepare_rag_templates.py",
+          "python upload_rag_templates_to_ipfs.py"
+        ],
+        "lines": [
+          23,
+          24,
+          29,
+          30,
+          31,
+          36,
+          41,
+          42
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\scripts\\dev\\README.md",
+        "pattern": "python [a-zA-Z_]+\\.py",
+        "matches": [
+          "python install_cli.py",
+          "python install_precommit.py",
+          "python setup_rag_vectors.py",
+          "python install_mythril_windows.py",
+          "python setup_mcp_docker.py"
+        ],
+        "lines": [
+          21,
+          24,
+          27,
+          33,
+          38
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\scripts\\emergency\\README.md",
+        "pattern": "\\.py --",
+        "matches": [
+          ".py --"
+        ],
+        "lines": [
+          29
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\scripts\\emergency\\README.md",
+        "pattern": "python [a-zA-Z_]+\\.py",
+        "matches": [
+          "python debug_deployment_error.py"
+        ],
+        "lines": [
+          29
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\scripts\\maintenance\\README.md",
+        "pattern": "python [a-zA-Z_]+\\.py",
+        "matches": [
+          "python run_all_updates.py",
+          "python deadweight_scan.py",
+          "python cli_command_validation.py",
+          "python security_scan.py",
+          "python doc_drift_audit.py",
+          "python doc_drift_cleanup.py",
+          "python orphaned_doc_reference_script.py",
+          "python integration_sdk_audit.py",
+          "python cleanup_mock_integrations.py"
+        ],
+        "lines": [
+          56,
+          61,
+          62,
+          63,
+          68,
+          69,
+          70,
+          75,
+          76
+        ]
+      }
+    ],
+    "shell_scripts": [
+      {
+        "file": ".\\README.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh"
+        ],
+        "lines": [
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          1305,
+          1348,
+          1349,
+          1350
+        ]
+      },
+      {
+        "file": ".\\SECURITY.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "getfoundry.sh"
+        ],
+        "lines": [
+          178
+        ]
+      },
+      {
+        "file": ".\\TECH_STACK_POLICY.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "emergency_patch.sh",
+          "cleanup_deadweight.sh",
+          "archive_old_scripts.sh",
+          "cleanup_legacy_files_fixed.sh",
+          "emergency_patch.sh",
+          "cleanup_deadweight.sh",
+          "cleanup_legacy_files_fixed.sh",
+          "archive_old_scripts.sh",
+          "emergency_patch.sh"
+        ],
+        "lines": [
+          65,
+          147,
+          148,
+          149,
+          150,
+          153,
+          154,
+          155
+        ]
+      },
+      {
+        "file": ".\\docs\\INSTALLATION_GUIDE.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "doctor.sh",
+          "dependency_install.sh",
+          "dependency_install.sh"
+        ],
+        "lines": [
+          69,
+          70,
+          321
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\README.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh"
+        ],
+        "lines": [
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          702,
+          745,
+          746,
+          747
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "emergency_patch.sh",
+          "emergency_patch.sh",
+          "emergency_patch.sh"
+        ],
+        "lines": [
+          285,
+          341,
+          345
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\INTEGRATOR_GUIDE.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "contract.sh"
+        ],
+        "lines": [
+          314
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\SCRIPTS_DIRECTORY_COMPARISON.md",
+        "pattern": "\\./scripts/",
+        "matches": [
+          "./scripts/",
+          "./scripts/",
+          "./scripts/",
+          "./scripts/"
+        ],
+        "lines": [
+          7,
+          80,
+          127,
+          175
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\SCRIPTS_DIRECTORY_COMPARISON.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "doctor.sh",
+          "emergency_patch.sh",
+          "dependency_install.sh",
+          "preflight_version_check.sh",
+          "install.sh",
+          "install.sh",
+          "doctor.sh",
+          "dependency_install.sh",
+          "preflight_version_check.sh",
+          "emergency_patch.sh"
+        ],
+        "lines": [
+          51,
+          55,
+          58,
+          59,
+          87,
+          96,
+          103,
+          104,
+          105,
+          117
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\DOCTOR_PREFLIGHT.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "doctor.sh",
+          "dependency_install.sh"
+        ],
+        "lines": [
+          205,
+          206
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\ENVIRONMENT_SETUP.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "getfoundry.sh"
+        ],
+        "lines": [
+          425
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\IDEAL_WORKFLOW_ALIGNMENT.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "fix_openzeppelin_submodule.sh"
+        ],
+        "lines": [
+          289
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\IPFS_RAG_GUIDE.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "sync_vectors.sh"
+        ],
+        "lines": [
+          280
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\REPORTS\\ACCOMPLISHED\\ACCOMPLISHED.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "doctor.sh",
+          "test_fresh_install.sh",
+          "cleanup_deadweight.sh",
+          "archive_old_scripts.sh",
+          "cleanup_legacy_files_fixed.sh",
+          "emergency_patch.sh"
+        ],
+        "lines": [
+          2600,
+          2966,
+          3816,
+          3817,
+          3818,
+          3819
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\scripts\\README.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "emergency_patch.sh",
+          "emergency_patch.sh",
+          "case.sh",
+          "archive_old_scripts.sh"
+        ],
+        "lines": [
+          35,
+          59,
+          82,
+          89
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\scripts\\ci\\README.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "cleanup_legacy_files_fixed.sh"
+        ],
+        "lines": [
+          17
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\scripts\\emergency\\README.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "emergency_patch.sh",
+          "emergency_patch.sh"
+        ],
+        "lines": [
+          13,
+          24
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\scripts\\maintenance\\README.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "cleanup_deadweight.sh",
+          "cleanup_deadweight.sh"
+        ],
+        "lines": [
+          45,
+          96
+        ]
+      },
+      {
+        "file": ".\\scripts\\README.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "install.sh",
+          "dev.sh",
+          "test.sh",
+          "lint.sh",
+          "deploy.sh",
+          "build.sh",
+          "release.sh",
+          "clean.sh",
+          "backup.sh",
+          "update.sh",
+          "script_name.sh",
+          "config.sh"
+        ],
+        "lines": [
+          8,
+          9,
+          10,
+          11,
+          14,
+          15,
+          16,
+          19,
+          20,
+          21,
+          28,
+          123
+        ]
+      }
+    ],
+    "todo_markers": [
+      {
+        "file": ".\\README.md",
+        "pattern": "NOTE:",
+        "matches": [
+          "NOTE:"
+        ],
+        "lines": [
+          1039
+        ]
+      },
+      {
+        "file": ".\\TECH_STACK_POLICY.md",
+        "pattern": "NOTE:",
+        "matches": [
+          "Note:"
+        ],
+        "lines": [
+          152
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\requirements.txt",
+        "pattern": "NOTE:",
+        "matches": [
+          "Note:",
+          "Note:",
+          "Note:"
+        ],
+        "lines": [
+          6,
+          27,
+          85
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\TROUBLESHOOTING_GUIDE.md",
+        "pattern": "TODO:",
+        "matches": [
+          "TODO:",
+          "TODO:",
+          "TODO:",
+          "TODO:",
+          "TODO:"
+        ],
+        "lines": [
+          87,
+          159,
+          183,
+          206,
+          268
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\MIGRATION_GUIDE.md",
+        "pattern": "NOTE:",
+        "matches": [
+          "Note:",
+          "Note:",
+          "Note:"
+        ],
+        "lines": [
+          68,
+          84,
+          132
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\QUICK_START.md",
+        "pattern": "NOTE:",
+        "matches": [
+          "Note:"
+        ],
+        "lines": [
+          97
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\INTEGRATION\\ALITH_INTEGRATION_PROGRESS.md",
+        "pattern": "NOTE:",
+        "matches": [
+          "Note:"
+        ],
+        "lines": [
+          56
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\REPORTS\\MARKDOWN_FIX_TRUTH_CHECK.md",
+        "pattern": "NOTE:",
+        "matches": [
+          "Note:"
+        ],
+        "lines": [
+          45
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\REPORTS\\ACCOMPLISHED\\ACCOMPLISHED.md",
+        "pattern": "NOTE:",
+        "matches": [
+          "Note:"
+        ],
+        "lines": [
+          2689
+        ]
+      }
+    ],
+    "unimplemented_commands": [
+      {
+        "file": ".\\hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+        "pattern": "hyperagent emergency_",
+        "matches": [
+          "hyperagent emergency_"
+        ],
+        "lines": [
+          346
+        ]
+      }
+    ]
+  },
+  "disaster_files": [
+    {
+      "file": ".\\hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+      "type": "disaster_recovery",
+      "status": "needs_review"
+    }
+  ],
+  "legacy_scripts": [
+    {
+      "file": "scripts\\cleanup_legacy_files.sh",
+      "type": "script",
+      "status": "needs_review"
+    },
+    {
+      "file": "scripts\\install.sh",
+      "type": "script",
+      "status": "needs_review"
+    },
+    {
+      "file": "scripts\\setup.py",
+      "type": "script",
+      "status": "needs_review"
+    }
+  ],
+  "recommendations": {
+    "archive_candidates": [
+      {
+        "file": ".\\hyperkit-agent\\scripts\\ci\\README.md",
+        "reason": "Multiple legacy script references",
+        "matches": 8
+      },
+      {
+        "file": ".\\hyperkit-agent\\scripts\\maintenance\\README.md",
+        "reason": "Multiple legacy script references",
+        "matches": 9
+      }
+    ],
+    "not_implemented_candidates": [
+      {
+        "file": ".\\hyperkit-agent\\docs\\EMERGENCY_RESPONSE.md",
+        "reason": "References unimplemented CLI commands",
+        "commands": [
+          "hyperagent emergency_"
+        ]
+      }
+    ],
+    "update_candidates": [
+      {
+        "file": ".\\CHANGELOG.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\CODE_OF_CONDUCT.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\CONTRIBUTING.md",
+        "reason": "Contains future tense language",
+        "instances": 3
+      },
+      {
+        "file": ".\\LICENSE.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\SECURITY.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\.cursor\\rules\\gitguardian.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\docs\\PRODUCTION_DEPLOYMENT_GUIDE.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\requirements.txt",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\DEVLOG_SETUP_COMPLETE.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\CONFIGURATION_GUIDE.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\ENVIRONMENT_SETUP.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\FOUNDRY_WINDOWS.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\docs\\GUIDE\\QUICK_START.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\REPORTS\\ACCOMPLISHED\\ACCOMPLISHED.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\REPORTS\\archive\\FIXES_ARCHIVE.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      }
+    ],
+    "delete_candidates": []
+  }
+}
