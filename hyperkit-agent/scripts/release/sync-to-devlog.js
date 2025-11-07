@@ -46,8 +46,37 @@ function getCurrentBranch() {
 
 function isCleanWorkingTree() {
   try {
-    execSync('git diff --quiet HEAD', { cwd: ROOT_DIR, stdio: 'pipe' });
-    return true;
+    // Check for uncommitted changes, excluding submodules
+    // Submodules show as "modified content" but we ignore them
+    const status = execSync('git status --porcelain', { 
+      cwd: ROOT_DIR, 
+      encoding: 'utf8' 
+    });
+    
+    if (!status.trim()) {
+      return true; // No changes at all
+    }
+    
+    // Filter out submodule changes (lines starting with " m " or "M " for submodules)
+    // Also filter out any changes in lib/ directories
+    const lines = status.split('\n').filter(line => {
+      const trimmed = line.trim();
+      // Skip submodule indicators (m or M in first column for submodules)
+      if (/^m\s/.test(trimmed) || /^M\s/.test(trimmed)) {
+        // Check if it's a lib/ directory
+        if (trimmed.includes('/lib/') || trimmed.includes('\\lib\\')) {
+          return false; // Exclude lib/ submodule changes
+        }
+      }
+      // Skip any line that mentions lib/ directories
+      if (trimmed.includes('/lib/') || trimmed.includes('\\lib\\')) {
+        return false;
+      }
+      return true; // Keep other changes
+    });
+    
+    // If all remaining lines are empty or only submodule changes, tree is clean
+    return lines.filter(l => l.trim()).length === 0;
   } catch {
     return false;
   }
@@ -59,9 +88,9 @@ function getAllFiles(dir, fileList = []) {
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
     
-    // Skip git and ignored dirs
+    // Skip git and ignored dirs, and lib/ directories (submodules)
     if (entry.isDirectory()) {
-      if (['.git', 'node_modules', '__pycache__', '.pytest_cache', '.venv', 'venv'].includes(entry.name)) {
+      if (['.git', 'node_modules', '__pycache__', '.pytest_cache', '.venv', 'venv', 'lib'].includes(entry.name)) {
         continue;
       }
       getAllFiles(fullPath, fileList);
