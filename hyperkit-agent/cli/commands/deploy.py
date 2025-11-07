@@ -37,7 +37,10 @@ def contract(ctx, contract, network, private_key, gas_limit, gas_price, construc
     """
     Deploy a smart contract using RAG deployment templates
     
-    ✅ FIXED: Constructor argument parsing now uses source code parsing with ABI validation.
+    AI Model: [*] PRIMARY Gemini (gemini-2.5-flash-lite via Alith SDK adapter)
+             [>] SECONDARY OpenAI (via Alith SDK) if Gemini unavailable
+    
+    [OK] FIXED: Constructor argument parsing now uses source code parsing with ABI validation.
     Deployments should work reliably. See docs/HONEST_STATUS.md for details.
     
     Examples:

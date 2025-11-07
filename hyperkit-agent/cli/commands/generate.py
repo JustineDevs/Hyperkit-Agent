@@ -29,6 +29,9 @@ def contract(ctx, type, name, output, network, template, use_rag):
     """
     Generate a smart contract with AI using RAG templates for context
     
+    AI Model: [*] PRIMARY Gemini (gemini-2.5-flash-lite via Alith SDK adapter)
+             [>] SECONDARY OpenAI (via Alith SDK) if Gemini unavailable
+    
     ⚠️  WARNING: Templates are limited - many advanced templates not yet implemented.
     See docs/HONEST_STATUS.md for details.
     """

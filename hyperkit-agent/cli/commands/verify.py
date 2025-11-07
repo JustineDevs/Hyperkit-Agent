@@ -26,7 +26,10 @@ def contract(ctx, address, network, source, constructor_args):
     """
     Verify a smart contract on block explorer
     
-    ✅ IMPLEMENTED: Full Hyperion Explorer (Blockscout) API integration.
+    AI Model: [*] PRIMARY Gemini (gemini-2.5-flash-lite via Alith SDK adapter)
+             [>] SECONDARY OpenAI (via Alith SDK) if Gemini unavailable
+    
+    [OK] IMPLEMENTED: Full Hyperion Explorer (Blockscout) API integration.
     Supports contract verification, status checking, and deployment info.
     See docs/HONEST_STATUS.md for details.
     """

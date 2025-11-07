@@ -111,6 +111,10 @@ def cli(ctx, verbose, debug):
     - PRODUCTION MODE: All dependencies available, full functionality
     - SAFE MODE: Missing dependencies, operations blocked with clear errors
     
+    AI/LLM Configuration:
+    [*] PRIMARY: Gemini (via Alith SDK adapter) - gemini-2.5-flash-lite
+    [>] SECONDARY: OpenAI (via Alith SDK) - used if Gemini unavailable
+    
     Check your mode: hyperagent status
     Check limitations: hyperagent limitations
     Honest status: See docs/HONEST_STATUS.md

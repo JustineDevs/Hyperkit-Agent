@@ -18,6 +18,10 @@ def config_group():
     """
     Manage configuration settings
     
+    AI/LLM Configuration:
+    [*] PRIMARY: Gemini (via Alith SDK adapter) - gemini-2.5-flash-lite
+    [>] SECONDARY: OpenAI (via Alith SDK) - used if Gemini unavailable
+    
     ⚠️  WARNING: This command has partial implementation - some features may be limited.
     See docs/HONEST_STATUS.md for details.
     """

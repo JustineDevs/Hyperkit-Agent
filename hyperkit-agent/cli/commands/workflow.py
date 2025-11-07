@@ -34,7 +34,10 @@ def run_workflow(ctx, prompt, network, no_audit, no_verify, test_only, allow_ins
     """
     Run complete AI-powered smart contract workflow with RAG template integration
     
-    ✅ FIXED: Deployment validation has been added - workflow properly fails on errors.
+    AI Model: [*] PRIMARY Gemini (gemini-2.5-flash-lite via Alith SDK adapter)
+             [>] SECONDARY OpenAI (via Alith SDK) if Gemini unavailable
+    
+hype    [OK] FIXED: Deployment validation has been added - workflow properly fails on errors.
     No more fake success messages. See docs/HONEST_STATUS.md for details.
     
     Stages: Generate -> Audit -> Deploy -> Verify -> Test

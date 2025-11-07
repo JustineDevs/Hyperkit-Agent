@@ -29,7 +29,10 @@ def audit_contracts(ctx, files: tuple, directory: str, output: str, format: str,
     """
     Audit multiple contracts in batch.
     
-    ✅ COMPLETE: All export formats including PDF and Excel are now fully functional.
+    AI Model: [*] PRIMARY Gemini (gemini-2.5-flash-lite via Alith SDK adapter)
+             [>] SECONDARY OpenAI (via Alith SDK) if Gemini unavailable
+    
+    [OK] COMPLETE: All export formats including PDF and Excel are now fully functional.
     See docs/HONEST_STATUS.md for details.
     
     Examples:

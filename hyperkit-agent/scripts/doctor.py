@@ -133,7 +133,7 @@ def check_tool(tool: str, version_flag: str = "--version") -> Tuple[bool, Option
 
 def check_required_tools() -> Dict[str, Tuple[bool, Optional[str]]]:
     """Check all required tools with version detection"""
-    print_bold("\nStep 1: Checking Required Tools")
+    print_bold("\n[1/5] Checking Required Tools")
     
     tools = {
         "forge": ["forge", "--version"],
@@ -174,7 +174,7 @@ def check_required_tools() -> Dict[str, Tuple[bool, Optional[str]]]:
 
 def check_openzeppelin_installation(workspace_dir: Path, auto_fix: bool = True) -> bool:
     """Check and auto-fix OpenZeppelin installation with version detection"""
-    print_bold("\nStep 2: Checking OpenZeppelin Installation")
+    print_bold("\n[2/5] Checking OpenZeppelin Installation")
     
     oz_dir = workspace_dir / "lib" / "openzeppelin-contracts"
     counters_path = oz_dir / "contracts" / "utils" / "Counters.sol"
@@ -306,16 +306,37 @@ def install_openzeppelin(workspace_dir: Path, version: Optional[str] = None) -> 
         if result.returncode != 0:
             # Try direct git clone as fallback
             print_warning("forge install failed, trying direct git clone...")
-            clone_url = "https://github.com/OpenZeppelin/openzeppelin-contracts.git"
-            if version:
-                clone_url += f"@{version}"
             
-            run_cmd(
-                ["git", "clone", "--depth", "1", "--branch", version.replace("v", "") if version else "latest", 
-                 "https://github.com/OpenZeppelin/openzeppelin-contracts.git", str(oz_dir)],
-                cwd=workspace_dir,
-                check=True
-            )
+            if version:
+                # Clone specific version tag
+                branch_or_tag = version.replace("v", "")  # Remove 'v' prefix if present
+                run_cmd(
+                    ["git", "clone", "--depth", "1", "--branch", branch_or_tag,
+                     "https://github.com/OpenZeppelin/openzeppelin-contracts.git", str(oz_dir)],
+                    cwd=workspace_dir,
+                    check=False
+                )
+                # If tag clone failed, try without branch (gets default branch, then checkout tag)
+                result = run_cmd(["git", "rev-parse", "--verify", f"refs/tags/{version}"], cwd=oz_dir, check=False)
+                if result.returncode != 0:
+                    # Clone default branch and checkout tag
+                    if oz_dir.exists():
+                        shutil.rmtree(oz_dir)
+                    run_cmd(
+                        ["git", "clone", "--depth", "1", 
+                         "https://github.com/OpenZeppelin/openzeppelin-contracts.git", str(oz_dir)],
+                        cwd=workspace_dir,
+                        check=True
+                    )
+                    run_cmd(["git", "checkout", version], cwd=oz_dir, check=True)
+            else:
+                # Clone default branch (no version specified)
+                run_cmd(
+                    ["git", "clone", "--depth", "1",
+                     "https://github.com/OpenZeppelin/openzeppelin-contracts.git", str(oz_dir)],
+                    cwd=workspace_dir,
+                    check=True
+                )
         
         # Verify installation
         erc20_path = oz_dir / "contracts" / "token" / "ERC20" / "ERC20.sol"
@@ -333,7 +354,7 @@ def install_openzeppelin(workspace_dir: Path, version: Optional[str] = None) -> 
 
 def check_foundry_config(workspace_dir: Path) -> bool:
     """Check and validate foundry.toml configuration"""
-    print_bold("\nStep 3: Checking Foundry Configuration")
+    print_bold("\n[3/5] Checking Foundry Configuration")
     
     foundry_toml = workspace_dir / "foundry.toml"
     
@@ -371,9 +392,110 @@ def check_foundry_config(workspace_dir: Path) -> bool:
         print_success(f"Foundry config valid: solc = {solc_version}")
         return True
 
+def check_ai_llm_configuration(workspace_dir: Path) -> bool:
+    """
+    Check AI/LLM provider configuration (Gemini primary, Alith SDK fallback).
+    
+    Returns:
+        True if at least one AI provider is configured, False otherwise
+    """
+    print_bold("\n[5/5] Checking AI/LLM Configuration...")
+    print_info("Primary: Gemini (via Alith SDK adapter)")
+    print_info("Fallback: Alith SDK (OpenAI)")
+    
+    env_file = workspace_dir / ".env"
+    config_file = workspace_dir / "config.yaml"
+    
+    # Check for .env file
+    if not env_file.exists():
+        print_warning(".env file not found")
+        print_info("💡 Copy env.example to .env and configure API keys")
+        return False
+    
+    # Load environment variables
+    env_vars = {}
+    try:
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    env_vars[key.strip()] = value.strip()
+    except Exception as e:
+        print_warning(f"Could not read .env file: {e}")
+        return False
+    
+    # Check Gemini (PRIMARY)
+    google_key = env_vars.get('GOOGLE_API_KEY', '')
+    has_gemini = google_key and google_key.strip() and google_key != 'your_google_api_key_here'
+    
+    if has_gemini:
+        print_success("✅ Gemini API key configured (PRIMARY)")
+        print_info(f"   Model: gemini-2.5-flash-lite (via Alith SDK adapter)")
+        
+        # Check if Gemini adapter is available
+        try:
+            import google.generativeai as genai
+            print_success("✅ Google Generative AI package installed")
+        except ImportError:
+            print_warning("⚠️  google-generativeai package not installed")
+            print_info("💡 Install: pip install google-generativeai")
+            return False
+        
+        # Check Alith SDK adapter availability
+        try:
+            adapter_path = workspace_dir / "services" / "core" / "gemini_alith_adapter.py"
+            if adapter_path.exists():
+                print_success("✅ Gemini Alith SDK adapter available")
+            else:
+                print_warning("⚠️  Gemini Alith SDK adapter not found")
+                print_info(f"💡 Expected: {adapter_path}")
+        except Exception as e:
+            print_warning(f"⚠️  Could not verify Gemini adapter: {e}")
+        
+        return True  # Gemini is configured, we're good
+    
+    # Check Alith SDK (FALLBACK - only if Gemini not available)
+    openai_key = env_vars.get('OPENAI_API_KEY', '')
+    has_openai = openai_key and openai_key.strip() and openai_key != 'your_openai_api_key_here'
+    
+    if has_openai:
+        print_success("✅ OpenAI API key configured (FALLBACK)")
+        print_info("   Using Alith SDK with OpenAI")
+        
+        # Check Alith SDK installation
+        try:
+            import alith
+            print_success("✅ Alith SDK package installed")
+            print_info(f"   Version: {alith.__version__ if hasattr(alith, '__version__') else 'unknown'}")
+        except ImportError:
+            print_warning("⚠️  Alith SDK package not installed")
+            print_info("💡 Install: pip install alith>=0.12.0")
+            return False
+        
+        # Check ALITH_ENABLED flag
+        alith_enabled = env_vars.get('ALITH_ENABLED', 'true').lower() == 'true'
+        if alith_enabled:
+            print_success("✅ ALITH_ENABLED=true (Alith SDK active)")
+        else:
+            print_warning("⚠️  ALITH_ENABLED is false (Alith SDK disabled)")
+            print_info("💡 Set ALITH_ENABLED=true in .env to enable")
+        
+        return True
+    
+    # No AI provider configured
+    print_error("❌ No AI provider configured")
+    print_info("💡 Configure at least one:")
+    print_info("   1. PRIMARY: Set GOOGLE_API_KEY in .env (Gemini via Alith SDK adapter)")
+    print_info("   2. FALLBACK: Set OPENAI_API_KEY in .env (Alith SDK with OpenAI)")
+    print_info("   Get keys from:")
+    print_info("   - Gemini: https://aistudio.google.com/")
+    print_info("   - OpenAI: https://platform.openai.com/api-keys")
+    return False
+
 def check_git_submodule_issues(workspace_dir: Path) -> bool:
     """Check and fix git submodule issues"""
-    print_bold("\nStep 4: Checking Git Submodule Configuration")
+    print_bold("\n[4/5] Checking Git Submodule Configuration")
     
     root_repo = workspace_dir.parent if workspace_dir.name == "hyperkit-agent" else workspace_dir
     
@@ -441,6 +563,10 @@ def doctor(workspace_dir: Optional[Path] = None, auto_fix: bool = True) -> bool:
         
         # Step 4: Git submodule issues
         check_git_submodule_issues(workspace_dir)
+        
+        # Step 5: AI/LLM configuration (Gemini primary, Alith SDK fallback)
+        if not check_ai_llm_configuration(workspace_dir):
+            all_checks_passed = False
         
         # Final summary
         print_bold("\n" + "=" * 60)

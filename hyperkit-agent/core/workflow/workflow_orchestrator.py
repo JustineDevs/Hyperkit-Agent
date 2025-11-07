@@ -1078,6 +1078,44 @@ class WorkflowOrchestrator:
                         )
                         logger.info("🔧 Fixed Ownable() to Ownable(msg.sender) for OpenZeppelin v5 compatibility")
         
+        # 0.3.5. PROACTIVELY fix OpenZeppelin v5 import path changes (security -> utils)
+        # OpenZeppelin v5 moved Pausable and ReentrancyGuard from security/ to utils/
+        oz_v5_path_fixes = {
+            "@openzeppelin/contracts/security/Pausable.sol": "@openzeppelin/contracts/utils/Pausable.sol",
+            "@openzeppelin/contracts/security/ReentrancyGuard.sol": "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+            "@openzeppelin/contracts/utils/security/Pausable.sol": "@openzeppelin/contracts/utils/Pausable.sol",
+        }
+        for old_path, new_path in oz_v5_path_fixes.items():
+            if old_path in fixed:
+                fixed = fixed.replace(old_path, new_path)
+                logger.info(f"🔧 Fixed OpenZeppelin v5 import path: {old_path} -> {new_path}")
+        
+        # 0.4. PROACTIVELY fix 'implements' keyword (Java/TypeScript pattern, invalid in Solidity)
+        # Solidity uses 'is' for both contract extension and interface inheritance - NEVER 'implements'
+        if 'implements' in fixed:
+            # Replace: contract X implements IInterface -> contract X is IInterface
+            fixed = re.sub(
+                r'contract\s+([A-Za-z0-9_]+)\s+implements\s+',
+                r'contract \1 is ',
+                fixed
+            )
+            logger.info("🔧 Fixed 'implements' keyword to 'is' (Solidity syntax correction)")
+        
+        # 0.4.5. PROACTIVELY remove SafeMath (deprecated in Solidity 0.8+)
+        # Solidity 0.8+ has built-in checked arithmetic, SafeMath is no longer needed
+        if 'SafeMath' in fixed or 'using SafeMath' in fixed:
+            logger.info("🔧 Proactively removing deprecated SafeMath usage...")
+            # Remove import
+            fixed = re.sub(r"import\s+['\"]@openzeppelin/contracts/utils/math/SafeMath\.sol['\"];?\s*\n?", "", fixed, flags=re.IGNORECASE | re.MULTILINE)
+            # Remove using statement
+            fixed = re.sub(r"using\s+SafeMath\s+for\s+uint256;?\s*\n?", "", fixed, flags=re.IGNORECASE | re.MULTILINE)
+            # Replace .add() with +, .sub() with -, .mul() with *, .div() with /
+            fixed = re.sub(r'(\w+)\.add\(([^)]+)\)', r'(\1 + \2)', fixed)
+            fixed = re.sub(r'(\w+)\.sub\(([^)]+)\)', r'(\1 - \2)', fixed)
+            fixed = re.sub(r'(\w+)\.mul\(([^)]+)\)', r'(\1 * \2)', fixed)
+            fixed = re.sub(r'(\w+)\.div\(([^)]+)\)', r'(\1 / \2)', fixed)
+            logger.info("✅ Proactively removed SafeMath - using native checked arithmetic")
+        
         # 0.5. PROACTIVELY remove Counters.sol (deprecated in OZ v5) before compilation
         # This prevents the error from happening in the first place
         if 'Counters.sol' in fixed or 'using Counters' in fixed or 'Counters.Counter' in fixed:

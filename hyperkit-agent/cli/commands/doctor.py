@@ -25,6 +25,7 @@ def doctor_command(no_fix, workspace):
       ✅ OpenZeppelin installation & version compatibility
       ✅ Foundry configuration (solc version)
       ✅ Git submodule issues (.gitmodules, .gitignore)
+      ✅ AI/LLM configuration (Gemini primary, Alith SDK fallback)
     
     \b
     Auto-Fixes:
@@ -32,6 +33,12 @@ def doctor_command(no_fix, workspace):
       🔧 Fixes version mismatches in foundry.toml
       🔧 Cleans broken git submodule entries
       🔧 Removes submodule entries from wrong locations (.gitignore)
+    
+    \b
+    AI/LLM Configuration:
+      [*] PRIMARY: Gemini (via Alith SDK adapter) - gemini-2.5-flash-lite
+      [>] SECONDARY: Alith SDK (OpenAI) - if Gemini unavailable
+      ✅ Validates API keys and package installations
     
     \b
     Examples:

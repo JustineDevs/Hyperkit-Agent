@@ -30,6 +30,9 @@ def contract(ctx, contract, address, network, output, format, severity, use_rag)
     """
     Audit a smart contract for security issues using RAG checklists
     
+    AI Model: [*] PRIMARY Gemini (gemini-2.5-flash-lite via Alith SDK adapter)
+             [>] SECONDARY OpenAI (via Alith SDK) if Gemini unavailable
+    
     ⚠️  WARNING: Core auditing works, but batch/viewing features are incomplete.
     See docs/HONEST_STATUS.md for details.
     """
