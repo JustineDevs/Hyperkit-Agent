@@ -2,7 +2,7 @@
 **Implementation Status**: ✅ Verified  
 **Version**: 1.4.7  
 **Last Verified**: 2025-11-07  
-**Commit**: `458dab3`  
+**Commit**: `174f47f`  
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
