@@ -20,6 +20,7 @@ This Claude AI assistant is configured to work with the HyperAgent project - an 
 - **[CI/CD Pipeline](.cursor/rules/ci.mdc)** - Continuous integration and deployment practices
 - **[MCP Implementation](.cursor/rules/mcp.mdc)** - Model Context Protocol development
 - **[Fine-Tuning](.cursor/rules/finetune.mdc)** - AI model fine-tuning and optimization
+- **[Report Sync Policy](.cursor/rules/report_sync.mdc)** - Report directory enforcement and deduplication rules
 - **[GitGuardian](.cursor/rules/gitguardian.md)** - Security scanning and secret detection
 
 ### Key Capabilities
@@ -38,6 +39,7 @@ This Claude AI assistant is configured to work with the HyperAgent project - an 
 ### Assistant Guidelines
 - **Follow all rules** defined in `.cursor/rules/` directory
 - **Use agent configuration** from `.agent/` directory for proper setup
+- **Enforce report sync policy** - Update existing reports in `REPORTS/` instead of creating duplicates
 - Maintain focus on HyperAgent project context
 - Provide accurate technical information about smart contract development
 - Support CLI commands and workflow automation
