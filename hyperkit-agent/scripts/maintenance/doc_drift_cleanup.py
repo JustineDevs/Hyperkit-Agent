@@ -113,6 +113,20 @@ def process_file(file_path):
         print(f"Error processing {file_path}: {e}")
         return False
 
+def is_submodule(file_path):
+    """Check if a file is in a submodule directory"""
+    path = Path(file_path)
+    # Check if any parent directory is a submodule
+    # Submodules have a .git file (not directory) in their root
+    for parent in path.parents:
+        git_file = parent / ".git"
+        if git_file.exists() and git_file.is_file():
+            return True
+        # Also exclude common submodule directories
+        if parent.name == "lib" and "openzeppelin" in str(parent).lower():
+            return True
+    return False
+
 def main():
     """Main function to process all markdown files"""
     print("Starting documentation drift cleanup...")
@@ -127,6 +141,9 @@ def main():
     
     for pattern in patterns:
         markdown_files.extend(glob.glob(pattern, recursive=True))
+    
+    # Filter out submodule files
+    markdown_files = [f for f in markdown_files if not is_submodule(f)]
     
     # Remove duplicates and sort
     markdown_files = sorted(set(markdown_files))
