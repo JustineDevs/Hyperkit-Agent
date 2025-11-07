@@ -1,16 +1,16 @@
 {
   "scan_results": {
-    "scan_date": "2025-11-06T00:49:37.440622",
+    "scan_date": "2025-11-07T11:09:19.130749",
     "legacy_files": [],
     "unimplemented_features": [],
     "future_tense_docs": [],
     "todo_files": [],
     "summary": {
-      "total_files_scanned": 140,
-      "legacy_references": 30,
+      "total_files_scanned": 161,
+      "legacy_references": 33,
       "unimplemented_features": 1,
-      "future_tense_docs": 15,
-      "todo_files": 8
+      "future_tense_docs": 21,
+      "todo_files": 9
     },
     "future_tense": [
       {
@@ -145,6 +145,83 @@
         ],
         "lines": [
           36
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\CHANGELOG.md",
+        "pattern": "will be",
+        "matches": [
+          "will be",
+          "will be",
+          "will be",
+          "will be",
+          "will be"
+        ],
+        "lines": [
+          22,
+          689,
+          690,
+          691,
+          1250
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\CHANGELOG.md",
+        "pattern": "will have",
+        "matches": [
+          "will have"
+        ],
+        "lines": [
+          864
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\CODE_OF_CONDUCT.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          59
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\CONTRIBUTING.md",
+        "pattern": "will be",
+        "matches": [
+          "will be"
+        ],
+        "lines": [
+          34
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\SECURITY.md",
+        "pattern": "will be",
+        "matches": [
+          "will be",
+          "will be",
+          "will be",
+          "will be"
+        ],
+        "lines": [
+          15,
+          27,
+          29
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\audits\\2017-03.md",
+        "pattern": "will be",
+        "matches": [
+          "will be",
+          "will be",
+          "will be"
+        ],
+        "lines": [
+          187,
+          255,
+          273
         ]
       },
       {
@@ -387,10 +464,10 @@
           96,
           97,
           98,
-          1305,
-          1348,
-          1349,
-          1350
+          1312,
+          1355,
+          1356,
+          1357
         ]
       },
       {
@@ -581,6 +658,53 @@
         ]
       },
       {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\README.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "img.sh",
+          "img.sh",
+          "img.sh",
+          "img.sh"
+        ],
+        "lines": [
+          3,
+          4,
+          7,
+          8
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\scripts\\upgradeable\\README.md",
+        "pattern": "bash scripts/",
+        "matches": [
+          "bash scripts/"
+        ],
+        "lines": [
+          12
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\scripts\\upgradeable\\README.md",
+        "pattern": "[a-zA-Z_]+\\.sh",
+        "matches": [
+          "transpile.sh",
+          "onto.sh",
+          "onto.sh",
+          "apply.sh",
+          "save.sh",
+          "apply.sh",
+          "save.sh"
+        ],
+        "lines": [
+          5,
+          9,
+          12,
+          17,
+          19,
+          21
+        ]
+      },
+      {
         "file": ".\\hyperkit-agent\\REPORTS\\ACCOMPLISHED\\ACCOMPLISHED.md",
         "pattern": "[a-zA-Z_]+\\.sh",
         "matches": [
@@ -691,7 +815,7 @@
           "NOTE:"
         ],
         "lines": [
-          1039
+          1046
         ]
       },
       {
@@ -768,6 +892,16 @@
         ],
         "lines": [
           56
+        ]
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\audits\\2017-03.md",
+        "pattern": "NOTE:",
+        "matches": [
+          "Note:"
+        ],
+        "lines": [
+          235
         ]
       },
       {
@@ -909,6 +1043,36 @@
         "file": ".\\hyperkit-agent\\docs\\GUIDE\\QUICK_START.md",
         "reason": "Contains future tense language",
         "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\CHANGELOG.md",
+        "reason": "Contains future tense language",
+        "instances": 5
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\CHANGELOG.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\CODE_OF_CONDUCT.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\CONTRIBUTING.md",
+        "reason": "Contains future tense language",
+        "instances": 1
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\SECURITY.md",
+        "reason": "Contains future tense language",
+        "instances": 4
+      },
+      {
+        "file": ".\\hyperkit-agent\\lib\\openzeppelin-contracts\\audits\\2017-03.md",
+        "reason": "Contains future tense language",
+        "instances": 3
       },
       {
         "file": ".\\hyperkit-agent\\REPORTS\\ACCOMPLISHED\\ACCOMPLISHED.md",
