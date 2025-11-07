@@ -1,0 +1,343 @@
+---
+description: Report Directory Consolidation & Sync Policy - Automated merge system for REPORTS directory
+globs:
+  - "hyperkit-agent/REPORTS/**/*.md"
+  - "**/REPORTS/**/*.md"
+alwaysApply: true
+---
+
+# Report Directory Consolidation & Sync Policy
+
+## Rule Overview
+
+Every agent, user, or scripted workflow producing or modifying a markdown (`.md`) document that represents an audit, regression check, or status report **MUST** follow the consolidation policy enforced by the automated merge system.
+
+## Directory Structure
+
+Reports are organized in `hyperkit-agent/REPORTS/` with category-based subdirectories:
+
+```
+hyperkit-agent/REPORTS/
+├── ACCOMPLISHED/
+│   └── ACCOMPLISHED.md (consolidated file)
+├── AUDIT/
+│   └── AUDIT.md (consolidated file)
+├── security/
+│   └── SECURITY.md (consolidated file)
+├── COMPLIANCE/
+│   └── COMPLIANCE.md (consolidated file)
+├── TODO/
+│   └── TODO_TRACKER.md (consolidated file)
+├── INFRASTRUCTURE/
+│   └── INFRASTRUCTURE.md (consolidated file)
+├── QUALITY/
+│   └── QUALITY.md (consolidated file)
+├── STATUS/
+│   └── STATUS.md (consolidated file)
+├── IPFS_RAG/
+│   └── IPFS.md (consolidated file)
+├── integration/
+│   └── INTEGRATION.md (consolidated file)
+├── api-audits/
+│   └── API_AUDITS.md (consolidated file)
+├── archive/
+│   └── FIXES_ARCHIVE.md (consolidated file)
+└── JSON_DATA/
+    └── (JSON reports stored separately, not consolidated)
+```
+
+## Consolidation Rules
+
+### 1. Category-Based Organization
+
+Each report category has:
+- **Subdirectory**: Category name (e.g., `ACCOMPLISHED/`, `AUDIT/`)
+- **Consolidated File**: Single markdown file per category (e.g., `ACCOMPLISHED.md`, `AUDIT.md`)
+- **Individual Files**: Temporary markdown files that get merged into consolidated file
+
+### 2. Automatic Consolidation Process
+
+**Primary Script**: `hyperkit-agent/scripts/reports/merge.py`
+
+**Workflow**:
+1. **Detection**: Scans all category subdirectories for individual `*.md` files
+2. **Duplicate Check**: Detects already-merged files using `*From: `filename`*` pattern
+3. **Merging**: Appends new content to consolidated file with section headers
+4. **Deletion**: Automatically removes merged files after successful merge
+5. **Commit**: Auto-commits changes if enabled
+
+**Usage**:
+```bash
+# Dry run (preview changes)
+npm run reports:organize:dry-run
+
+# Actually merge and delete files
+npm run reports:organize
+```
+
+### 3. File Naming & Matching
+
+**Consolidation Mapping** (defined in `merge.py`):
+- `ACCOMPLISHED/` → `ACCOMPLISHED.md`
+- `AUDIT/` → `AUDIT.md`
+- `security/` → `SECURITY.md`
+- `COMPLIANCE/` → `COMPLIANCE.md`
+- `TODO/` → `TODO_TRACKER.md`
+- `INFRASTRUCTURE/` → `INFRASTRUCTURE.md`
+- `QUALITY/` → `QUALITY.md`
+- `STATUS/` → `STATUS.md`
+- `IPFS_RAG/` → `IPFS.md`
+- `integration/` → `INTEGRATION.md`
+- `api-audits/` → `API_AUDITS.md`
+- `archive/` → `FIXES_ARCHIVE.md`
+
+**Excluded Files** (never merged):
+- `README.md` (category documentation)
+- Consolidated file itself (e.g., `ACCOMPLISHED.md`)
+- `CONSOLIDATION_COMPLETE.md` (if exists)
+
+### 4. Duplicate Detection
+
+The system detects already-merged files by checking for:
+- Pattern: `*From: `filename`*` in consolidated content
+- Section headers matching the original filename
+- Context analysis around section markers
+
+**Result**: Already-merged files are automatically deleted without re-merging.
+
+### 5. Merge Format
+
+When merging, the system:
+1. Creates section header: `## {Title}` with separator line
+2. Adds source attribution: `*From: `filename`*`
+3. Removes YAML frontmatter from source files
+4. Appends content to consolidated file
+5. Adds merge timestamp and file count
+
+**Example Output**:
+```markdown
+================================================================================
+## Audit Completion Summary
+================================================================================
+
+*From: `AUDIT_COMPLETION_SUMMARY.md`*
+
+[Content from merged file...]
+```
+
+## Workflow Integration
+
+### Version Bump Workflow
+
+Reports consolidation runs automatically during version bumps:
+
+```bash
+npm run version:complete
+# Runs: reports:organize → version:patch → hygiene
+```
+
+### Manual Consolidation
+
+```bash
+# Preview what would be merged
+npm run reports:organize:dry-run
+
+# Actually merge files
+npm run reports:organize
+```
+
+## JSON Reports
+
+**Location**: `hyperkit-agent/REPORTS/JSON_DATA/`
+
+JSON reports are **NOT** consolidated into markdown files. They remain as individual timestamped files:
+- Format: `{report_type}_{timestamp}.json`
+- Examples: `doc_drift_audit_20251105_234325.json`, `legacy_file_inventory.json`
+
+## Human/AI/Script Instructions
+
+### For Manual Report Creation
+
+1. **Check Category**: Determine which category your report belongs to
+2. **Check Existing**: Look for existing consolidated file in that category
+3. **Create Individual File**: Create new `*.md` file in category subdirectory
+4. **Run Consolidation**: Execute `npm run reports:organize` to merge
+5. **Verify**: Check consolidated file contains your content
+
+### For Automated Workflows
+
+1. **Generate Report**: Create markdown file in appropriate category subdirectory
+2. **Use Standard Naming**: Use descriptive filenames (will become section titles)
+3. **Trigger Consolidation**: Call `merge.py` or use `npm run reports:organize`
+4. **No Manual Cleanup**: System automatically deletes merged files
+
+### For AI Agents
+
+1. **Detect Category**: Match report content to category (audit → `AUDIT/`, status → `STATUS/`, etc.)
+2. **Check Consolidated File**: Read existing consolidated file to avoid duplicates
+3. **Update or Create**: 
+   - If similar content exists: Update relevant section in consolidated file
+   - If new content: Create individual file, then trigger consolidation
+4. **Preserve Structure**: Maintain section headers and formatting standards
+
+## Best Practices
+
+### ✅ DO
+
+- Create individual files in category subdirectories
+- Use descriptive filenames (they become section titles)
+- Run consolidation before committing changes
+- Check for duplicates before creating new reports
+- Use appropriate category subdirectory
+
+### ❌ DON'T
+
+- Create files directly in `REPORTS/` root (use subdirectories)
+- Manually edit consolidated files (use merge process)
+- Create duplicate reports for minor updates
+- Skip consolidation step
+- Mix JSON and markdown in same directory
+
+## Enforcement
+
+These rules are **binding** for:
+- ✅ Manual workflows (human-created reports)
+- ✅ Automated workflows (Python/JS scripts)
+- ✅ AI agent outputs (Claude, GPT, etc.)
+- ✅ CI/CD jobs (GitHub Actions, etc.)
+
+**Violation**: Reports that don't follow consolidation policy will be automatically merged and cleaned up by `merge.py` during `npm run reports:organize`.
+
+### Example 1: Creating a New Audit Report
+
+**Scenario**: AI agent generates a new security audit report after analyzing contracts.
+
+**Step 1 - Create Individual File**:
+```bash
+# Create new report in appropriate category
+echo "# Security Audit Results
+
+Found 3 critical vulnerabilities:
+1. Reentrancy in withdraw()
+2. Integer overflow in calculateRewards()
+3. Access control bypass in admin functions
+" > hyperkit-agent/REPORTS/AUDIT/SECURITY_AUDIT_2025_01_25.md
+```
+
+**Step 2 - Run Consolidation**:
+```bash
+npm run reports:organize
+```
+
+**Result**:
+- `SECURITY_AUDIT_2025_01_25.md` is merged into `AUDIT/AUDIT.md`
+- Individual file is automatically deleted
+- Consolidated file now contains:
+  ```markdown
+  ================================================================================
+  ## Security Audit 2025 01 25
+  ================================================================================
+  
+  *From: `SECURITY_AUDIT_2025_01_25.md`*
+  
+  # Security Audit Results
+  
+  Found 3 critical vulnerabilities:
+  1. Reentrancy in withdraw()
+  2. Integer overflow in calculateRewards()
+  3. Access control bypass in admin functions
+  ```
+
+### Example 2: Updating Existing Report
+
+**Scenario**: Need to add fixes applied to the audit report.
+
+**Step 1 - Check Existing Content**:
+```bash
+# Read consolidated file to see what's already there
+cat hyperkit-agent/REPORTS/AUDIT/AUDIT.md
+```
+
+**Step 2 - Create Update File**:
+```bash
+# Create update file (will merge into existing consolidated file)
+echo "# Audit Fixes Applied
+
+Fixed all 3 critical vulnerabilities:
+1. Added ReentrancyGuard to withdraw()
+2. Used SafeMath for calculateRewards()
+3. Implemented proper access control checks
+" > hyperkit-agent/REPORTS/AUDIT/AUDIT_FIXES_APPLIED.md
+```
+
+**Step 3 - Consolidate**:
+```bash
+npm run reports:organize
+```
+
+**Result**: New section added to `AUDIT.md`, update file deleted.
+
+### Example 3: Duplicate Detection
+
+**Scenario**: Accidentally create a report that was already merged.
+
+**Step 1 - Create Duplicate**:
+```bash
+# Create file with same content as previously merged
+echo "# Old Audit Report" > hyperkit-agent/REPORTS/AUDIT/OLD_AUDIT.md
+```
+
+**Step 2 - Run Consolidation**:
+```bash
+npm run reports:organize
+```
+
+**Result**:
+- System detects `*From: `OLD_AUDIT.md`*` already exists in consolidated file
+- File is automatically deleted without re-merging
+- No duplicate content added
+
+### Example 4: Wrong Category (What NOT to Do)
+
+**❌ Incorrect**:
+```bash
+# DON'T: Create file in wrong category
+echo "# Status Report" > hyperkit-agent/REPORTS/AUDIT/STATUS_REPORT.md
+```
+
+**✅ Correct**:
+```bash
+# DO: Use correct category
+echo "# Status Report" > hyperkit-agent/REPORTS/STATUS/STATUS_REPORT.md
+```
+
+### Example 5: JSON Report (Separate Handling)
+
+**Scenario**: Generate JSON audit data.
+
+**Correct Approach**:
+```bash
+# JSON reports go to JSON_DATA/, NOT consolidated
+echo '{"audit_date": "2025-01-25", "vulnerabilities": 3}' > \
+  hyperkit-agent/REPORTS/JSON_DATA/audit_20250125.json
+```
+
+**Result**: JSON file remains separate, not merged into markdown.
+
+### Example 6: Version Bump Workflow (Automatic)
+
+**Scenario**: Running version bump automatically consolidates reports.
+
+```bash
+npm run version:complete
+# Executes:
+# 1. npm run reports:organize  ← Consolidates all reports
+# 2. npm run version:patch     ← Bumps version
+# 3. npm run hygiene           ← Syncs to devlog branch
+```
+
+**Result**: All individual report files are automatically merged before version bump.
+
+---
+
+> **Note**: This policy is enforced by `hyperkit-agent/scripts/reports/merge.py` and integrated into the version bump workflow (`npm run version:complete`).
