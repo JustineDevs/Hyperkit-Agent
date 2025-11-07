@@ -114,17 +114,24 @@ def process_file(file_path):
         return False
 
 def is_submodule(file_path):
-    """Check if a file is in a submodule directory"""
-    path = Path(file_path)
+    """Check if a file is in a submodule directory or lib/ directory"""
+    path = Path(file_path).resolve()
+    path_str = str(path)
+    
+    # Exclude all lib/ directories (submodules are typically in lib/)
+    if '/lib/' in path_str or '\\lib\\' in path_str:
+        return True
+    
     # Check if any parent directory is a submodule
     # Submodules have a .git file (not directory) in their root
     for parent in path.parents:
         git_file = parent / ".git"
         if git_file.exists() and git_file.is_file():
             return True
-        # Also exclude common submodule directories
-        if parent.name == "lib" and "openzeppelin" in str(parent).lower():
+        # Also exclude if parent is named "lib"
+        if parent.name == "lib":
             return True
+    
     return False
 
 def main():
