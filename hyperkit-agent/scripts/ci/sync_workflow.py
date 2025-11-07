@@ -181,12 +181,37 @@ def get_current_branch() -> str:
 
 
 def is_clean_working_tree() -> bool:
-    """Check if working tree is clean."""
-    result = subprocess.run(
-        ['git', 'diff', '--quiet', 'HEAD'], 
-        capture_output=True, cwd=REPO_ROOT
-    )
-    return result.returncode == 0
+    """Check if working tree is clean, excluding submodule changes in lib/ directories."""
+    try:
+        # Get git status
+        result = subprocess.run(
+            ['git', 'status', '--porcelain'],
+            capture_output=True, text=True, cwd=REPO_ROOT
+        )
+        
+        if not result.stdout.strip():
+            return True  # No changes at all
+        
+        # Filter out submodule changes (lines with 'm' or 'M' for submodules in lib/)
+        lines = result.stdout.strip().split('\n')
+        relevant_changes = []
+        
+        for line in lines:
+            trimmed = line.strip()
+            # Skip submodule indicators (m or M in first column) for lib/ directories
+            if trimmed.startswith('m ') or trimmed.startswith('M '):
+                # Check if it's a lib/ directory
+                if '/lib/' in trimmed or '\\lib\\' in trimmed:
+                    continue  # Skip lib/ submodule changes
+            # Skip any line that mentions lib/ directories
+            if '/lib/' in trimmed or '\\lib\\' in trimmed:
+                continue
+            relevant_changes.append(trimmed)
+        
+        # If no relevant changes remain, tree is clean
+        return len(relevant_changes) == 0
+    except subprocess.CalledProcessError:
+        return False
 
 
 def stage_files(patterns: List[str]) -> int:
@@ -384,20 +409,27 @@ def run_hygiene_workflow(dry_run: bool = False, push: bool = False) -> bool:
         print("   Hygiene workflow requires a clean working tree for safety.")
         print("   Branch switching and merging with uncommitted changes can cause data loss.\n")
         
-        # Show what files have changes
+        # Show what files have changes (excluding lib/ submodule changes)
         try:
             result = subprocess.run(
                 ['git', 'status', '--short'],
                 capture_output=True, text=True, cwd=REPO_ROOT
             )
             if result.stdout.strip():
-                lines = result.stdout.strip().split('\n')[:10]
-                print("   Uncommitted changes detected:")
-                for line in lines:
-                    print(f"     {line}")
-                if len(result.stdout.strip().split('\n')) > 10:
-                    print(f"     ... and {len(result.stdout.strip().split('\n')) - 10} more files")
-                print()
+                all_lines = result.stdout.strip().split('\n')
+                # Filter out lib/ submodule changes
+                relevant_lines = [
+                    line for line in all_lines 
+                    if '/lib/' not in line and '\\lib\\' not in line
+                ]
+                if relevant_lines:
+                    lines = relevant_lines[:10]
+                    print("   Uncommitted changes detected:")
+                    for line in lines:
+                        print(f"     {line}")
+                    if len(relevant_lines) > 10:
+                        print(f"     ... and {len(relevant_lines) - 10} more files")
+                    print()
         except:
             pass
         
