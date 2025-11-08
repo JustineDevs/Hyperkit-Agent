@@ -11,6 +11,10 @@ env:
   # Fix: Set UTF-8 encoding globally to prevent charmap errors
   PYTHONIOENCODING: utf-8
   PYTHONUTF8: 1
+  # Test private key for CI (throwaway key - never use in production)
+  DEFAULT_PRIVATE_KEY: "0x000000000000000000000000000000000000deadbeefdeadbeefdeadbeefdead"
+  HYPERION_RPC_URL: "https://hyperion-testnet.metisdevops.link"
+  HYPERION_CHAIN_ID: "133717"
 
 jobs:
   test:
@@ -73,6 +77,18 @@ jobs:
               print('⚠️  Alith SDK not available (optional)')" || true
         continue-on-error: false  # HARD FAIL if critical SDKs missing (Web3, AI providers)
       
+      - name: Test CLI informational commands (no config required)
+        run: |
+          cd hyperkit-agent
+          # Test that help and version work without full config
+          python -m cli.main --help || exit 1
+          python -m cli.main version || exit 1
+        env:
+          # Minimal env for informational commands
+          PYTHONIOENCODING: utf-8
+          LC_ALL: C.UTF-8
+          LANG: C.UTF-8
+      
       - name: Run Python tests
         run: |
           cd hyperkit-agent
@@ -87,9 +103,8 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Test environment variables
+          # Test environment variables (inherited from job env)
           TEST_MODE: true
-          HYPERION_RPC_URL: https://hyperion-testnet.metisdevops.link
           # Fix: Encoding environment variables
           PYTHONIOENCODING: utf-8
           LC_ALL: C.UTF-8
