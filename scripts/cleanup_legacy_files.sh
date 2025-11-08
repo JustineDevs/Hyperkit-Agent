@@ -48,6 +48,28 @@ EOF
     echo "Added NOT IMPLEMENTED banner to .\hyperkit-agent\docs\EMERGENCY_RESPONSE.md"
 fi
 
+# Add NOT IMPLEMENTED banner to .\hyperkit-agent\REPORTS\ACCOMPLISHED\ACCOMPLISHED.md
+if [ -f ".\hyperkit-agent\REPORTS\ACCOMPLISHED\ACCOMPLISHED.md" ]; then
+    echo "Adding NOT IMPLEMENTED banner to .\hyperkit-agent\REPORTS\ACCOMPLISHED\ACCOMPLISHED.md..."
+    # Create backup
+    cp ".\hyperkit-agent\REPORTS\ACCOMPLISHED\ACCOMPLISHED.md" ".\hyperkit-agent\REPORTS\ACCOMPLISHED\ACCOMPLISHED.md.backup"
+    
+    # Add banner
+    cat > ".\hyperkit-agent\REPORTS\ACCOMPLISHED\ACCOMPLISHED.md.tmp" << 'EOF'
+> **NOT IMPLEMENTED BANNER**  
+> This process references scripts or procedures that are not CLI-integrated.  
+> These features are documented but not executable via `hyperagent` CLI.  
+> See implementation status in `REPORTS/IMPLEMENTATION_STATUS.md`.
+> 
+> 
+> 
+EOF
+    
+    cat ".\hyperkit-agent\REPORTS\ACCOMPLISHED\ACCOMPLISHED.md" >> ".\hyperkit-agent\REPORTS\ACCOMPLISHED\ACCOMPLISHED.md.tmp"
+    mv ".\hyperkit-agent\REPORTS\ACCOMPLISHED\ACCOMPLISHED.md.tmp" ".\hyperkit-agent\REPORTS\ACCOMPLISHED\ACCOMPLISHED.md"
+    echo "Added NOT IMPLEMENTED banner to .\hyperkit-agent\REPORTS\ACCOMPLISHED\ACCOMPLISHED.md"
+fi
+
 echo "Legacy file cleanup completed!"
 echo "Review ARCHIVE/ directory for archived files"
 echo "Review files with NOT IMPLEMENTED banners"
