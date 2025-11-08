@@ -966,6 +966,12 @@ All version bumps, releases, and changes are documented here.
 - Version bump to 1.5.18
 
 
+## [1.6.8] - 2025-11-08
+
+### Changes
+
+- Version bump to 1.6.8
+
 ## [1.6.7] - 2025-11-07
 
 ### Changes
