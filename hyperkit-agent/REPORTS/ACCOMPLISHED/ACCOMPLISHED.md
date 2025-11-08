@@ -7208,7 +7208,7 @@ To test these fixes:
 
 2. **Run verification script**:
    ```bash
-   python scripts/verify_recursion_fixes.py
+   hyperagent verify_recursion_fixes
    ```
 
 3. **Test commands that raise ClickException**:
