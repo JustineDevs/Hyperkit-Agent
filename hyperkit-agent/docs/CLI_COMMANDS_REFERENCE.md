@@ -55,8 +55,8 @@ Deploy a smart contract using RAG deployment templates.
 - `--private-key, -k` - Private key for deployment
 - `--gas-limit, -g` - Gas limit for deployment
 - `--gas-price` - Gas price for deployment
-- `--constructor-args` - Constructor arguments as JSON array (e.g., `'["0x1234...", 1000000]'`)
-- `--constructor-file` - Path to JSON file with constructor arguments
+- `--args` - Constructor arguments as JSON array (e.g., `'["0x1234...", 1000000]'`)
+- `--file` - Path to JSON file with constructor arguments
 - `--use-rag/--no-use-rag` - Use RAG deployment templates (default: true)
 
 **RAG Integration**: Fetches `hardhat-deploy` template from IPFS Pinata for enhanced deployment context.
@@ -67,10 +67,10 @@ Deploy a smart contract using RAG deployment templates.
 hyperagent deploy contract MyToken.sol
 
 # Provide custom constructor arguments
-hyperagent deploy contract MyToken.sol --constructor-args '["0x1234...", 1000000]'
+hyperagent deploy contract MyToken.sol --args '["0x1234...", 1000000]'
 
 # Load constructor arguments from JSON file
-hyperagent deploy contract MyToken.sol --constructor-file args.json
+hyperagent deploy contract MyToken.sol --file args.json
 ```
 
 ##### `deploy status`

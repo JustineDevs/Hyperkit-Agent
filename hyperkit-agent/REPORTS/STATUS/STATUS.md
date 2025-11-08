@@ -68,7 +68,7 @@ Successfully consolidated duplicate test files and enhanced workflow scripts wit
 - **Improved error messages**: Clear guidance when manual intervention is needed
 
 #### Workflow Changes:
-1. **Pre-flight check**: Detects uncommitted files before workflow execution
+1. **Pre-flight check**: Detects uncommitted files before workflow run
 2. **Auto-staging**: Automatically stages detected files
 3. **Post-execution validation**: Final check ensures clean working tree
 4. **Auto-commit**: Attempts to commit remaining files if detected

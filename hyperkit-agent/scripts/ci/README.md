@@ -22,7 +22,7 @@ Scripts for continuous integration, deployment, badge generation, and version ma
 The hygiene workflow script automatically handles uncommitted files to prevent data loss and ensure clean working trees.
 
 ### Features:
-- **Auto-detection**: Detects untracked, modified, and staged files before workflow execution
+- **Auto-detection**: Detects untracked, modified, and staged files before workflow run
 - **Auto-staging**: Automatically stages uncommitted files to prevent data loss
 - **Auto-commit**: Commits workflow-generated files automatically
 - **Final validation**: Ensures no uncommitted files remain after workflow completion
