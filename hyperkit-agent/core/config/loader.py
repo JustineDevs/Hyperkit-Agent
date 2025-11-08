@@ -104,9 +104,17 @@ class ConfigLoader:
         """Apply environment variable overrides to configuration."""
         # AI Provider API Keys
         if os.getenv('GOOGLE_API_KEY'):
-            self.config.setdefault('ai_providers', {}).setdefault('google', {})['api_key'] = os.getenv('GOOGLE_API_KEY')
+            google_key = os.getenv('GOOGLE_API_KEY')
+            # Store in nested location (for ai_providers)
+            self.config.setdefault('ai_providers', {}).setdefault('google', {})['api_key'] = google_key
+            # Also store at top level for direct access
+            self.config['GOOGLE_API_KEY'] = google_key
         if os.getenv('OPENAI_API_KEY'):
-            self.config.setdefault('ai_providers', {}).setdefault('openai', {})['api_key'] = os.getenv('OPENAI_API_KEY')
+            openai_key = os.getenv('OPENAI_API_KEY')
+            # Store in nested location (for ai_providers)
+            self.config.setdefault('ai_providers', {}).setdefault('openai', {})['api_key'] = openai_key
+            # Also store at top level for direct access
+            self.config['OPENAI_API_KEY'] = openai_key
         if os.getenv('ANTHROPIC_API_KEY'):
             self.config.setdefault('ai_providers', {}).setdefault('anthropic', {})['api_key'] = os.getenv('ANTHROPIC_API_KEY')
         if os.getenv('LAZAI_API_KEY'):

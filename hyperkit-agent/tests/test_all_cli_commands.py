@@ -59,6 +59,7 @@ def run_command(cmd, expect_error=False, description=""):
         print(f"\n❌ EXCEPTION: {e}")
         return False
 
+@pytest.mark.integration
 def main():
     """Run all CLI command tests"""
     results = []

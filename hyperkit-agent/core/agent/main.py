@@ -147,7 +147,21 @@ class HyperKitAgent:
         # Initialize intelligent LLM router with model selection (prefers Gemini for cost)
         from core.llm.router import HybridLLMRouter
 
+        # DEBUG: Log config structure before router initialization
+        logger.info("🔍 Config structure at router initialization:")
+        logger.info(f"  - Has GOOGLE_API_KEY: {bool(self.config.get('GOOGLE_API_KEY'))}")
+        logger.info(f"  - Has google_api_key: {bool(self.config.get('google_api_key'))}")
+        logger.info(f"  - Has ai_providers.google.api_key: {bool(self.config.get('ai_providers', {}).get('google', {}).get('api_key'))}")
+        logger.info(f"  - Has OPENAI_API_KEY: {bool(self.config.get('OPENAI_API_KEY'))}")
+        logger.info(f"  - Has ai_providers.openai.api_key: {bool(self.config.get('ai_providers', {}).get('openai', {}).get('api_key'))}")
+
         self.llm_router = HybridLLMRouter(config=self.config)
+        
+        # DEBUG: Log router initialization status
+        logger.info("🔍 Router initialization status:")
+        logger.info(f"  - gemini_available: {self.llm_router.gemini_available}")
+        logger.info(f"  - openai_available: {self.llm_router.openai_available}")
+        logger.info(f"  - alith_available: {self.llm_router.alith_available}")
 
         # Initialize Intent Router
         self.intent_router = IntentRouter()
@@ -220,8 +234,8 @@ class HyperKitAgent:
     async def generate_contract(self, prompt: str, context: str = "") -> Dict[str, Any]:
         """
         Generate a smart contract based on natural language prompt.
-        Uses intelligent model selection (prefers Gemini Flash-Lite for cost efficiency).
-        Falls back to Alith SDK if router unavailable.
+        Uses Alith SDK (PRIMARY AI agent) with Gemini model by default, OpenAI as fallback.
+        Falls back to intelligent model selector if Alith SDK unavailable.
 
         Args:
             prompt: Natural language description of the contract
@@ -234,11 +248,32 @@ class HyperKitAgent:
         enforce_production_mode("Contract Generation")
         
         try:
-            # PRIORITY 1: Use intelligent model selector (Gemini Flash-Lite preferred)
-            # This optimizes for cost and uses cheaper Gemini models when available
+            # PRIORITY 1: Use Alith SDK (PRIMARY AI agent - integrated by default)
+            # Alith SDK uses Gemini model by default, falls back to OpenAI if Gemini unavailable
+            if self.ai_agent and self.ai_agent.alith_configured:
+                try:
+                    logger.info("🤖 Using Alith SDK (PRIMARY AI agent) for contract generation")
+                    logger.info("   Alith SDK uses Gemini model by default, OpenAI as fallback")
+                    requirements = {
+                        "prompt": prompt,
+                        "context": context,
+                        "name": prompt[:50],  # Extract name from prompt
+                        "type": "smart_contract"
+                    }
+                    result = await self.ai_agent.generate_contract(requirements)
+                    if result:
+                        # Process result using shared processing method
+                        return await self._process_generated_contract(result, prompt, method="alith", provider="Alith SDK (Gemini/OpenAI)")
+                except Exception as e:
+                    logger.error(f"Alith SDK generation failed: {e}")
+                    # Fall through to router fallback
+                    logger.warning("⚠️ Alith SDK failed, trying intelligent model selector as fallback...")
+            
+            # PRIORITY 2: Fallback to intelligent model selector (router) if Alith SDK unavailable
+            # This provides a secondary path if Alith SDK is not configured
             if self.llm_router and self.llm_router.gemini_available:
                 try:
-                    logger.info("🌐 Using intelligent model selector (prefers Gemini Flash-Lite)")
+                    logger.info("🌐 Using intelligent model selector (fallback - Alith SDK unavailable)")
                     # Create full prompt with context
                     full_prompt = f"{context}\n\nUser Request: {prompt}" if context else prompt
                     
@@ -266,52 +301,35 @@ class HyperKitAgent:
                             )
                         )
                     
+                    # Log what the router returned for debugging
+                    if result:
+                        logger.debug(f"Router returned {len(result)} characters")
+                        logger.debug(f"First 200 chars: {result[:200]}")
+                    
                     if result and len(result.strip()) > 100:  # Valid contract generated
-                        logger.info("✅ Generated contract using intelligent model selector (Gemini preferred)")
+                        logger.info("✅ Generated contract using intelligent model selector (fallback)")
                         # Process result same way as Alith path
                         return await self._process_generated_contract(result, prompt, method="intelligent_router", provider="Gemini/ModelSelector")
                     else:
-                        logger.warning("⚠️ Router returned invalid/empty result, falling back to Alith SDK")
-                        # Fall through to Alith SDK
+                        logger.warning(f"⚠️ Router returned invalid/empty result (length: {len(result) if result else 0})")
+                except ValueError as router_error:
+                    # ValueError from _process_generated_contract means invalid Solidity code
+                    logger.warning(f"⚠️ Router returned invalid Solidity code: {router_error}")
                 except Exception as router_error:
-                    logger.warning(f"⚠️ Intelligent model selector failed: {router_error}, falling back to Alith SDK")
-                    # Fall through to Alith SDK fallback
-            
-            # PRIORITY 2: Fallback to Alith SDK ONLY if router unavailable or failed
-            # NOTE: Alith SDK is disabled when Gemini is available (to avoid OpenAI usage)
-            if self.ai_agent and self.ai_agent.alith_configured:
-                try:
-                    logger.warning("🤖 Using Alith SDK (OpenAI) for contract generation (fallback - Gemini unavailable)")
-                    requirements = {
-                        "prompt": prompt,
-                        "context": context,
-                        "name": prompt[:50],  # Extract name from prompt
-                        "type": "smart_contract"
-                    }
-                    result = await self.ai_agent.generate_contract(requirements)
-                    if result:
-                        # Process result using shared processing method
-                        return await self._process_generated_contract(result, prompt, method="alith", provider="Alith SDK")
-                except Exception as e:
-                    logger.error(f"Alith SDK generation failed: {e}")
-                    # Alith SDK failed, but intelligent router may have already been tried
-                    # If we got here, it means router also failed, so this is a real error
-                    raise RuntimeError(
-                        f"Contract generation failed - all AI providers unavailable\n"
-                        f"  Router error: (see logs above)\n"
-                        f"  Alith SDK error: {e}\n"
-                        f"  Required: Configure GOOGLE_API_KEY (preferred) or OPENAI_API_KEY with alith>=0.12.0"
-                    )
+                    logger.warning(f"⚠️ Intelligent model selector failed: {router_error}")
 
-            # CRITICAL: Neither Gemini (router) nor Alith SDK available
+            # CRITICAL: Neither Alith SDK nor router available
             logger.error("CRITICAL: No AI generation method available")
+            logger.error(f"  Alith SDK status: configured={self.ai_agent.alith_configured if self.ai_agent else 'N/A'}")
+            logger.error(f"  Router status: gemini_available={self.llm_router.gemini_available if self.llm_router else 'N/A'}, openai_available={self.llm_router.openai_available if self.llm_router else 'N/A'}")
             raise RuntimeError(
                 "CRITICAL: Contract generation failed - no AI providers available\n"
-                "  PRIMARY (REQUIRED): Google Gemini - Set GOOGLE_API_KEY in .env\n"
-                "    Gemini Flash-Lite is preferred for cost efficiency\n"
-                "  FALLBACK ONLY: Alith SDK with OpenAI - Set OPENAI_API_KEY and install alith>=0.12.0\n"
-                "    NOTE: Alith SDK is DISABLED when Gemini is available (to avoid OpenAI usage)\n"
-                "  Recommendation: Configure GOOGLE_API_KEY as PRIMARY model"
+                "  PRIMARY (REQUIRED): Alith SDK with Gemini - Set GOOGLE_API_KEY in .env\n"
+                "    Alith SDK is the PRIMARY AI agent, uses Gemini model by default\n"
+                "    Install: pip install alith>=0.12.0\n"
+                "  FALLBACK: Alith SDK with OpenAI - Set OPENAI_API_KEY if Gemini unavailable\n"
+                "    Alith SDK will use OpenAI if Gemini is not configured\n"
+                "  Recommendation: Configure GOOGLE_API_KEY for Gemini (preferred) or OPENAI_API_KEY for OpenAI"
             )
 
         except RuntimeError:
@@ -1231,11 +1249,21 @@ Return JSON with structure:
                         contract_code
                     )
                     
-                    if verification_result["success"]:
-                        logger.info("✅ Deployment verification passed")
+                    if verification_result.get("success"):
+                        if verification_result.get("verified"):
+                            logger.info("✅ Deployment verification passed")
+                        else:
+                            # Verification skipped (not an error)
+                            logger.info(f"ℹ️  {verification_result.get('message', 'Deployment verification skipped')}")
                     else:
-                        logger.error("❌ Deployment verification failed")
-                        logger.error(f"Verification error: {verification_result.get('error', 'Unknown')}")
+                        # Only log as error if verification actually failed (not just skipped)
+                        error_msg = verification_result.get('error', 'Unknown')
+                        if error_msg and "skipped" not in error_msg.lower():
+                            logger.error("❌ Deployment verification failed")
+                            logger.error(f"Verification error: {error_msg}")
+                        else:
+                            # Verification was skipped, not failed
+                            logger.info(f"ℹ️  {verification_result.get('message', 'Deployment verification skipped')}")
                         
                         # Add verification details to result
                         result["verification"] = verification_result
@@ -1244,10 +1272,14 @@ Return JSON with structure:
                     logger.warning(f"Post-deployment verification failed: {e}")
                     result["verification"] = {"success": False, "error": str(e)}
                 
+                # Handle both "tx_hash" and "transaction_hash" keys from foundry_deployer
+                tx_hash = result.get("tx_hash") or result.get("transaction_hash", "")
+                
                 return {
                     "status": "deployed",
-                    "tx_hash": result.get("transaction_hash", ""),
+                    "tx_hash": tx_hash,
                     "address": contract_address,
+                    "contract_address": contract_address,  # Also include for compatibility
                     "network": network,
                     "block": result.get("block_number", ""),
                     "verification": result.get("verification", {"success": True})

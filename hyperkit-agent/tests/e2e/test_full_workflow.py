@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 
 
+@pytest.mark.integration
 class TestFullWorkflow:
     """Test complete end-to-end workflows"""
     

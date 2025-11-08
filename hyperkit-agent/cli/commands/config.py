@@ -224,6 +224,38 @@ def get(ctx, key):
 
 @config_group.command()
 @click.pass_context
+def show(ctx):
+    """Show current configuration values"""
+    verbose = ctx.obj.get('verbose', False) if ctx.obj else False
+    debug = ctx.obj.get('debug', False) if ctx.obj else False
+    try:
+        config_file = Path("config.yaml")
+        
+        if not config_file.exists():
+            console.print(f"No configuration file found at {config_file}")
+            console.print(f"Use 'hyperagent config reset' to create default configuration")
+            return
+        
+        import yaml
+        with open(config_file, 'r') as f:
+            config_data = yaml.safe_load(f) or {}
+        
+        console.print("[bold]Current Configuration:[/bold]")
+        if config_data:
+            # Pretty print YAML
+            import yaml
+            yaml_str = yaml.dump(config_data, default_flow_style=False, sort_keys=False)
+            console.print(f"[code]{yaml_str}[/code]")
+        else:
+            console.print("  (no configuration values set)")
+            
+    except ImportError:
+        console.print(f"PyYAML not available - install with: pip install pyyaml")
+    except Exception as e:
+        console.print(f"Config error: {e}", style="red")
+
+@config_group.command()
+@click.pass_context
 def list(ctx):
     """List all configuration values"""
     verbose = ctx.obj.get('verbose', False) if ctx.obj else False

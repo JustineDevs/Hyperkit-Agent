@@ -332,9 +332,32 @@ pytest tests/unit/
 pytest tests/integration/
 pytest tests/e2e/
 
+# Run consolidated test files
+pytest tests/test_rag.py          # All RAG tests (consolidated)
+pytest tests/test_pinata.py      # All Pinata tests (consolidated)
+
+# Run with markers
+pytest -m integration             # Integration tests only
+pytest -m asyncio                 # Async tests only
+
 # With coverage
 pytest --cov=hyperkit-agent tests/
 ```
+
+### Test File Organization
+
+**Consolidated Test Files:**
+- `test_rag.py` - All RAG (Retrieval-Augmented Generation) tests
+  - Template fetcher tests
+  - CLI integration tests
+  - Connection tests
+  - Convenience function tests
+- `test_pinata.py` - All Pinata IPFS tests
+  - Direct API tests
+  - Service layer integration tests
+  - File retrieval tests
+
+**Note**: Duplicate test files have been consolidated to improve maintainability. All test functionality is preserved in the consolidated files.
 
 ---
 
@@ -402,9 +425,49 @@ flake8 hyperkit-agent/
 
 ### Environment Setup
 
-1. Copy `hyperkit-agent/env.example` to `hyperkit-agent/.env`
-2. Add API keys (OpenAI, Anthropic, Google)
-3. Configure network settings
+1. **Copy environment template:**
+   ```bash
+   cp hyperkit-agent/env.example hyperkit-agent/.env
+   ```
+
+2. **Fill in required values:**
+   - `DEFAULT_PRIVATE_KEY`: Use a test wallet (never use mainnet keys!)
+   - `HYPERION_RPC_URL`: Hyperion testnet RPC endpoint
+   - AI provider keys (optional for basic CLI, required for contract operations)
+
+3. **Test your setup:**
+   ```bash
+   hyperagent --help      # Should work without config
+   hyperagent version     # Should work without config
+   hyperagent status      # Should work without config
+   ```
+
+### CI/CD Configuration
+
+The CI pipeline uses a throwaway test private key defined in `.github/workflows/ci-cd.yml`:
+
+```yaml
+env:
+  DEFAULT_PRIVATE_KEY: "0x000000000000000000000000000000000000deadbeefdeadbeefdeadbeefdead"
+```
+
+**Never commit real private keys to version control!**
+
+### CLI Command Gating
+
+- **Informational commands** (no private key required):
+  - `--help`, `version`, `status`, `limitations`, `doctor`, `test-rag`, `context`
+  
+- **Contract operations** (private key required):
+  - `generate`, `deploy`, `workflow`, `audit`, `verify`
+
+### Troubleshooting
+
+**Error: "DEFAULT_PRIVATE_KEY not configured"**
+- **What**: Private key missing from `.env`
+- **Why**: Required for contract deployment and transaction signing
+- **How**: Add `DEFAULT_PRIVATE_KEY=your_test_key_hex` to `.env`
+- **Where**: See `docs/GUIDE/CONFIGURATION_GUIDE.md` for details
 
 ---
 

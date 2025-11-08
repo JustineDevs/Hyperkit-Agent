@@ -93,44 +93,114 @@ def contract(ctx, address, network, source, constructor_args):
             console.print(traceback.format_exc())
 
 @verify_group.command()
-@click.option('--address', '-a', required=True, help='Contract address')
+@click.option('--address', '-a', required=False, help='Contract address')
 @click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
 @click.pass_context
 def status(ctx, address, network):
-    """Check verification status"""
+    """
+    Check verification status for a contract address.
+    
+    If no address is provided, lists recent verified contracts.
+    """
     verbose = ctx.obj.get('verbose', False) if ctx.obj else False
     debug = ctx.obj.get('debug', False) if ctx.obj else False
+    
+    # Validate address is provided
+    if not address:
+        console.print("[red]Error: Contract address is required[/red]", style="red")
+        console.print("[yellow]Usage: hyperagent verify status --address <ADDRESS>[/yellow]")
+        console.print("[yellow]Example: hyperagent verify status --address 0x1234...[/yellow]")
+        console.print("[yellow]Tip: Use 'hyperagent verify list' to see verified contracts[/yellow]")
+        raise click.ClickException("Contract address is required (--address / -a)")
+    
+    # Validate address format (basic check)
+    if not address.startswith('0x') or len(address) != 42:
+        console.print(f"[red]Error: Invalid contract address format: {address}[/red]")
+        console.print("[yellow]Address must be a valid Ethereum address (0x followed by 40 hex characters)[/yellow]")
+        raise click.ClickException(f"Invalid address format: {address}")
+    
     # Hardcode Hyperion - no network selection
     network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
     
-    console.print(f"Verification Status")
+    console.print("Verification Status")
     console.print(f"Address: {address}")
-    console.print(f"Network: Hyperion (exclusive deployment target)")
+    console.print("Network: Hyperion (exclusive deployment target)")
     
     try:
-        from services.verification.explorer_api import ExplorerAPI
-        from core.config.loader import get_config
+        # Import with error handling
+        try:
+            from services.verification.explorer_api import ExplorerAPI
+            from core.config.loader import get_config
+        except ImportError as import_err:
+            console.print(f"[red]Error: Failed to import required modules: {import_err}[/red]", style="red")
+            console.print("[yellow]This may indicate a missing dependency or installation issue[/yellow]")
+            if debug:
+                import traceback
+                console.print(traceback.format_exc())
+            raise click.ClickException(f"Import error: {import_err}")
         
-        config = get_config().to_dict()
-        explorer = ExplorerAPI(network, config)
+        # Get config with error handling
+        try:
+            config = get_config().to_dict()
+        except Exception as config_err:
+            console.print(f"[red]Error: Failed to load configuration: {config_err}[/red]", style="red")
+            if debug:
+                import traceback
+                console.print(traceback.format_exc())
+            raise click.ClickException(f"Config error: {config_err}")
         
-        # Check verification status
-        status_result = explorer.get_verification_status(address)
+        # Initialize explorer with error handling
+        try:
+            explorer = ExplorerAPI(network, config)
+        except Exception as explorer_err:
+            console.print(f"[red]Error: Failed to initialize explorer API: {explorer_err}[/red]", style="red")
+            if debug:
+                import traceback
+                console.print(traceback.format_exc())
+            raise click.ClickException(f"Explorer initialization error: {explorer_err}")
+        
+        # Check verification status with error handling
+        try:
+            status_result = explorer.get_verification_status(address)
+        except Exception as status_err:
+            console.print(f"[red]Error: Failed to check verification status: {status_err}[/red]", style="red")
+            console.print("[yellow]This may indicate a network issue or invalid explorer configuration[/yellow]")
+            if debug:
+                import traceback
+                console.print(traceback.format_exc())
+            raise click.ClickException(f"Status check error: {status_err}")
+        
+        # Process and display results
+        if not isinstance(status_result, dict):
+            console.print("[yellow]Warning: Unexpected response format from explorer[/yellow]")
+            if debug:
+                console.print(f"Response: {status_result}")
+            raise click.ClickException("Invalid response from explorer API")
+        
         is_verified = status_result.get('status') == 'verified'
         
         if is_verified:
-            console.print(f"Contract is verified")
-            console.print(f"Explorer URL: {status_result.get('explorer_url', 'N/A')}")
+            console.print("[green]Contract is verified[/green]")
+            explorer_url = status_result.get('explorer_url', 'N/A')
+            console.print(f"Explorer URL: {explorer_url}")
         else:
-            console.print(f"Contract is not verified")
-            console.print(f"Use 'hyperagent verify contract' to verify")
+            console.print("[yellow]Contract is not verified[/yellow]")
+            console.print("Use 'hyperagent verify contract' to verify")
+            # Return exit code 1 for unverified contracts (non-critical)
+            if status_result.get('status') == 'error':
+                raise click.ClickException(f"Explorer error: {status_result.get('error', 'Unknown error')}")
             
+    except click.ClickException:
+        # Re-raise Click exceptions (they handle exit codes properly)
+        raise
     except Exception as e:
-        console.print(f"Status check error: {e}", style="red")
-        console.print(f"This command requires real explorer integration")
+        # Catch-all for unexpected errors
+        console.print(f"[red]Unexpected error: {e}[/red]", style="red")
+        console.print("[yellow]This command requires real explorer integration[/yellow]")
         if debug:
             import traceback
             console.print(traceback.format_exc())
+        raise click.ClickException(f"Unexpected error: {e}")
 
 @verify_group.command()
 @click.option('--address', '-a', required=True, help='Contract address')

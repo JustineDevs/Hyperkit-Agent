@@ -26,7 +26,20 @@ class HybridLLMRouter:
         self.model_selector = ModelSelector(config)
 
         # Initialize Google Gemini
-        google_key = os.getenv("GOOGLE_API_KEY")
+        # Check config first, then fall back to environment variable
+        google_key = None
+        if self.config:
+            # Try multiple config paths where the key might be stored
+            google_key = (
+                self.config.get("GOOGLE_API_KEY") or
+                self.config.get("google_api_key") or
+                self.config.get("ai_providers", {}).get("google", {}).get("api_key")
+            )
+        
+        # Fall back to environment variable if not in config
+        if not google_key:
+            google_key = os.getenv("GOOGLE_API_KEY")
+        
         if (
             google_key
             and google_key.strip()
@@ -37,14 +50,31 @@ class HybridLLMRouter:
 
                 genai.configure(api_key=google_key)
                 self.gemini_available = True
-                logger.info("Google Gemini client initialized")
+                logger.info(f"✅ Google Gemini client initialized (key found in config: {bool(self.config.get('GOOGLE_API_KEY') or self.config.get('ai_providers', {}).get('google', {}).get('api_key'))})")
             except Exception as e:
-                logger.warning(f"Failed to initialize Google Gemini: {e}")
+                logger.warning(f"❌ Failed to initialize Google Gemini: {e}")
+                self.gemini_available = False
         else:
-            logger.warning("Google Gemini API key not found or invalid")
+            logger.warning("⚠️ Google Gemini API key not found or invalid")
+            logger.debug(f"  - Config GOOGLE_API_KEY: {bool(self.config.get('GOOGLE_API_KEY'))}")
+            logger.debug(f"  - Config ai_providers.google.api_key: {bool(self.config.get('ai_providers', {}).get('google', {}).get('api_key'))}")
+            logger.debug(f"  - Env GOOGLE_API_KEY: {bool(os.getenv('GOOGLE_API_KEY'))}")
 
         # Initialize OpenAI
-        openai_key = os.getenv("OPENAI_API_KEY")
+        # Check config first, then fall back to environment variable
+        openai_key = None
+        if self.config:
+            # Try multiple config paths where the key might be stored
+            openai_key = (
+                self.config.get("OPENAI_API_KEY") or
+                self.config.get("openai_api_key") or
+                self.config.get("ai_providers", {}).get("openai", {}).get("api_key")
+            )
+        
+        # Fall back to environment variable if not in config
+        if not openai_key:
+            openai_key = os.getenv("OPENAI_API_KEY")
+        
         if (
             openai_key
             and openai_key.strip()

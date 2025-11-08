@@ -17,6 +17,7 @@ from typing import Dict, Any, List
 import os
 
 
+@pytest.mark.integration
 class TestCLICommandsE2E:
     """End-to-end tests for all CLI commands"""
     
@@ -412,6 +413,7 @@ contract SimpleToken {
             assert result.returncode in [0, 1]
 
 
+@pytest.mark.integration
 class TestCLIIntegrationE2E:
     """Integration tests for CLI commands working together"""
     

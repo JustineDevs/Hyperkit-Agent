@@ -26,12 +26,18 @@ except ImportError:
 
 class HyperKitAIAgent:
     """
-    Production AI Agent service using Alith SDK ONLY.
+    Production AI Agent service using Alith SDK (PRIMARY AI agent).
+    
+    ARCHITECTURE:
+    - Alith SDK is the PRIMARY AI agent for HyperAgent (integrated by default)
+    - Alith SDK uses Gemini model by default (via GOOGLE_API_KEY)
+    - Alith SDK falls back to OpenAI model if Gemini unavailable (via OPENAI_API_KEY)
+    - If Alith SDK not configured, system uses fallback LLM router
     
     CRITICAL NOTES:
-    - Alith SDK is the ONLY AI agent - no LazAI AI agent exists
+    - Alith SDK is PRIMARY - no LazAI AI agent exists
     - LazAI is network-only (blockchain RPC endpoint), NOT an AI service
-    - If Alith SDK not configured, system uses fallback LLM (OpenAI/Gemini)
+    - If Alith SDK not configured, system uses fallback LLM router
     - Hard fail on operations that require Alith if not configured
     """
     
@@ -47,34 +53,45 @@ class HyperKitAIAgent:
             self._setup_api_endpoints()
         else:
             log_warning(LogCategory.AI_AGENT, "Alith SDK not configured - using fallback LLM")
-            logging.warning("Alith SDK not configured - advanced AI features disabled")
-            logging.warning("System will use fallback LLM (OpenAI/Gemini) for contract operations")
-            logging.warning("To enable Alith SDK:")
+            logging.warning("Alith SDK not configured - PRIMARY AI agent unavailable")
+            logging.warning("System will use fallback LLM (router) for contract operations")
+            logging.warning("To enable Alith SDK (PRIMARY AI agent):")
             logging.warning("  1. Install: pip install alith>=0.12.0")
-            logging.warning("  2. Configure OpenAI API key (Alith requires it)")
-            logging.warning("  3. Set ALITH_ENABLED=true in .env")
+            logging.warning("  2. Configure GOOGLE_API_KEY (preferred) or OPENAI_API_KEY")
+            logging.warning("     - Gemini model is PRIMARY (via GOOGLE_API_KEY)")
+            logging.warning("     - OpenAI model is FALLBACK (via OPENAI_API_KEY)")
+            logging.warning("  3. Set ALITH_ENABLED=true in .env (default: true)")
     
     def _check_alith_config(self) -> bool:
         """Check if Alith SDK is properly configured
         
-        NOTE: Gemini is now PRIMARY. Alith SDK is only used as fallback if Gemini unavailable.
+        NOTE: Alith SDK is PRIMARY AI agent, uses Gemini model by default, OpenAI as fallback.
+        HyperAgent integrates Alith SDK by default for all AI operations.
         """
         if not ALITH_AVAILABLE:
             return False
         
-        # PRIORITY: Check for Gemini first (primary model)
-        google_key = self.config.get('GOOGLE_API_KEY') or self.config.get('google', {}).get('api_key')
-        has_gemini = google_key and google_key.strip() and google_key != 'your_google_api_key_here'
+        # Check for Gemini API key (PRIMARY model for Alith SDK)
+        google_key = (
+            self.config.get('GOOGLE_API_KEY') or 
+            self.config.get('google_api_key') or
+            self.config.get('google', {}).get('api_key') or
+            self.config.get('ai_providers', {}).get('google', {}).get('api_key')
+        )
         
-        # If Gemini is available, disable Alith SDK (don't use OpenAI)
-        # Only enable Alith SDK if Gemini is NOT available
-        if has_gemini:
-            log_info(LogCategory.AI_AGENT, "Gemini detected - Alith SDK (OpenAI) disabled in favor of Gemini")
-            return False  # Don't use Alith SDK when Gemini is available
+        # Check for OpenAI API key (FALLBACK model for Alith SDK)
+        openai_key = (
+            self.config.get('OPENAI_API_KEY') or 
+            self.config.get('openai_api_key') or
+            self.config.get('openai', {}).get('api_key') or
+            self.config.get('ai_providers', {}).get('openai', {}).get('api_key')
+        )
         
-        # Fallback: Check for OpenAI only if Gemini unavailable
-        openai_key = self.config.get('OPENAI_API_KEY') or self.config.get('openai', {}).get('api_key')
-        if not openai_key or openai_key.strip() == '' or openai_key == 'your_openai_api_key_here':
+        # At least one API key must be available (Gemini preferred, OpenAI fallback)
+        has_google = google_key and google_key.strip() != '' and google_key != 'your_google_api_key_here'
+        has_openai = openai_key and openai_key.strip() != '' and openai_key != 'your_openai_api_key_here'
+        
+        if not (has_google or has_openai):
             return False
         
         # Check if Alith is enabled in config
@@ -82,59 +99,102 @@ class HyperKitAIAgent:
         if isinstance(alith_enabled, str):
             alith_enabled = alith_enabled.lower() == 'true'
         
+        # Alith SDK is PRIMARY - always enabled if configured
         return bool(alith_enabled)
     
     def _initialize_alith(self):
-        """Initialize Alith SDK agent - FALLBACK ONLY when Gemini unavailable
+        """Initialize Alith SDK agent - PRIMARY AI agent with Gemini model support
         
-        NOTE: This is only called when Gemini is NOT available. Gemini is PRIMARY model.
+        PRIORITY:
+        1. Gemini model (via GOOGLE_API_KEY) - PRIMARY
+        2. OpenAI model (via OPENAI_API_KEY) - FALLBACK
+        
+        NOTE: Alith SDK is the PRIMARY AI agent for HyperAgent.
+        It uses Gemini by default, falls back to OpenAI if Gemini unavailable.
         """
         try:
-            # Alith SDK fallback - only used if Gemini unavailable
-            # Check Gemini first - if available, don't initialize Alith SDK
-            google_key = self.config.get('GOOGLE_API_KEY') or self.config.get('google', {}).get('api_key')
-            if google_key and google_key.strip() and google_key != 'your_google_api_key_here':
-                log_info(LogCategory.AI_AGENT, "Gemini available - skipping Alith SDK (OpenAI) initialization")
-                self.alith_agent = None
-                self.alith_configured = False
-                return
+            # PRIORITY 1: Try Gemini first (PRIMARY model)
+            google_key = (
+                self.config.get('GOOGLE_API_KEY') or 
+                self.config.get('google_api_key') or
+                self.config.get('google', {}).get('api_key') or
+                self.config.get('ai_providers', {}).get('google', {}).get('api_key')
+            )
             
-            # Fallback: Use OpenAI only if Gemini unavailable
-            openai_key = self.config.get('OPENAI_API_KEY') or self.config.get('openai', {}).get('api_key')
-            if not openai_key:
-                raise ValueError("Neither Gemini nor OpenAI API key available for Alith SDK fallback")
+            # PRIORITY 2: Fallback to OpenAI if Gemini not available
+            openai_key = (
+                self.config.get('OPENAI_API_KEY') or 
+                self.config.get('openai_api_key') or
+                self.config.get('openai', {}).get('api_key') or
+                self.config.get('ai_providers', {}).get('openai', {}).get('api_key')
+            )
             
-            # Get model from config or use default (Alith SDK requires a model)
+            # Get model from config or use defaults
             alith_config = self.config.get('alith', {})
-            model = alith_config.get('model') or self.config.get('ALITH_MODEL') or 'gpt-4o-mini'
             name = alith_config.get('name') or 'HyperKit Agent'
             
-            # Initialize Alith Agent with OpenAI key and model (FALLBACK ONLY)
-            try:
-                self.alith_agent = Agent(
-                    api_key=openai_key,
-                    model=model,
-                    name=name
-                )
-                log_warning(LogCategory.AI_AGENT, f"Alith SDK Agent initialized with OpenAI (FALLBACK) - Gemini unavailable. Model: {model}")
-                logging.warning("⚠️ Using OpenAI via Alith SDK as fallback - Gemini should be configured as PRIMARY")
-            except (AttributeError, TypeError) as e:
-                log_error(LogCategory.AI_AGENT, f"Alith SDK Agent initialization failed: {e}", e)
-                raise ValueError(f"Alith SDK Agent failed to initialize: {e}")
+            # Try Gemini first (PRIMARY)
+            if google_key and google_key.strip() != '' and google_key != 'your_google_api_key_here':
+                try:
+                    # Use Gemini model (e.g., gemini-2.0-pro, gemini-1.5-flash, etc.)
+                    gemini_model = alith_config.get('model') or self.config.get('ALITH_MODEL') or 'gemini-2.0-pro'
+                    
+                    self.alith_agent = Agent(
+                        api_key=google_key,
+                        model=gemini_model,
+                        name=name
+                    )
+                    log_info(LogCategory.AI_AGENT, f"Alith SDK Agent initialized with Gemini (PRIMARY). Model: {gemini_model}")
+                    logging.info(f"✅ Alith SDK initialized with Gemini model: {gemini_model}")
+                    logging.info("   This is the PRIMARY AI agent for HyperAgent")
+                    
+                    # Initialize multiple AI models
+                    self._initialize_models()
+                    log_info(LogCategory.AI_AGENT, "Alith AI Agent initialized successfully")
+                    logging.info("✅ Alith SDK AI Agent initialized successfully")
+                    return  # Success - exit early
+                except (AttributeError, TypeError, ValueError) as e:
+                    log_warning(LogCategory.AI_AGENT, f"Gemini initialization failed: {e}, trying OpenAI fallback")
+                    logging.warning(f"⚠️ Gemini model initialization failed: {e}")
+                    logging.warning("   Falling back to OpenAI...")
             
-            # Initialize multiple AI models
-            self._initialize_models()
+            # PRIORITY 2: Fallback to OpenAI if Gemini unavailable or failed
+            if openai_key and openai_key.strip() != '' and openai_key != 'your_openai_api_key_here':
+                try:
+                    openai_model = alith_config.get('model') or self.config.get('ALITH_MODEL') or 'gpt-4o-mini'
+                    
+                    self.alith_agent = Agent(
+                        api_key=openai_key,
+                        model=openai_model,
+                        name=name
+                    )
+                    log_info(LogCategory.AI_AGENT, f"Alith SDK Agent initialized with OpenAI (FALLBACK). Model: {openai_model}")
+                    logging.info(f"✅ Alith SDK initialized with OpenAI (fallback). Model: {openai_model}")
+                    logging.info("   Note: Configure GOOGLE_API_KEY to use Gemini as primary")
+                    
+                    # Initialize multiple AI models
+                    self._initialize_models()
+                    log_info(LogCategory.AI_AGENT, "Alith AI Agent initialized successfully")
+                    logging.info("✅ Alith SDK AI Agent initialized successfully")
+                    return  # Success with OpenAI fallback
+                except (AttributeError, TypeError) as e:
+                    log_error(LogCategory.AI_AGENT, f"OpenAI initialization also failed: {e}", e)
+                    raise ValueError(f"Both Gemini and OpenAI initialization failed. Last error: {e}")
             
-            log_info(LogCategory.AI_AGENT, "Alith AI Agent initialized successfully")
-            logging.info("✅ Alith SDK AI Agent initialized successfully")
+            # No API keys available
+            raise ValueError(
+                "No AI provider API keys available for Alith SDK\n"
+                "  Required: GOOGLE_API_KEY (preferred) or OPENAI_API_KEY\n"
+                "  Configure: Set GOOGLE_API_KEY in .env for Gemini (primary)\n"
+                "  Or set OPENAI_API_KEY for OpenAI (fallback)"
+            )
+            
         except Exception as e:
             log_error(LogCategory.AI_AGENT, "Failed to initialize Alith agent", e)
             logging.error(f"CRITICAL: Failed to initialize Alith SDK agent: {e}")
             logging.error("Advanced AI features will be unavailable")
-            logging.error("System will continue with fallback LLM only")
             self.alith_agent = None
-            # Hard fail would be: raise RuntimeError("Alith SDK initialization failed")
-            # But we allow graceful degradation to fallback LLM
+            raise
     
     def _initialize_models(self):
         """Initialize multiple AI models for different tasks"""
@@ -203,12 +263,14 @@ class HyperKitAIAgent:
     
     async def generate_contract(self, requirements: Dict[str, Any]) -> str:
         """
-        Generate smart contract using Alith SDK AI services.
+        Generate smart contract using Alith SDK AI services (PRIMARY AI agent).
+        
+        Alith SDK uses Gemini model by default (via GOOGLE_API_KEY), falls back to OpenAI if Gemini unavailable.
         
         Requires:
         - Alith SDK installed (pip install alith>=0.12.0)
-        - OpenAI API key configured (OPENAI_API_KEY)
-        - ALITH_ENABLED=true in config
+        - GOOGLE_API_KEY (preferred) or OPENAI_API_KEY configured
+        - ALITH_ENABLED=true in config (default: true)
         
         Raises:
             RuntimeError: If Alith SDK not configured
@@ -216,10 +278,10 @@ class HyperKitAIAgent:
         if not self.alith_configured:
             raise RuntimeError(
                 "Alith SDK not configured - cannot generate contract with AI\n"
-                "  Required: OpenAI API key (OPENAI_API_KEY) + Alith SDK installed\n"
+                "  Required: GOOGLE_API_KEY (preferred) or OPENAI_API_KEY + Alith SDK installed\n"
                 "  Install: pip install alith>=0.12.0\n"
-                "  Configure: Set OPENAI_API_KEY and ALITH_ENABLED=true in .env\n"
-                "  Note: LazAI is network-only, NOT an AI agent"
+                "  Configure: Set GOOGLE_API_KEY (Gemini) or OPENAI_API_KEY (OpenAI) in .env\n"
+                "  Note: Alith SDK is PRIMARY AI agent, uses Gemini by default, OpenAI as fallback"
             )
         
         try:

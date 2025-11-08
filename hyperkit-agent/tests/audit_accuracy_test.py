@@ -8,6 +8,7 @@ import pytest
 from services.audit.auditor import SmartContractAuditor
 
 
+@pytest.mark.integration
 class TestAuditAccuracy:
     """Test audit accuracy against known vulnerable contracts"""
     

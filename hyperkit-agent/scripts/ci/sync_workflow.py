@@ -238,6 +238,58 @@ def stage_files(patterns: List[str]) -> int:
                 staged_count += len(check.stdout.strip().split('\n'))
     return staged_count
 
+def detect_uncommitted_files() -> Tuple[List[str], List[str], List[str]]:
+    """
+    Detect uncommitted files: untracked, modified, and staged.
+    
+    Returns:
+        Tuple of (untracked_files, modified_files, staged_files)
+    """
+    untracked = []
+    modified = []
+    staged = []
+    
+    # Get git status
+    result = subprocess.run(
+        ['git', 'status', '--porcelain'],
+        capture_output=True, text=True, cwd=REPO_ROOT
+    )
+    
+    if not result.stdout.strip():
+        return (untracked, modified, staged)
+    
+    # Parse status output
+    # Status format: XY filename
+    # X = staged status, Y = working tree status
+    for line in result.stdout.strip().split('\n'):
+        if not line.strip():
+            continue
+        
+        status = line[:2]
+        filename = line[3:].strip()
+        
+        # Remove quotes if present
+        if filename.startswith('"') and filename.endswith('"'):
+            filename = filename[1:-1]
+        
+        # Skip lib/ submodule changes
+        if '/lib/' in filename or '\\lib\\' in filename:
+            continue
+        
+        # Categorize files
+        if status[0] == '?' and status[1] == '?':
+            # Untracked file
+            untracked.append(filename)
+        elif status[1] in ['M', 'D']:
+            # Modified or deleted in working tree
+            modified.append(filename)
+        elif status[0] in ['M', 'A', 'D', 'R']:
+            # Staged changes
+            staged.append(filename)
+    
+    return (untracked, modified, staged)
+
+
 def stage_all_modified_files() -> int:
     """Stage ALL modified files (not just patterns). Returns number of files staged."""
     # Get all modified files
@@ -272,6 +324,10 @@ def stage_all_modified_files() -> int:
         # Remove quotes if present
         if filename.startswith('"') and filename.endswith('"'):
             filename = filename[1:-1]
+        
+        # Skip lib/ submodule changes
+        if '/lib/' in filename or '\\lib\\' in filename:
+            continue
         
         # Skip if already staged
         if filename in already_staged:
@@ -403,11 +459,42 @@ def run_hygiene_workflow(dry_run: bool = False, push: bool = False) -> bool:
         print("[DRY RUN] Mode: No changes will be made")
         print()
     
-    # Check working tree
+    # Check for uncommitted files and auto-stage if found
+    untracked, modified, staged = detect_uncommitted_files()
+    has_uncommitted = len(untracked) > 0 or len(modified) > 0
+    
+    if has_uncommitted and not dry_run:
+        print("\n⚠️  [WARNING] Uncommitted files detected before workflow start")
+        print("   Auto-staging uncommitted files to prevent data loss...\n")
+        
+        if untracked:
+            print(f"   Untracked files ({len(untracked)}):")
+            for f in untracked[:5]:
+                print(f"     + {f}")
+            if len(untracked) > 5:
+                print(f"     ... and {len(untracked) - 5} more")
+            print()
+        
+        if modified:
+            print(f"   Modified files ({len(modified)}):")
+            for f in modified[:5]:
+                print(f"     M {f}")
+            if len(modified) > 5:
+                print(f"     ... and {len(modified) - 5} more")
+            print()
+        
+        # Auto-stage all uncommitted files
+        auto_staged = stage_all_modified_files()
+        if auto_staged > 0:
+            print(f"   ✅ Auto-staged {auto_staged} file(s)")
+            print("   These files will be committed during the workflow\n")
+        else:
+            print("   [INFO] No files were staged (may already be staged)\n")
+    
+    # Check working tree after auto-staging
     if not is_clean_working_tree() and not dry_run:
-        print("\n❌ [ERROR] Working tree has uncommitted changes")
-        print("   Hygiene workflow requires a clean working tree for safety.")
-        print("   Branch switching and merging with uncommitted changes can cause data loss.\n")
+        print("\n❌ [ERROR] Working tree still has uncommitted changes after auto-staging")
+        print("   This may indicate files that cannot be automatically staged.\n")
         
         # Show what files have changes (excluding lib/ submodule changes)
         try:
@@ -424,7 +511,7 @@ def run_hygiene_workflow(dry_run: bool = False, push: bool = False) -> bool:
                 ]
                 if relevant_lines:
                     lines = relevant_lines[:10]
-                    print("   Uncommitted changes detected:")
+                    print("   Remaining uncommitted changes:")
                     for line in lines:
                         print(f"     {line}")
                     if len(relevant_lines) > 10:
@@ -435,9 +522,10 @@ def run_hygiene_workflow(dry_run: bool = False, push: bool = False) -> bool:
         
         print("   📋 Next steps:")
         print("   1. Review changes: git status")
-        print("   2. Commit changes: git add . && git commit -m 'your message'")
+        print("   2. Manually stage: git add <files>")
+        print("   3. Commit changes: git commit -m 'your message'")
         print("      OR stash changes: git stash")
-        print("   3. Re-run: npm run hygiene")
+        print("   4. Re-run: npm run hygiene")
         print()
         print("   ⚠️  Never bypass this check - it protects your repository integrity!\n")
         return False
@@ -706,18 +794,77 @@ def run_hygiene_workflow(dry_run: bool = False, push: bool = False) -> bool:
     print("-" * 60)
     print()
     
-    # Final status
-    print("[STEP 5] Final status...")
+    # Final status and validation
+    print("[STEP 5] Final status and validation...")
     print("-" * 60)
-    result = subprocess.run(
-        ['git', 'status', '--short'], 
-        capture_output=True, text=True, cwd=REPO_ROOT
-    )
-    if result.stdout.strip():
-        print("Remaining uncommitted changes:")
-        print(result.stdout)
+    
+    if not dry_run:
+        # Final check for uncommitted files
+        final_untracked, final_modified, final_staged = detect_uncommitted_files()
+        has_final_uncommitted = len(final_untracked) > 0 or len(final_modified) > 0
+        
+        if has_final_uncommitted:
+            print("⚠️  [WARNING] Uncommitted files detected after workflow completion")
+            
+            if final_untracked:
+                print(f"   Untracked files ({len(final_untracked)}):")
+                for f in final_untracked[:5]:
+                    print(f"     + {f}")
+                if len(final_untracked) > 5:
+                    print(f"     ... and {len(final_untracked) - 5} more")
+            
+            if final_modified:
+                print(f"   Modified files ({len(final_modified)}):")
+                for f in final_modified[:5]:
+                    print(f"     M {f}")
+                if len(final_modified) > 5:
+                    print(f"     ... and {len(final_modified) - 5} more")
+            
+            # Try to auto-stage and commit remaining files
+            print("\n   Attempting to auto-commit remaining files...")
+            remaining_staged = stage_all_modified_files()
+            if remaining_staged > 0:
+                try:
+                    commit_message = f"chore: auto-commit remaining workflow files\n\n" \
+                                   f"Auto-committed {remaining_staged} remaining file(s) after workflow completion.\n" \
+                                   f"Generated: {datetime.now().isoformat()}"
+                    result = subprocess.run(
+                        ['git', 'diff', '--cached', '--quiet'],
+                        capture_output=True, cwd=REPO_ROOT
+                    )
+                    if result.returncode != 0:
+                        subprocess.run(
+                            ['git', 'commit', '-m', commit_message],
+                            check=True, cwd=REPO_ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                        )
+                        print(f"   ✅ Committed {remaining_staged} remaining file(s)")
+                    else:
+                        print(f"   [INFO] No remaining files to commit")
+                except subprocess.CalledProcessError as e:
+                    print(f"   ⚠️  Could not commit remaining files: {e}")
+            
+            # Final check
+            final_untracked2, final_modified2, _ = detect_uncommitted_files()
+            if len(final_untracked2) > 0 or len(final_modified2) > 0:
+                print("\n   ❌ Some files could not be automatically committed")
+                print("   Please review and commit manually:")
+                print("     git status")
+                print("     git add <files>")
+                print("     git commit -m 'your message'")
+            else:
+                print("\n   ✅ All files successfully committed")
+        else:
+            print("  [OK] Working tree is clean - all files committed")
     else:
-        print("  [OK] Working tree is clean")
+        result = subprocess.run(
+            ['git', 'status', '--short'], 
+            capture_output=True, text=True, cwd=REPO_ROOT
+        )
+        if result.stdout.strip():
+            print("[DRY RUN] Would check for remaining uncommitted changes:")
+            print(result.stdout)
+        else:
+            print("  [DRY RUN] Working tree appears clean")
     
     print()
     print("=" * 60)

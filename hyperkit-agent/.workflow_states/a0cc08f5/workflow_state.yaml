@@ -1,0 +1,109 @@
+workflow_id: a0cc08f5
+user_goal: Create a test ERC20 token
+created_at: '2025-11-07T14:51:31.978474'
+updated_at: '2025-11-07T14:51:32.613983'
+current_step: update
+current_stage: generation
+reasoning_history:
+- step: read
+  reasoning: 'Reading workflow state for a0cc08f5. Last successful stage: input_parsing'
+  plan:
+  - Load state
+  - Load context
+  - Load RAG context
+  constraints: {}
+  confidence: 1.0
+  timestamp: '2025-11-07T14:51:32.577983'
+- step: plan
+  reasoning: 'Planning input_parsing stage. Tool: query_ipfs_rag'
+  plan:
+  - Execute query_ipfs_rag for input_parsing
+  constraints:
+    stage: input_parsing
+    retry_count: 0
+  confidence: 0.9
+  timestamp: '2025-11-07T14:51:32.580983'
+- step: read
+  reasoning: 'Reading workflow state for a0cc08f5. Last successful stage: input_parsing'
+  plan:
+  - Load state
+  - Load context
+  - Load RAG context
+  constraints: {}
+  confidence: 1.0
+  timestamp: '2025-11-07T14:51:32.602983'
+- step: plan
+  reasoning: 'Planning generation stage. Tool: generate_contract'
+  plan:
+  - Execute generate_contract for generation
+  constraints:
+    stage: generation
+    retry_count: 0
+  confidence: 0.9
+  timestamp: '2025-11-07T14:51:32.606983'
+current_reasoning:
+  step: plan
+  reasoning: 'Planning generation stage. Tool: generate_contract'
+  plan:
+  - Execute generate_contract for generation
+  constraints:
+    stage: generation
+    retry_count: 0
+  confidence: 0.9
+  timestamp: '2025-11-07T14:51:32.606983'
+tool_invocations:
+- tool_name: query_ipfs_rag
+  parameters:
+    stage: input_parsing
+  result:
+    status: success
+    output:
+      rag_context_length: 0
+      rag_scope: official-only
+      template_info:
+        cid: null
+        source: ipfs_pinata
+        scope: official-only
+      template_loaded: false
+  error: null
+  duration_ms: 3.999948501586914
+  timestamp: '2025-11-07T14:51:32.587983'
+- tool_name: generate_contract
+  parameters:
+    stage: generation
+  result: null
+  error: No module named 'core.prompts'
+  duration_ms: 4.000425338745117
+  timestamp: '2025-11-07T14:51:32.613983'
+next_action:
+  step: plan
+  tool_name: generate_contract
+  parameters:
+    stage: generation
+  reasoning: 'Planning generation stage. Tool: generate_contract'
+  expected_outcome: Successfully complete generation stage
+  fallback_plan: null
+action_queue: []
+context_snapshot:
+  temp_dir: C:\Users\JustineDevs\Downloads\HyperAgent\hyperkit-agent\.temp_envs\workflow_a0cc08f5_20251107_145131
+  workspace_dir: C:\Users\JustineDevs\Downloads\HyperAgent\hyperkit-agent
+  last_successful_stage: input_parsing
+  has_errors: false
+  retry_counts: {}
+  error_count: 0
+  last_action: generate_contract
+  last_action_success: false
+  last_stage: input_parsing
+rag_context: null
+error_history:
+- error: No module named 'core.prompts'
+  error_type: ModuleNotFoundError
+  stage: generation
+  step: act
+  timestamp: '2025-11-07T14:51:32.613983'
+  retry_count: 0
+retry_counts: {}
+is_complete: false
+has_error: true
+error_message: No module named 'core.prompts'
+metadata: {}

@@ -5,6 +5,7 @@ Production-ready with Hyperion testnet focus
 """
 import click
 import asyncio
+from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -97,20 +98,49 @@ hype    [OK] FIXED: Deployment validation has been added - workflow properly fai
             console.print(f"[red]WARNING: Network '{ctx.params.get('network')}' not supported[/red]")
             console.print("[yellow]Using Hyperion (only supported network)[/yellow]")
         
-        # Run workflow
+        # Run workflow with real-time monitoring (Phase 5)
         console.print("\n[cyan]Starting 5-stage workflow...[/cyan]")
         console.print(f"[dim]Network: Hyperion (exclusive deployment target)[/dim]\n")
         
-        result = asyncio.run(agent.run_workflow(
-            user_prompt=enhanced_prompt,
-            network="hyperion",  # Hardcoded - Hyperion only
-            auto_verification=not no_verify,
-            test_only=test_only,
-            allow_insecure=allow_insecure,
-            upload_scope=upload_scope,
-            rag_scope=rag_scope,
-            resume_from_diagnostic=resume_from
-        ))
+        # Display workflow state panel (Phase 5)
+        from core.workflow.state_persistence import StatePersistence
+        from pathlib import Path
+        state_persistence = StatePersistence(Path.cwd())
+        
+        # Create progress indicator with workflow state updates
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("[cyan]Executing workflow...", total=None)
+            
+            # Run workflow
+            result = asyncio.run(agent.run_workflow(
+                user_prompt=enhanced_prompt,
+                network="hyperion",  # Hardcoded - Hyperion only
+                auto_verification=not no_verify,
+                test_only=test_only,
+                allow_insecure=allow_insecure,
+                upload_scope=upload_scope,
+                rag_scope=rag_scope,
+                resume_from_diagnostic=resume_from
+            ))
+            
+            progress.update(task, completed=True)
+            
+            # Display workflow state after completion (Phase 5)
+            workflow_id = result.get('workflow_id') or result.get('workflow', {}).get('id')
+            if workflow_id:
+                state = state_persistence.load_state(workflow_id)
+                if state:
+                    # Show current step and reasoning
+                    console.print(f"\n[bold cyan]Workflow State:[/bold cyan]")
+                    console.print(f"  Step: [yellow]{state.current_step.value}[/yellow]")
+                    console.print(f"  Stage: [yellow]{state.current_stage or 'N/A'}[/yellow]")
+                    if state.current_reasoning:
+                        console.print(f"  Reasoning: [dim]{state.current_reasoning.reasoning[:100]}...[/dim]")
+                    console.print(f"  [dim]Use 'hyperagent workflow inspect {workflow_id}' for full details[/dim]")
         
         # Process results with proper status handling
         workflow_status = result.get('status', 'unknown')
@@ -175,10 +205,23 @@ def _display_success_results(result: dict, network: str, test_only: bool, verbos
     # Stage 1: Generation
     gen = result.get('generation', {})
     if gen:
+        # Get actual file path from artifacts or generation result
+        contract_path = (
+            result.get('artifacts', {}).get('local_paths', {}).get('contract') or
+            gen.get('path') or
+            gen.get('filename', 'N/A')
+        )
+        # Make path relative if it's absolute
+        if contract_path and contract_path != 'N/A':
+            try:
+                contract_path = str(Path(contract_path).relative_to(Path.cwd()))
+            except (ValueError, TypeError):
+                pass  # Keep absolute path if can't make relative
+        
         table.add_row(
             "1. Generation",
             "[green]Success[/green]",
-            f"File: {gen.get('filename', 'N/A')}\nProvider: {gen.get('provider_used', 'AI')}"
+            f"File: {contract_path}\nProvider: {gen.get('provider_used', 'AI')}"
         )
     
     # Stage 2: Audit
@@ -202,14 +245,51 @@ def _display_success_results(result: dict, network: str, test_only: bool, verbos
     deploy = result.get('deployment', {})
     if deploy and not test_only:
         deploy_status = deploy.get('status', 'unknown')
-        if deploy_status in ['deployed', 'success']:
+        # Check if deployment actually succeeded - look for address or success status
+        address = deploy.get('address') or deploy.get('contract_address') or None
+        tx_hash = deploy.get('tx_hash') or deploy.get('transaction_hash') or None
+        network = deploy.get('network', 'hyperion')
+        
+        # If status is success/deployed OR we have an address, deployment succeeded
+        deployment_succeeded = (
+            deploy_status in ['deployed', 'success'] or 
+            address is not None or 
+            tx_hash is not None
+        )
+        
+        if deployment_succeeded:
+            if address:
+                address_display = address
+            else:
+                # Address might be missing but deployment succeeded - check if we can extract from tx
+                address_display = 'Deployed (address pending)'
+            
+            if tx_hash:
+                # Show truncated TX in table, full link will be shown below
+                tx_display = f"{tx_hash[:18]}..."
+            else:
+                tx_display = 'N/A'
+            
+            # Determine deployment status for display
+            if address:
+                status_display = "[green]Deployed[/green]"
+            elif tx_hash:
+                status_display = "[green]Deployed[/green]"  # Has TX hash = deployed
+            else:
+                status_display = "[yellow]Pending[/yellow]"
+            
             table.add_row(
                 "3. Deployment",
-                "[green]Deployed[/green]",
-                f"Address: {deploy.get('address', 'N/A')}\nTX: {deploy.get('tx_hash', 'N/A')[:18]}..."
+                status_display,
+                f"Address: {address_display}\nTX: {tx_display}"
             )
-        else:
-            # FAIL LOUD - Don't fake success
+            
+            # Store TX hash and address for display below table
+            deploy['_tx_hash_display'] = tx_hash
+            deploy['_address_display'] = address
+            deploy['_network'] = network
+        elif deploy_status not in ['skipped', 'unknown']:
+            # FAIL LOUD - Don't fake success (only if status is explicitly error/failed)
             error_msg = deploy.get('error', 'Unknown deployment error')
             suggestions = deploy.get('suggestions', [])
             
@@ -268,25 +348,136 @@ def _display_success_results(result: dict, network: str, test_only: bool, verbos
     testing = result.get('testing', {})
     if testing and not test_only:
         test_status = testing.get('status', 'unknown')
+        test_results = testing.get('results', {})
+        
         if test_status == 'success':
+            # Build meaningful test information
+            test_info_parts = []
+            
+            if test_results:
+                if test_results.get('foundry_tests_run'):
+                    test_info_parts.append("Foundry tests executed")
+                if test_results.get('tests_passed'):
+                    test_info_parts.append("All tests passed")
+                elif test_results.get('tests_passed') is False:
+                    test_info_parts.append("Some tests failed")
+                
+                # Extract test count if available
+                if 'test_count' in test_results:
+                    test_info_parts.append(f"{test_results['test_count']} tests")
+                elif 'tests_passed' is True:
+                    test_info_parts.append("All tests passed")
+            
+            test_info = ", ".join(test_info_parts) if test_info_parts else "Tests executed successfully"
+            
             table.add_row(
                 "5. Testing",
                 "[green]Passed[/green]",
-                f"Tests: {testing.get('tests_passed', 'N/A')}"
+                test_info
+            )
+        elif test_status == 'skipped':
+            table.add_row(
+                "5. Testing",
+                "[blue]Skipped[/blue]",
+                "Testing stage skipped"
+            )
+        else:
+            table.add_row(
+                "5. Testing",
+                "[yellow]Pending[/yellow]",
+                f"Status: {test_status}"
             )
     
     console.print(table)
     
     # Display key information
-    if deploy and deploy.get('status') in ['deployed', 'success']:
-        contract_address = deploy.get('address', '')
+    deploy_status = deploy.get('status', 'unknown') if deploy else None
+    deployment_succeeded = (
+        deploy_status in ['deployed', 'success'] or 
+        deploy.get('address') or 
+        deploy.get('contract_address') or
+        deploy.get('tx_hash') or
+        deploy.get('transaction_hash')
+    )
+    
+    if deploy and deployment_succeeded:
+        contract_address = deploy.get('_address_display') or deploy.get('address') or deploy.get('contract_address')
+        network = deploy.get('_network') or deploy.get('network', 'hyperion')
+        tx_hash = deploy.get('_tx_hash_display') or deploy.get('tx_hash') or deploy.get('transaction_hash')
+        
+        # If we have tx_hash but no address, try to extract from transaction receipt
+        if tx_hash and not contract_address:
+            try:
+                from web3 import Web3
+                # Get RPC URL for Hyperion
+                rpc_url = "https://hyperion-testnet-rpc.metisdevops.link"
+                w3 = Web3(Web3.HTTPProvider(rpc_url))
+                receipt = w3.eth.get_transaction_receipt(tx_hash)
+                if receipt and receipt.contractAddress:
+                    contract_address = receipt.contractAddress
+                    console.print(f"[dim]✓ Extracted contract address from transaction receipt[/dim]")
+            except Exception as e:
+                # Silently fail - address extraction is optional
+                pass
+        
         if contract_address:
             console.print(f"\n[bold green]Contract Address:[/bold green] [white]{contract_address}[/white]")
-            console.print(f"[bold green]Explorer URL:[/bold green] [link=https://hyperion-testnet-explorer.metisdevops.link/address/{contract_address}]https://hyperion-testnet-explorer.metisdevops.link/address/{contract_address}[/link]")
+            explorer_base = "https://hyperion-testnet-explorer.metisdevops.link"
+            explorer_url = f"{explorer_base}/address/{contract_address}"
+            console.print(f"[bold green]Explorer URL:[/bold green] [link={explorer_url}]{explorer_url}[/link]")
+        elif tx_hash:
+            # We have a transaction but no address - deployment might still be pending
+            console.print(f"\n[bold yellow]Deployment Status:[/bold yellow] [white]Transaction confirmed, extracting address...[/white]")
+            console.print(f"[dim]Contract address will be available from transaction receipt.[/dim]")
+        else:
+            console.print(f"\n[bold yellow]Deployment Status:[/bold yellow] [white]Pending deployment[/white]")
+            console.print(f"[dim]Contract is being deployed. Address will be available once deployment completes.[/dim]")
+        
+        # Show transaction hash with clickable explorer link
+        if tx_hash:
+            explorer_base = "https://hyperion-testnet-explorer.metisdevops.link"
+            tx_url = f"{explorer_base}/tx/{tx_hash}"
+            console.print(f"[bold cyan]Transaction Hash:[/bold cyan] [link={tx_url}]{tx_hash}[/link]")
     
-    # Display file path
-    if gen and gen.get('path'):
-        console.print(f"[bold cyan]Contract File:[/bold cyan] [white]{gen.get('path')}[/white]")
+    # Display file paths and artifacts
+    artifacts = result.get('artifacts', {})
+    local_paths = artifacts.get('local_paths', {})
+    
+    # Contract file
+    contract_path = local_paths.get('contract') or gen.get('path') if gen else None
+    if contract_path:
+        try:
+            contract_path = str(Path(contract_path).relative_to(Path.cwd()))
+        except (ValueError, TypeError):
+            pass
+        console.print(f"[bold cyan]Contract File:[/bold cyan] [white]{contract_path}[/white]")
+    
+    # ABI file
+    abi_path = local_paths.get('abi')
+    if abi_path:
+        try:
+            abi_path = str(Path(abi_path).relative_to(Path.cwd()))
+        except (ValueError, TypeError):
+            pass
+        console.print(f"[bold cyan]ABI File:[/bold cyan] [white]{abi_path}[/white]")
+    
+    # Metadata file
+    metadata_path = local_paths.get('metadata')
+    if metadata_path:
+        try:
+            metadata_path = str(Path(metadata_path).relative_to(Path.cwd()))
+        except (ValueError, TypeError):
+            pass
+        console.print(f"[bold cyan]Metadata File:[/bold cyan] [white]{metadata_path}[/white]")
+    
+    # Diagnostic bundle if errors occurred
+    diagnostic_bundle = result.get('diagnostic_bundle')
+    if diagnostic_bundle:
+        try:
+            diagnostic_bundle = str(Path(diagnostic_bundle).relative_to(Path.cwd()))
+        except (ValueError, TypeError):
+            pass
+        console.print(f"[bold yellow]Diagnostic Bundle:[/bold yellow] [white]{diagnostic_bundle}[/white]")
     
     # Determine if workflow actually succeeded
     deploy = result.get('deployment', {})
@@ -301,38 +492,302 @@ def _display_success_results(result: dict, network: str, test_only: bool, verbos
     return True  # All good
 
 def _display_error_results(result: dict):
-    """Display error results"""
+    """Display error results with user-friendly messages"""
     error_msg = result.get('error', 'Unknown error occurred')
     console.print(f"\n[red bold]Workflow failed:[/red bold] {error_msg}")
     
+    # Check for friendly error message in metadata (from guardrails)
+    friendly_error = result.get('metadata', {}).get('friendly_error')
+    if not friendly_error:
+        # Try to extract from stages
+        stages = result.get('stages', [])
+        for stage in stages:
+            if stage.get('status') == 'error' and stage.get('metadata', {}).get('friendly_error'):
+                friendly_error = stage['metadata']['friendly_error']
+                break
+    
+    if friendly_error:
+        console.print(f"\n[yellow bold]{friendly_error.get('friendly_message', '')}[/yellow bold]")
+        suggestions = friendly_error.get('suggestions', [])
+        if suggestions:
+            console.print(f"\n[cyan]Suggestions:[/cyan]")
+            for suggestion in suggestions:
+                console.print(f"  • {suggestion}")
+        help_text = friendly_error.get('help_text')
+        if help_text:
+            console.print(f"\n[dim]{help_text}[/dim]")
+    else:
+        # Generic helpful message
+        console.print(f"\n[yellow]💡 Tips:[/yellow]")
+        console.print(f"  • Check the diagnostic bundle for detailed error information")
+        console.print(f"  • Try reformulating your prompt with more specific requirements")
+        console.print(f"  • Ensure all required dependencies are available")
+        console.print(f"  • Review error logs for specific issues")
+    
     if result.get('workflow'):
-        console.print(f"[yellow]Failed at stage:[/yellow] {result.get('workflow')}")
+        console.print(f"\n[yellow]Failed at stage:[/yellow] {result.get('workflow')}")
+    
+    # Show failed stages if available
+    failed_stages = result.get('failed_stages', [])
+    if failed_stages:
+        console.print(f"\n[red]Failed critical stages:[/red] {', '.join(failed_stages)}")
 
 @workflow_group.command(name='status')
-@click.option('--network', '-n', default='hyperion', help='Target network')
-def workflow_status(network):
-    """Check workflow system status"""
-    console.print(f"[cyan]Workflow System Status[/cyan]\n")
+@click.option('--workflow-id', '-w', help='Specific workflow ID to check')
+def workflow_status(workflow_id):
+    """
+    Show current workflow state and status.
     
-    status_table = Table(show_header=True, header_style="bold cyan")
-    status_table.add_column("Component", style="cyan")
-    status_table.add_column("Status", width=20)
+    Displays the current autonomous loop state (read/plan/act/update) and
+    agent reasoning for active or recent workflows.
+    """
+    from core.workflow.state_persistence import StatePersistence
+    from pathlib import Path
+    from rich.table import Table
+    from rich.panel import Panel
     
-    # Check components
-    status_table.add_row("Network", f"[green][/green] {network}")
-    status_table.add_row("AI Generation", "[green]Ready[/green]")
-    status_table.add_row("Security Audit", "[green]Ready[/green]")
-    status_table.add_row("Deployment", "[green]Ready[/green]")
-    status_table.add_row("Verification", "[green]Ready[/green]")
+    # Validate workflow_id - filter out Sentinel objects using centralized utility
+    from cli.utils.sentinel_validator import validate_string_param
+    workflow_id = validate_string_param(workflow_id, "workflow_id")
     
-    console.print(status_table)
-    console.print("\n[green]All workflow components operational[/green]")
+    workspace_dir = Path.cwd()
+    state_persistence = StatePersistence(workspace_dir)
+    
+    if workflow_id:
+        # Show specific workflow
+        state = state_persistence.load_state(workflow_id)
+        if not state:
+            console.print(f"[red]Workflow '{workflow_id}' not found[/red]")
+            return
+        
+        # Display workflow state
+        status_table = Table(title=f"Workflow: {workflow_id}")
+        status_table.add_column("Property", style="cyan")
+        status_table.add_column("Value", style="white")
+        
+        status_table.add_row("Status", "[green]Complete[/green]" if state.is_complete else "[yellow]In Progress[/yellow]")
+        status_table.add_row("Current Step", state.current_step.value)
+        status_table.add_row("Current Stage", state.current_stage or "None")
+        status_table.add_row("User Goal", state.user_goal[:100] + "..." if len(state.user_goal) > 100 else state.user_goal)
+        status_table.add_row("Has Errors", "[red]Yes[/red]" if state.has_error else "[green]No[/green]")
+        status_table.add_row("Tool Invocations", str(len(state.tool_invocations)))
+        status_table.add_row("Reasoning Steps", str(len(state.reasoning_history)))
+        
+        console.print(status_table)
+        
+        # Show recent reasoning
+        if state.reasoning_history:
+            console.print("\n[bold]Recent Agent Reasoning:[/bold]")
+            for reasoning in state.reasoning_history[-3:]:
+                console.print(Panel(
+                    f"[cyan]Step:[/cyan] {reasoning.step.value}\n"
+                    f"[cyan]Reasoning:[/cyan] {reasoning.reasoning}\n"
+                    f"[cyan]Confidence:[/cyan] {reasoning.confidence:.2f}",
+                    title=f"{reasoning.timestamp}",
+                    border_style="blue"
+                ))
+    else:
+        # List recent workflows
+        states_dir = state_persistence.states_dir
+        if not states_dir.exists():
+            console.print("[yellow]No workflows found[/yellow]")
+            return
+        
+        workflows = []
+        for workflow_dir in states_dir.iterdir():
+            if workflow_dir.is_dir():
+                state = state_persistence.load_state(workflow_dir.name)
+                if state:
+                    workflows.append(state)
+        
+        if not workflows:
+            console.print("[yellow]No workflows found[/yellow]")
+            return
+        
+        # Sort by updated_at
+        workflows.sort(key=lambda s: s.updated_at, reverse=True)
+        
+        # Display table
+        table = Table(title="Recent Workflows")
+        table.add_column("Workflow ID", style="cyan")
+        table.add_column("Status", style="white")
+        table.add_column("Step", style="yellow")
+        table.add_column("Updated", style="dim")
+        
+        for state in workflows[:10]:  # Last 10
+            status = "[green]Complete[/green]" if state.is_complete else "[yellow]In Progress[/yellow]"
+            table.add_row(
+                state.workflow_id,
+                status,
+                state.current_step.value,
+                state.updated_at[:19] if len(state.updated_at) > 19 else state.updated_at
+            )
+        
+        console.print(table)
+        console.print(f"\n[yellow]Use 'hyperagent workflow inspect <workflow_id>' for details[/yellow]")
+
+
+@workflow_group.command(name='inspect')
+@click.argument('workflow_id', required=False)
+def workflow_inspect(workflow_id):
+    """
+    Inspect detailed workflow state and logs.
+    
+    Displays the complete workflow_state.yaml and workflow_log.md for a workflow.
+    
+    If no workflow_id is provided, shows the latest workflow.
+    """
+    from core.workflow.state_persistence import StatePersistence
+    from pathlib import Path
+    from rich.panel import Panel
+    from rich.syntax import Syntax
+    
+    # Validate workflow_id - ensure it's a string using centralized utility
+    from cli.utils.sentinel_validator import validate_string_param
+    
+    workspace_dir = Path.cwd()
+    state_persistence = StatePersistence(workspace_dir)
+    
+    # If no workflow_id provided, try to get the latest one
+    if not workflow_id:
+        # Try to find the latest workflow
+        workflows_dir = workspace_dir / ".workflow_contexts"
+        if workflows_dir.exists():
+            workflows = list(workflows_dir.glob("*.json"))
+            if workflows:
+                # Get the most recent workflow
+                latest = max(workflows, key=lambda x: x.stat().st_mtime)
+                workflow_id = latest.stem
+                console.print(f"[yellow]No workflow ID provided. Using latest: {workflow_id}[/yellow]\n")
+            else:
+                console.print("[red]Error: Workflow ID is required[/red]")
+                console.print("[yellow]Usage: hyperagent workflow inspect <WORKFLOW_ID>[/yellow]")
+                console.print("[yellow]Example: hyperagent workflow inspect my-workflow-123[/yellow]")
+                console.print("[yellow]Tip: Use 'hyperagent workflow status' to see recent workflows[/yellow]")
+                raise click.ClickException("Workflow ID is required")
+        else:
+            console.print("[red]Error: Workflow ID is required[/red]")
+            console.print("[yellow]Usage: hyperagent workflow inspect <WORKFLOW_ID>[/yellow]")
+            console.print("[yellow]Example: hyperagent workflow inspect my-workflow-123[/yellow]")
+            console.print("[yellow]Tip: Use 'hyperagent workflow status' to see recent workflows[/yellow]")
+            raise click.ClickException("Workflow ID is required")
+    
+    workflow_id = validate_string_param(workflow_id, "workflow_id")
+    
+    if not workflow_id:
+        console.print(f"[red]Workflow ID is required[/red]")
+        console.print("[yellow]Usage: hyperagent workflow inspect <WORKFLOW_ID>[/yellow]")
+        console.print("[yellow]Example: hyperagent workflow inspect my-workflow-123[/yellow]")
+        console.print("[yellow]Tip: Use 'hyperagent workflow status' to see recent workflows[/yellow]")
+        raise click.ClickException("Workflow ID is required")
+    
+    state = state_persistence.load_state(workflow_id)
+    if not state:
+        console.print(f"[red]Workflow '{workflow_id}' not found[/red]")
+        return
+    
+    # Display YAML state
+    log_path = state_persistence.get_log_path(workflow_id)
+    if log_path.exists():
+        log_content = log_path.read_text(encoding='utf-8')
+        console.print(Panel(
+            Syntax(log_content, "markdown", theme="monokai", line_numbers=True),
+            title=f"[bold]Workflow Log: {workflow_id}[/bold]",
+            border_style="green"
+        ))
+    else:
+        console.print(f"[yellow]Log file not found: {log_path}[/yellow]")
+    
+    # Display state YAML
+    state_path = state_persistence.get_state_path(workflow_id)
+    if state_path.exists():
+        import yaml
+        with open(state_path, 'r', encoding='utf-8') as f:
+            state_yaml = f.read()
+        console.print(Panel(
+            Syntax(state_yaml, "yaml", theme="monokai", line_numbers=True),
+            title=f"[bold]Workflow State: {workflow_id}[/bold]",
+            border_style="blue"
+        ))
+
+
+# Removed duplicate status command - using enhanced version above
 
 @workflow_group.command(name='list')
 def list_workflows():
-    """List available workflow templates"""
-    console.print("[cyan]Available Workflow Templates[/cyan]\n")
+    """List available workflow templates from RAG (IPFS Pinata)"""
+    console.print("[cyan]Available RAG Templates from IPFS Pinata[/cyan]\n")
     
+    try:
+        from services.core.rag_template_fetcher import get_template_fetcher
+        
+        fetcher = get_template_fetcher()
+        templates = fetcher.list_templates()
+        
+        if not templates:
+            console.print("[yellow]No templates found in registry. Using example templates...[/yellow]\n")
+            _show_example_templates()
+            return
+        
+        # Group templates by category
+        by_category = {}
+        for template in templates:
+            category = template.get('category', 'Other')
+            # Normalize category names
+            category = category.capitalize() if category else 'Other'
+            if category not in by_category:
+                by_category[category] = []
+            by_category[category].append(template)
+        
+        # Display templates organized by category
+        for category in sorted(by_category.keys()):
+            items = sorted(by_category[category], key=lambda x: x['name'])
+            console.print(f"\n[bold cyan]{category}:[/bold cyan]")
+            
+            for item in items:
+                # Status indicator
+                status = "✅" if item.get('uploaded', False) else "⏳"
+                name = item.get('name', 'Unknown')
+                desc = item.get('description', 'No description')
+                
+                console.print(f"  {status} [bold]{name}[/bold]")
+                console.print(f"      {desc}")
+                
+                # Show CID and gateway URL if available
+                if item.get('cid'):
+                    console.print(f"      CID: [dim]{item['cid']}[/dim]")
+                if item.get('gateway_url'):
+                    console.print(f"      URL: [link={item['gateway_url']}]{item['gateway_url']}[/link]")
+        
+        # Show statistics
+        try:
+            stats = fetcher.get_template_statistics()
+            console.print(f"\n[bold]Template Statistics:[/bold]")
+            console.print(f"  Total Templates: {stats.get('total_templates', 0)}")
+            console.print(f"  Uploaded: {stats.get('uploaded_templates', 0)}")
+            console.print(f"  Categories: {len(stats.get('categories', {}))}")
+            
+            if stats.get('categories'):
+                console.print(f"\n  [dim]Categories: {', '.join(sorted(stats['categories'].keys()))}[/dim]")
+        except Exception as stats_error:
+            console.print(f"\n[yellow]Could not fetch statistics: {stats_error}[/yellow]")
+        
+        # Show usage example
+        console.print(f"\n[bold]Usage Example:[/bold]")
+        console.print(f"  hyperagent workflow run \"Create an ERC20 token with 1M supply\"")
+        console.print(f"  [dim]Templates are automatically matched based on your prompt[/dim]")
+        
+    except ImportError as e:
+        console.print(f"[yellow]RAG template fetcher not available: {e}[/yellow]")
+        console.print("[yellow]Falling back to example templates...[/yellow]\n")
+        _show_example_templates()
+    except Exception as e:
+        console.print(f"[red]Error fetching RAG templates: {e}[/red]")
+        console.print("[yellow]Falling back to example templates...[/yellow]\n")
+        _show_example_templates()
+
+def _show_example_templates():
+    """Show hardcoded example templates as fallback"""
     templates = {
         'Tokens': [
             'create ERC20 token',
@@ -360,6 +815,7 @@ def list_workflows():
         ]
     }
     
+    console.print("[dim]Example Workflow Prompts:[/dim]\n")
     for category, items in templates.items():
         console.print(f"\n[bold cyan]{category}:[/bold cyan]")
         for item in items:

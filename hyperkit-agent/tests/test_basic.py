@@ -8,6 +8,7 @@ import os
 # Add the parent directory to the path so we can import the modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
+@pytest.mark.unit
 def test_imports():
     """Test that core modules can be imported"""
     try:
@@ -18,6 +19,7 @@ def test_imports():
     except ImportError as e:
         pytest.fail(f"Failed to import core modules: {e}")
 
+@pytest.mark.unit
 def test_config_loading():
     """Test that configuration can be loaded"""
     try:
@@ -28,6 +30,7 @@ def test_config_loading():
     except Exception as e:
         pytest.fail(f"Failed to load configuration: {e}")
 
+@pytest.mark.unit
 def test_intent_router():
     """Test that intent router can be initialized"""
     try:
@@ -38,6 +41,7 @@ def test_intent_router():
     except Exception as e:
         pytest.fail(f"Failed to initialize intent router: {e}")
 
+@pytest.mark.unit
 def test_agent_initialization():
     """Test that the main agent can be initialized"""
     try:

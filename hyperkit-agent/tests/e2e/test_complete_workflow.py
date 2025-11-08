@@ -16,6 +16,7 @@ from core.agent.main import HyperKitAgent
 from core.config.loader import get_config
 
 
+@pytest.mark.integration
 class TestCompleteWorkflow:
     """Test complete end-to-end workflows"""
     
@@ -157,6 +158,7 @@ class TestCompleteWorkflow:
         print(f"✅ Health check test passed")
 
 
+@pytest.mark.integration
 class TestCLICommands:
     """Test CLI command integrations"""
     
@@ -206,6 +208,7 @@ class TestCLICommands:
             pytest.skip(f"Workflow command import failed: {e}")
 
 
+@pytest.mark.integration
 class TestSystemIntegration:
     """Test system integration points"""
     

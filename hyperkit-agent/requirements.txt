@@ -91,6 +91,9 @@ ipfshttpclient>=0.8.0a2,<1.0  # IPFS HTTP client for Pinata RAG (exclusive RAG b
 reportlab>=4.0.0,<5.0  # PDF export
 openpyxl>=3.1.0,<4.0  # Excel export
 
+# Optional Interactive CLI Menu
+questionary>=1.10.0,<2.0  # Interactive menu (optional - CLI works without it)
+
 # Removed dependencies for production readiness:
 # - solcx (Windows incompatibility - using Foundry CLI instead)
 # - langchain (deprecated, unnecessary)

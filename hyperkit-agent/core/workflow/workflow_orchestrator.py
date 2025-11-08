@@ -5,6 +5,7 @@ Orchestrates the complete pipeline with dependency management, context tracking,
 
 import asyncio
 import logging
+import os
 import time
 import uuid
 import json
@@ -17,6 +18,10 @@ from datetime import datetime
 from core.workflow.context_manager import (
     ContextManager, WorkflowContext, PipelineStage, StageResult
 )
+from core.workflow.workflow_state import (
+    WorkflowState, LoopStep, AgentReasoning, ActionPlan, ActionResult, ToolInvocation
+)
+from core.workflow.state_persistence import StatePersistence
 
 # Defensive check: Ensure PipelineStage is properly imported at module level
 if not hasattr(PipelineStage, "GENERATION"):
@@ -26,6 +31,38 @@ from core.workflow.environment_manager import EnvironmentManager
 from services.dependencies.dependency_manager import DependencyManager
 
 logger = logging.getLogger(__name__)
+
+# Optional import for agent memory (Phase 3 feature)
+try:
+    from core.workflow.agent_memory import AgentMemory
+    AGENT_MEMORY_AVAILABLE = True
+except ImportError:
+    AGENT_MEMORY_AVAILABLE = False
+    logger.debug("Agent memory system not available")
+
+# Optional import for adaptive prompt repair (Phase 3 feature)
+try:
+    from core.workflow.adaptive_prompt_repair import AdaptivePromptRepair
+    ADAPTIVE_REPAIR_AVAILABLE = True
+except ImportError:
+    ADAPTIVE_REPAIR_AVAILABLE = False
+    logger.debug("Adaptive prompt repair not available")
+
+# Optional import for guardrails (Phase 3 feature)
+try:
+    from core.workflow.guardrails import Guardrails
+    GUARDRAILS_AVAILABLE = True
+except ImportError:
+    GUARDRAILS_AVAILABLE = False
+    logger.debug("Guardrails system not available")
+
+# Optional import for audit trail (Phase 3 feature)
+try:
+    from core.workflow.audit_trail import AuditTrail, AuditEventType
+    AUDIT_TRAIL_AVAILABLE = True
+except ImportError:
+    AUDIT_TRAIL_AVAILABLE = False
+    logger.debug("Audit trail system not available")
 
 
 class WorkflowOrchestrator:
@@ -47,11 +84,358 @@ class WorkflowOrchestrator:
         
         # Initialize managers
         self.context_manager = ContextManager(self.workspace_dir)
+        self.state_persistence = StatePersistence(self.workspace_dir)
         self.error_handler = SelfHealingErrorHandler()
         self.dep_manager = DependencyManager(self.workspace_dir)
         self.env_manager: Optional[EnvironmentManager] = None
         
+        # Initialize tool registry (Phase 2)
+        from core.tools.registry import ToolRegistry, ToolExecutor
+        from core.tools.agent_tools import create_agent_tools
+        self.tool_registry = ToolRegistry()
+        self.tool_executor = ToolExecutor(self.tool_registry)
+        
+        # Register agent tools
+        try:
+            agent_tools = create_agent_tools(agent)
+            for tool in agent_tools:
+                self.tool_registry.register(tool)
+            logger.info(f"Registered {len(agent_tools)} agent tools")
+        except Exception as e:
+            logger.warning(f"Failed to register agent tools: {e}")
+        
+        # Initialize agent memory system (Phase 3 feature)
+        self.agent_memory: Optional[AgentMemory] = None
+        if AGENT_MEMORY_AVAILABLE:
+            try:
+                self.agent_memory = AgentMemory(self.workspace_dir)
+                logger.info("Agent memory system initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize agent memory: {e}")
+        
+        # Initialize adaptive prompt repair system (Phase 3 feature)
+        self.prompt_repair: Optional[AdaptivePromptRepair] = None
+        if ADAPTIVE_REPAIR_AVAILABLE:
+            try:
+                # Get LLM router from agent for meta-prompting
+                llm_router = getattr(agent, 'llm_router', None) if hasattr(agent, 'llm_router') else None
+                self.prompt_repair = AdaptivePromptRepair(agent_memory=self.agent_memory, llm_router=llm_router)
+                logger.info("Adaptive prompt repair system initialized with meta-prompting")
+            except Exception as e:
+                logger.warning(f"Failed to initialize adaptive prompt repair: {e}")
+        
+        # Initialize guardrails system (Phase 3 feature)
+        self.guardrails: Optional[Guardrails] = None
+        if GUARDRAILS_AVAILABLE:
+            try:
+                # Load config for guardrails
+                from core.config.loader import get_config
+                config = get_config().to_dict()
+                guardrails_config = config.get('guardrails', {})
+                self.guardrails = Guardrails(self.workspace_dir, guardrails_config)
+                logger.info("Guardrails system initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize guardrails: {e}")
+        
+        # Initialize audit trail system (Phase 3 feature)
+        self.audit_trail: Optional[AuditTrail] = None
+        if AUDIT_TRAIL_AVAILABLE:
+            try:
+                self.audit_trail = AuditTrail(self.workspace_dir)
+                logger.info("Audit trail system initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize audit trail: {e}")
+        
         logger.info("WorkflowOrchestrator initialized with self-healing capabilities")
+    
+    async def _read_workflow_state(self, context: WorkflowContext) -> WorkflowState:
+        """
+        READ step: Load workflow state, context, and RAG results.
+        
+        Args:
+            context: Current workflow context
+            
+        Returns:
+            WorkflowState with current state loaded
+        """
+        workflow_state = self.state_persistence.load_state(context.workflow_id)
+        if not workflow_state:
+            # Create new state if not found
+            workflow_state = WorkflowState(
+                workflow_id=context.workflow_id,
+                user_goal=context.user_prompt,
+                current_step=LoopStep.READ
+            )
+        
+        # Update context snapshot from WorkflowContext
+        workflow_state.update_context_snapshot({
+            "last_successful_stage": context.get_last_successful_stage().value if context.get_last_successful_stage() else None,
+            "has_errors": context.has_error(),
+            "retry_counts": context.retry_attempts,
+            "error_count": len(context.error_history)
+        })
+        
+        workflow_state.add_reasoning(
+            step=LoopStep.READ,
+            reasoning=f"Reading workflow state for {context.workflow_id}. Last successful stage: {context.get_last_successful_stage().value if context.get_last_successful_stage() else 'none'}",
+            plan=["Load state", "Load context", "Load RAG context"],
+            confidence=1.0
+        )
+        
+        self.state_persistence.save_state(workflow_state)
+        self.state_persistence.append_log_entry(
+            workflow_state,
+            "read",
+            f"Loaded workflow state. Current step: {workflow_state.current_step.value}"
+        )
+        
+        return workflow_state
+    
+    async def _plan_next_action(self, state: WorkflowState, context: WorkflowContext, 
+                               stage: PipelineStage) -> ActionPlan:
+        """
+        PLAN step: Agent reasons about next actions.
+        
+        Args:
+            state: Current workflow state
+            context: Current workflow context
+            stage: Pipeline stage to plan for
+            
+        Returns:
+            ActionPlan for next action
+        """
+        # Determine tool based on stage
+        stage_to_tool = {
+            PipelineStage.INPUT_PARSING: "query_ipfs_rag",
+            PipelineStage.GENERATION: "generate_contract",
+            PipelineStage.DEPENDENCY_RESOLUTION: "analyze_dependencies",
+            PipelineStage.COMPILATION: "run_linter",  # Compilation is handled by Foundry
+            PipelineStage.TESTING: "run_tests",
+            PipelineStage.AUDITING: "audit_contract",
+            PipelineStage.DEPLOYMENT: "deploy_contract",
+            PipelineStage.VERIFICATION: "verify_contract"
+        }
+        
+        tool_name = stage_to_tool.get(stage, "unknown")
+        
+        # Build reasoning
+        reasoning = f"Planning {stage.value} stage. Tool: {tool_name}"
+        if state.error_history:
+            last_error = state.error_history[-1]
+            reasoning += f". Previous error in {last_error.get('stage', 'unknown')}: {last_error.get('error', 'unknown')[:100]}"
+        
+        # Create action plan
+        action_plan = ActionPlan(
+            step=LoopStep.PLAN,
+            tool_name=tool_name,
+            parameters={"stage": stage.value},
+            reasoning=reasoning,
+            expected_outcome=f"Successfully complete {stage.value} stage"
+        )
+        
+        state.add_reasoning(
+            step=LoopStep.PLAN,
+            reasoning=reasoning,
+            plan=[f"Execute {tool_name} for {stage.value}"],
+            constraints={"stage": stage.value, "retry_count": state.retry_counts.get(stage.value, 0)},
+            confidence=0.9 if state.retry_counts.get(stage.value, 0) == 0 else 0.7
+        )
+        
+        state.set_next_action(action_plan)
+        state.current_stage = stage.value
+        self.state_persistence.save_state(state)
+        self.state_persistence.append_log_entry(
+            state,
+            "plan",
+            reasoning,
+            {"tool": tool_name, "stage": stage.value}
+        )
+        
+        return action_plan
+    
+    async def _execute_action(self, action_plan: ActionPlan, state: WorkflowState, 
+                            context: WorkflowContext) -> ActionResult:
+        """
+        ACT step: Execute selected tool(s).
+        
+        Args:
+            action_plan: Planned action to execute
+            state: Current workflow state
+            context: Current workflow context
+            
+        Returns:
+            ActionResult with execution results
+        """
+        import time
+        start_time = time.time()
+        
+        state.current_step = LoopStep.ACT
+        self.state_persistence.save_state(state)
+        
+        try:
+            # Get parameters from context metadata or action plan
+            user_prompt = context.user_prompt
+            rag_scope = context.metadata.get('rag_scope', 'official-only')
+            network = context.metadata.get('network', 'hyperion')
+            allow_insecure = context.metadata.get('allow_insecure', False)
+            
+            # Map tool names to actual stage methods with proper parameters
+            tool_to_stage_method = {
+                "query_ipfs_rag": lambda: self._stage_input_parsing(context, user_prompt, rag_scope),
+                "generate_contract": lambda: self._stage_generation(context, user_prompt, rag_scope),
+                "analyze_dependencies": lambda: self._stage_dependency_resolution(context),
+                "run_linter": lambda: self._stage_compilation(context),
+                "run_tests": lambda: self._stage_testing(context),
+                "audit_contract": lambda: self._stage_auditing(context),
+                "deploy_contract": lambda: self._stage_deployment(context, network, allow_insecure),
+                "verify_contract": lambda: self._stage_verification(context, network)
+            }
+            
+            # Execute the stage method
+            if action_plan.tool_name in tool_to_stage_method:
+                await tool_to_stage_method[action_plan.tool_name]()
+                duration_ms = (time.time() - start_time) * 1000
+                
+                # Get the last stage result
+                last_result = context.get_last_stage_result()
+                success = last_result.status == "success" if last_result else False
+                
+                # Record tool invocation
+                invocation = state.add_tool_invocation(
+                    tool_name=action_plan.tool_name,
+                    parameters=action_plan.parameters,
+                    result={"status": last_result.status, "output": last_result.output} if last_result else None,
+                    error=last_result.error if last_result and last_result.error else None,
+                    duration_ms=duration_ms
+                )
+                
+                result = ActionResult(
+                    success=success,
+                    output=last_result.output if last_result else {},
+                    error=last_result.error if last_result else None,
+                    error_type=last_result.error_type if last_result else None,
+                    tool_invocation=invocation,
+                    duration_ms=duration_ms
+                )
+            else:
+                # Unknown tool
+                result = ActionResult(
+                    success=False,
+                    error=f"Unknown tool: {action_plan.tool_name}",
+                    error_type="UnknownToolError"
+                )
+            
+            self.state_persistence.append_log_entry(
+                state,
+                "act",
+                f"Executed {action_plan.tool_name}",
+                {"success": result.success, "duration_ms": result.duration_ms}
+            )
+            
+            return result
+            
+        except Exception as e:
+            duration_ms = (time.time() - start_time) * 1000
+            error_msg = str(e)
+            
+            state.add_tool_invocation(
+                tool_name=action_plan.tool_name,
+                parameters=action_plan.parameters,
+                error=error_msg,
+                duration_ms=duration_ms
+            )
+            
+            state.record_error(error_msg, type(e).__name__, state.current_stage)
+            
+            result = ActionResult(
+                success=False,
+                error=error_msg,
+                error_type=type(e).__name__,
+                duration_ms=duration_ms
+            )
+            
+            self.state_persistence.append_log_entry(
+                state,
+                "act_error",
+                f"Failed to execute {action_plan.tool_name}: {error_msg}",
+                {"error_type": type(e).__name__}
+            )
+            
+            return result
+    
+    async def _update_workflow_state(self, state: WorkflowState, action_result: ActionResult, 
+                                    context: WorkflowContext) -> WorkflowState:
+        """
+        UPDATE step: Persist results to workflow_state and markdown log.
+        
+        Args:
+            state: Current workflow state
+            action_result: Result from action execution
+            context: Current workflow context
+            
+        Returns:
+            Updated WorkflowState
+        """
+        state.current_step = LoopStep.UPDATE
+        
+        # Update context snapshot
+        state.update_context_snapshot({
+            "last_action": state.tool_invocations[-1].tool_name if state.tool_invocations else None,
+            "last_action_success": action_result.success,
+            "last_stage": context.get_last_stage_result().stage.value if context.get_last_stage_result() else None,
+            "has_errors": context.has_error()
+        })
+        
+        # Clear next action if completed
+        if action_result.success:
+            state.next_action = None
+        else:
+            # Plan retry or escalation
+            if state.retry_counts.get(state.current_stage or "unknown", 0) < 3:
+                # Will retry - keep action plan
+                pass
+            else:
+                # Max retries exceeded - clear action
+                state.next_action = None
+                state.has_error = True
+        
+        # Save state and log
+        self.state_persistence.save_state(state)
+        self.state_persistence.save_full_log(state)
+        
+        self.state_persistence.append_log_entry(
+            state,
+            "update",
+            f"Updated workflow state. Action success: {action_result.success}",
+            {"step": state.current_step.value, "stage": state.current_stage}
+        )
+        
+        return state
+    
+    async def _autonomous_loop(self, context: WorkflowContext, stage: PipelineStage) -> bool:
+        """
+        Execute autonomous read/plan/act/update loop for a stage.
+        
+        Args:
+            context: Workflow context
+            stage: Pipeline stage to execute
+            
+        Returns:
+            True if stage completed successfully, False otherwise
+        """
+        # READ: Load workflow state
+        state = await self._read_workflow_state(context)
+        
+        # PLAN: Determine next action
+        action_plan = await self._plan_next_action(state, context, stage)
+        
+        # ACT: Execute action
+        action_result = await self._execute_action(action_plan, state, context)
+        
+        # UPDATE: Persist results
+        await self._update_workflow_state(state, action_result, context)
+        
+        return action_result.success
     
     async def run_complete_workflow(
         self,
@@ -90,80 +474,135 @@ class WorkflowOrchestrator:
             Complete workflow results with diagnostics
         """
         # Check if resuming from diagnostic bundle
-        if resume_from_diagnostic:
-            logger.info(f"🔄 Resuming workflow from diagnostic bundle: {resume_from_diagnostic}")
-            try:
-                diagnostic_path = Path(resume_from_diagnostic)
-                if not diagnostic_path.exists():
-                    logger.error(f"Diagnostic bundle not found: {resume_from_diagnostic}")
+        # Filter out None, empty strings, and Click Sentinel objects
+        resume_path_str = None
+        if resume_from_diagnostic and isinstance(resume_from_diagnostic, (str, os.PathLike)):
+            # Convert to string if it's a PathLike object
+            resume_path_str = str(resume_from_diagnostic)
+            if resume_path_str and resume_path_str.strip():
+                logger.info(f"🔄 Resuming workflow from diagnostic bundle: {resume_path_str}")
+                try:
+                    diagnostic_path = Path(resume_path_str)
+                    if not diagnostic_path.exists():
+                        logger.error(f"Diagnostic bundle not found: {resume_path_str}")
+                        return {
+                            "status": "error",
+                            "error": f"Diagnostic bundle not found: {resume_path_str}",
+                            "suggestions": ["Verify the diagnostic bundle path is correct"]
+                        }
+                    
+                    # Load diagnostic bundle
+                    with open(diagnostic_path, 'r') as f:
+                        diagnostic_data = json.load(f)
+                    
+                    # Extract workflow_id and recreate context
+                    workflow_id = diagnostic_data.get('workflow_id', str(uuid.uuid4())[:8])
+                    context = self.context_manager.create_context(workflow_id, diagnostic_data.get('user_prompt', user_prompt), self.workspace_dir)
+                    
+                    # Load or create workflow state
+                    workflow_state = self.state_persistence.load_state(workflow_id)
+                    if not workflow_state:
+                        workflow_state = WorkflowState(
+                            workflow_id=workflow_id,
+                            user_goal=diagnostic_data.get('user_prompt', user_prompt),
+                            current_step=LoopStep.READ
+                        )
+                    
+                    # Restore context state from diagnostic bundle
+                    if 'stages' in diagnostic_data:
+                        context.stages = []
+                        for stage_data in diagnostic_data['stages']:
+                            # PipelineStage and StageResult are available from module-level import (line 16)
+                            # Do NOT re-import - this creates local scope that shadows module-level import
+                            stage_result = StageResult(
+                                stage=PipelineStage(stage_data['stage']),
+                                status=stage_data['status'],
+                                output=stage_data.get('output', {}),
+                                error=stage_data.get('error'),
+                                error_type=stage_data.get('error_type'),
+                                timestamp=stage_data.get('timestamp', datetime.utcnow().isoformat()),
+                                duration_ms=stage_data.get('duration_ms')
+                            )
+                            context.stages.append(stage_result)
+                    
+                    # Restore contract info if available
+                    if 'contract_info' in diagnostic_data:
+                        contract_info = diagnostic_data['contract_info']
+                        context.contract_name = contract_info.get('name')
+                        context.contract_path = contract_info.get('path')
+                        context.contract_category = contract_info.get('category')
+                    
+                    # Restore compilation info
+                    if 'compilation' in diagnostic_data:
+                        context.compilation_success = diagnostic_data['compilation'].get('success', False)
+                        context.compilation_artifact_path = diagnostic_data['compilation'].get('artifact_path')
+                    
+                    # Restore deployment info
+                    if 'deployment' in diagnostic_data:
+                        deployment_info = diagnostic_data['deployment']
+                        context.deployment_address = deployment_info.get('address')
+                        context.deployment_tx_hash = deployment_info.get('tx_hash')
+                        context.deployment_network = deployment_info.get('network')
+                    
+                    logger.info(f"✅ Loaded diagnostic bundle - resuming from stage: {context.get_last_successful_stage()}")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to load diagnostic bundle: {e}")
                     return {
                         "status": "error",
-                        "error": f"Diagnostic bundle not found: {resume_from_diagnostic}",
-                        "suggestions": ["Verify the diagnostic bundle path is correct"]
+                        "error": f"Failed to load diagnostic bundle: {str(e)}",
+                        "suggestions": ["Check diagnostic bundle format", "Verify bundle is valid JSON"]
                     }
-                
-                # Load diagnostic bundle
-                with open(diagnostic_path, 'r') as f:
-                    diagnostic_data = json.load(f)
-                
-                # Extract workflow_id and recreate context
-                workflow_id = diagnostic_data.get('workflow_id', str(uuid.uuid4())[:8])
-                context = self.context_manager.create_context(workflow_id, diagnostic_data.get('user_prompt', user_prompt), self.workspace_dir)
-                
-                # Restore context state from diagnostic bundle
-                if 'stages' in diagnostic_data:
-                    context.stages = []
-                    for stage_data in diagnostic_data['stages']:
-                        # PipelineStage and StageResult are available from module-level import (line 16)
-                        # Do NOT re-import - this creates local scope that shadows module-level import
-                        stage_result = StageResult(
-                            stage=PipelineStage(stage_data['stage']),
-                            status=stage_data['status'],
-                            output=stage_data.get('output', {}),
-                            error=stage_data.get('error'),
-                            error_type=stage_data.get('error_type'),
-                            timestamp=stage_data.get('timestamp', datetime.utcnow().isoformat()),
-                            duration_ms=stage_data.get('duration_ms')
-                        )
-                        context.stages.append(stage_result)
-                
-                # Restore contract info if available
-                if 'contract_info' in diagnostic_data:
-                    contract_info = diagnostic_data['contract_info']
-                    context.contract_name = contract_info.get('name')
-                    context.contract_path = contract_info.get('path')
-                    context.contract_category = contract_info.get('category')
-                
-                # Restore compilation info
-                if 'compilation' in diagnostic_data:
-                    context.compilation_success = diagnostic_data['compilation'].get('success', False)
-                    context.compilation_artifact_path = diagnostic_data['compilation'].get('artifact_path')
-                
-                # Restore deployment info
-                if 'deployment' in diagnostic_data:
-                    deployment_info = diagnostic_data['deployment']
-                    context.deployment_address = deployment_info.get('address')
-                    context.deployment_tx_hash = deployment_info.get('tx_hash')
-                    context.deployment_network = deployment_info.get('network')
-                
-                logger.info(f"✅ Loaded diagnostic bundle - resuming from stage: {context.get_last_successful_stage()}")
-                
-            except Exception as e:
-                logger.error(f"Failed to load diagnostic bundle: {e}")
-                return {
-                    "status": "error",
-                    "error": f"Failed to load diagnostic bundle: {str(e)}",
-                    "suggestions": ["Check diagnostic bundle format", "Verify bundle is valid JSON"]
-                }
-        else:
+            else:
+                # resume_path_str is empty or invalid - treat as None
+                resume_path_str = None
+        
+        # If not resuming, create new workflow context and state
+        if not resume_path_str:
             workflow_id = str(uuid.uuid4())[:8]
             context = self.context_manager.create_context(workflow_id, user_prompt, self.workspace_dir)
+            
+            # Create workflow state for autonomous loop
+            workflow_state = WorkflowState(
+                workflow_id=workflow_id,
+                user_goal=user_prompt,
+                current_step=LoopStep.READ
+            )
+            self.state_persistence.save_state(workflow_state)
+            
+            # Log prompt received (Phase 3 feature)
+            if self.audit_trail:
+                self.audit_trail.log_event(
+                    AuditEventType.PROMPT_RECEIVED,
+                    workflow_id,
+                    details={"prompt_length": len(user_prompt), "rag_scope": rag_scope}
+                )
+        else:
+            # Load existing workflow state if resuming
+            workflow_state = self.state_persistence.load_state(context.workflow_id)
+            if not workflow_state:
+                # Create new state if not found
+                workflow_state = WorkflowState(
+                    workflow_id=context.workflow_id,
+                    user_goal=user_prompt,
+                    current_step=LoopStep.READ
+                )
+        
+        # Ensure workflow_id is available
+        workflow_id = context.workflow_id
         
         # Create isolated environment
         self.env_manager = EnvironmentManager(self.workspace_dir, workflow_id)
         temp_dir = self.env_manager.create_isolated_environment()
         context.temp_dir = str(temp_dir)
         context.metadata["temp_dir"] = str(temp_dir)
+        
+        # Update workflow state with environment info
+        workflow_state.update_context_snapshot({
+            "temp_dir": str(temp_dir),
+            "workspace_dir": str(self.workspace_dir)
+        })
+        self.state_persistence.save_state(workflow_state)
         
         logger.info(f"🚀 Starting self-healing workflow: {workflow_id}")
         logger.info(f"📝 User prompt: {user_prompt}")
@@ -172,11 +611,11 @@ class WorkflowOrchestrator:
         had_errors = False
         
         # Determine resume point if resuming from diagnostic bundle
-        last_successful_stage = context.get_last_successful_stage() if resume_from_diagnostic else None
+        last_successful_stage = context.get_last_successful_stage() if resume_path_str else None
         
         try:
             # Resume from last successful stage if resuming from diagnostic bundle
-            if resume_from_diagnostic and last_successful_stage:
+            if resume_path_str and last_successful_stage:
                 logger.info(f"🔄 Resuming workflow from stage: {last_successful_stage.value}")
                 
                 # Skip stages that already succeeded
@@ -193,41 +632,46 @@ class WorkflowOrchestrator:
                 elif last_successful_stage.value == 'deployment':
                     logger.info("Skipping preflight through deployment (already completed)")
             
+            # Store metadata for autonomous loop
+            context.metadata['network'] = network
+            context.metadata['rag_scope'] = rag_scope
+            context.metadata['allow_insecure'] = allow_insecure
+            
             # Stage 0: Preflight checks (skip if resuming past generation)
-            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value == 'input_parsing':
+            if not resume_path_str or not last_successful_stage or last_successful_stage.value == 'input_parsing':
                 await self._stage_preflight(context)
             
             # Stage 1: Input parsing & RAG context (skip if resuming past this)
-            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value == 'input_parsing':
-                await self._stage_input_parsing(context, user_prompt, rag_scope)
+            if not resume_path_str or not last_successful_stage or last_successful_stage.value == 'input_parsing':
+                await self._autonomous_loop(context, PipelineStage.INPUT_PARSING)
             
             # Stage 2: Contract generation (skip if resuming past this)
-            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['generation', 'input_parsing']:
-                await self._stage_generation(context, user_prompt, rag_scope)
+            if not resume_path_str or not last_successful_stage or last_successful_stage.value in ['generation', 'input_parsing']:
+                await self._autonomous_loop(context, PipelineStage.GENERATION)
             
             # Stage 3: Dependency resolution (skip if resuming past this)
-            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['dependency_resolution', 'generation', 'input_parsing']:
-                await self._stage_dependency_resolution(context)
+            if not resume_path_str or not last_successful_stage or last_successful_stage.value in ['dependency_resolution', 'generation', 'input_parsing']:
+                await self._autonomous_loop(context, PipelineStage.DEPENDENCY_RESOLUTION)
             
             # Stage 4: Compilation (skip if resuming past this)
-            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['compilation', 'dependency_resolution', 'generation', 'input_parsing']:
-                await self._stage_compilation(context)
+            if not resume_path_str or not last_successful_stage or last_successful_stage.value in ['compilation', 'dependency_resolution', 'generation', 'input_parsing']:
+                await self._autonomous_loop(context, PipelineStage.COMPILATION)
             
             # Stage 5: Testing (skip if resuming past this)
             if not test_only:
-                if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
-                    await self._stage_testing(context)
+                if not resume_path_str or not last_successful_stage or last_successful_stage.value in ['testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
+                    await self._autonomous_loop(context, PipelineStage.TESTING)
             
             # Stage 6: Auditing (skip if resuming past this)
-            if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['auditing', 'testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
-                await self._stage_auditing(context)
+            if not resume_path_str or not last_successful_stage or last_successful_stage.value in ['auditing', 'testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
+                await self._autonomous_loop(context, PipelineStage.AUDITING)
             
             # Stage 7: Deployment (skip if resuming past this)
             deployment_success = False
             if not test_only:
-                if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['deployment', 'auditing', 'testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
+                if not resume_path_str or not last_successful_stage or last_successful_stage.value in ['deployment', 'auditing', 'testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
                     try:
-                        await self._stage_deployment(context, network, allow_insecure)
+                        await self._autonomous_loop(context, PipelineStage.DEPLOYMENT)
                         # Check if deployment actually succeeded
                         if context.deployment_address:
                             deployment_success = True
@@ -240,9 +684,9 @@ class WorkflowOrchestrator:
             
             # Stage 8: Verification & Artifact Storage (only if deployment succeeded)
             if not test_only and auto_verification and deployment_success and context.deployment_address:
-                if not resume_from_diagnostic or not last_successful_stage or last_successful_stage.value in ['verification', 'deployment', 'auditing', 'testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
+                if not resume_path_str or not last_successful_stage or last_successful_stage.value in ['verification', 'deployment', 'auditing', 'testing', 'compilation', 'dependency_resolution', 'generation', 'input_parsing']:
                     try:
-                        await self._stage_verification(context, network)
+                        await self._autonomous_loop(context, PipelineStage.VERIFICATION)
                     except Exception as verify_error:
                         # Verification failed - log but don't crash workflow
                         logger.warning(f"⚠️ Verification stage failed: {verify_error}")
@@ -261,6 +705,25 @@ class WorkflowOrchestrator:
             # Stage 9: Output & diagnostics (always runs)
             result = await self._stage_output(context, upload_scope)
             
+            # Add workflow_id to result for CLI monitoring (Phase 5)
+            result['workflow_id'] = context.workflow_id
+            
+            # Mark workflow state as complete
+            final_state = self.state_persistence.load_state(context.workflow_id)
+            if final_state:
+                final_state.mark_complete()
+                self.state_persistence.save_state(final_state)
+                self.state_persistence.save_full_log(final_state)
+            
+            # Save workflow to agent memory for learning (Phase 3 feature)
+            if self.agent_memory:
+                try:
+                    diagnostic_bundle = context.generate_diagnostic_bundle()
+                    self.agent_memory.add_workflow(diagnostic_bundle)
+                    logger.debug("Workflow saved to agent memory")
+                except Exception as mem_error:
+                    logger.warning(f"Failed to save workflow to agent memory: {mem_error}")
+            
             # Determine final workflow status based on critical stages
             # Critical: generation, compilation (these must succeed)
             # Non-critical: deployment, verification (can fail but workflow completes)
@@ -276,6 +739,15 @@ class WorkflowOrchestrator:
                 result["critical_failure"] = True
                 result["failed_stages"] = [s.stage.value for s in critical_failures]
                 logger.error("❌ Workflow failed due to critical stage failure")
+                
+                # Log workflow failure (Phase 3 feature)
+                if self.audit_trail:
+                    self.audit_trail.log_event(
+                        AuditEventType.WORKFLOW_FAILED,
+                        context.workflow_id,
+                        error="Critical stage failure",
+                        details={"failed_stages": [s.stage.value for s in critical_failures]}
+                    )
             elif context.has_error():
                 # Non-critical errors (deployment/verification) - workflow completed with warnings
                 result["status"] = "completed_with_errors"
@@ -286,6 +758,14 @@ class WorkflowOrchestrator:
                 result["status"] = "success"
                 result["critical_failure"] = False
                 logger.info("✅ Workflow completed successfully")
+                
+                # Log workflow completion (Phase 3 feature)
+                if self.audit_trail:
+                    self.audit_trail.log_event(
+                        AuditEventType.WORKFLOW_COMPLETED,
+                        context.workflow_id,
+                        details={"status": "success", "stages_completed": len([s for s in context.stages if s.status == "success"])}
+                    )
             
             # Save context (always save, even on failure)
             self.context_manager.save_context(context)
@@ -504,16 +984,42 @@ class WorkflowOrchestrator:
                             "scope": rag_scope
                         }
                     
-                    logger.info(f"📚 Retrieved RAG context: {len(rag_context)} characters")
-                    if template_info:
-                        logger.info(f"📦 Template matched: {template_info.get('cid', 'N/A')}")
+                    if rag_context:
+                        logger.info(f"📚 RAG context retrieved: {len(rag_context)} characters")
+                        if template_info:
+                            logger.info(f"📦 Template matched: {template_info.get('cid', 'N/A')} (scope: {rag_scope})")
+                        else:
+                            logger.info(f"📚 RAG context retrieved from IPFS (no specific template matched)")
+                        
+                        # Log RAG context retrieved (Phase 3 feature)
+                        if self.audit_trail:
+                            self.audit_trail.log_event(
+                                AuditEventType.RAG_CONTEXT_RETRIEVED,
+                                context.workflow_id,
+                                stage=PipelineStage.INPUT_PARSING.value,
+                                details={"context_length": len(rag_context), "template_cid": template_info.get('cid') if template_info else None}
+                            )
+                    else:
+                        logger.info("ℹ️  No RAG context found - generating from scratch (new prompt pattern)")
+                        logger.info("💡 This is normal for novel contract types not in template library")
+                        
+                        # Log RAG context empty (Phase 3 feature)
+                        if self.audit_trail:
+                            self.audit_trail.log_event(
+                                AuditEventType.RAG_CONTEXT_EMPTY,
+                                context.workflow_id,
+                                stage=PipelineStage.INPUT_PARSING.value,
+                                details={"reason": "No matching template found"}
+                            )
                 except Exception as rag_error:
                     logger.warning(f"⚠️ RAG context retrieval failed: {rag_error}")
                     # Continue without RAG - it's helpful but not required
                     rag_context = ""
+                    logger.info("ℹ️  Continuing without RAG context - contract generation will proceed from scratch")
             else:
                 logger.warning("⚠️ RAG system not available - proceeding without template context")
                 logger.info("💡 Tip: Configure PINATA_API_KEY and PINATA_SECRET_KEY for template retrieval")
+                logger.info("ℹ️  Generating contract from scratch without template context")
             
             # Store RAG context for reuse in generation stage
             context.metadata['rag_context'] = rag_context
@@ -549,7 +1055,8 @@ class WorkflowOrchestrator:
             logger.info("💡 Continuing without RAG context - contract generation will proceed")
     
     async def _stage_generation(self, context: WorkflowContext, user_prompt: str, rag_scope: str = 'official-only'):
-        """Stage 2: Contract generation"""
+        """Stage 2: Contract generation with context-rich prompts"""
+        from core.prompts.system_prompt import build_contract_generation_prompt
         stage_start = time.time()
         logger.info("🎨 Stage 2: Contract Generation")
         
@@ -578,7 +1085,47 @@ class WorkflowOrchestrator:
                             logger.debug(f"RAG retrieval in generation stage failed: {e}")
                             pass
                 
-                generation_result = await self.agent.generate_contract(user_prompt, rag_context)
+                # Build context-rich prompt (Phase 3)
+                workflow_state = self.state_persistence.load_state(context.workflow_id)
+                enhanced_prompt = build_contract_generation_prompt(
+                    user_goal=user_prompt,
+                    rag_context=rag_context if isinstance(rag_context, str) else "",
+                    workflow_state=workflow_state.to_dict() if workflow_state else None,
+                    error_history=context.error_history[-5:] if context.error_history else None,  # Last 5 errors
+                    constraints={
+                        "network": context.metadata.get('network', 'hyperion'),
+                        "standards": ["ERC20", "OpenZeppelin v5"],
+                        "gas_optimization": True,
+                        "security_level": "high"
+                    }
+                )
+                
+                # Log generation attempt (Phase 3 feature)
+                if self.audit_trail:
+                    self.audit_trail.log_event(
+                        AuditEventType.GENERATION_ATTEMPTED,
+                        context.workflow_id,
+                        stage=PipelineStage.GENERATION.value,
+                        details={"attempt": attempt + 1, "has_rag_context": bool(rag_context), "enhanced_prompt": True}
+                    )
+                
+                # Use enhanced prompt for generation
+                generation_result = await self.agent.generate_contract(enhanced_prompt, rag_context)
+                
+                # Track model/provider info for diagnostic bundles
+                model_provider = generation_result.get('provider_used', 'unknown')
+                generation_method = generation_result.get('method', 'unknown')
+                context.metadata['model_provider'] = model_provider
+                context.metadata['generation_method'] = generation_method
+                
+                # Log model selection (Phase 3 feature)
+                if self.audit_trail:
+                    self.audit_trail.log_event(
+                        AuditEventType.MODEL_SELECTED,
+                        context.workflow_id,
+                        stage=PipelineStage.GENERATION.value,
+                        details={"provider": model_provider, "method": generation_method}
+                    )
                 
                 if generation_result["status"] == "success":
                     context.contract_code = generation_result["contract_code"]
@@ -605,6 +1152,39 @@ class WorkflowOrchestrator:
                         metadata={"attempt": attempt + 1}
                     )
                     logger.info("✅ Contract generated successfully")
+                    
+                    # Log generation success (Phase 3 feature)
+                    if self.audit_trail:
+                        self.audit_trail.log_event(
+                            AuditEventType.GENERATION_SUCCESS,
+                            context.workflow_id,
+                            stage=PipelineStage.GENERATION.value,
+                            details={"contract_name": context.contract_name, "contract_size": len(context.contract_code) if context.contract_code else 0}
+                        )
+                    
+                    # Self-healing onboarding: Store successful novel prompts as templates (Phase 3 feature)
+                    if hasattr(self.agent, 'rag') and self.agent.rag:
+                        # Check if this was a novel prompt (no RAG context found)
+                        rag_context_used = bool(context.metadata.get('rag_context'))
+                        if not rag_context_used and context.contract_code:
+                            try:
+                                template_cid = await self.agent.rag.suggest_and_store_new_pattern(
+                                    user_prompt,
+                                    context.contract_code,
+                                    success=True,
+                                    metadata={
+                                        'contract_type': context.contract_category or 'Custom',
+                                        'contract_name': context.contract_name,
+                                        'workflow_id': context.workflow_id
+                                    }
+                                )
+                                if template_cid:
+                                    logger.info(f"💡 Auto-stored novel prompt as template (CID: {template_cid})")
+                                    context.metadata['template_auto_stored'] = True
+                                    context.metadata['template_cid'] = template_cid
+                            except Exception as store_error:
+                                logger.debug(f"Failed to auto-store template: {store_error}")
+                    
                     # Sanitize generated contract code to avoid known compiler issues
                     try:
                         sanitized = self._sanitize_contract_code(context.contract_code)
@@ -630,7 +1210,53 @@ class WorkflowOrchestrator:
                     raise Exception(generation_result.get("error", "Generation failed"))
                     
             except Exception as e:
+                # Log generation failure (Phase 3 feature)
+                if self.audit_trail:
+                    self.audit_trail.log_event(
+                        AuditEventType.GENERATION_FAILED,
+                        context.workflow_id,
+                        stage=PipelineStage.GENERATION.value,
+                        error=str(e),
+                        details={"attempt": attempt + 1}
+                    )
+                
                 if attempt < max_retries:
+                    # Try adaptive prompt repair before retry (Phase 3 feature)
+                    if self.prompt_repair:
+                        try:
+                            error_str = str(e)
+                            repaired_prompt, repaired_context, was_repaired = self.prompt_repair.repair_prompt(
+                                user_prompt, rag_context, error_str
+                            )
+                            if was_repaired:
+                                logger.info("🔧 Applied adaptive prompt repair")
+                                user_prompt = repaired_prompt
+                                rag_context = repaired_context
+                                # Update RAG context in metadata
+                                context.metadata['rag_context'] = rag_context
+                                context.metadata['prompt_repaired'] = True
+                                context.metadata['repair_pattern'] = self.prompt_repair.detect_error_pattern(error_str)
+                                
+                                # Log auto-fix attempt (Phase 3 feature)
+                                if self.audit_trail:
+                                    self.audit_trail.log_event(
+                                        AuditEventType.AUTO_FIX_ATTEMPTED,
+                                        context.workflow_id,
+                                        stage=PipelineStage.GENERATION.value,
+                                        details={"fix_type": "prompt_repair", "pattern": context.metadata.get('repair_pattern')}
+                                    )
+                        except Exception as repair_error:
+                            logger.debug(f"Adaptive prompt repair failed: {repair_error}")
+                    
+                    # Log retry triggered (Phase 3 feature)
+                    if self.audit_trail:
+                        self.audit_trail.log_event(
+                            AuditEventType.RETRY_TRIGGERED,
+                            context.workflow_id,
+                            stage=PipelineStage.GENERATION.value,
+                            details={"retry_count": attempt + 1, "max_retries": max_retries}
+                        )
+                    
                     context.increment_retry(PipelineStage.GENERATION)
                     logger.warning(f"⚠️ Generation attempt {attempt + 1} failed, retrying...")
                     await asyncio.sleep(1)  # Brief delay before retry
@@ -729,9 +1355,32 @@ class WorkflowOrchestrator:
                 "workspace_dir": self.workspace_dir,
                 "contract_code": context.contract_code
             }
+            # Query agent memory for similar errors and successful fixes (Phase 3 feature)
+            if self.agent_memory:
+                try:
+                    error_type = type(e).__name__
+                    similar_errors = self.agent_memory.query_similar_errors(
+                        error_type, 
+                        PipelineStage.DEPENDENCY_RESOLUTION.value,
+                        limit=3
+                    )
+                    if similar_errors:
+                        successful_fixes = self.agent_memory.get_successful_fixes_for_error(
+                            error_type,
+                            PipelineStage.DEPENDENCY_RESOLUTION.value
+                        )
+                        if successful_fixes:
+                            logger.info(f"💡 Found {len(successful_fixes)} successful fixes for similar error in agent memory")
+                            # Could use these fixes to inform the error handler
+                except Exception as mem_error:
+                    logger.debug(f"Failed to query agent memory: {mem_error}")
+            
             fix_success, fix_msg = await handle_error_with_retry(
                 self.error_handler, e, fix_context, max_retries=2
             )
+            
+            # Record fix attempt in error history
+            context.record_fix_attempt(PipelineStage.DEPENDENCY_RESOLUTION, fix_success, fix_msg or "")
             
             if not fix_success:
                 duration = (time.time() - stage_start) * 1000
@@ -743,8 +1392,72 @@ class WorkflowOrchestrator:
                 )
                 raise
             
-            # Retry dependency resolution after fix
-            logger.info("Retrying dependency resolution after auto-fix...")
+            # BULLETPROOF RECURSION GUARD: Increment FIRST, then check
+            # This ensures atomic increment-and-check to prevent infinite recursion
+            MAX_RETRIES = 3
+            retry_count = context.increment_and_get_retry_count(PipelineStage.DEPENDENCY_RESOLUTION)
+            
+            # Log every increment + recursion attempt for debugging
+            import traceback
+            stack_info = ''.join(traceback.format_stack()[-3:-1])  # Last 2 stack frames
+            logger.debug(f"🔄 Dependency resolution retry attempt {retry_count}/{MAX_RETRIES}\nStack trace:\n{stack_info}")
+            
+            # Strict check: if incremented count exceeds MAX_RETRIES, refuse to recurse
+            if retry_count > MAX_RETRIES:
+                logger.error(f"❌ Dependency resolution failed after {MAX_RETRIES} retries (attempt {retry_count} exceeded limit)")
+                # Save diagnostic bundle for debugging
+                diagnostic_path = None
+                try:
+                    diagnostic_path = self.context_manager.save_diagnostic_bundle(context)
+                    logger.error(f"Diagnostic bundle saved: {diagnostic_path}")
+                except Exception as diag_error:
+                    logger.warning(f"Failed to save diagnostic bundle: {diag_error}")
+                
+                # Escalate using guardrails (Phase 3 feature)
+                if self.guardrails:
+                    try:
+                        context_dict = context.generate_diagnostic_bundle()
+                        self.guardrails.escalate(
+                            PipelineStage.DEPENDENCY_RESOLUTION.value,
+                            str(e),
+                            context_dict,
+                            diagnostic_path
+                        )
+                        
+                        # Log escalation (Phase 3 feature)
+                        if self.audit_trail:
+                            self.audit_trail.log_event(
+                                AuditEventType.ESCALATION_TRIGGERED,
+                                context.workflow_id,
+                                stage=PipelineStage.DEPENDENCY_RESOLUTION.value,
+                                error=str(e),
+                                details={"retry_count": retry_count, "max_retries": MAX_RETRIES, "exceeded": True}
+                            )
+                    except Exception as guard_error:
+                        logger.debug(f"Guardrails escalation failed: {guard_error}")
+                
+                duration = (time.time() - stage_start) * 1000
+                context.add_stage_result(
+                    PipelineStage.DEPENDENCY_RESOLUTION,
+                    "error",
+                    error=f"Dependency resolution failed after {MAX_RETRIES} retries (attempt {retry_count} exceeded limit)",
+                    error_type="max_retries_exceeded",
+                    duration_ms=duration
+                )
+                
+                # Store user-friendly error info in context
+                if self.guardrails:
+                    friendly_error = self.guardrails.get_user_friendly_error(
+                        PipelineStage.DEPENDENCY_RESOLUTION.value,
+                        str(e),
+                        "max_retries_exceeded"
+                    )
+                    context.metadata['friendly_error'] = friendly_error
+                
+                raise RuntimeError(f"Dependency resolution failed after {MAX_RETRIES} retries (attempt {retry_count} exceeded limit). See diagnostic bundle for details.")
+            
+            # Safe to retry: retry_count is now incremented and <= MAX_RETRIES
+            logger.info(f"🔄 Retrying dependency resolution after auto-fix... (attempt {retry_count}/{MAX_RETRIES})")
             await self._stage_dependency_resolution(context)
     
     async def _stage_compilation(self, context: WorkflowContext):
@@ -1077,6 +1790,28 @@ class WorkflowOrchestrator:
                             count=1
                         )
                         logger.info("🔧 Fixed Ownable() to Ownable(msg.sender) for OpenZeppelin v5 compatibility")
+                else:
+                    # No constructor exists - need to add one with Ownable(msg.sender)
+                    # Find the contract declaration and add constructor after it
+                    contract_match = re.search(r'(contract\s+\w+\s+is\s+[^{]*\{)', fixed)
+                    if contract_match:
+                        # Build constructor calls based on what the contract inherits
+                        constructor_calls = []
+                        if 'Ownable' in contract_match.group(1):
+                            constructor_calls.append('Ownable(msg.sender)')
+                        if 'ReentrancyGuard' in contract_match.group(1):
+                            constructor_calls.append('ReentrancyGuard()')
+                        
+                        if constructor_calls:
+                            # Add constructor after the opening brace
+                            constructor_str = ' ' + ' '.join(constructor_calls) + ' '
+                            fixed = re.sub(
+                                r'(contract\s+\w+\s+is\s+[^{]*\{)',
+                                lambda m: m.group(1) + f'\n    constructor(){constructor_str}{{}}',
+                                fixed,
+                                count=1
+                            )
+                            logger.info(f"🔧 Added constructor() {constructor_str.strip()} for OpenZeppelin v5 compatibility")
         
         # 0.3.5. PROACTIVELY fix OpenZeppelin v5 import path changes (security -> utils)
         # OpenZeppelin v5 moved Pausable and ReentrancyGuard from security/ to utils/
@@ -1144,20 +1879,32 @@ class WorkflowOrchestrator:
                 fixed = re.sub(pat, "", fixed, flags=re.MULTILINE | re.DOTALL)
                 logger.info("🔧 Removed _beforeTokenTransfer override function")
         
-        # 2. Fix constructor parameter shadowing of functions
+        # 2. Fix constructor parameter shadowing of state variables and functions
+        # First, find all state variables - Solidity syntax: type [visibility] [immutable/constant] name;
+        # Pattern 1: uint256 private immutable _cap; or uint256 _cap;
+        simple_state_var_pattern = r'(?:uint256|uint8|uint16|uint32|uint64|uint128|int256|int8|int16|int32|int64|int128|bool|address|string|bytes\d*|mapping)\s+(?:private|internal|public)?\s*(?:immutable|constant)?\s*(_?\w+)\s*;'
+        state_vars = set(re.findall(simple_state_var_pattern, fixed))
+        # Pattern 2: private uint256 _cap; (less common but possible)
+        alt_state_var_pattern = r'(?:private|internal|public)\s+(?:uint256|uint8|uint16|uint32|uint64|uint128|int256|int8|int16|int32|int64|int128|bool|address|string|bytes\d*|mapping)\s+(?:immutable|constant)?\s*(_?\w+)\s*;'
+        alt_state_vars = set(re.findall(alt_state_var_pattern, fixed))
+        state_vars.update(alt_state_vars)
+        
         # Find all public/external function names in the contract
         # Pattern matches: function name(...) public/external [view/pure/payable] [returns (...)]
         function_pattern = r'function\s+(\w+)\s*\([^)]*\)\s+(?:public|external)'
         function_names = set(re.findall(function_pattern, fixed))
         
-        # Log found function names for debugging
+        # Combine state variables and function names to check for shadowing
+        all_names_to_check = state_vars.union(function_names)
+        
+        # Log found names for debugging
         logger.info(f"Sanitizer: Checking for shadowing issues...")
+        if state_vars:
+            logger.info(f"Sanitizer: Found state variables: {', '.join(state_vars)}")
         if function_names:
             logger.info(f"Sanitizer: Found functions that may shadow: {', '.join(function_names)}")
-        else:
-            logger.info("Sanitizer: No public/external functions found to check for shadowing")
         
-        if function_names:
+        if all_names_to_check:
             # Find constructor and its parameters
             constructor_pattern = r'constructor\s*\(([^)]+)\)'
             constructor_match = re.search(constructor_pattern, fixed)
@@ -1168,23 +1915,29 @@ class WorkflowOrchestrator:
                 modified = False
                 replaced_names = {}
                 
-                # Check each parameter for shadowing
-                for func_name in function_names:
+                # Check each name (state variable or function) for shadowing
+                for name_to_check in all_names_to_check:
+                    # Remove leading underscore if present for matching
+                    name_without_underscore = name_to_check.lstrip('_')
                     # Match parameter with this name: type paramName or type memory paramName
-                    # Simpler pattern: match any type followed by the parameter name
                     # Look for the parameter name as a standalone word in the params string
-                    param_pattern = rf'\b(\w+(?:\s+memory)?)\s+\b({func_name})\b'
+                    # Match both with and without underscore prefix
+                    param_pattern = rf'\b(\w+(?:\s+memory)?)\s+\b(_?{re.escape(name_without_underscore)})\b'
                     param_match = re.search(param_pattern, params)
                     if param_match:
-                        # Rename parameter to _paramName to avoid shadowing
-                        new_name = f'_{func_name}'
+                        # Rename parameter to _paramName to avoid shadowing (if not already prefixed)
+                        param_name = param_match.group(2)
+                        if param_name.startswith('_'):
+                            new_name = param_name  # Already prefixed, but might still shadow
+                        else:
+                            new_name = f'_{param_name}'
                         # Replace the exact match in params list
                         old_param_decl = param_match.group(0)
                         new_param_decl = f'{param_match.group(1)} {new_name}'
                         params = params.replace(old_param_decl, new_param_decl)
-                        replaced_names[func_name] = new_name
+                        replaced_names[param_name] = new_name
                         modified = True
-                        logger.info(f"Sanitizer: Will rename constructor parameter '{func_name}' to '{new_name}'")
+                        logger.info(f"Sanitizer: Will rename constructor parameter '{param_name}' to '{new_name}' to avoid shadowing state variable/function")
                 
                 # Update constructor signature if parameters were modified
                 if modified:
@@ -1250,8 +2003,16 @@ class WorkflowOrchestrator:
             deployment_status = deployment_result.get("status", "unknown")
             
             if deployment_status in ["success", "deployed"]:
-                context.deployment_address = deployment_result.get("contract_address")
-                context.deployment_tx_hash = deployment_result.get("tx_hash")
+                # Handle both "address" and "contract_address" keys for compatibility
+                context.deployment_address = (
+                    deployment_result.get("address") or 
+                    deployment_result.get("contract_address")
+                )
+                # Handle both "tx_hash" and "transaction_hash" keys for compatibility
+                context.deployment_tx_hash = (
+                    deployment_result.get("tx_hash") or 
+                    deployment_result.get("transaction_hash")
+                )
                 context.deployment_network = network
                 
                 duration = (time.time() - stage_start) * 1000

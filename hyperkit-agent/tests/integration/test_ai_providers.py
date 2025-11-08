@@ -9,6 +9,7 @@ import asyncio
 from unittest.mock import patch, AsyncMock
 from services.generation.generator import ContractGenerator
 
+@pytest.mark.integration
 class TestAIProviders:
     """Test AI provider integrations."""
     

@@ -19,6 +19,7 @@ from core.config.loader import get_config
 from core.workflow.workflow_orchestrator import WorkflowOrchestrator
 
 
+@pytest.mark.integration
 class TestRealWorkflowE2E:
     """Real E2E workflow tests - no mocks"""
     
@@ -44,6 +45,7 @@ class TestRealWorkflowE2E:
         return WorkflowOrchestrator(agent, workspace_dir)
     
     @pytest.mark.asyncio
+    @pytest.mark.integration
     async def test_workflow_completes_even_on_deployment_failure(self, orchestrator):
         """
         Test that workflow completes successfully even if deployment fails.

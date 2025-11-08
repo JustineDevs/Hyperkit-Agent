@@ -12,6 +12,38 @@ Production release automation scripts for HyperKit-Agent.
 
 **JavaScript version script removed** - consolidated to Python for single-source-of-truth workflow.
 
+### `version-bump.js`
+Handles semantic versioning with automatic uncommitted file detection and handling.
+
+**Usage:**
+```bash
+node hyperkit-agent/scripts/release/version-bump.js [patch|minor|major] [--no-commit] [--skip-remote-check] [--skip-uncommitted-check]
+```
+
+**Options:**
+- `[patch|minor|major]`: Version bump type (required)
+- `--no-commit`: Disable auto-commit (default: enabled)
+- `--skip-remote-check`: Skip remote version validation
+- `--skip-uncommitted-check`: Skip uncommitted file detection
+
+**Features:**
+- Detects uncommitted files before version bump
+- Auto-stages uncommitted files
+- Updates VERSION, package.json, and pyproject.toml
+- Commits version files + uncommitted files together
+- Final validation ensures clean working tree
+
+**Uncommitted File Handling:**
+1. Pre-bump check detects uncommitted files
+2. Auto-stages detected files
+3. Commits version files + uncommitted files together
+4. Post-bump validation ensures clean working tree
+
+**Git Integration:**
+- Automatically commits version files and uncommitted files
+- Use `--no-commit` to review changes before committing
+- Use `--skip-uncommitted-check` to disable auto-staging
+
 ### `update-changelog.js`
 Automatically generates CHANGELOG.md entries from git commits.
 

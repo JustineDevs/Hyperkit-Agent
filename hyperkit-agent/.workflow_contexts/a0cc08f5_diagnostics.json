@@ -1,0 +1,158 @@
+{
+  "workflow_id": "a0cc08f5",
+  "user_prompt": "Create a test ERC20 token",
+  "created_at": "2025-11-07T14:51:31.978474",
+  "system_info": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "architecture": [
+      "64bit",
+      "WindowsPE"
+    ]
+  },
+  "tool_versions": {
+    "forge": "forge Version: 1.4.3-stable\nCommit SHA: fa9f934bdac4bcf57e694e852a61997dda90668a\nBuild Timestamp: 2025-10-22T05:35:40.561222200Z (1761111340)\nBuild Profile: maxperf",
+    "npm": "Not found",
+    "node": "v24.11.0",
+    "python": "Python 3.12.10"
+  },
+  "workspace_dir": "C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent",
+  "temp_dir": "C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent\\.temp_envs\\workflow_a0cc08f5_20251107_145131",
+  "stages": [
+    {
+      "stage": "input_parsing",
+      "status": "success",
+      "output": {
+        "tools": {
+          "forge": {
+            "available": true,
+            "version": "forge Version: 1.4.3-stable",
+            "path": "C:\\Users\\JustineDevs\\.foundry\\bin\\forge.exe"
+          },
+          "npm": false,
+          "node": true,
+          "python": true,
+          "pip": true
+        },
+        "required": {
+          "forge": {
+            "available": true,
+            "version": "forge Version: 1.4.3-stable",
+            "path": "C:\\Users\\JustineDevs\\.foundry\\bin\\forge.exe"
+          },
+          "python": true
+        },
+        "optional": {
+          "npm": false,
+          "node": true,
+          "pip": true
+        },
+        "warnings": [
+          "npm"
+        ]
+      },
+      "error": null,
+      "error_type": null,
+      "timestamp": "2025-11-07T14:51:32.568983",
+      "duration_ms": 586.5073204040527,
+      "metadata": {}
+    },
+    {
+      "stage": "input_parsing",
+      "status": "success",
+      "output": {
+        "rag_context_length": 0,
+        "rag_scope": "official-only",
+        "template_info": {
+          "cid": null,
+          "source": "ipfs_pinata",
+          "scope": "official-only"
+        },
+        "template_loaded": false
+      },
+      "error": null,
+      "error_type": null,
+      "timestamp": "2025-11-07T14:51:32.587983",
+      "duration_ms": 1.9991397857666016,
+      "metadata": {}
+    },
+    {
+      "stage": "output",
+      "status": "error",
+      "output": {},
+      "error": "'dict' object has no attribute 'step'",
+      "error_type": "workflow_exception",
+      "timestamp": "2025-11-07T14:51:32.617983",
+      "duration_ms": null,
+      "metadata": {}
+    }
+  ],
+  "errors": [
+    {
+      "stage": "output",
+      "error": "'dict' object has no attribute 'step'",
+      "error_type": "workflow_exception",
+      "timestamp": "2025-11-07T14:51:32.617983",
+      "fix_attempted": false,
+      "fix_successful": false,
+      "retry_count": 0
+    }
+  ],
+  "error_history": [
+    {
+      "stage": "output",
+      "error": "'dict' object has no attribute 'step'",
+      "error_type": "workflow_exception",
+      "timestamp": "2025-11-07T14:51:32.617983",
+      "fix_attempted": false,
+      "fix_successful": false,
+      "retry_count": 0
+    }
+  ],
+  "retry_attempts": {},
+  "detected_dependencies": [],
+  "installed_dependencies": {},
+  "contract_info": {
+    "name": null,
+    "path": null,
+    "category": null
+  },
+  "compilation": {
+    "success": false,
+    "artifact_path": null
+  },
+  "audit": null,
+  "deployment": {
+    "address": null,
+    "tx_hash": null,
+    "network": null
+  },
+  "verification": {
+    "status": null,
+    "url": null
+  },
+  "metadata": {
+    "temp_dir": "C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent\\.temp_envs\\workflow_a0cc08f5_20251107_145131",
+    "network": "hyperion",
+    "rag_scope": "official-only",
+    "allow_insecure": false,
+    "rag_context": "",
+    "template_info": {
+      "cid": null,
+      "source": "ipfs_pinata",
+      "scope": "official-only"
+    }
+  },
+  "rag_status": {
+    "context_retrieved": false,
+    "context_length": 0,
+    "scope": "official-only",
+    "template_info": {
+      "cid": null,
+      "source": "ipfs_pinata",
+      "scope": "official-only"
+    }
+  },
+  "model_provider": "unknown",
+  "generation_method": "unknown"
+}

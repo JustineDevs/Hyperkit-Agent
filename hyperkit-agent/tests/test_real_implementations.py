@@ -7,6 +7,7 @@ Based on the comprehensive repo analysis
 import asyncio
 import sys
 import os
+import pytest
 
 # Add the parent directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,6 +17,8 @@ from services.audit.public_contract_auditor import PublicContractAuditor
 from services.deployment.foundry_deployer import FoundryDeployer
 from services.storage.pinata_client import PinataClient
 
+@pytest.mark.integration
+@pytest.mark.asyncio
 async def test_real_implementations():
     """Test all real implementations to verify they work correctly"""
     print("🔍 Testing Real Implementations vs Mock Implementations")

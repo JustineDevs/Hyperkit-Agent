@@ -242,20 +242,23 @@ class ConfigManager:
     
     # Obsidian methods removed - IPFS Pinata RAG is now exclusive
     
-    def _validate_startup_config(self):
+    def _validate_startup_config(self, skip_private_key: bool = False):
         """
         Validate critical configuration on startup - abort if missing/invalid.
         This prevents runtime errors by catching config issues early.
+        
+        Args:
+            skip_private_key: If True, skip private key validation (for informational commands)
         """
         from core.config.config_validator import ConfigValidator
         
         # Boot-time config validation - fail hard on critical errors
         validator = ConfigValidator(self._config)
-        validator.fail_if_invalid()  # Raises SystemExit(1) if critical errors found
+        validator.fail_if_invalid(skip_private_key=skip_private_key)  # Raises SystemExit(1) if critical errors found
         
         # If we reach here, validation passed (no critical errors)
         # Log warnings if any (critical errors already handled by fail_if_invalid)
-        result = validator.validate_all()
+        result = validator.validate_all(skip_private_key=skip_private_key)
         if result['non_critical_issues'] > 0:
             import logging
             logger = logging.getLogger(__name__)

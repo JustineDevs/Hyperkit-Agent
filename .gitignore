@@ -30,6 +30,7 @@ ENV/
 env.bak/
 venv.bak/
 .conda/
+=0.12.0
 
 # IDE and Editor files
 .vscode/

@@ -19,6 +19,7 @@ from core.workflow.workflow_orchestrator import WorkflowOrchestrator
 from services.dependencies.dependency_manager import DependencyManager
 
 
+@pytest.mark.integration
 class TestFailureModes:
     """Test common failure modes and recovery logic"""
     

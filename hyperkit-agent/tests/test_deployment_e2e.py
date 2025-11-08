@@ -9,6 +9,7 @@ from pathlib import Path
 from services.deployment.foundry_deployer import FoundryDeployer
 
 
+@pytest.mark.integration
 class TestDeploymentE2E:
     """End-to-end deployment tests"""
     

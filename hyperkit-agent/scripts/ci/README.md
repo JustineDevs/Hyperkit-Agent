@@ -6,6 +6,7 @@ Scripts for continuous integration, deployment, badge generation, and version ma
 
 | Script | Purpose | Arguments | Frequency |
 |--------|---------|-----------|-----------|
+| `sync_workflow.py` | Branch+workflow hygiene with auto uncommitted file handling | `[--dry-run] [--push]` | On commit/push |
 | `run_all_updates.py` | Orchestrates all repo maintenance workflows in parallel | - | CI/CD on push |
 | `audit_badge_system.py` | Adds audit badges to markdown files | `--output REPORTS/` | CI/CD badges |
 | `docs_version_badge_system.py` | Injects version badges into core docs | - | On release |
@@ -15,6 +16,35 @@ Scripts for continuous integration, deployment, badge generation, and version ma
 | `prepare_rag_templates.py` | Prepares RAG templates for upload | - | Before upload |
 | `upload_rag_templates_to_ipfs.py` | Uploads RAG templates to IPFS | - | After prepare |
 | `cleanup_legacy_files_fixed.sh` | Legacy file cleanup (legacy) | - | One-time |
+
+## Workflow Hygiene (`sync_workflow.py`)
+
+The hygiene workflow script automatically handles uncommitted files to prevent data loss and ensure clean working trees.
+
+### Features:
+- **Auto-detection**: Detects untracked, modified, and staged files before workflow execution
+- **Auto-staging**: Automatically stages uncommitted files to prevent data loss
+- **Auto-commit**: Commits workflow-generated files automatically
+- **Final validation**: Ensures no uncommitted files remain after workflow completion
+
+### Usage:
+```bash
+# Run hygiene workflow (auto-handles uncommitted files)
+npm run hygiene
+
+# Dry run (preview changes)
+npm run hygiene:dry-run
+
+# Push changes to remote
+npm run hygiene:push
+```
+
+### Uncommitted File Handling:
+1. **Pre-flight check**: Detects uncommitted files before workflow starts
+2. **Auto-staging**: Automatically stages detected files
+3. **Workflow execution**: Runs all workflow scripts
+4. **Auto-commit**: Commits generated files automatically
+5. **Final validation**: Ensures clean working tree after completion
 
 ## Usage
 

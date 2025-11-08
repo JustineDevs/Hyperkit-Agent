@@ -18,7 +18,7 @@ def deploy_group():
     # Production-ready deploy group - no stubs
 
 @deploy_group.command()
-@click.option('--contract', '-c', required=True, help='Contract file path')
+@click.option('--contract', '-c', help='Contract file path')
 @click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
 @click.option('--private-key', '-k', help='Private key for deployment')
 @click.option('--gas-limit', '-g', type=int, help='Gas limit for deployment')
@@ -55,17 +55,39 @@ def contract(ctx, contract, network, private_key, gas_limit, gas_price, construc
       hyperagent deploy contract MyToken.sol --constructor-file args.json
     """
     from cli.utils.warnings import show_command_warning
+    from cli.utils.interactive import (
+        interactive_file_selection,
+        confirm_destructive_action
+    )
     show_command_warning('deploy')
     
     import json
     from core.agent.main import HyperKitAgent
     from core.config.loader import get_config
     
+    # Interactive contract file selection if not provided
+    if not contract:
+        contract = interactive_file_selection(
+            "Select contract file to deploy",
+            file_pattern="*.sol"
+        )
+        if not contract:
+            console.print("[red]No contract selected. Deployment cancelled.[/red]")
+            return
+    
     # Hardcode Hyperion - no network selection
     network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
     if ctx.params.get('network') and ctx.params.get('network') != 'hyperion':
         console.print(f"[red]WARNING: Network '{ctx.params.get('network')}' not supported[/red]")
         console.print("[yellow]Using Hyperion (only supported network)[/yellow]")
+    
+    # Confirm deployment (destructive action)
+    if not confirm_destructive_action(
+        "This will deploy a contract to the blockchain",
+        f"Contract: {contract}\nNetwork: {network}\n\nThis action cannot be undone."
+    ):
+        console.print("[yellow]Deployment cancelled by user.[/yellow]")
+        return
     
     console.print(f"Deploying contract: {contract}")
     console.print(f"Network: Hyperion (exclusive deployment target)")
@@ -136,10 +158,25 @@ def contract(ctx, contract, network, private_key, gas_limit, gas_price, construc
             console.print(traceback.format_exc())
 
 @deploy_group.command()
-@click.option('--network', '-n', default='hyperion', help='Target network')
+@click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
+def list(network):
+    """List recent deployments"""
+    # Hardcode Hyperion - no network selection
+    network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
+    
+    console.print(f"Recent Deployments on Hyperion")
+    console.print(f"[dim]Deployment history tracking not yet implemented[/dim]")
+    console.print(f"[yellow]Tip: Use 'hyperagent deploy status' to check deployment status[/yellow]")
+    console.print(f"[yellow]Tip: Use 'hyperagent verify list' to see verified contracts[/yellow]")
+
+@deploy_group.command()
+@click.option('--network', '-n', default='hyperion', hidden=True, help='[DEPRECATED] Hyperion is the only supported network')
 def status(network):
     """Check deployment status"""
-    console.print(f"Deployment Status for {network}")
+    # Hardcode Hyperion - no network selection
+    network = "hyperion"  # HYPERION-ONLY: Ignore any --network flag
+    
+    console.print(f"Deployment Status for Hyperion")
     
     # Check deployment status
     try:

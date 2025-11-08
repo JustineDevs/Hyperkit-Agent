@@ -6,7 +6,11 @@
 **Branch**: `main`  
 <!-- AUDIT_BADGE_END -->
 
-# HyperAgent 🤖
+<div align="center">
+
+<img src="public/ascii/ascii-art-Hyperagent.png" alt="HyperAgent" width="800">
+
+</div>
 
 > **AI-Powered Smart Contract Development, Security Auditing, and Multi-Chain Deployment Platform**
 
@@ -412,6 +416,29 @@ hyperagent limitations
 | **Security Review** | Comprehensive audit pipeline | `hyperagent audit batch --severity critical` |
 | **Automated Testing** | Generate + test contracts | `hyperagent generate test MyContract.sol` |
 | **CI/CD Integration** | Automated deployment pipeline | GitHub Actions workflow |
+
+---
+
+## 🎨 CLI Banner
+
+HyperAgent displays a professional ASCII banner on every CLI invocation:
+
+```
+ _   _                      _   _             
+| | | |_   _ _ __   ___ _ __| |_(_) __ _ _ __  
+| |_| | | | | '_ \ / _ \ '__| __| |/ _` | '_ \ 
+|  _  | |_| | |_) |  __/ |  | |_| | (_| | | | |
+|_| |_|\__, | .__/ \___|_|   \__|_|\__,_|_| |_|
+       |___/|_|
+Autonomous Smart Contract Agent
+```
+
+**Customization:**
+- `--no-banner`: Suppress banner display
+- `--color`: Enable colored output (requires terminal support)
+- `HYPERAGENT_BANNER_STYLE`: Set style (`simple`, `compact`, `professional`)
+
+See [Banner Usage Guide](./docs/GUIDE/BANNER_USAGE.md) for details.
 
 ---
 

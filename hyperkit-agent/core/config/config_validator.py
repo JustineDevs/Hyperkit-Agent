@@ -18,9 +18,12 @@ class ConfigValidator:
         self.errors: List[str] = []
         self.warnings: List[str] = []
     
-    def validate_all(self) -> Dict[str, Any]:
+    def validate_all(self, skip_private_key: bool = False) -> Dict[str, Any]:
         """
         Validate all critical configuration.
+        
+        Args:
+            skip_private_key: If True, skip private key validation (for informational commands)
         
         Returns:
             dict with validation results and detailed error messages
@@ -31,8 +34,9 @@ class ConfigValidator:
         # Validate network configs
         self._validate_networks()
         
-        # Validate private keys
-        self._validate_private_keys()
+        # Validate private keys (unless skipped for informational commands)
+        if not skip_private_key:
+            self._validate_private_keys()
         
         # Validate AI/RAG configs
         self._validate_ai_rag_config()
@@ -219,14 +223,17 @@ class ConfigValidator:
         # Pinata validation is done in _validate_ai_rag_config
         pass
     
-    def fail_if_invalid(self):
+    def fail_if_invalid(self, skip_private_key: bool = False):
         """
         Fail hard if configuration is invalid.
+        
+        Args:
+            skip_private_key: If True, skip private key validation (for informational commands)
         
         Raises:
             SystemExit: If critical config errors found
         """
-        result = self.validate_all()
+        result = self.validate_all(skip_private_key=skip_private_key)
         
         if result['critical_issues'] > 0:
             logger.error("=" * 80)
@@ -238,6 +245,9 @@ class ConfigValidator:
             
             logger.error("\n" + "=" * 80)
             logger.error("SYSTEM CANNOT START - FIX CONFIGURATION ERRORS ABOVE")
+            logger.error("=" * 80)
+            logger.error("\n📖 Documentation: https://github.com/JustineDevs/HyperAgent/blob/main/docs/GUIDE/CONFIGURATION_GUIDE.md")
+            logger.error("🔧 Quick Fix: Copy .env.example to .env and fill in required values")
             logger.error("=" * 80)
             
             raise SystemExit(1)

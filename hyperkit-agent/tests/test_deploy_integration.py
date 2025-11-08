@@ -14,6 +14,7 @@ from services.deployment.deployer import MultiChainDeployer
 from services.deployment.constructor_parser import ConstructorArgumentParser
 
 
+@pytest.mark.integration
 class TestDeployIntegration:
     """Integration tests for the complete deploy workflow"""
     

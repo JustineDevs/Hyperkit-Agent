@@ -1,0 +1,127 @@
+{
+  "workflow_id": "9ce13100",
+  "user_prompt": "Create a test ERC20 token",
+  "created_at": "2025-11-07T14:39:58.404369",
+  "stages": [
+    {
+      "stage": "input_parsing",
+      "status": "success",
+      "output": {
+        "tools": {
+          "forge": {
+            "available": true,
+            "version": "forge Version: 1.4.3-stable",
+            "path": "C:\\Users\\JustineDevs\\.foundry\\bin\\forge.exe"
+          },
+          "npm": false,
+          "node": true,
+          "python": true,
+          "pip": true
+        },
+        "required": {
+          "forge": {
+            "available": true,
+            "version": "forge Version: 1.4.3-stable",
+            "path": "C:\\Users\\JustineDevs\\.foundry\\bin\\forge.exe"
+          },
+          "python": true
+        },
+        "optional": {
+          "npm": false,
+          "node": true,
+          "pip": true
+        },
+        "warnings": [
+          "npm"
+        ]
+      },
+      "error": null,
+      "error_type": null,
+      "timestamp": "2025-11-07T14:39:59.529703",
+      "duration_ms": 1121.3335990905762,
+      "metadata": {}
+    },
+    {
+      "stage": "input_parsing",
+      "status": "success",
+      "output": {
+        "rag_context_length": 0,
+        "rag_scope": "official-only",
+        "template_info": {
+          "cid": null,
+          "source": "ipfs_pinata",
+          "scope": "official-only"
+        },
+        "template_loaded": false
+      },
+      "error": null,
+      "error_type": null,
+      "timestamp": "2025-11-07T14:39:59.549704",
+      "duration_ms": 3.0012130737304688,
+      "metadata": {}
+    },
+    {
+      "stage": "output",
+      "status": "error",
+      "output": {},
+      "error": "'dict' object has no attribute 'step'",
+      "error_type": "workflow_exception",
+      "timestamp": "2025-11-07T14:39:59.579702",
+      "duration_ms": null,
+      "metadata": {}
+    }
+  ],
+  "contract_code": null,
+  "contract_name": null,
+  "contract_path": null,
+  "contract_category": null,
+  "detected_dependencies": [],
+  "installed_dependencies": {},
+  "compilation_artifact_path": null,
+  "compilation_success": false,
+  "audit_results": null,
+  "security_score": null,
+  "deployment_address": null,
+  "deployment_tx_hash": null,
+  "deployment_network": null,
+  "verification_status": null,
+  "verification_url": null,
+  "test_results": null,
+  "errors": [
+    {
+      "stage": "output",
+      "error": "'dict' object has no attribute 'step'",
+      "error_type": "workflow_exception",
+      "timestamp": "2025-11-07T14:39:59.579702",
+      "fix_attempted": false,
+      "fix_successful": false,
+      "retry_count": 0
+    }
+  ],
+  "retry_attempts": {},
+  "error_history": [
+    {
+      "stage": "output",
+      "error": "'dict' object has no attribute 'step'",
+      "error_type": "workflow_exception",
+      "timestamp": "2025-11-07T14:39:59.579702",
+      "fix_attempted": false,
+      "fix_successful": false,
+      "retry_count": 0
+    }
+  ],
+  "workspace_dir": "C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent",
+  "temp_dir": "C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent\\.temp_envs\\workflow_9ce13100_20251107_143958",
+  "metadata": {
+    "temp_dir": "C:\\Users\\JustineDevs\\Downloads\\HyperAgent\\hyperkit-agent\\.temp_envs\\workflow_9ce13100_20251107_143958",
+    "network": "hyperion",
+    "rag_scope": "official-only",
+    "allow_insecure": false,
+    "rag_context": "",
+    "template_info": {
+      "cid": null,
+      "source": "ipfs_pinata",
+      "scope": "official-only"
+    }
+  }
+}

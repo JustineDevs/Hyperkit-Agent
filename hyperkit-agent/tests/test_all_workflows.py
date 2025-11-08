@@ -18,6 +18,7 @@ except ImportError:
     from cli.main import cli
 
 
+@pytest.mark.integration
 class TestDocumentedWorkflows:
     """Test all workflows documented in README.md"""
     

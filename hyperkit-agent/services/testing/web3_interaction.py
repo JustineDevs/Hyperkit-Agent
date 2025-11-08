@@ -6,10 +6,17 @@ import json
 import logging
 from typing import Dict, Any, List, Optional
 from web3 import Web3
+
+# Try to import PoA middleware with web3 v7+ compatibility
+# Note: PoA middleware is non-critical, so we handle ImportError silently
+geth_poa_middleware = None
 try:
     from web3.middleware import geth_poa_middleware
 except ImportError:
-    geth_poa_middleware = None
+    # PoA middleware not available - this is non-critical
+    # Suppress warning - only log at debug level if needed
+    logger = logging.getLogger(__name__)
+    logger.debug("PoA middleware not available - non-critical")
 
 logger = logging.getLogger(__name__)
 

@@ -1,0 +1,26 @@
+[
+  {
+    "query": "Generate a sophisticated lending/borrowing protocol with these advanced features: - Collateral deposit \u00e2\u2020\u2019 aToken minting (interest-bearing token) conversion 1:1 + interest - Borrow mechanism: LTV-bas",
+    "timestamp": "2025-11-07T06:41:45.900252",
+    "suggested": true,
+    "processed": false
+  },
+  {
+    "query": "smart contract",
+    "timestamp": "2025-11-07T13:13:14.525181",
+    "suggested": true,
+    "processed": false
+  },
+  {
+    "query": "smart contract security",
+    "timestamp": "2025-11-07T13:13:16.377173",
+    "suggested": true,
+    "processed": false
+  },
+  {
+    "query": "Create a test ERC20 token",
+    "timestamp": "2025-11-07T14:39:59.549704",
+    "suggested": true,
+    "processed": false
+  }
+]

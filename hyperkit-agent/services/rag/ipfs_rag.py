@@ -11,6 +11,7 @@ import requests
 import json
 from typing import Dict, Any, List, Optional
 from pathlib import Path
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,15 @@ class IPFSRAG:
         
         # Track last retrieved CID for template identification (per ideal workflow)
         self.last_retrieved_cid = None
+        
+        # Initialize template engine for auto-selection (Phase 4)
+        self.template_engine = None
+        try:
+            from core.prompts.template_engine import TemplateEngine
+            self.template_engine = TemplateEngine()
+            logger.info("Template engine initialized for RAG auto-selection")
+        except Exception as e:
+            logger.debug(f"Template engine not available: {e}")
         
         if self.pinata_enabled:
             logger.info("IPFS RAG initialized with Pinata integration")
@@ -109,6 +119,13 @@ class IPFSRAG:
                 "  Fix: Add Pinata credentials to .env file\n"
                 "  Note: RAG context retrieval requires Pinata configuration"
             )
+        
+        # Try template matching first (Phase 4)
+        matched_template = None
+        if self.template_engine:
+            matched_template = self.template_engine.match_template(query)
+            if matched_template:
+                logger.info(f"📋 Matched template: {matched_template.name}")
         
         try:
             # Load dual-scope registries
@@ -201,6 +218,23 @@ class IPFSRAG:
             
             logger.info(f"RAG retrieval: {len(team_results)} Team, {len(community_results)} Community, {len(legacy_results)} Legacy")
             
+            # Self-healing onboarding: If no results found, suggest storing new pattern
+            if not combined_context and len(all_results) == 0:
+                logger.info("💡 No RAG context found - this is a new prompt pattern")
+                logger.info("💡 Consider storing this as a template for future use")
+                # Store suggestion in metadata for later processing
+                self._suggest_template_creation(query)
+            
+            # Combine with template if matched (Phase 4)
+            if self.template_engine and matched_template:
+                try:
+                    template_context = matched_template.render(goal=query)
+                    if combined_context:
+                        return f"{template_context}\n\n## Additional Context from IPFS\n{combined_context}"
+                    return template_context
+                except Exception as e:
+                    logger.warning(f"Template combination failed: {e}")
+            
             return combined_context
             
         except Exception as e:
@@ -257,6 +291,129 @@ class IPFSRAG:
             score -= 0.5  # Heavy penalty for flagged content
         
         return max(0.0, min(1.0, score))  # Clamp between 0 and 1
+    
+    def _suggest_template_creation(self, query: str):
+        """
+        Suggest creating a template for a new prompt pattern.
+        Stores suggestion for later processing.
+        
+        Args:
+            query: User prompt that had no RAG match
+        """
+        try:
+            from pathlib import Path
+            suggestions_file = Path(".workflow_contexts") / "template_suggestions.json"
+            suggestions_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Load existing suggestions
+            suggestions = []
+            if suggestions_file.exists():
+                try:
+                    with open(suggestions_file, 'r', encoding='utf-8') as f:
+                        suggestions = json.load(f)
+                except Exception:
+                    suggestions = []
+            
+            # Add new suggestion
+            suggestion = {
+                "query": query[:200],  # Truncate for storage
+                "timestamp": datetime.utcnow().isoformat(),
+                "suggested": True,
+                "processed": False
+            }
+            
+            # Avoid duplicates
+            if not any(s.get('query') == suggestion['query'] for s in suggestions):
+                suggestions.append(suggestion)
+                # Keep only last 50 suggestions
+                if len(suggestions) > 50:
+                    suggestions = suggestions[-50:]
+                
+                # Save suggestions
+                with open(suggestions_file, 'w', encoding='utf-8') as f:
+                    json.dump(suggestions, f, indent=2)
+                
+                logger.debug(f"Stored template suggestion for new prompt pattern")
+        except Exception as e:
+            logger.debug(f"Failed to store template suggestion: {e}")
+    
+    async def suggest_and_store_new_pattern(
+        self,
+        prompt: str,
+        generated_contract: str,
+        success: bool = True,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Optional[str]:
+        """
+        Suggest and optionally store a new prompt pattern as a template.
+        Called when a successful generation occurs with a novel prompt.
+        
+        Args:
+            prompt: User prompt that generated the contract
+            generated_contract: Generated contract code
+            success: Whether generation was successful
+            metadata: Optional metadata (contract type, compilation status, etc.)
+            
+        Returns:
+            CID of stored template if stored, None otherwise
+        """
+        if not success:
+            logger.debug("Skipping template storage for unsuccessful generation")
+            return None
+        
+        if not self.pinata_enabled:
+            logger.debug("Pinata not enabled - cannot store template")
+            return None
+        
+        try:
+            # Extract contract type from prompt or metadata
+            contract_type = "Custom"
+            if metadata:
+                contract_type = metadata.get('contract_type') or metadata.get('category', 'Custom')
+            else:
+                prompt_lower = prompt.lower()
+                if 'erc20' in prompt_lower or 'token' in prompt_lower:
+                    contract_type = 'ERC20'
+                elif 'erc721' in prompt_lower or 'nft' in prompt_lower:
+                    contract_type = 'ERC721'
+                elif 'defi' in prompt_lower or 'dex' in prompt_lower:
+                    contract_type = 'DeFi'
+                elif 'dao' in prompt_lower or 'governance' in prompt_lower:
+                    contract_type = 'DAO'
+            
+            # Create template name
+            template_name = f"{contract_type}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+            
+            # Prepare template content (prompt + contract)
+            template_content = f"""# Template: {contract_type}
+# Generated: {datetime.utcnow().isoformat()}
+# Prompt: {prompt[:500]}
+
+{generated_contract}
+"""
+            
+            # Prepare metadata
+            template_metadata = {
+                'description': f"Template for {contract_type} contracts",
+                'tags': [contract_type.lower(), 'auto-generated', 'template'],
+                'version': '1.0',
+                'contract_type': contract_type,
+                'prompt_pattern': prompt[:200],
+                'auto_stored': True,
+                **(metadata or {})
+            }
+            
+            # Upload template
+            cid = await self.upload_template(template_name, template_content, template_metadata)
+            
+            logger.info(f"✅ Auto-stored new template: {template_name} (CID: {cid})")
+            logger.info(f"💡 This template will be available for future similar prompts")
+            
+            return cid
+            
+        except Exception as e:
+            logger.warning(f"Failed to auto-store template: {e}")
+            return None
     
     async def upload_template(self, name: str, content: str, metadata: Dict[str, Any] = None) -> str:
         """

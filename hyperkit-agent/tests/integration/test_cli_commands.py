@@ -14,6 +14,7 @@ CLI_COMMAND = "python -m cli.main"
 TEST_NETWORK = "hyperion"
 
 
+@pytest.mark.integration
 class TestCLIGenerate:
     """Test generate command"""
     
@@ -49,6 +50,7 @@ class TestCLIGenerate:
         print(f"✅ Generate contract CLI test passed")
 
 
+@pytest.mark.integration
 class TestCLIAudit:
     """Test audit command"""
     
@@ -104,6 +106,7 @@ contract TestContract {
                 test_contract.unlink()
 
 
+@pytest.mark.integration
 class TestCLIDeploy:
     """Test deploy command"""
     
@@ -121,6 +124,7 @@ class TestCLIDeploy:
     # Deployment tests skipped - require actual blockchain interaction
 
 
+@pytest.mark.integration
 class TestCLIWorkflow:
     """Test workflow command"""
     
@@ -182,6 +186,7 @@ class TestCLIWorkflow:
         print(f"✅ Workflow run (test-only) CLI test passed")
 
 
+@pytest.mark.integration
 class TestCLIUtility:
     """Test utility commands"""
     
@@ -212,6 +217,7 @@ class TestCLIUtility:
         print(f"✅ Version CLI test passed")
 
 
+@pytest.mark.integration
 class TestCLIConfig:
     """Test config command"""
     
@@ -227,6 +233,7 @@ class TestCLIConfig:
         assert "config" in result.stdout.lower()
 
 
+@pytest.mark.integration
 class TestCLIMonitor:
     """Test monitor command"""
     
@@ -242,6 +249,7 @@ class TestCLIMonitor:
         assert "monitor" in result.stdout.lower()
 
 
+@pytest.mark.integration
 class TestCLIVerify:
     """Test verify command"""
     
@@ -257,6 +265,7 @@ class TestCLIVerify:
         assert "verify" in result.stdout.lower()
 
 
+@pytest.mark.integration
 class TestCLIErrorHandling:
     """Test CLI error handling"""
     

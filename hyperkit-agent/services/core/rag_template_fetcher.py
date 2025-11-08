@@ -29,7 +29,9 @@ class RAGTemplateFetcher:
             registry_path: Path to cid-registry.json (default: docs/RAG_TEMPLATES/cid-registry.json)
             cache_dir: Directory for caching templates (default: artifacts/rag_templates/)
         """
-        self.project_root = Path(__file__).parent.parent.parent.parent
+        # Calculate project root: services/core/rag_template_fetcher.py -> hyperkit-agent
+        # Go up 3 levels: core -> services -> hyperkit-agent
+        self.project_root = Path(__file__).parent.parent.parent
         
         # Set registry path
         if registry_path:

@@ -132,14 +132,42 @@ class ModelSelector:
         import os
         
         # Check Google/Gemini availability
-        google_key = os.getenv("GOOGLE_API_KEY") or self.config.get("google", {}).get("api_key", "")
+        # Check config first, then fall back to environment variable
+        google_key = None
+        if self.config:
+            # Try multiple config paths where the key might be stored
+            google_key = (
+                self.config.get("GOOGLE_API_KEY") or
+                self.config.get("google_api_key") or
+                self.config.get("google", {}).get("api_key") or
+                self.config.get("ai_providers", {}).get("google", {}).get("api_key")
+            )
+        
+        # Fall back to environment variable if not in config
+        if not google_key:
+            google_key = os.getenv("GOOGLE_API_KEY")
+        
         if google_key and google_key.strip() and google_key != "your_google_api_key_here":
             for model_name, spec in self.GEMINI_MODELS.items():
                 self.available_models[model_name] = spec
             logger.info(f"✅ Loaded {len(self.GEMINI_MODELS)} Gemini models")
         
         # Check OpenAI availability (fallback)
-        openai_key = os.getenv("OPENAI_API_KEY") or self.config.get("openai", {}).get("api_key", "")
+        # Check config first, then fall back to environment variable
+        openai_key = None
+        if self.config:
+            # Try multiple config paths where the key might be stored
+            openai_key = (
+                self.config.get("OPENAI_API_KEY") or
+                self.config.get("openai_api_key") or
+                self.config.get("openai", {}).get("api_key") or
+                self.config.get("ai_providers", {}).get("openai", {}).get("api_key")
+            )
+        
+        # Fall back to environment variable if not in config
+        if not openai_key:
+            openai_key = os.getenv("OPENAI_API_KEY")
+        
         if openai_key and openai_key.strip() and openai_key != "your_openai_api_key_here":
             for model_name, spec in self.OPENAI_MODELS.items():
                 self.available_models[model_name] = spec

@@ -1,36 +1,24 @@
 {
-  "timestamp": "144364.234",
+  "timestamp": "38211.187",
   "overall_status": "partial",
   "components": {
-    "obsidian": {
+    "ipfs_pinata": {
       "status": "success",
-      "test_result": true
-    },
-    "enhanced_retriever": {
-      "obsidian": {
-        "status": "success",
-        "method": "filesystem",
-        "vault_path": "C:\\Users\\JustineDevs\\Downloads\\Hyperkit",
-        "file_count": 8
-      },
-      "ipfs": {
-        "status": "not_configured"
-      },
-      "local": {
-        "status": "no_files",
-        "path": "knowledge"
-      }
+      "pinata_enabled": true,
+      "cid_registry_loaded": true,
+      "template_count": 2,
+      "test_retrieve": "success (no results)",
+      "test_upload": "success"
     },
     "configuration": {
-      "obsidian_api_key": true,
-      "obsidian_vault_path": true,
-      "mcp_enabled": true,
-      "mcp_docker": false
+      "pinata_api_key": true,
+      "pinata_secret_key": true,
+      "cid_registry_exists": true
     },
     "content_retrieval": {
-      "content_length": 3122,
-      "has_content": true,
-      "preview": "## Source 1: Obsidian (Relevance: 0.01)\n## Security-Checklist.md\n# Smart Contract Security Audit Checklist\n\n## Pre-Audit Preparation\n\n### Code Quality\n- [ ] Code follows Solidity style guide\n- [ ] Pro..."
+      "content_length": 0,
+      "has_content": false,
+      "preview": ""
     }
   }
 }

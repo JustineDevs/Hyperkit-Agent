@@ -88,6 +88,7 @@ class WorkflowContext:
     # Error tracking
     errors: List[Dict[str, Any]] = field(default_factory=list)
     retry_attempts: Dict[str, int] = field(default_factory=dict)
+    error_history: List[Dict[str, Any]] = field(default_factory=list)  # Last N errors with timestamps and fix attempts
     
     # Environment
     workspace_dir: Optional[str] = None
@@ -112,12 +113,20 @@ class WorkflowContext:
         self.stages.append(result)
         
         if error:
-            self.errors.append({
+            error_entry = {
                 "stage": stage.value,
                 "error": error,
                 "error_type": error_type,
-                "timestamp": result.timestamp
-            })
+                "timestamp": result.timestamp,
+                "fix_attempted": False,
+                "fix_successful": False,
+                "retry_count": self.retry_attempts.get(stage.value, 0)
+            }
+            self.errors.append(error_entry)
+            # Add to error_history (keep last 50 errors)
+            self.error_history.append(error_entry)
+            if len(self.error_history) > 50:
+                self.error_history.pop(0)  # Remove oldest error
     
     def get_last_stage_result(self) -> Optional[StageResult]:
         """Get the most recent stage result"""
@@ -149,6 +158,34 @@ class WorkflowContext:
     def get_retry_count(self, stage: PipelineStage) -> int:
         """Get retry count for a stage"""
         return self.retry_attempts.get(stage.value, 0)
+    
+    def increment_and_get_retry_count(self, stage: PipelineStage) -> int:
+        """
+        Atomically increment and return the new retry count.
+        This ensures the increment and check happen in a single operation.
+        
+        Args:
+            stage: Pipeline stage to increment retry for
+            
+        Returns:
+            The new retry count after incrementing
+        """
+        stage_key = stage.value
+        current_count = self.retry_attempts.get(stage_key, 0)
+        new_count = current_count + 1
+        self.retry_attempts[stage_key] = new_count
+        return new_count
+    
+    def record_fix_attempt(self, stage: PipelineStage, fix_successful: bool, fix_message: str = ""):
+        """Record a fix attempt for the most recent error in a stage"""
+        # Find the most recent error for this stage
+        for error_entry in reversed(self.error_history):
+            if error_entry.get("stage") == stage.value:
+                error_entry["fix_attempted"] = True
+                error_entry["fix_successful"] = fix_successful
+                error_entry["fix_message"] = fix_message
+                error_entry["fix_timestamp"] = datetime.utcnow().isoformat()
+                break
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert context to dictionary for serialization"""
@@ -251,6 +288,7 @@ class WorkflowContext:
                 for stage in self.stages
             ],
             "errors": self.errors,
+            "error_history": self.error_history,  # Last N errors with timestamps and fix attempts
             "retry_attempts": self.retry_attempts,
             "detected_dependencies": self.detected_dependencies,
             "installed_dependencies": self.installed_dependencies,
@@ -274,6 +312,15 @@ class WorkflowContext:
                 "url": self.verification_url,
             },
             "metadata": self.metadata,
+            # Enhanced diagnostic information
+            "rag_status": {
+                "context_retrieved": bool(self.metadata.get('rag_context')),
+                "context_length": len(self.metadata.get('rag_context', '')),
+                "scope": self.metadata.get('rag_scope', 'unknown'),
+                "template_info": self.metadata.get('template_info'),
+            },
+            "model_provider": self.metadata.get('model_provider', 'unknown'),
+            "generation_method": self.metadata.get('generation_method', 'unknown'),
         }
 
 
@@ -345,7 +392,34 @@ class ContextManager:
         context.save_to_file(file_path)
     
     def load_context(self, workflow_id: str) -> Optional[WorkflowContext]:
-        """Load context from disk"""
+        """
+        Load context from disk.
+        
+        Args:
+            workflow_id: Workflow ID (must be a valid string, not Sentinel)
+            
+        Returns:
+            WorkflowContext if found, None otherwise
+            
+        Raises:
+            ValueError: If workflow_id is invalid (None, empty, or Sentinel)
+        """
+        # Validate workflow_id - prevent Sentinel objects and invalid values
+        if not workflow_id:
+            raise ValueError("Invalid workflow_id: cannot be None or empty")
+        
+        # Check for Sentinel objects
+        if hasattr(workflow_id, '__class__') and 'Sentinel' in str(type(workflow_id)):
+            raise ValueError(f"Invalid workflow_id: cannot be Sentinel object (got {type(workflow_id)})")
+        
+        # Ensure it's a string
+        if not isinstance(workflow_id, str):
+            raise ValueError(f"Invalid workflow_id: must be a string (got {type(workflow_id)})")
+        
+        # Validate workflow_id doesn't contain path traversal
+        if ".." in workflow_id or "/" in workflow_id or "\\" in workflow_id:
+            raise ValueError(f"Invalid workflow_id: contains path traversal characters")
+        
         file_path = self.contexts_dir / f"{workflow_id}.json"
         if file_path.exists():
             return WorkflowContext.from_file(file_path)
@@ -362,6 +436,37 @@ class ContextManager:
         return file_path
     
     def get_context_path(self, workflow_id: str) -> Path:
-        """Get path to context file for a workflow"""
+        """
+        Get path to context file for a workflow.
+        
+        Args:
+            workflow_id: Workflow ID (must be a valid string, not Sentinel)
+            
+        Returns:
+            Path to context file
+            
+        Raises:
+            ValueError: If workflow_id is invalid (None, empty, or Sentinel)
+        """
+        # Validate workflow_id - prevent Sentinel objects and invalid values
+        if not workflow_id:
+            raise ValueError("Invalid workflow_id: cannot be None or empty")
+        
+        # Check for Sentinel objects
+        if hasattr(workflow_id, '__class__') and 'Sentinel' in str(type(workflow_id)):
+            raise ValueError(f"Invalid workflow_id: cannot be Sentinel object (got {type(workflow_id)})")
+        
+        # Ensure it's a string
+        if not isinstance(workflow_id, str):
+            raise ValueError(f"Invalid workflow_id: must be a string (got {type(workflow_id)})")
+        
+        # CRITICAL: Reject string values that look like Sentinel objects (e.g., "Sentinel.UNSET")
+        if "Sentinel" in workflow_id:
+            raise ValueError(f"Invalid workflow_id: contains 'Sentinel' (got '{workflow_id}')")
+        
+        # Validate workflow_id doesn't contain path traversal
+        if ".." in workflow_id or "/" in workflow_id or "\\" in workflow_id:
+            raise ValueError(f"Invalid workflow_id: contains path traversal characters")
+        
         return self.contexts_dir / f"{workflow_id}.json"
 

@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 
 
+@pytest.mark.integration
 class TestWorkflowIntegration:
     """Test end-to-end workflow integration"""
     

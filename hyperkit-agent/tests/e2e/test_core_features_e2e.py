@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 
+@pytest.mark.integration
 class TestCoreFeaturesE2E:
     """End-to-end tests for all core features"""
     
@@ -276,6 +277,7 @@ contract TestToken is ERC20, Ownable {
         assert pass_rate >= 0.8, f"Pass rate {pass_rate:.1%} below 80% threshold"
 
 
+@pytest.mark.integration
 class TestIntegrationE2E:
     """Integration tests for core features"""
     

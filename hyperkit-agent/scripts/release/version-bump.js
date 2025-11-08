@@ -181,6 +181,128 @@ function calculateVersionGap(localVersion, remoteVersion) {
   };
 }
 
+function checkUncommittedFiles() {
+  /**
+   * Check for uncommitted files: untracked, modified, and staged.
+   * Returns: { untracked: [], modified: [], staged: [] }
+   */
+  try {
+    const statusOutput = execSync('git status --porcelain', {
+      cwd: ROOT_DIR,
+      encoding: 'utf8',
+      stdio: 'pipe'
+    }).trim();
+    
+    if (!statusOutput) {
+      return { untracked: [], modified: [], staged: [] };
+    }
+    
+    const untracked = [];
+    const modified = [];
+    const staged = [];
+    
+    const lines = statusOutput.split('\n');
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      
+      const status = line.substring(0, 2);
+      const filename = line.substring(3).trim();
+      
+      // Skip lib/ submodule changes
+      if (filename.includes('/lib/') || filename.includes('\\lib\\')) {
+        continue;
+      }
+      
+      // Categorize files
+      if (status === '??') {
+        // Untracked file
+        untracked.push(filename);
+      } else if (status[1] === 'M' || status[1] === 'D') {
+        // Modified or deleted in working tree
+        modified.push(filename);
+      } else if (status[0] === 'M' || status[0] === 'A' || status[0] === 'D' || status[0] === 'R') {
+        // Staged changes
+        staged.push(filename);
+      }
+    }
+    
+    return { untracked, modified, staged };
+  } catch (err) {
+    // If git command fails, assume no uncommitted files
+    return { untracked: [], modified: [], staged: [] };
+  }
+}
+
+function stageAllModifiedFiles() {
+  /**
+   * Stage all modified, deleted, and untracked files.
+   * Returns: number of files staged
+   */
+  try {
+    const statusOutput = execSync('git status --porcelain', {
+      cwd: ROOT_DIR,
+      encoding: 'utf8',
+      stdio: 'pipe'
+    }).trim();
+    
+    if (!statusOutput) {
+      return 0;
+    }
+    
+    // Get already staged files
+    let alreadyStaged = new Set();
+    try {
+      const stagedOutput = execSync('git diff --cached --name-only', {
+        cwd: ROOT_DIR,
+        encoding: 'utf8',
+        stdio: 'pipe'
+      }).trim();
+      if (stagedOutput) {
+        alreadyStaged = new Set(stagedOutput.split('\n'));
+      }
+    } catch (err) {
+      // No staged files
+    }
+    
+    let stagedCount = 0;
+    const lines = statusOutput.split('\n');
+    
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      
+      const status = line.substring(0, 2);
+      const filename = line.substring(3).trim();
+      
+      // Skip lib/ submodule changes
+      if (filename.includes('/lib/') || filename.includes('\\lib\\')) {
+        continue;
+      }
+      
+      // Skip if already staged
+      if (alreadyStaged.has(filename)) {
+        continue;
+      }
+      
+      // Stage if file is modified (M), deleted (D), or untracked (?)
+      if (status[1] === 'M' || status[1] === 'D' || status[1] === '?') {
+        try {
+          execSync(`git add "${filename}"`, {
+            cwd: ROOT_DIR,
+            stdio: 'pipe'
+          });
+          stagedCount++;
+        } catch (err) {
+          // Skip files that can't be staged
+        }
+      }
+    }
+    
+    return stagedCount;
+  } catch (err) {
+    return 0;
+  }
+}
+
 function validateVersionGap(localVersion, remoteVersion, bumpType) {
   /**
    * Validate that the version gap is reasonable.
@@ -253,8 +375,53 @@ function main() {
   
   const autoCommit = !process.argv.includes('--no-commit');
   const skipRemoteCheck = process.argv.includes('--skip-remote-check');
+  const skipUncommittedCheck = process.argv.includes('--skip-uncommitted-check');
   
   console.log(`\n📦 Bumping ${type} version\n`);
+  
+  // Check for uncommitted files before version bump
+  if (!skipUncommittedCheck) {
+    console.log('🔍 Checking for uncommitted files...');
+    const { untracked, modified, staged } = checkUncommittedFiles();
+    const hasUncommitted = untracked.length > 0 || modified.length > 0;
+    
+    if (hasUncommitted) {
+      console.log('\n⚠️  Uncommitted files detected before version bump:');
+      
+      if (untracked.length > 0) {
+        console.log(`   Untracked files (${untracked.length}):`);
+        for (const f of untracked.slice(0, 5)) {
+          console.log(`     + ${f}`);
+        }
+        if (untracked.length > 5) {
+          console.log(`     ... and ${untracked.length - 5} more`);
+        }
+      }
+      
+      if (modified.length > 0) {
+        console.log(`   Modified files (${modified.length}):`);
+        for (const f of modified.slice(0, 5)) {
+          console.log(`     M ${f}`);
+        }
+        if (modified.length > 5) {
+          console.log(`     ... and ${modified.length - 5} more`);
+        }
+      }
+      
+      console.log('\n   Auto-staging uncommitted files...');
+      const autoStaged = stageAllModifiedFiles();
+      if (autoStaged > 0) {
+        console.log(`   ✅ Auto-staged ${autoStaged} file(s)`);
+        console.log('   These files will be committed with the version bump\n');
+      } else {
+        console.log('   [INFO] No files were staged (may already be staged)\n');
+      }
+    } else {
+      console.log('   ✅ Working tree is clean\n');
+    }
+  } else {
+    console.log('ℹ️  Skipping uncommitted files check (--skip-uncommitted-check)\n');
+  }
   
   // Get current local version
   const currentVersion = getCurrentVersion();
@@ -304,22 +471,56 @@ function main() {
   updatePackageJson(newVersion);
   updatePyprojectToml(newVersion);
   
-  // Commit changes
+  // Commit changes (including all staged files from auto-staging)
   if (autoCommit) {
+    // First, stage version files explicitly
     const files = [VERSION_FILE, PACKAGE_JSON];
     if (fs.existsSync(PYPROJECT_TOML)) {
       files.push(PYPROJECT_TOML);
     }
     
-    if (gitCommit(files, `chore: bump version to ${newVersion}`)) {
+    // Stage all other modified files (from auto-staging)
+    const additionalStaged = stageAllModifiedFiles();
+    
+    // Commit all staged files
+    const commitMessage = `chore: version bump to ${newVersion} [auto-commit]\n\n` +
+                         `Bumped ${type} version: ${currentVersion} → ${newVersion}\n` +
+                         (additionalStaged > 0 ? `Auto-committed ${additionalStaged} additional file(s) from workflow.\n` : '') +
+                         `\nGenerated: ${new Date().toISOString()}`;
+    
+    if (gitCommit(files, commitMessage)) {
       console.log(`\n✅ Committed version bump: ${newVersion}`);
+      if (additionalStaged > 0) {
+        console.log(`   Also committed ${additionalStaged} additional file(s) from workflow`);
+      }
     } else {
-      console.log(`\n⚠️  No changes to commit`);
+      // Try to commit just the version files if the combined commit failed
+      if (gitCommit(files, `chore: bump version to ${newVersion}`)) {
+        console.log(`\n✅ Committed version bump: ${newVersion}`);
+        // Try to commit remaining files
+        const remainingStaged = stageAllModifiedFiles();
+        if (remainingStaged > 0) {
+          const remainingCommitMessage = `chore: auto-commit workflow files after version bump\n\n` +
+                                       `Auto-committed ${remainingStaged} file(s) after version bump.\n` +
+                                       `Generated: ${new Date().toISOString()}`;
+          try {
+            execSync(`git commit -m "${remainingCommitMessage}"`, {
+              cwd: ROOT_DIR,
+              stdio: 'pipe'
+            });
+            console.log(`   ✅ Also committed ${remainingStaged} workflow file(s)`);
+          } catch (err) {
+            console.log(`   ⚠️  Could not commit remaining files: ${err.message}`);
+          }
+        }
+      } else {
+        console.log(`\n⚠️  No changes to commit`);
+      }
     }
   } else {
     console.log(`\n📝 Next steps:`);
     console.log(`   1. Review changes: git diff`);
-    console.log(`   2. Commit: git add VERSION package.json hyperkit-agent/pyproject.toml`);
+    console.log(`   2. Stage all files: git add .`);
     console.log(`   3. Commit: git commit -m "chore: bump version to ${newVersion}"`);
   }
   
@@ -372,6 +573,47 @@ function main() {
   
   console.log(`\n✅ Version bump complete: ${currentVersion} → ${newVersion}`);
   
+  // Final check for uncommitted files
+  if (!skipUncommittedCheck) {
+    console.log('\n🔍 Final check for uncommitted files...');
+    const finalCheck = checkUncommittedFiles();
+    const hasFinalUncommitted = finalCheck.untracked.length > 0 || finalCheck.modified.length > 0;
+    
+    if (hasFinalUncommitted) {
+      console.log('⚠️  Uncommitted files detected after version bump:');
+      if (finalCheck.untracked.length > 0) {
+        console.log(`   Untracked: ${finalCheck.untracked.length} file(s)`);
+      }
+      if (finalCheck.modified.length > 0) {
+        console.log(`   Modified: ${finalCheck.modified.length} file(s)`);
+      }
+      
+      // Try to auto-stage and commit remaining files
+      console.log('\n   Attempting to auto-commit remaining files...');
+      const remainingStaged = stageAllModifiedFiles();
+      if (remainingStaged > 0) {
+        try {
+          const remainingCommitMessage = `chore: auto-commit remaining files after version bump\n\n` +
+                                       `Auto-committed ${remainingStaged} remaining file(s) after version bump.\n` +
+                                       `Generated: ${new Date().toISOString()}`;
+          execSync(`git commit -m "${remainingCommitMessage}"`, {
+            cwd: ROOT_DIR,
+            stdio: 'pipe'
+          });
+          console.log(`   ✅ Committed ${remainingStaged} remaining file(s)`);
+        } catch (err) {
+          console.log(`   ⚠️  Could not commit remaining files: ${err.message}`);
+          console.log('   Please review and commit manually:');
+          console.log('     git status');
+          console.log('     git add <files>');
+          console.log('     git commit -m "your message"');
+        }
+      }
+    } else {
+      console.log('   ✅ Working tree is clean - all files committed');
+    }
+  }
+  
   // Remind about local vs remote version persistence
   if (!skipRemoteCheck) {
     const remoteVersion = getRemoteVersion();
@@ -410,6 +652,8 @@ module.exports = {
   getRemoteVersion,
   compareVersions,
   calculateVersionGap,
-  validateVersionGap
+  validateVersionGap,
+  checkUncommittedFiles,
+  stageAllModifiedFiles
 };
 

@@ -10,6 +10,7 @@ from web3 import Web3
 from services.deployment.deployer import MultiChainDeployer
 from services.gas.gas_estimator import GasEstimator
 
+@pytest.mark.integration
 class TestNetworkIntegration:
     """Test network integration functionality."""
     
